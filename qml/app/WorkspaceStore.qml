@@ -1289,12 +1289,40 @@ property Settings missionRunPrefs: Settings {
     property bool showHome: true
     property bool showVehicleLine: true
     property bool showLabels: true
+    property string aheadColor: "#3B82F6"
+    property string currentColor: "#FACC15"
+    property string doneColor: "#94A3B8"
+    property real routeWidth: 2.5
+    property real currentWidth: 3.5
 }
 property alias missionRunShowFence:       missionRunPrefs.showFence
 property alias missionRunShowRally:       missionRunPrefs.showRally
 property alias missionRunShowHome:        missionRunPrefs.showHome
 property alias missionRunShowVehicleLine: missionRunPrefs.showVehicleLine
 property alias missionRunShowLabels:      missionRunPrefs.showLabels
+property alias missionRunAheadColor:      missionRunPrefs.aheadColor
+property alias missionRunCurrentColor:    missionRunPrefs.currentColor
+property alias missionRunDoneColor:       missionRunPrefs.doneColor
+property alias missionRunRouteWidth:      missionRunPrefs.routeWidth
+property alias missionRunCurrentWidth:    missionRunPrefs.currentWidth
+readonly property var missionRunViewDefaults: ({
+    showFence: true, showRally: true, showHome: true, showVehicleLine: true, showLabels: true,
+    aheadColor: "#3B82F6", currentColor: "#FACC15", doneColor: "#94A3B8",
+    routeWidth: 2.5, currentWidth: 3.5
+})
+readonly property bool missionRunViewIsDefault: {
+    const defaults = missionRunViewDefaults
+    for (const key in defaults) {
+        if (missionRunPrefs[key] !== defaults[key])
+            return false
+    }
+    return true
+}
+function resetMissionRunView() {
+    const defaults = missionRunViewDefaults
+    for (const key in defaults)
+        missionRunPrefs[key] = defaults[key]
+}
 
 property Settings missionRunBehaviour: Settings {
     id: missionRunBehaviour

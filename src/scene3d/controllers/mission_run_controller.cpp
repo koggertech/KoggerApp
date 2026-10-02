@@ -18,10 +18,18 @@ constexpr int kGeodesicMaxSteps = 256;
 constexpr double kArrowAlongSegment = 0.75;
 constexpr double kTapRadiusPx = 22.0;
 
-const QColor kDoneColor(148, 163, 184, 170);
-const QColor kCurrentColor(250, 204, 21, 245);
-const QColor kAheadColor(59, 130, 246, 235);
-const QColor kVehicleLineColor(250, 204, 21, 150);
+constexpr int kVehicleLineAlpha = 150;
+constexpr int kAheadAlpha = 235;
+constexpr int kCurrentAlpha = 245;
+constexpr int kDoneAlpha = 170;
+
+QColor withAlpha(QColor color, int alpha)
+{
+    color.setAlpha(alpha);
+    return color;
+}
+constexpr double kMinWidthPx = 0.5;
+constexpr double kMaxWidthPx = 12.0;
 const QColor kPointColor(255, 255, 255, 240);
 const QColor kDonePointColor(148, 163, 184, 220);
 const QColor kStartColor(245, 158, 11, 240);
@@ -33,8 +41,6 @@ const QColor kFenceExclusionFill(239, 68, 68, 35);
 const QColor kSelectedRing(255, 255, 255, 255);
 const QColor kOutline(17, 24, 39, 230);
 
-constexpr float kLegWidthPx = 2.5f;
-constexpr float kCurrentLegWidthPx = 3.5f;
 constexpr float kVehicleLineWidthPx = 1.5f;
 constexpr float kFenceWidthPx = 1.5f;
 constexpr float kLabelledPointPx = 7.0f;
@@ -131,6 +137,52 @@ void MissionRunController::setDrawOption(bool& option, bool value)
     option = value;
     emit drawOptionsChanged();
     markDirty();
+}
+
+void MissionRunController::setColorOption(QColor& option, const QColor& value)
+{
+    if (!value.isValid() || option == value) {
+        return;
+    }
+    option = value;
+    emit drawOptionsChanged();
+    markDirty();
+}
+
+void MissionRunController::setWidthOption(double& option, double value)
+{
+    const double clamped = std::clamp(value, kMinWidthPx, kMaxWidthPx);
+    if (qFuzzyCompare(option, clamped)) {
+        return;
+    }
+    option = clamped;
+    emit drawOptionsChanged();
+    markDirty();
+}
+
+void MissionRunController::setAheadColor(const QColor& color)
+{
+    setColorOption(aheadColor_, color);
+}
+
+void MissionRunController::setCurrentColor(const QColor& color)
+{
+    setColorOption(currentColor_, color);
+}
+
+void MissionRunController::setDoneColor(const QColor& color)
+{
+    setColorOption(doneColor_, color);
+}
+
+void MissionRunController::setRouteWidth(double width)
+{
+    setWidthOption(routeWidth_, width);
+}
+
+void MissionRunController::setCurrentWidth(double width)
+{
+    setWidthOption(currentWidth_, width);
 }
 
 void MissionRunController::setShowFence(bool show)
@@ -401,13 +453,14 @@ void MissionRunController::rebuild()
     for (int k = 1; k < positions.size(); ++k) {
         const bool done = targetIdx >= 0 && k < targetIdx;
         const bool current = k == targetIdx;
-        appendLeg(rd, positions.at(k - 1), positions.at(k), done ? kDoneColor : (current ? kCurrentColor : kAheadColor),
-                  current ? kCurrentLegWidthPx : kLegWidthPx, !done);
+        appendLeg(rd, positions.at(k - 1), positions.at(k),
+                  done ? withAlpha(doneColor_, kDoneAlpha) : (current ? withAlpha(currentColor_, kCurrentAlpha) : withAlpha(aheadColor_, kAheadAlpha)),
+                  float(current ? currentWidth_ : routeWidth_), !done);
     }
 
     const mission::GeoPoint vehicle = tracker_->vehiclePosition();
     if (showVehicleLine_ && targetIdx >= 0 && targetIdx < positions.size() && vehicle.isValid() && tracker_->running()) {
-        appendLeg(rd, vehicle, positions.at(targetIdx), kVehicleLineColor, kVehicleLineWidthPx, false);
+        appendLeg(rd, vehicle, positions.at(targetIdx), withAlpha(currentColor_, kVehicleLineAlpha), kVehicleLineWidthPx, false);
     }
 
     for (int k = 0; k < seqs.size(); ++k) {
@@ -438,7 +491,7 @@ void MissionRunController::rebuild()
         }
         appendPoint(rd, world, color, size, showLabels_ ? label : QString(), shape);
         if (k == targetIdx) {
-            appendRing(rd, world, kCurrentColor, kTargetRingPx);
+            appendRing(rd, world, withAlpha(currentColor_, kCurrentAlpha), kTargetRingPx);
         }
         if (seqs.at(k) == selectedSeq_) {
             appendRing(rd, world, kSelectedRing, kSelectedRingPx);

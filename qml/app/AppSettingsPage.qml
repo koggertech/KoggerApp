@@ -67,6 +67,34 @@ Column {
 
     // Inline toggle switch for parameter rows — same visual size as KSwitch's
     // indicator so all toggles in the app look identical and are easy to tap.
+    component RouteColorRow: Row {
+        id: colorRow
+        property string current: ""
+        signal picked(string color)
+        spacing: Math.round(6 * AppPalette.scale)
+
+        Repeater {
+            model: ["#3B82F6", "#22C55E", "#FACC15", "#F97316", "#EF4444", "#A855F7", "#FFFFFF", "#94A3B8"]
+            delegate: Rectangle {
+                required property string modelData
+                readonly property bool selected: colorRow.current.toUpperCase() === modelData
+                width: Math.round(24 * AppPalette.scale)
+                height: width
+                radius: width / 2
+                color: modelData
+                border.width: selected ? 3 : 1
+                border.color: selected ? AppPalette.textStrong : AppPalette.border
+
+                MouseArea {
+                    anchors.fill: parent
+                    anchors.margins: -Math.round(3 * AppPalette.scale)
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: colorRow.picked(parent.modelData)
+                }
+            }
+        }
+    }
+
     component SmallCheck: Item {
         id: sc
         property bool checked: false
@@ -2415,6 +2443,121 @@ Column {
 
             Text {
                 width: parent.width
+                text: qsTr("Route lines") + ":"
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
+                topPadding: Tokens.spaceXs
+            }
+
+            KIsland {
+                KIslandRow {
+                    label: qsTr("Ahead")
+                    labelColor: root._bright
+                    stacked: true
+
+                    RouteColorRow {
+                        current: root.store ? root.store.missionRunAheadColor : ""
+                        onPicked: function(color) { if (root.store) root.store.missionRunAheadColor = color }
+                    }
+                }
+                KIslandRow {
+                    label: qsTr("Current leg")
+                    labelColor: root._bright
+                    stacked: true
+
+                    RouteColorRow {
+                        current: root.store ? root.store.missionRunCurrentColor : ""
+                        onPicked: function(color) { if (root.store) root.store.missionRunCurrentColor = color }
+                    }
+                }
+                KIslandRow {
+                    label: qsTr("Flown")
+                    labelColor: root._bright
+                    stacked: true
+
+                    RouteColorRow {
+                        current: root.store ? root.store.missionRunDoneColor : ""
+                        onPicked: function(color) { if (root.store) root.store.missionRunDoneColor = color }
+                    }
+                }
+                KIslandRow {
+                    id: missionRunRouteWidthSliderRow
+                    label: qsTr("Line width")
+                    labelColor: root._bright
+                    slotWidth: Math.round(200 * AppPalette.scale)
+
+                    Item {
+                        width: missionRunRouteWidthSliderRow.slotWidth
+                        height: missionRunRouteWidthSliderLayout.implicitHeight
+
+                        RowLayout {
+                            id: missionRunRouteWidthSliderLayout
+                            anchors.fill: parent
+                            spacing: Tokens.spaceSm
+
+                            KSlider {
+                                id: missionRunRouteWidthSlider
+                                Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
+                                from: 1; to: 8; stepSize: 0.5
+                                value: root.store ? root.store.missionRunRouteWidth : 2.5
+                                onValueModified: function(val) { if (root.store) root.store.missionRunRouteWidth = val }
+                            }
+                            Text {
+                                text: qsTr("%1 px").arg(missionRunRouteWidthSlider.value.toFixed(1))
+                                color: root._bright
+                                font.pixelSize: Tokens.fontBase
+                                Layout.preferredWidth: Math.round(44 * AppPalette.scale)
+                                horizontalAlignment: Text.AlignRight
+                            }
+                        }
+                    }
+                }
+                KIslandRow {
+                    id: missionRunCurrentWidthSliderRow
+                    label: qsTr("Current leg width")
+                    labelColor: root._bright
+                    slotWidth: Math.round(200 * AppPalette.scale)
+
+                    Item {
+                        width: missionRunCurrentWidthSliderRow.slotWidth
+                        height: missionRunCurrentWidthSliderLayout.implicitHeight
+
+                        RowLayout {
+                            id: missionRunCurrentWidthSliderLayout
+                            anchors.fill: parent
+                            spacing: Tokens.spaceSm
+
+                            KSlider {
+                                id: missionRunCurrentWidthSlider
+                                Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
+                                from: 1; to: 8; stepSize: 0.5
+                                value: root.store ? root.store.missionRunCurrentWidth : 3.5
+                                onValueModified: function(val) { if (root.store) root.store.missionRunCurrentWidth = val }
+                            }
+                            Text {
+                                text: qsTr("%1 px").arg(missionRunCurrentWidthSlider.value.toFixed(1))
+                                color: root._bright
+                                font.pixelSize: Tokens.fontBase
+                                Layout.preferredWidth: Math.round(44 * AppPalette.scale)
+                                horizontalAlignment: Text.AlignRight
+                            }
+                        }
+                    }
+                }
+            }
+
+            KButton {
+                x: parent.width - width
+                text: qsTr("Defaults")
+                height: Tokens.controlHMd
+                enabled: !!root.store && !root.store.missionRunViewIsDefault
+                onClicked: if (root.store) root.store.resetMissionRunView()
+            }
+
+            Text {
+                width: parent.width
                 text: qsTr("Behaviour") + ":"
                 color: AppPalette.textSecond
                 font.pixelSize: Tokens.fontBase
@@ -2448,6 +2591,44 @@ Column {
                         flat: true
                         checked: root.store ? root.store.missionRunRestartAfterUpload : true
                         onToggled: if (root.store) root.store.missionRunRestartAfterUpload = checked
+                    }
+                }
+            }
+
+            KButton {
+                id: missionEditorButton
+                readonly property int _iconSize: Tokens.iconSm
+                text: qsTr("Mission editor")
+                height: Tokens.controlHMd
+                rightPadding: horizontalPadding + _iconSize + Tokens.spaceSm
+                implicitWidth: contentItem.implicitWidth + leftPadding + rightPadding
+                onClicked: {
+                    if (root.store) root.store.settingsPanelOpen = false
+                    if (typeof core !== "undefined" && core) core.setMissionEditorActive(true)
+                }
+
+                Item {
+                    anchors.right: parent.right
+                    anchors.rightMargin: missionEditorButton.horizontalPadding
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: missionEditorButton._iconSize
+                    height: width
+
+                    Image {
+                        id: missionEditorIcon
+                        anchors.fill: parent
+                        source: "qrc:/icons/ui/external-link.svg"
+                        sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+                        sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+                        fillMode: Image.PreserveAspectFit
+                        smooth: true
+                        visible: false
+                    }
+                    ColorOverlay {
+                        anchors.fill: missionEditorIcon
+                        source: missionEditorIcon
+                        color: missionEditorButton.contentItem.color
+                        smooth: true
                     }
                 }
             }

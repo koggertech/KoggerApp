@@ -62,10 +62,19 @@ Rectangle {
         z: 5
     }
 
-    visible: active
+    property real progress: active ? 1.0 : 0.0
+    Behavior on progress {
+        NumberAnimation {
+            duration: Anim.sidebarMs
+            easing.type: Easing.OutCubic
+        }
+    }
+
+    visible: progress > 0.01
     enabled: active
     color: AppPalette.bg
     focus: active
+    transform: Translate { x: -root.width * (1.0 - root.progress) }
 
     function refreshFromPlan() {
         if (!plan) return

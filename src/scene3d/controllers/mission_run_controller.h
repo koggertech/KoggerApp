@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QColor>
 #include <QObject>
 #include <QPointF>
 #include <QString>
@@ -36,6 +37,12 @@ class MissionRunController : public QObject
     Q_PROPERTY(bool    showHome         READ showHome     WRITE setShowHome     NOTIFY drawOptionsChanged)
     Q_PROPERTY(bool    showVehicleLine  READ showVehicleLine WRITE setShowVehicleLine NOTIFY drawOptionsChanged)
     Q_PROPERTY(bool    showLabels       READ showLabels   WRITE setShowLabels   NOTIFY drawOptionsChanged)
+    /** Route look: legs ahead, the current leg (also the target ring and the line to it), legs flown — opaque colours, the layer applies its own transparency per role; widths in px (0.5…12). */
+    Q_PROPERTY(QColor  aheadColor       READ aheadColor   WRITE setAheadColor   NOTIFY drawOptionsChanged)
+    Q_PROPERTY(QColor  currentColor     READ currentColor WRITE setCurrentColor NOTIFY drawOptionsChanged)
+    Q_PROPERTY(QColor  doneColor        READ doneColor    WRITE setDoneColor    NOTIFY drawOptionsChanged)
+    Q_PROPERTY(double  routeWidth       READ routeWidth   WRITE setRouteWidth   NOTIFY drawOptionsChanged)
+    Q_PROPERTY(double  currentWidth     READ currentWidth WRITE setCurrentWidth NOTIFY drawOptionsChanged)
     Q_PROPERTY(int     selectedSeq      READ selectedSeq                        NOTIFY selectionChanged)
     Q_PROPERTY(int     selectedJumpSeq  READ selectedJumpSeq                    NOTIFY selectionChanged)
     Q_PROPERTY(int     selectedNav      READ selectedNav                        NOTIFY selectionChanged)
@@ -62,6 +69,16 @@ public:
     void setShowHome(bool show);
     void setShowVehicleLine(bool show);
     void setShowLabels(bool show);
+    QColor aheadColor() const { return aheadColor_; }
+    QColor currentColor() const { return currentColor_; }
+    QColor doneColor() const { return doneColor_; }
+    double routeWidth() const { return routeWidth_; }
+    double currentWidth() const { return currentWidth_; }
+    void setAheadColor(const QColor& color);
+    void setCurrentColor(const QColor& color);
+    void setDoneColor(const QColor& color);
+    void setRouteWidth(double width);
+    void setCurrentWidth(double width);
     int selectedSeq() const { return selectedSeq_; }
     int selectedJumpSeq() const;
     int selectedNav() const;
@@ -86,6 +103,8 @@ private:
     void rebuild();
     void markDirty();
     void setDrawOption(bool& option, bool value);
+    void setColorOption(QColor& option, const QColor& value);
+    void setWidthOption(double& option, double value);
     void updateShown();
     void updateSelectedScreen();
     void onSnapshotChanged();
@@ -102,6 +121,11 @@ private:
     bool showHome_{true};
     bool showVehicleLine_{true};
     bool showLabels_{true};
+    QColor aheadColor_{59, 130, 246};
+    QColor currentColor_{250, 204, 21};
+    QColor doneColor_{148, 163, 184};
+    double routeWidth_{2.5};
+    double currentWidth_{3.5};
     bool editorActive_{false};
     bool shown_{false};
     bool dirty_{true};
