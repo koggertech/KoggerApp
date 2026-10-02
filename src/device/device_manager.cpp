@@ -34,6 +34,7 @@ DeviceManager::DeviceManager()
     qRegisterMetaType<IDBinDVL::DVLSolution>("IDBinDVL::DVLSolution");
     qRegisterMetaType<uint32_t>("uint32_t");
     qRegisterMetaType<FrameParser>("FrameParser");
+    qRegisterMetaType<Position>("Position");
 }
 
 DeviceManager::~DeviceManager()
@@ -383,6 +384,19 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                         emit gnssVelocityComplete(pos.velocityH(), 0);
                         vru_.velocityH = pos.velocityH();
                         emit vruChanged();
+                    }
+                }
+
+                if (mavlink_frame.msgId() == MAVLink_MSG_GPS_RAW_INT::getID()) {
+                    MAVLink_MSG_GPS_RAW_INT raw = mavlink_frame.read<MAVLink_MSG_GPS_RAW_INT>();
+                    if (raw.isValid() && raw.isRtkFixed()) {
+                        Position pos;
+                        pos.lla.latitude = raw.latitude();
+                        pos.lla.longitude = raw.longitude();
+                        pos.lla.altitude = raw.altitudeMsl();
+                        pos.lla.source = PositionSourceRTK;
+                        pos.lla.altSource = AltitudeSourceRTK;
+                        emit positionCompleteRTK(pos);
                     }
                 }
 
