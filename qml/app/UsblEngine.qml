@@ -127,6 +127,7 @@ QtObject {
         id: schedSettings
         category: "main/usblSchedule"
         property int dwellMs: 700
+        property bool fireOnPps: false
     }
     // Stored in MILLISECONDS and shown in seconds: the timers and the answer budget are integer
     // ms, and rounding a float seconds value back into them at every read is a way to be wrong
@@ -137,6 +138,10 @@ QtObject {
     // can contain a real answer. Below it every interrogation would time out by construction.
     readonly property int dwellMinMs: 400
     function setDwellMs(v) { schedSettings.dwellMs = v }
+
+    readonly property bool fireOnPps: schedSettings.fireOnPps
+    function setFireOnPps(v) { schedSettings.fireOnPps = v }
+    readonly property real _triggerTimeoutUs: fireOnPps ? 0xFFFFFFFF : 0
 
     property Timer _runTimer: Timer {
         interval: engine.dwellMs
@@ -161,10 +166,10 @@ QtObject {
         // Only the schedule is per-node, so only the ping is sent per step.
         var g = s.implicit ? null : plan.groupById(s.groupId)
         var snd = g ? g.ini.send : null
-        if (!snd) { dev.acousticPingRequest(s.addr, 0xFFFFFFFF); return }
+        if (!snd) { dev.acousticPingRequest(s.addr, _triggerTimeoutUs); return }
         var fn = plan.findBy(plan.pingFunctions, snd.fn)
         var payload = (fn.id === "bits") ? snd.payload : ""
-        dev.acousticPingRequestEx(s.addr, 0xFFFFFFFF, s.cmd, snd.reply, payload)
+        dev.acousticPingRequestEx(s.addr, _triggerTimeoutUs, s.cmd, snd.reply, payload)
     }
 
     // Build the step a hand-asked interrogation stands for. A muted step is still sendable --

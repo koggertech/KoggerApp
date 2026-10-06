@@ -357,6 +357,38 @@ DeviceSettingsGroup {
         }
     }
 
+    Row {
+        width: parent.width
+        spacing: Tokens.spaceSm
+        Text {
+            text: qsTr("Transmit"); color: AppPalette.textMuted
+            font.pixelSize: Tokens.fontSm; font.bold: true
+            anchors.verticalCenter: parent.verticalCenter
+        }
+        KTabBar {
+            buttonHeight: Tokens.controlHSm
+            fontPixelSize: Tokens.fontSm
+            trackColor: AppPalette.bgDeep
+            options: [
+                { label: qsTr("Immediately"), value: false },
+                { label: qsTr("On PPS"), value: true }
+            ]
+            currentValue: !!(usblGroup.engine && usblGroup.engine.fireOnPps)
+            anchors.verticalCenter: parent.verticalCenter
+            onValueSelected: function(v) { if (usblGroup.engine) usblGroup.engine.setFireOnPps(v) }
+        }
+    }
+
+    Text {
+        visible: !!(usblGroup.engine && usblGroup.engine.fireOnPps)
+        width: parent.width
+        wrapMode: Text.WordWrap
+        text: qsTr("Each step only arms the request; the device transmits on its next PPS pulse, "
+                 + "and without a PPS signal nothing is sent. Keep Dwell at 1 s or more.")
+        color: AppPalette.textMuted
+        font.pixelSize: Tokens.fontXs
+    }
+
     Rectangle { width: parent.width; height: 1; color: AppPalette.border }
 
     // The schedule counts head the LIST, not the controls: they describe what is IN the list —
@@ -587,7 +619,7 @@ DeviceSettingsGroup {
                         MiniStat {
                             width: parent.cellW
                             value: usblGroup._num(nodeCard._e ? nodeCard._e.snr : NaN, 0)
-                            label: qsTr("SNR, dB")
+                            label: qsTr("RSRQ, dB")
                         }
                     }
 

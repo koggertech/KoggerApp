@@ -1278,6 +1278,8 @@ property Settings scene3dLayerVisibility: Settings {
     // the acoustic head: one is a beacon that mostly sits still, the other is the boat.
     property bool usblBeaconTrackDots: false
     property bool usblHeadTrackDots: false
+    property bool usblSignalDetails: true
+    property bool usblMessageBytes: true
 }
 property alias boatTrackVisible:   scene3dLayerVisibility.boatTrackCheckButton
 property alias bottomTrackVisible: scene3dLayerVisibility.bottomTrackCheckButton
@@ -1286,6 +1288,8 @@ property alias mosaicVisible:      scene3dLayerVisibility.mosaicViewCheckButton
 property alias usblVisible:        scene3dLayerVisibility.usblCheckButton
 property alias usblBeaconTrackDots: scene3dLayerVisibility.usblBeaconTrackDots
 property alias usblHeadTrackDots:   scene3dLayerVisibility.usblHeadTrackDots
+property alias usblSignalDetails:   scene3dLayerVisibility.usblSignalDetails
+property alias usblMessageBytes:    scene3dLayerVisibility.usblMessageBytes
 
 // The USBL layer is developer-only. The toggle above keeps what the user chose; this decides what
 // the scene actually draws, so leaving developer mode hides the layer without forgetting it.

@@ -88,26 +88,35 @@ BasePanePopup {
     readonly property real _ageFont:  Math.max(7, Math.round(_uAgeFont * _k))
     readonly property real _cmdFont:  Math.max(9, Math.round(_uCmdFont * _k))
     // The number the panel is READ for. The status bar took the top line, so this one carries
-    // only the range and the SNR and can afford the size.
+    // only the range, the azimuth and the RSRQ and can afford the size.
     readonly property real _rangeFont: Math.max(10, Math.round(22 * _k))
+    readonly property real _diagFont: Math.max(7, Math.round(10 * _k))
+    readonly property bool _details: !!(store && store.usblSignalDetails)
+    readonly property bool _bytes: !!(store && store.usblMessageBytes)
+    readonly property real _readSmallFont: Math.max(7, Math.round(11 * _k))
+    readonly property real _pairGap: Math.round(10 * _k)
     // Two lines plus the gutters between and around them. The status bar is a chip tall; the
     // readings line is as tall as the range number RENDERS, which at 22 px is taller than a
     // chip -- so it comes off the same prototype the width does rather than being assumed to be
     // another chipH. Derived rather than literal, so the row grows when the theme's controls do
     // instead of clipping them.
     readonly property real _readH: Math.max(_chipH, Math.ceil(_protoRead.implicitHeight))
-    readonly property real _rowH: _chipH + _readH + Math.round(12 * _k)
+    readonly property real _diagH: _details ? Math.ceil(_protoDiag.implicitHeight) + Math.round(3 * _k) : 0
+    readonly property real _bytesH: _bytes ? Math.ceil(_protoBytes.implicitHeight) + Math.round(3 * _k) : 0
+    readonly property real _baseRowH: _chipH + _readH + Math.round(12 * _k)
+    readonly property real _rowH: _baseRowH + _bytesH + _diagH
     readonly property real _noteH: Math.round(18 * _k)
     readonly property real _gap: Math.round(4 * _k)
     readonly property real _pad: Math.round(8 * _k)
 
     // Same scale space as the prototype, so nothing is converted and nothing accumulates.
     readonly property real _contentW: Math.ceil(Math.max(_protoStatus.implicitWidth,
-                                                         _protoRead.implicitWidth)
+                                                         _protoRead.implicitWidth,
+                                                         _details ? _protoDiag.implicitWidth : 0)
                                                 + _rowPadH * 2)
     readonly property real _contentH: {
         var n = Math.max(1, _shown)          // an empty plan still occupies one line, which says so
-        var h = n * _rowH + (n - 1) * _gap
+        var h = n * (_shown > 0 ? _rowH : _baseRowH) + (n - 1) * _gap
         if (_hidden > 0) h += _gap + _noteH
         if (_note)      h += _gap + _noteH
         return h
@@ -201,6 +210,26 @@ BasePanePopup {
     function _num(v, digits, suffix) {
         if (v === undefined || v === null || isNaN(v)) return "—"
         return v.toFixed(digits) + (suffix ? suffix : "")
+    }
+    readonly property var _dev: engine ? engine.dev : null
+    property real _modemAtMs: 0
+    Connections {
+        target: root._dev
+        enabled: !!root._dev
+        function onModemPayloadChanged() { root._modemAtMs = Date.now() }
+    }
+    function _modemText(addr) {
+        if (!_dev || _dev.modemLastBitLength <= 0 || _dev.modemLastAddressFrom !== addr)
+            return "—"
+        var age = _modemAtMs > 0 ? _fmtAge(Math.max(0, Date.now() - _modemAtMs)) : ""
+        return _dev.modemLastPayload
+               + qsTr(" · %1 bit").arg(_dev.modemLastBitLength)
+               + (age.length ? " · " + age : "")
+    }
+
+    function _ampDb(v) {
+        if (v === undefined || v === null || !isFinite(v) || v <= 0) return "—"
+        return (20 * Math.log10(v)).toFixed(1) + " " + qsTr("dB")
     }
 
     // WHICH COMMAND was last sent. The only chip on the status bar that is neither of the two
@@ -306,6 +335,121 @@ BasePanePopup {
         Component.onCompleted: rm.requestPaint()
     }
 
+    component AzimuthMark: Canvas {
+        id: am
+        property color ink: AppPalette.textMuted
+        antialiasing: true
+        onPaint: {
+            var ctx = getContext("2d")
+            if (!ctx)
+                return
+            ctx.clearRect(0, 0, width, height)
+            var w = width, h = height
+            var vx = w * 0.12, vy = h * 0.82
+            var tx = w * 0.62, ty = h * 0.14
+            ctx.strokeStyle = am.ink
+            ctx.lineCap = "round"
+            ctx.lineJoin = "round"
+            ctx.lineWidth = Math.max(1, w * 0.094)
+            ctx.beginPath()
+            ctx.moveTo(w * 0.9, vy); ctx.lineTo(vx, vy); ctx.lineTo(tx, ty)
+            ctx.stroke()
+            ctx.lineWidth = Math.max(1, w * 0.07)
+            ctx.beginPath()
+            ctx.arc(vx, vy, w * 0.42, 0, Math.atan2(ty - vy, tx - vx), true)
+            ctx.stroke()
+        }
+        onInkChanged: am.requestPaint()
+        onWidthChanged: am.requestPaint()
+        onHeightChanged: am.requestPaint()
+        Component.onCompleted: am.requestPaint()
+    }
+
+    component SyncLine: Row {
+        id: syncLine
+        property string peak: "—"
+        property string peakSnr: "—"
+        property string first: "—"
+        property string firstSnr: "—"
+        property string rms: "—"
+        property string lead: "—"
+        property real fontPixelSize: Tokens.fontXs
+        readonly property real _pairGap: Math.round(syncLine.fontPixelSize * 0.7)
+        spacing: Math.round(syncLine.fontPixelSize * 0.3)
+
+        Text {
+            text: qsTr("Peak")
+            color: AppPalette.textMuted
+            font.pixelSize: syncLine.fontPixelSize
+        }
+        Text {
+            text: syncLine.peak
+            color: AppPalette.text
+            font.pixelSize: syncLine.fontPixelSize
+            font.bold: true
+        }
+        Text {
+            leftPadding: syncLine._pairGap
+            text: qsTr("Peak SNR")
+            color: AppPalette.textMuted
+            font.pixelSize: syncLine.fontPixelSize
+        }
+        Text {
+            text: syncLine.peakSnr
+            color: AppPalette.text
+            font.pixelSize: syncLine.fontPixelSize
+            font.bold: true
+        }
+        Text {
+            leftPadding: syncLine._pairGap
+            text: qsTr("1st peak")
+            color: AppPalette.textMuted
+            font.pixelSize: syncLine.fontPixelSize
+        }
+        Text {
+            text: syncLine.first
+            color: AppPalette.text
+            font.pixelSize: syncLine.fontPixelSize
+            font.bold: true
+        }
+        Text {
+            leftPadding: syncLine._pairGap
+            text: qsTr("1st SNR")
+            color: AppPalette.textMuted
+            font.pixelSize: syncLine.fontPixelSize
+        }
+        Text {
+            text: syncLine.firstSnr
+            color: AppPalette.text
+            font.pixelSize: syncLine.fontPixelSize
+            font.bold: true
+        }
+        Text {
+            leftPadding: syncLine._pairGap
+            text: qsTr("RMS")
+            color: AppPalette.textMuted
+            font.pixelSize: syncLine.fontPixelSize
+        }
+        Text {
+            text: syncLine.rms
+            color: AppPalette.text
+            font.pixelSize: syncLine.fontPixelSize
+            font.bold: true
+        }
+        Text {
+            leftPadding: syncLine._pairGap
+            text: qsTr("1st→peak")
+            color: AppPalette.textMuted
+            font.pixelSize: syncLine.fontPixelSize
+        }
+        Text {
+            text: syncLine.lead
+            color: AppPalette.text
+            font.pixelSize: syncLine.fontPixelSize
+            font.bold: true
+        }
+    }
+
     // ── what the card has to be wide enough for ───────────────────────────
     // Laid out but never drawn, at exactly the sizes the real rows use, out of exactly the
     // components the real rows use -- a prototype that drifts from the row measures the wrong
@@ -319,6 +463,10 @@ BasePanePopup {
     readonly property string _ageSample: _fmtAge(3596400000)
     // Four digits and a decimal -- past any acoustic range this protocol carries.
     readonly property string _rangeSample: "8888.8"
+    readonly property string _azSample: "-888.8°"
+    readonly property string _ampDbSample: "-188.8 " + qsTr("dB")
+    readonly property string _dbSample: "888 " + qsTr("dB")
+    readonly property string _msSample: "88.88 " + qsTr("ms")
 
     Item {
         visible: false
@@ -344,11 +492,34 @@ BasePanePopup {
                 text: root._rangeSample
                 font.pixelSize: root._rangeFont; font.bold: true
             }
-            Text { text: qsTr("m"); font.pixelSize: Math.max(7, Math.round(11 * root._k)) }
+            Text { text: qsTr("m"); font.pixelSize: root._readSmallFont }
+            Item { width: root._pairGap; height: 1 }
+            Item { width: Math.round(root._chipH * 0.66); height: root._chipH }
+            Text {
+                text: root._azSample
+                font.pixelSize: root._rangeFont; font.bold: true
+            }
+            Text { text: qsTr("RSRQ"); font.pixelSize: root._readSmallFont }
             Text {
                 text: "888 " + qsTr("dB")
-                font.pixelSize: Math.max(7, Math.round(11 * root._k))
+                font.pixelSize: root._readSmallFont
             }
+        }
+        Text {
+            id: _protoBytes
+            text: "0A"
+            font.pixelSize: root._readSmallFont
+            font.family: "monospace"
+        }
+        SyncLine {
+            id: _protoDiag
+            fontPixelSize: root._diagFont
+            peak: root._ampDbSample
+            peakSnr: root._dbSample
+            first: root._ampDbSample
+            firstSnr: root._dbSample
+            rms: root._ampDbSample
+            lead: root._msSample
         }
     }
 
@@ -369,7 +540,7 @@ BasePanePopup {
             Text {
                 visible: root._noDevice || root._noNodes
                 width: parent.width
-                height: root._rowH
+                height: root._baseRowH
                 verticalAlignment: Text.AlignVCenter
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
@@ -388,6 +559,7 @@ BasePanePopup {
                     id: nodeRow
                     required property int index
                     readonly property var _r: root._rows[index]
+                    readonly property var _e: _r ? _r.entry : null
 
                     width: root._contentW
                     height: root._rowH
@@ -491,8 +663,9 @@ BasePanePopup {
                         id: _line2
                         anchors.left: parent.left
                         anchors.leftMargin: Math.round(6 * root._k)
-                        anchors.bottom: parent.bottom
-                        anchors.bottomMargin: Math.round(4 * root._k)
+                        anchors.bottom: root._bytes ? _lineBytes.top
+                                                    : (root._details ? _line3.top : parent.bottom)
+                        anchors.bottomMargin: Math.round((root._bytes || root._details ? 3 : 4) * root._k)
                         spacing: Math.round(6 * root._k)
 
                         RangeMark {
@@ -515,22 +688,79 @@ BasePanePopup {
                         Text {
                             text: qsTr("m")
                             color: AppPalette.textMuted
-                            font.pixelSize: Math.max(7, Math.round(11 * root._k))
+                            font.pixelSize: root._readSmallFont
                             anchors.baseline: _range.baseline
+                        }
+                        Item { width: root._pairGap; height: 1 }
+                        AzimuthMark {
+                            width: Math.round(root._chipH * 0.66)
+                            height: width
+                            ink: AppPalette.textMuted
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Text {
+                            text: root._num(nodeRow._e ? nodeRow._e.azimuth : NaN, 1, "°")
+                            color: AppPalette.textStrong
+                            font.pixelSize: root._rangeFont
+                            font.bold: true
+                            anchors.verticalCenter: parent.verticalCenter
                         }
                     }
 
                     // SNR is absent on the v1/v2 solution paths -- the payload carries none and
                     // the projection leaves it NAN -- so this is an em dash far more often than
                     // it is a number. It used to read a confident 0.
-                    Text {
+                    Row {
                         anchors.right: parent.right
                         anchors.rightMargin: Math.round(6 * root._k)
                         anchors.verticalCenter: _line2.verticalCenter
-                        text: root._num(nodeRow._r && nodeRow._r.entry
-                                        ? nodeRow._r.entry.snr : NaN, 0) + " " + qsTr("dB")
-                        color: AppPalette.textMuted
-                        font.pixelSize: Math.max(7, Math.round(11 * root._k))
+                        spacing: Math.round(3 * root._k)
+                        Text {
+                            text: qsTr("RSRQ")
+                            color: AppPalette.textMuted
+                            font.pixelSize: root._readSmallFont
+                        }
+                        Text {
+                            text: root._num(nodeRow._e ? nodeRow._e.snr : NaN, 0) + " " + qsTr("dB")
+                            color: AppPalette.text
+                            font.pixelSize: root._readSmallFont
+                        }
+                    }
+
+                    Text {
+                        id: _lineBytes
+                        visible: root._bytes
+                        anchors.left: parent.left
+                        anchors.leftMargin: Math.round(6 * root._k)
+                        anchors.right: parent.right
+                        anchors.rightMargin: Math.round(6 * root._k)
+                        anchors.bottom: root._details ? _line3.top : parent.bottom
+                        anchors.bottomMargin: Math.round((root._details ? 3 : 4) * root._k)
+                        elide: Text.ElideMiddle
+                        font.pixelSize: root._readSmallFont
+                        font.family: "monospace"
+                        readonly property string _txt: {
+                            var _t = root.engine ? root.engine.clockTick : ""
+                            return root._modemText(nodeRow._r ? nodeRow._r.addr : -1)
+                        }
+                        text: _txt
+                        color: _txt === "—" ? AppPalette.textMuted : AppPalette.textStrong
+                    }
+
+                    SyncLine {
+                        id: _line3
+                        visible: root._details
+                        anchors.left: parent.left
+                        anchors.leftMargin: Math.round(6 * root._k)
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: Math.round(4 * root._k)
+                        fontPixelSize: root._diagFont
+                        peak: root._ampDb(nodeRow._e ? nodeRow._e.syncVal : NaN)
+                        peakSnr: root._num(nodeRow._e ? nodeRow._e.syncSnr : NaN, 0) + " " + qsTr("dB")
+                        first: root._ampDb(nodeRow._e ? nodeRow._e.syncFirstVal : NaN)
+                        firstSnr: root._num(nodeRow._e ? nodeRow._e.syncFirstSnr : NaN, 0) + " " + qsTr("dB")
+                        rms: root._ampDb(nodeRow._e ? nodeRow._e.syncRms : NaN)
+                        lead: root._num(nodeRow._e ? nodeRow._e.syncFirstMainMaxMs : NaN, 2) + " " + qsTr("ms")
                     }
                 }
             }

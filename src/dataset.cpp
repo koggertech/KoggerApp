@@ -583,6 +583,12 @@ QVariantMap Dataset::getUsblSolutions() const {
         e["beaconLat"]    = s.beacon_latitude;
         e["beaconLon"]    = s.beacon_longitude;
         e["beaconDepth"]  = s.beacon_depth;
+        e["syncVal"]      = s.sync_val;
+        e["syncSnr"]      = s.sync_snr;
+        e["syncFirstVal"] = s.sync_first_val;
+        e["syncFirstSnr"] = s.sync_first_snr;
+        e["syncRms"]      = s.sync_rms;
+        e["syncFirstMainMaxMs"] = s.sync_first_main_max_msec;
         e["epochMs"]      = usblEpochMsByAddr_.value(it.key(), 0.0);
         e["coordValid"]   = LLA(s.beacon_latitude, s.beacon_longitude).isCoordinatesValid();
         // String key: QVariantMap keys are QStrings, so QML indexes it as usblSolutions["2"].

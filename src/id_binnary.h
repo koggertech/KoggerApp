@@ -1443,7 +1443,13 @@ public:
         float beacon_e_m = NAN;
         // Tail-appended: absent from older firmware payloads, left NAN by the
         // short-payload path in FrameParser::read<T>().
-        float code_snr[8] = {NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN};
+        float sync_val = NAN;
+        float sync_snr = NAN;
+        float sync_first_val = NAN;
+        float sync_first_snr = NAN;
+        float sync_rms = NAN;
+        float sync_first_main_max_msec = NAN;
+        float reserved_array[2] = {NAN, NAN};
     } __attribute__((packed));
 
     struct AcousticNavSolution {
@@ -1547,6 +1553,7 @@ protected:
     BeaconActivationResponce _beaconResponcel;
     PayloadKind _lastPayloadKind = PayloadKind::None;
 };
+static_assert(sizeof(IDBinUsblSolution::UsblSolution) == 152);
 
 class IDBinUsblControl : public IDBin
 {

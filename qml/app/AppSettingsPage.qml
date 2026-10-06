@@ -2237,6 +2237,34 @@ Column {
                     onValueSelected: function(v) { if (root.store) root.store.usblHeadTrackDots = v }
                 }
             }
+
+            KIslandRow {
+                label: qsTr("Signal quality details")
+                toolTipText: qsTr("Show the sync peak readings under each node's RSRQ in the USBL panel")
+                interactive: true
+                onClicked: usblSignalDetailsSwitch.click()
+
+                KSwitch {
+                    id: usblSignalDetailsSwitch
+                    flat: true
+                    checked: root.store ? root.store.usblSignalDetails : true
+                    onToggled: if (root.store) root.store.usblSignalDetails = checked
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Received message bytes")
+                toolTipText: qsTr("Show the payload last received from each node in the USBL panel")
+                interactive: true
+                onClicked: usblMessageBytesSwitch.click()
+
+                KSwitch {
+                    id: usblMessageBytesSwitch
+                    flat: true
+                    checked: root.store ? root.store.usblMessageBytes : true
+                    onToggled: if (root.store) root.store.usblMessageBytes = checked
+                }
+            }
         }
 
         // One row per node the layer could draw: the plan's own, plus the addresses adopted from
