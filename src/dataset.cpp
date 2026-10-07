@@ -530,20 +530,22 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
         pool_[poolIndex].set(data);
     }
 
-    // Host arrival time: the device clock in data.timestamp_us is not comparable with
-    // the host's, and fix age is what tells the operator whether a range is live.
-    const double nowMs = (double)QDateTime::currentMSecsSinceEpoch();
-    lastUsblSolution_ = data;
-    lastUsblFixEpochMs_ = nowMs;
+    if (data.role != IDBinUsblSolution::UsblSolution::RoleRequest) {
+        // Host arrival time: the device clock in data.timestamp_us is not comparable with
+        // the host's, and fix age is what tells the operator whether a range is live.
+        const double nowMs = (double)QDateTime::currentMSecsSinceEpoch();
+        lastUsblSolution_ = data;
+        lastUsblFixEpochMs_ = nowMs;
 
-    // Keep it per address as well. 0xFF is the "no address" marker in the payload, and
-    // the protocol only ever uses 0..8, so anything else is not a beacon we can name.
-    if (data.id <= 8) {
-        QWriteLocker wl(&usblAddrLock_);
-        usblByAddr_[(int)data.id] = data;
-        usblEpochMsByAddr_[(int)data.id] = nowMs;
+        // Keep it per address as well. 0xFF is the "no address" marker in the payload, and
+        // the protocol only ever uses 0..8, so anything else is not a beacon we can name.
+        if (data.id <= 8) {
+            QWriteLocker wl(&usblAddrLock_);
+            usblByAddr_[(int)data.id] = data;
+            usblEpochMsByAddr_[(int)data.id] = nowMs;
+        }
+        emit lastUsblSolutionChanged();
     }
-    emit lastUsblSolutionChanged();
     emit usblSolutionAdded(data);
 
     markDataAvailable(hasUsblData_);

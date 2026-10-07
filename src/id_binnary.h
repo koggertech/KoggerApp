@@ -1399,6 +1399,8 @@ public:
     };
 
     struct UsblSolution {
+        enum Role : uint8_t { RoleNone = 0, RoleRequest = 1, RoleResponse = 2 };
+
         uint8_t id = 0xFF;
         uint8_t role = 0;
         uint8_t cmd_id = 0xFF;
