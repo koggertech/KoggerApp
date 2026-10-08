@@ -1,12 +1,6 @@
 import QtQuick 2.15
 import kqml_types 1.0
 
-// What this device does when someone interrogates IT: whether it answers at all, whose
-// addresses it accepts, and the self-suppression windows.
-//
-// These frames only make sense for the transponder side, but the group stays editable
-// regardless of the plan's selected role — the role governs what Apply writes, not what
-// you may configure.
 DeviceSettingsGroup {
     id: respGroup
 
@@ -18,31 +12,86 @@ DeviceSettingsGroup {
     collapsedByDefault: true
     visible: !!(dev && (dev.isUSBL || dev.isUSBLBeacon))
 
-    // Host intent only: ID_USBL_CONTROL has no read-back, so nothing here can be
-    // confirmed against the device or restored from it.
-    property var acceptedSlots: [true, true, false, false, false, false, false, false]
-    property int suppressResponseUs: 0
-    property int suppressRequestUs: 0
-    property bool receiveInIdle: false
+    readonly property int fwSuppressUs: 400000
 
-    function _pushFilter() {
-        if (!dev) return
-        var addrs = []
+    property bool respond: false
+    property var acceptedSlots: [true, false, false, false, false, false, false, false]
+    property int suppressResponseUs: fwSuppressUs
+    property int suppressRequestUs: fwSuppressUs
+    property bool receiveInIdle: false
+    property bool _edited: false
+
+    readonly property bool _known: !!(dev && dev.usblRespKnown)
+    readonly property int _applyState: dev ? dev.usblRespApplyState : 0
+    readonly property var _accepted: {
+        var out = []
         for (var i = 0; i < acceptedSlots.length; ++i)
-            if (acceptedSlots[i]) addrs.push(i)
-        dev.acousticResponceFilterSlots(addrs)
+            if (acceptedSlots[i]) out.push(i)
+        return out
     }
-    function _pushMonitor() {
+    readonly property bool _needsApply: _edited || !_known || _applyState === 4 || _applyState === 5
+
+    function _deviceSlots() {
+        var s = [false, false, false, false, false, false, false, false]
+        if (dev && dev.usblRespFilterKnown) {
+            var a = dev.usblRespAcceptedAddresses || []
+            for (var i = 0; i < a.length; ++i)
+                if (a[i] >= 0 && a[i] < s.length) s[a[i]] = true
+        } else {
+            s[0] = true
+        }
+        return s
+    }
+
+    function _loadFromDevice() {
+        respond = !!(dev && dev.usblRespTransponderKnown && dev.usblRespEnabled)
+        acceptedSlots = _deviceSlots()
+        var mon = !!(dev && dev.usblRespMonitorKnown)
+        suppressResponseUs = mon ? dev.usblRespSuppressResponseUs : fwSuppressUs
+        suppressRequestUs = mon ? dev.usblRespSuppressRequestUs : fwSuppressUs
+        receiveInIdle = mon ? dev.usblRespReceiveInIdle : false
+        if (respondSwitch) respondSwitch.checked = respond
+        if (idleSwitch) idleSwitch.checked = receiveInIdle
+        _edited = false
+    }
+
+    function apply() {
         if (!dev) return
         dev.setUsblMonitorConfig(suppressResponseUs, suppressRequestUs, receiveInIdle)
+        dev.acousticResponceFilterSlots(_accepted)
+        dev.setUsblTransponderEnable(respond)
+        _edited = false
+    }
+
+    onDevChanged: _loadFromDevice()
+    Component.onCompleted: _loadFromDevice()
+
+    Connections {
+        target: respGroup.dev
+        ignoreUnknownSignals: true
+        function onUsblResponseConfigChanged() { if (!respGroup._edited) respGroup._loadFromDevice() }
+    }
+
+    readonly property var _status: {
+        if (_edited)
+            return { text: qsTr("Changed here, not sent yet — press Apply."), color: AppPalette.linkIdleText }
+        switch (_applyState) {
+        case 1: return { text: qsTr("Waiting for the device to connect; sent as soon as it does."), color: AppPalette.textSecond }
+        case 2: return { text: qsTr("Sending…"), color: AppPalette.textSecond }
+        case 3: return { text: qsTr("Confirmed by the device. Sent again automatically when the device restarts or reconnects."), color: AppPalette.linkOkText }
+        case 4: return { text: qsTr("The device rejected these settings."), color: AppPalette.linkDownText }
+        case 5: return { text: qsTr("No confirmation from the device. Check the connection and press Apply again."), color: AppPalette.linkIdleText }
+        }
+        return { text: qsTr("Nothing sent from the app since this device connected, so its settings are unknown. After power-up a device does not answer and accepts only address 0."),
+                 color: AppPalette.textSecond }
     }
 
     KSwitch {
         id: respondSwitch
         width: parent.width
         text: qsTr("Respond to interrogation")
-        checked: true
-        onToggled: if (dev) dev.setUsblTransponderEnable(checked)
+        checked: respGroup.respond
+        onToggled: { respGroup.respond = checked; respGroup._edited = true }
     }
 
     Text {
@@ -82,11 +131,20 @@ DeviceSettingsGroup {
                         var next = respGroup.acceptedSlots.slice()
                         next[acceptCell.index] = !next[acceptCell.index]
                         respGroup.acceptedSlots = next
-                        respGroup._pushFilter()
+                        respGroup._edited = true
                     }
                 }
             }
         }
+    }
+
+    Text {
+        width: parent.width
+        visible: respGroup._accepted.length === 0
+        wrapMode: Text.WordWrap
+        color: AppPalette.linkDownText
+        font.pixelSize: Tokens.fontXs; font.bold: true
+        text: qsTr("No address selected: the device will not hear any request.")
     }
 
     Rectangle { width: parent.width; height: 1; color: AppPalette.border }
@@ -105,7 +163,7 @@ DeviceSettingsGroup {
             from: 0; to: 2000000; stepSize: 1000
             devValue: respGroup.suppressResponseUs
             anchors.verticalCenter: parent.verticalCenter
-            writeBack: function (v) { respGroup.suppressResponseUs = v; respGroup._pushMonitor() }
+            writeBack: function (v) { respGroup.suppressResponseUs = v; respGroup._edited = true }
         }
     }
 
@@ -123,22 +181,50 @@ DeviceSettingsGroup {
             from: 0; to: 2000000; stepSize: 1000
             devValue: respGroup.suppressRequestUs
             anchors.verticalCenter: parent.verticalCenter
-            writeBack: function (v) { respGroup.suppressRequestUs = v; respGroup._pushMonitor() }
+            writeBack: function (v) { respGroup.suppressRequestUs = v; respGroup._edited = true }
         }
     }
 
     KSwitch {
+        id: idleSwitch
         width: parent.width
         text: qsTr("Receive while idle")
         checked: respGroup.receiveInIdle
-        onToggled: { respGroup.receiveInIdle = checked; respGroup._pushMonitor() }
+        onToggled: { respGroup.receiveInIdle = checked; respGroup._edited = true }
+    }
+
+    Rectangle { width: parent.width; height: 1; color: AppPalette.border }
+
+    Row {
+        width: parent.width; spacing: Tokens.spaceMd
+        UsblButton {
+            id: applyButton
+            height: Tokens.controlHMd
+            fontPixelSize: Tokens.fontMd
+            enabled: !!respGroup.dev
+            text: qsTr("Apply")
+            toolTipText: qsTr("Send all settings of this group to the device")
+            normalBorder: respGroup._needsApply ? AppPalette.linkIdleBorder : AppPalette.border
+            borderWidth: respGroup._needsApply ? Math.max(1, Math.round(1.5 * AppPalette.scale)) : Tokens.cardBorderWidth
+            anchors.verticalCenter: parent.verticalCenter
+            onClicked: respGroup.apply()
+        }
+        UsblButton {
+            height: Tokens.controlHMd
+            fontPixelSize: Tokens.fontMd
+            visible: respGroup._edited
+            text: qsTr("Revert")
+            toolTipText: qsTr("Discard the changes made here")
+            anchors.verticalCenter: parent.verticalCenter
+            onClicked: respGroup._loadFromDevice()
+        }
     }
 
     Text {
         width: parent.width
         wrapMode: Text.WordWrap
-        color: AppPalette.textMuted
+        color: respGroup._status.color
         font.pixelSize: Tokens.fontXs
-        text: qsTr("The device cannot report these back, so this shows what was last sent — not necessarily what the device holds.")
+        text: respGroup._status.text
     }
 }

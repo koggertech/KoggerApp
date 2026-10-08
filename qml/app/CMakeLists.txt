@@ -33,6 +33,7 @@ qt_add_qml_module(kogger_app
         GlobalPanePopup.qml
         HeaderActionChip.qml
         HotActionsPanel.qml
+        ImuStatusGroup.qml
         InputDeviceState.qml
         IsobathsPipelineStatus.qml
         LayoutCreatePage.qml

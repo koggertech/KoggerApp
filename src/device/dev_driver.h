@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <QHash>
+#include <QMap>
 #include <QVector>
 #include <QTimer>
 #include <QUuid>
@@ -140,6 +141,44 @@ public:
     int  recorderDurationSeconds()       { return idRecorderStatus ? idRecorderStatus->recordingDurationSeconds() : 0; }
     int  recorderSecondsSinceLastWrite() { return idRecorderStatus ? idRecorderStatus->secondsSinceLastWrite() : 0; }
 
+    bool navSensorStatusValid() { return idNavSensorStatus && idNavSensorStatus->isValid(); }
+    bool navSensorStatusStale() { return navSensorStatusStale_; }
+    int  navSensorSeq()         { return idNavSensorStatus ? idNavSensorStatus->seq() : 0; }
+    int  imuState()             { return idNavSensorStatus ? idNavSensorStatus->imuState() : 0; }
+    int  imuWhoAmI()            { return idNavSensorStatus ? idNavSensorStatus->imuWhoAmI() : 0; }
+    int  imuFaultFlags()        { return idNavSensorStatus ? idNavSensorStatus->imuFaultFlags() : 0; }
+    int  imuSamplesPerS()       { return idNavSensorStatus ? idNavSensorStatus->imuSamplesPerS() : 0; }
+    int  imuEkfFedPerS()        { return idNavSensorStatus ? idNavSensorStatus->imuEkfFedPerS() : 0; }
+    int  imuBusErrCnt()         { return idNavSensorStatus ? idNavSensorStatus->imuBusErrCnt() : 0; }
+    int  imuInvalidCnt()        { return idNavSensorStatus ? idNavSensorStatus->imuInvalidCnt() : 0; }
+    int  imuStuckRunMax()       { return idNavSensorStatus ? idNavSensorStatus->imuStuckRunMax() : 0; }
+    int  imuAccNormMg()         { return idNavSensorStatus ? idNavSensorStatus->imuAccNormMg() : 0; }
+    int  imuGyrNormCdps()       { return idNavSensorStatus ? idNavSensorStatus->imuGyrNormCdps() : 0; }
+    int  imuTempCc()            { return idNavSensorStatus ? idNavSensorStatus->imuTempCc() : 0; }
+    int  imuClipMask()          { return idNavSensorStatus ? idNavSensorStatus->imuClipMask() : 0; }
+    int  imuReinitCnt()         { return idNavSensorStatus ? idNavSensorStatus->imuReinitCnt() : 0; }
+    int  imuBadSeconds()        { return idNavSensorStatus ? idNavSensorStatus->imuBadSeconds() : 0; }
+
+    enum UsblApplyState {
+        UsblApplyNone      = 0,
+        UsblApplyQueued    = 1,
+        UsblApplyPending   = 2,
+        UsblApplyConfirmed = 3,
+        UsblApplyRejected  = 4,
+        UsblApplyNoAnswer  = 5,
+    };
+
+    bool usblRespKnown() const { return usblMem_.hasTransponder || usblMem_.hasFilter || usblMem_.hasMonitor; }
+    bool usblRespTransponderKnown() const { return usblMem_.hasTransponder; }
+    bool usblRespEnabled() const { return usblMem_.hasTransponder && usblMem_.transponderTimeoutUs != 0; }
+    bool usblRespFilterKnown() const { return usblMem_.hasFilter; }
+    QVariantList usblRespAcceptedAddresses() const;
+    bool usblRespMonitorKnown() const { return usblMem_.hasMonitor; }
+    int  usblRespSuppressResponseUs() const { return (int)usblMem_.suppressSelfResponseUs; }
+    int  usblRespSuppressRequestUs() const { return (int)usblMem_.suppressSelfRequestUs; }
+    bool usblRespReceiveInIdle() const { return usblMem_.receiveResponseInIdle; }
+    int  usblRespApplyState() const;
+
     BoardVersion boardVersion() {
         return idVersion->boardVersion();
     }
@@ -270,6 +309,8 @@ signals:
     void deviceIDChanged(QByteArray uid);
     void onReboot();
     void recorderStatusChanged();
+    void navSensorStatusChanged();
+    void usblResponseConfigChanged();
 
     void dopplerVeloComplete();
     void dopplerBeamComplete(IDBinDVL::BeamSolution *beams, uint16_t cnt);
@@ -392,6 +433,7 @@ protected:
     IDBinNav* idNav = nullptr;
     IDBinBoatStatus* idBoatStatus = nullptr;
     IDBinRecorderStatus* idRecorderStatus = nullptr;
+    IDBinNavSensorStatus* idNavSensorStatus = nullptr;
     IDBinDVL* idDVL = nullptr;
     IDBinDVLMode* idDVLMode = nullptr;
 
@@ -533,6 +575,7 @@ protected slots:
     void receivedNav        (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedBoatStatus (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedRecorderStatus(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedNavSensorStatus(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedDVL        (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedDVLMode    (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
@@ -571,5 +614,44 @@ private:
     bool linkReceivesData_ = false;
     bool linkNotAvailable_ = false;
     int64_t lastRecorderStatusReq_ = 0;
+    static constexpr int64_t navSensorStatusStaleMsec = 5000;
+    int64_t lastNavSensorStatusMs_ = 0;
+    bool navSensorStatusStale_ = false;
+
+    struct UsblSlotArgs {
+        int cmdId = 0;
+        int event = 0;
+        int receiverFunction = 0;
+        int receiveBitLength = 0;
+        int senderFunction = 0;
+        QString sendHexPayload;
+        int eventAction = 0;
+        int cmdIdAction = 0;
+        int cmdIdReplacement = 0;
+        int addressAction = 0;
+        int addressReplacement = 0;
+    };
+    struct UsblControlMemory {
+        bool hasTransponder = false;
+        uint32_t transponderTimeoutUs = 0;
+        bool hasFilter = false;
+        std::array<uint8_t, 8> filter{};
+        bool hasMonitor = false;
+        uint32_t suppressSelfResponseUs = 0;
+        uint32_t suppressSelfRequestUs = 0;
+        bool receiveResponseInIdle = false;
+        QMap<int, UsblSlotArgs> cmdSlots;
+    };
+    static constexpr int64_t usblAckTimeoutMsec = 2000;
+    UsblControlMemory usblMem_;
+    std::array<uint8_t, 8> usblAck_{};
+    std::array<int64_t, 8> usblAckSentMs_{};
+
+    void sendUsblTransponder();
+    void sendUsblFilter();
+    void sendUsblMonitor();
+    void sendUsblSlot(const UsblSlotArgs& a);
+    void markUsblSent(int ver);
+    void resendUsblControl();
     bool streamListRequested_ = false;
 };

@@ -188,13 +188,18 @@ DeviceSettingsGroup {
                                  w[i].cmdIdAction, w[i].cmdIdRepl,
                                  w[i].addrAction, w[i].addrRepl)
         if (role === "transponder") {
-            var accepted = []
-            for (var n = 0; n < plan.nodes.length; ++n)
-                if (plan.nodes[n].active) accepted.push(plan.nodes[n].addr)
-            dev.acousticResponceFilterSlots(accepted)
+            dev.acousticResponceFilterSlots(_transponderAddresses())
             dev.setUsblTransponderEnable(true)
         }
         plan.markApplied(role)
+    }
+
+    function _transponderAddresses() {
+        var accepted = []
+        if (!plan) return accepted
+        for (var n = 0; n < plan.nodes.length; ++n)
+            if (plan.nodes[n].active) accepted.push(plan.nodes[n].addr)
+        return accepted
     }
 
     // ── command groups ──────────────────
@@ -807,6 +812,16 @@ DeviceSettingsGroup {
                                 .arg(applyCard._i.frames).arg(applyCard._i.configured)
                               : ""
                         color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
+                        width: parent.width; elide: Text.ElideRight
+                    }
+                    Text {
+                        readonly property var _addrs: planGroup._transponderAddresses()
+                        visible: applyCard.modelData.role === "transponder" && !!planGroup.plan
+                        text: _addrs.length
+                              ? qsTr("answers addresses %1").arg(_addrs.join(", "))
+                              : qsTr("no active node: will answer nothing")
+                        color: _addrs.length ? AppPalette.textMuted : AppPalette.linkDownText
+                        font.pixelSize: Tokens.fontXs; font.bold: _addrs.length === 0
                         width: parent.width; elide: Text.ElideRight
                     }
                     Text {

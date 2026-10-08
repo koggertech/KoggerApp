@@ -101,6 +101,7 @@ enum ID : uint16_t {
 
     ID_MODEM_SOLUTION = 0x66, // 102
     ID_USBL_CONTROL = 0x68, // 104
+    ID_NAV_SENSOR_STATUS = 0x6C, // 108
 
     ID_GFW = 200,
     ID_BOAT_STATUS = 0xC9,

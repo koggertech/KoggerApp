@@ -535,6 +535,24 @@ Resp IDBinRecorderStatus::parsePayload(FrameParser& proto)
     return respOk;
 }
 
+static_assert(sizeof(IDBinNavSensorStatus::NavSensorStatus) == 38,
+              "NavSensorStatusV0 wire layout must stay 38 bytes");
+
+Resp IDBinNavSensorStatus::parsePayload(FrameParser& proto)
+{
+    if (proto.ver() != NavSensorStatus::getVer()) {
+        return respErrorVersion;
+    }
+
+    if (proto.readAvailable() < static_cast<int16_t>(sizeof(NavSensorStatus))) {
+        return respErrorPayload;
+    }
+
+    data_ = proto.read<NavSensorStatus>();
+    valid_ = true;
+    return respOk;
+}
+
 Resp IDBinDVL::parsePayload(FrameParser &proto) {
     if(proto.ver() == v0) {
          vel_x = proto.read<F4>();

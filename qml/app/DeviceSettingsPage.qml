@@ -1375,6 +1375,11 @@ Column {
         }
     }
 
+    ImuStatusGroup {
+        width: root.groupWidth; preferredWidth: root.groupWidth
+        dev: root.dev
+    }
+
     // ── USBL ──────────────────────────────────────────────────────────────
     // Three groups ordered by how often they are touched: operating (nodes + schedule)
     // stays open, the command plan and the response gating start collapsed. The plan model

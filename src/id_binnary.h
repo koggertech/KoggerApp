@@ -1253,6 +1253,84 @@ protected:
     bool valid_ = false;
 };
 
+class IDBinNavSensorStatus : public IDBin
+{
+    Q_OBJECT
+public:
+    explicit IDBinNavSensorStatus() : IDBin() {
+    }
+
+    ID id() override { return ID_NAV_SENSOR_STATUS; }
+    Resp parsePayload(FrameParser& proto) override;
+
+    enum State : uint8_t {
+        StateOk          = 0,
+        StateNotFound    = 1,
+        StateBusError    = 2,
+        StateNoData      = 3,
+        StateStuck       = 4,
+        StateImplausible = 5,
+        StateRecovering  = 6,
+    };
+
+    enum Fault : uint16_t {
+        FaultIdMismatch = 1u << 0,
+        FaultBus        = 1u << 1,
+        FaultConfigLost = 1u << 2,
+        FaultLowRate    = 1u << 3,
+        FaultInvalid    = 1u << 4,
+        FaultStuck      = 1u << 5,
+        FaultNorm       = 1u << 6,
+        FaultTemp       = 1u << 7,
+        FaultClip       = 1u << 8,
+        FaultInjected   = 1u << 15,
+    };
+
+    struct NavSensorStatus {
+        static constexpr ID getId() { return ID_NAV_SENSOR_STATUS; }
+        static constexpr Version getVer() { return v0; }
+
+        uint16_t seq;
+        uint8_t  imu_state;
+        uint8_t  imu_whoami;
+        uint16_t imu_fault_flags;
+        uint16_t imu_samples_per_s;
+        uint16_t imu_ekf_fed_per_s;
+        uint16_t imu_bus_err_cnt;
+        uint16_t imu_invalid_cnt;
+        uint16_t imu_stuck_run_max;
+        uint16_t imu_acc_norm_mg;
+        uint16_t imu_gyr_norm_cdps;
+        int16_t  imu_temp_cc;
+        uint8_t  imu_clip_mask;
+        uint8_t  imu_reinit_cnt;
+        uint8_t  imu_bad_seconds;
+        uint8_t  mag_reserved[13];
+    } __attribute__((packed));
+
+    bool     isValid() const { return valid_; }
+    void     invalidate() { valid_ = false; }
+    uint16_t seq() const { return data_.seq; }
+    uint8_t  imuState() const { return data_.imu_state; }
+    uint8_t  imuWhoAmI() const { return data_.imu_whoami; }
+    uint16_t imuFaultFlags() const { return data_.imu_fault_flags; }
+    uint16_t imuSamplesPerS() const { return data_.imu_samples_per_s; }
+    uint16_t imuEkfFedPerS() const { return data_.imu_ekf_fed_per_s; }
+    uint16_t imuBusErrCnt() const { return data_.imu_bus_err_cnt; }
+    uint16_t imuInvalidCnt() const { return data_.imu_invalid_cnt; }
+    uint16_t imuStuckRunMax() const { return data_.imu_stuck_run_max; }
+    uint16_t imuAccNormMg() const { return data_.imu_acc_norm_mg; }
+    uint16_t imuGyrNormCdps() const { return data_.imu_gyr_norm_cdps; }
+    int16_t  imuTempCc() const { return data_.imu_temp_cc; }
+    uint8_t  imuClipMask() const { return data_.imu_clip_mask; }
+    uint8_t  imuReinitCnt() const { return data_.imu_reinit_cnt; }
+    uint8_t  imuBadSeconds() const { return data_.imu_bad_seconds; }
+
+protected:
+    NavSensorStatus data_{};
+    bool valid_ = false;
+};
+
 class IDBinDVL : public IDBin
 {
     Q_OBJECT

@@ -36,15 +36,18 @@ function linkState(dev) {
     return ""
 }
 
+function imuDegraded(dev) {
+    return !!(dev && dev.navSensorStatusValid && !dev.navSensorStatusStale && dev.imuState !== 0)
+}
+
 function pillState(dev, master, port) {
     if (dev && dev.isRecorder && dev.recorderStatusValid) {
         var s = severity(dev)
         return s === "good" ? "ok" : s === "warn" ? "warn" : s === "crit" ? "down" : ""
     }
     var src = sourceState(master, port)
-    if (src === "good") return "ok"
-    if (src === "crit") return "down"
-    return linkState(dev)
+    var base = src === "good" ? "ok" : src === "crit" ? "down" : linkState(dev)
+    return (base === "ok" && imuDegraded(dev)) ? "warn" : base
 }
 
 function fmtSize(b) {

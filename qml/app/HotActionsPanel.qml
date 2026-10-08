@@ -1509,6 +1509,8 @@ Item {
                         if (lbl && lbl.length > 0)
                             t += " · " + lbl
                     }
+                    if (RecorderStatus.imuDegraded(_dev))
+                        t += " · " + qsTr("IMU fault")
                     return t
                 }
 
