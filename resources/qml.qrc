@@ -1,5 +1,9 @@
 <RCC>
+    <!-- Was "../main.qml", which has never resolved: main.qml has lived in
+         qml/ (originally QML/, renamed lowercase in de794ce3) since before
+         this .qrc was even created in 1f971c5f ("restructuring"). Found
+         2026-10-01 building kogger_station. -->
     <qresource prefix="/">
-        <file>../main.qml</file>
+        <file>../qml/main.qml</file>
     </qresource>
 </RCC>

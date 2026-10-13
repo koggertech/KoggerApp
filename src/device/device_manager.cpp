@@ -1,13 +1,17 @@
 #include "device_manager.h"
 #include "device_defs.h"
 #include <QDateTime>
+#include <QTimeZone>
+#include <QFile>
+#include <QUrl>
 #include "location_reader.h"
 #include "core.h"
 extern Core core;
 
 
-DeviceManager::DeviceManager()
-    : lastDevs_(nullptr),
+DeviceManager::DeviceManager(QObject* parent)
+    : QObject(parent),
+      lastDevs_(nullptr),
       lastDevice_(nullptr),
       mavlinkLink_(nullptr),
       streamList_(this),

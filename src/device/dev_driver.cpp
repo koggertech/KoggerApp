@@ -2,6 +2,9 @@
 #include <time.h>
 #include <core.h>
 #include <QXmlStreamWriter>
+#include <QFile>
+#include <QVariant>
+#include <QDateTime>
 
 extern Core core;
 

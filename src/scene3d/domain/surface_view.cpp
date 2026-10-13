@@ -5,6 +5,7 @@
 #include <cmath>
 #include <algorithm>
 #include <QFile>
+#include <QLocale>
 #include "math_defs.h"
 
 

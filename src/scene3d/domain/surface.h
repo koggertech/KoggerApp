@@ -8,7 +8,7 @@
 #include "scene_object.h"
 #include "contour.h"
 #include "surface_grid.h"
-#include "surface_processor.h"
+#include "../processors/surface_processor.h"
 #include "dataset.h"
 
 inline uint qHash(const QVector3D &key, uint seed = 0) {

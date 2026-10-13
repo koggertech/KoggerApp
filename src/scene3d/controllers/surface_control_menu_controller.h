@@ -5,7 +5,7 @@
 #include <QThread>
 
 #include "qml_component_controller.h"
-#include "surface_processor.h"
+#include "../processors/surface_processor.h"
 
 class Surface;
 class GraphicsScene3dView;

@@ -132,7 +132,7 @@ QMap<uint32_t, HotkeyData> HotkeysManager::loadHotkeysMapping() const
 
     while (!xml.atEnd() && !xml.hasError()) {
         auto token = xml.readNext();
-        if (token == QXmlStreamReader::StartElement && xml.name() == "Hotkey") {
+        if (token == QXmlStreamReader::StartElement && xml.name().toString() == "Hotkey") {
             QXmlStreamAttributes attrs = xml.attributes();
 
             QString scancodeStr  = attrs.value("scanCode").toString();
@@ -186,7 +186,7 @@ QList<HotkeyData> HotkeysManager::parseHotkeysFromString(const QString &xmlStrin
     QXmlStreamReader xml(xmlString);
     while (!xml.atEnd() && !xml.hasError()) {
         auto token = xml.readNext();
-        if (token == QXmlStreamReader::StartElement && xml.name() == "Hotkey") {
+        if (token == QXmlStreamReader::StartElement && xml.name().toString() == "Hotkey") {
             QXmlStreamAttributes attrs = xml.attributes();
 
             HotkeyData data;
@@ -226,7 +226,7 @@ QList<HotkeyData> HotkeysManager::parseHotkeysFromFile(const QString &filePath) 
     QXmlStreamReader xml(&file);
     while (!xml.atEnd() && !xml.hasError()) {
         auto token = xml.readNext();
-        if (token == QXmlStreamReader::StartElement && xml.name() == "Hotkey") {
+        if (token == QXmlStreamReader::StartElement && xml.name().toString() == "Hotkey") {
             QXmlStreamAttributes attrs = xml.attributes();
 
             HotkeyData data;

@@ -73,7 +73,7 @@ public slots:
     void onMosaicCanCalc(uint64_t indx);
     // BottomTrackProcessor
     void bottomTrackProcessing(const DatasetChannel& channel1, const DatasetChannel& channel2, const BottomTrackParam& bottomTrackParam, bool manual, bool redrawAll); // CALC BOTTOM TRACK BY BUTTON, qPlot2D
-    // SurfaceProcessor
+    // TileSurfaceProcessor
     void setSurfaceColorTableThemeById(int id);
     void setSurfaceEdgeLimit(int val);
     void setExtraWidth(int val);
@@ -140,7 +140,7 @@ signals:
     void distCompletedByProcessing(int epIndx, const ChannelId& channelId, float dist);
     void distCompletedByProcessingBatch(const QVector<BottomTrackUpdate>& updates);
     void lastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual, bool redrawAll);
-    // SurfaceProcessor
+    // TileSurfaceProcessor
     void sendSurfaceMinZ(float minZ);
     void sendSurfaceMaxZ(float maxZ);
     void sendSurfaceTextureTask(const std::vector<uint8_t>& textureTask);
@@ -232,7 +232,7 @@ private:
     void setUpdateBottomTrackSourceState(bool state, bool fromSettings);
 
 private:
-    friend class SurfaceProcessor;
+    friend class TileSurfaceProcessor;
     friend class BottomTrackProcessor;
     friend class IsobathsProcessor;
     friend class MosaicProcessor;

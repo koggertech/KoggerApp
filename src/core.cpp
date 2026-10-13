@@ -1,6 +1,7 @@
 #include "core.h"
 
 #include <QSettings>
+#include <QStringBuilder>
 #include <cmath>
 #include <ctime>
 #include <cstring>

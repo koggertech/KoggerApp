@@ -87,7 +87,7 @@ private:
     Dataset*             dataset_;
     SurfaceMesh          surfaceMesh_;
 
-    SurfaceProcessor     surface_;
+    TileSurfaceProcessor     surface_;
     IsobathsProcessor    isobaths_;
     MosaicProcessor      mosaic_;
     BottomTrackProcessor bottom_;

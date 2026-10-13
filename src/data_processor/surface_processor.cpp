@@ -12,7 +12,7 @@
 #include "math_defs.h"
 
 
-SurfaceProcessor::SurfaceProcessor(DataProcessor* parent) :
+TileSurfaceProcessor::TileSurfaceProcessor(DataProcessor* parent) :
     dataProcessor_(parent),
     bottomTrackPtr_(nullptr),
     surfaceMeshPtr_(nullptr),
@@ -31,11 +31,11 @@ SurfaceProcessor::SurfaceProcessor(DataProcessor* parent) :
 {
 }
 
-SurfaceProcessor::~SurfaceProcessor()
+TileSurfaceProcessor::~TileSurfaceProcessor()
 {
 }
 
-void SurfaceProcessor::clear()
+void TileSurfaceProcessor::clear()
 {
     delaunayProc_ = delaunay::Delaunay();
     lastMatParams_ = kmath::MatrixParams();
@@ -48,22 +48,22 @@ void SurfaceProcessor::clear()
     originSet_ = false;
 }
 
-void SurfaceProcessor::setBottomTrackPtr(BottomTrack *bottomTrackPtr)
+void TileSurfaceProcessor::setBottomTrackPtr(BottomTrack *bottomTrackPtr)
 {
     bottomTrackPtr_ = bottomTrackPtr;
 }
 
-void SurfaceProcessor::setSurfaceMeshPtr(SurfaceMesh *surfaceMeshPtr)
+void TileSurfaceProcessor::setSurfaceMeshPtr(SurfaceMesh *surfaceMeshPtr)
 {
     surfaceMeshPtr_ = surfaceMeshPtr;
 }
 
-void SurfaceProcessor::setVisibleTileKeys(const QSet<TileKey>& val)
+void TileSurfaceProcessor::setVisibleTileKeys(const QSet<TileKey>& val)
 {
     visibleTileKeys_ = val;
 }
 
-void SurfaceProcessor::ensureTileInited(SurfaceTile* tile, int tileSidePix)
+void TileSurfaceProcessor::ensureTileInited(SurfaceTile* tile, int tileSidePix)
 {
     if (!tile || tile->getIsInited()) {
         return;
@@ -166,7 +166,7 @@ void SurfaceProcessor::ensureTileInited(SurfaceTile* tile, int tileSidePix)
 //    tile->initImageData(tileSidePix, tileHeightMatrixRatio_); // TODO ???
 }
 
-void SurfaceProcessor::ensureTilesInitedBatch(const QHash<TileKey, SurfaceTile*>& tiles, int tileSidePix)
+void TileSurfaceProcessor::ensureTilesInitedBatch(const QHash<TileKey, SurfaceTile*>& tiles, int tileSidePix)
 {
     if (tiles.isEmpty()) {
         return;
@@ -319,9 +319,9 @@ void SurfaceProcessor::ensureTilesInitedBatch(const QHash<TileKey, SurfaceTile*>
     }
 }
 
-void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> &indxs)
+void TileSurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> &indxs)
 {
-    //qDebug() << "SurfaceProcessor::onUpdatedBottomTrackData" << indxs;
+    //qDebug() << "TileSurfaceProcessor::onUpdatedBottomTrackData" << indxs;
 
     if (indxs.empty()) {
         return;
@@ -1007,12 +1007,12 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
 }
 
-void SurfaceProcessor::setTileResolution(float tileResolution)
+void TileSurfaceProcessor::setTileResolution(float tileResolution)
 {
     tileResolution_ = tileResolution;
 }
 
-void SurfaceProcessor::rebuildAfterResolutionChange()
+void TileSurfaceProcessor::rebuildAfterResolutionChange()
 {
     if (!surfaceMeshPtr_) {
         return;
@@ -1083,7 +1083,7 @@ void SurfaceProcessor::rebuildAfterResolutionChange()
     refreshAfterEdgeLimitChange();
 }
 
-void SurfaceProcessor::restoreTilesFromCache(const TileMap& tiles)
+void TileSurfaceProcessor::restoreTilesFromCache(const TileMap& tiles)
 {
     if (!surfaceMeshPtr_ || tiles.isEmpty()) {
         return;
@@ -1196,14 +1196,14 @@ void SurfaceProcessor::restoreTilesFromCache(const TileMap& tiles)
     QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, false));
 }
 
-void SurfaceProcessor::setEdgeLimit(float val)
+void TileSurfaceProcessor::setEdgeLimit(float val)
 {
     edgeLimit_ = val;
 
     refreshAfterEdgeLimitChange();
 }
 
-void SurfaceProcessor::rebuildColorIntervals()
+void TileSurfaceProcessor::rebuildColorIntervals()
 {
     int levelCount = static_cast<int>(((maxZ_ - minZ_) / surfaceStepSize_) + 1);
     if (levelCount <= 0) {
@@ -1224,42 +1224,42 @@ void SurfaceProcessor::rebuildColorIntervals()
     updateTexture();
 }
 
-void SurfaceProcessor::setSurfaceStepSize(float val)
+void TileSurfaceProcessor::setSurfaceStepSize(float val)
 {
     surfaceStepSize_ = val;
 }
 
-void SurfaceProcessor::setThemeId(int val)
+void TileSurfaceProcessor::setThemeId(int val)
 {
     themeId_ = val;
 }
 
-void SurfaceProcessor::setExtraWidth(int val)
+void TileSurfaceProcessor::setExtraWidth(int val)
 {
     extraWidth_ = val;
 }
 
-float SurfaceProcessor::getEdgeLimit() const
+float TileSurfaceProcessor::getEdgeLimit() const
 {
     return edgeLimit_;
 }
 
-float SurfaceProcessor::getSurfaceStepSize() const
+float TileSurfaceProcessor::getSurfaceStepSize() const
 {
     return surfaceStepSize_;
 }
 
-int SurfaceProcessor::getThemeId() const
+int TileSurfaceProcessor::getThemeId() const
 {
     return themeId_;
 }
 
-int SurfaceProcessor::getExtraWidth() const
+int TileSurfaceProcessor::getExtraWidth() const
 {
     return extraWidth_;
 }
 
-void SurfaceProcessor::writeTriangleToMesh(const QVector3D &A, const QVector3D &B, const QVector3D &C, QSet<SurfaceTile*> &updatedTiles)
+void TileSurfaceProcessor::writeTriangleToMesh(const QVector3D &A, const QVector3D &B, const QVector3D &C, QSet<SurfaceTile*> &updatedTiles)
 {
     if (!surfaceMeshPtr_ || !surfaceMeshPtr_->getIsInited()) {
         return;
@@ -1391,7 +1391,7 @@ void SurfaceProcessor::writeTriangleToMesh(const QVector3D &A, const QVector3D &
     }
 }
 
-QVector<QVector3D> SurfaceProcessor::generateExpandedPalette(int totalColors) const
+QVector<QVector3D> TileSurfaceProcessor::generateExpandedPalette(int totalColors) const
 {
     const auto &palette = colorPalette(themeId_);
     const int paletteSize = palette.size();
@@ -1417,7 +1417,7 @@ QVector<QVector3D> SurfaceProcessor::generateExpandedPalette(int totalColors) co
     return retVal;
 }
 
-void SurfaceProcessor::updateTexture() const
+void TileSurfaceProcessor::updateTexture() const
 {
     int paletteSize = colorIntervals_.size();
     if (paletteSize == 0) {
@@ -1437,7 +1437,7 @@ void SurfaceProcessor::updateTexture() const
     QMetaObject::invokeMethod(dataProcessor_, "postSurfaceColorTable", Qt::QueuedConnection, Q_ARG(std::vector<uint8_t>, textureTask));
 }
 
-void SurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
+void TileSurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
 {
     if (!surfaceMeshPtr_ || !surfaceMeshPtr_->getIsInited()) {
         return;
@@ -1645,7 +1645,7 @@ void SurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
     }
 }
 
-void SurfaceProcessor::refreshAfterEdgeLimitChange()
+void TileSurfaceProcessor::refreshAfterEdgeLimitChange()
 {
     if (!surfaceMeshPtr_ || !surfaceMeshPtr_->getIsInited()) {
         return;
@@ -1719,7 +1719,7 @@ void SurfaceProcessor::refreshAfterEdgeLimitChange()
     QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, false));
 }
 
-bool SurfaceProcessor::canceled() const noexcept
+bool TileSurfaceProcessor::canceled() const noexcept
 {
     return dataProcessor_ && dataProcessor_->isHardStopRequested();
 }

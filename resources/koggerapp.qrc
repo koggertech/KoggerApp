@@ -1,5 +1,9 @@
 <RCC>
+    <!-- MenuBlockEx.qml was deleted in e681d5f0 ("deleted unused qml files"),
+         but this .qrc was never updated to match. Found 2026-10-01 while
+         building kogger_station, which failed with "No rule to make target
+         ...MenuBlockEx.qml". The whole qml/KoggerCommon/ directory this
+         pointed at doesn't exist in the current tree. -->
     <qresource prefix="/qml">
-        <file>../qml/KoggerCommon/MenuBlockEx.qml</file>
     </qresource>
 </RCC>

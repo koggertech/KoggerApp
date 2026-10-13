@@ -17,11 +17,11 @@ class BottomTrack;
 class DataProcessor;
 class SurfaceMesh;
 class SurfaceTile;
-class SurfaceProcessor
+class TileSurfaceProcessor
 {
 public:
-    explicit SurfaceProcessor(DataProcessor* parent);
-    ~SurfaceProcessor();
+    explicit TileSurfaceProcessor(DataProcessor* parent);
+    ~TileSurfaceProcessor();
 
     void clear();
 

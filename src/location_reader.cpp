@@ -1,10 +1,14 @@
 #include "location_reader.h"
 
 #include <QGeoCoordinate>
+#include <QGeoPositionInfoSource>
 #include <QDateTime>
 #include <QtMath>
 #include <QDebug>
-#include "core.h"
+#include <core.h>  // angle brackets: respects kogger_robot's include-path
+                    // shadowing (a quoted include here would resolve to
+                    // this file's own directory first, finding the real
+                    // GUI core.h instead of kogger_robot's lightweight stub)
 
 extern Core core;
 

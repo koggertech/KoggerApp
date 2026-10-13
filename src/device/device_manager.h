@@ -21,7 +21,7 @@ class DeviceManager : public QObject
 
 public:
     /*methods*/
-    DeviceManager();
+    explicit DeviceManager(QObject* parent = nullptr);
     ~DeviceManager();
 
     Q_INVOKABLE float vruVoltage();
