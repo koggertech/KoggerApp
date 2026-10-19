@@ -488,6 +488,24 @@ inline uint8_t getMAVLinkExtra(uint32_t msgid)
     return 0;
 }
 
+struct __attribute__((packed)) MAVLink_MSG_SYSTEM_TIME
+{
+    uint64_t time_unix_usec;
+    uint32_t time_boot_ms;
+
+    static uint32_t getID() {
+        return 2;
+    }
+
+    bool hasUnixTime() {
+        return time_unix_usec != 0;
+    }
+
+    int64_t unixOffsetUs() {
+        return int64_t(time_unix_usec) - int64_t(time_boot_ms) * 1000;
+    }
+};
+
 struct __attribute__((packed)) MAVLink_MSG_GLOBAL_POSITION_INT
 {
     uint32_t time_boot_ms; // Timestamp (time since system boot), ms
@@ -551,6 +569,19 @@ struct __attribute__((packed)) MAVLink_MSG_GPS_RAW_INT
     uint16_t cog = UINT16_MAX; // Course over ground (NOT heading, but direction of movement) in degrees * 100, 0.0..359.99 degrees. If unknown, set to: UINT16_MAX
     uint8_t fix_type;
     uint8_t satellites_visible = UINT8_MAX; // Number of satellites visible. If unknown, set to UINT8_MAX
+    int32_t alt_ellipsoid = 0;
+
+    static uint32_t getID() {
+        return 24;
+    }
+
+    bool hasAltitudeEllipsoid() {
+        return alt_ellipsoid != 0;
+    }
+
+    double altitudeEllipsoid() {
+        return double(alt_ellipsoid)*0.001;
+    }
 
     double latitude() {
         return double(lat)/1.0e7;
@@ -558,6 +589,14 @@ struct __attribute__((packed)) MAVLink_MSG_GPS_RAW_INT
 
     double longitude() {
         return double(lon)/1.0e7;
+    }
+
+    double altitudeMsl() {
+        return double(alt)*0.001;
+    }
+
+    bool isRtkFixed() {
+        return fix_type == 6;
     }
 
     uint32_t time_boot_msec() {

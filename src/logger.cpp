@@ -278,22 +278,22 @@ void Logger::loggingCsvStream()
                 prevEventId = epoch->eventID();
                 prevUnix = epoch->eventUnix();
             }
-            rowData.append(QString("%1,%2,%3,").arg(prevUnix).arg(prevTimestamp).arg(prevEventId));
+            rowData.append(epoch->eventAvail() ? QString("%1,%2,%3,").arg(prevUnix).arg(prevTimestamp).arg(prevEventId) : QStringLiteral(",,,"));
         }
 
         if (csvData_.rangefinder)
-            epoch->distAvail() ? rowData.append(QString("%1,").arg((float)epoch->rangeFinder())) : rowData.append("0,");
+            epoch->distAvail() && isfinite(epoch->rangeFinder()) ? rowData.append(QString("%1,").arg((float)epoch->rangeFinder())) : rowData.append(",");
 
         if (csvData_.bottomDepth) {
-            rowData.append(QString("%1,").arg(NAN));
+            rowData.append(",");
         }
 
         if (csvData_.posLatLon) {
             prevLat = csvData_.lastCsvPos.lla.latitude;
             prevLon = csvData_.lastCsvPos.lla.longitude;
-            rowData.append(QString::number(prevLat, 'f', 8));
+            rowData.append(isfinite(prevLat) ? QString::number(prevLat, 'f', 8) : QString());
             rowData.append(",");
-            rowData.append(QString::number(prevLon, 'f', 8));
+            rowData.append(isfinite(prevLon) ? QString::number(prevLon, 'f', 8) : QString());
             rowData.append(",");
 
             if (csvData_.posTime) {
@@ -322,31 +322,13 @@ void Logger::loggingCsvStream()
             }
         }
 
-        //Position position = epoch->getExternalPosition();
-        //if (csvData_.external_pos_lla && csvData_.ext_pos_lla_find) {
-            rowData.append(QString::number(NAN, 'f', 10));
-            rowData.append(",");
-            rowData.append(QString::number(NAN, 'f', 10));
-            rowData.append(",");
-            rowData.append(QString::number(NAN, 'f', 3));
-            rowData.append(",");
-        //}
-
-        //if (csvData_.external_pos_neu && csvData_.ext_pos_ned_find) {
-            rowData.append(QString::number(NAN, 'f', 10));
-            rowData.append(",");
-            rowData.append(QString::number(NAN, 'f', 10));
-            rowData.append(",");
-            rowData.append(QString::number(NAN, 'f', 3));
-            rowData.append(",");
-        //}
+        rowData.append(",,,");
+        rowData.append(",,,");
 
         if (csvData_.sonarHeight) {
-            rowData.append(QString::number(NAN, 'f', 3));
             rowData.append(",");
         }
         if (csvData_.bottomHeight) {
-            rowData.append(QString::number(NAN, 'f', 3));
             rowData.append(",");
         }
         rowData.append("\n");

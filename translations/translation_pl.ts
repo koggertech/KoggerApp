@@ -1989,6 +1989,30 @@ udp://@:1234
         <translation>Odległość z głębokościomierza (czerwona linia)</translation>
     </message>
     <message>
+        <source>GNSS altitude (above sea level)</source>
+        <translation>GNSS wysokość (nad poziomem morza)</translation>
+    </message>
+    <message>
+        <source>Antenna altitude above mean sea level, RTK fixed only (MAVLink, UBX, NMEA GGA)</source>
+        <translation>Wysokość anteny n.p.m., tylko RTK Fixed (MAVLink, UBX, NMEA GGA)</translation>
+    </message>
+    <message>
+        <source>GNSS position date/time (UTC)</source>
+        <translation>GNSS data/czas pozycji (UTC)</translation>
+    </message>
+    <message>
+        <source>UTC date and time carried by the GNSS position message (NMEA RMC, UBX, MAVLink)</source>
+        <translation>Data i czas UTC z komunikatu GNSS z pozycją (NMEA RMC, UBX, MAVLink)</translation>
+    </message>
+    <message>
+        <source>GNSS altitude (above ellipsoid)</source>
+        <translation>GNSS wysokość (nad elipsoidą)</translation>
+    </message>
+    <message>
+        <source>Antenna altitude above the WGS84 ellipsoid, RTK fixed only (MAVLink 2, UBX, NMEA GGA)</source>
+        <translation>Wysokość anteny nad elipsoidą WGS84, tylko RTK Fixed (MAVLink 2, UBX, NMEA GGA)</translation>
+    </message>
+    <message>
         <source>Post-processing distance (green line)</source>
         <translation>Odległość z postprzetwarzania (zielona linia)</translation>
     </message>
