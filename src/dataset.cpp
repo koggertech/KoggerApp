@@ -883,6 +883,18 @@ void Dataset::addGnssAltitudeMsl(double altitudeMsl) {
     pool_.last().setGnssAltitudeMsl(altitudeMsl);
 }
 
+void Dataset::addGnssAltitudeEllipsoid(double altitudeEllipsoid) {
+    if (activeZeroing_) {
+        return;
+    }
+
+    QWriteLocker wl(&poolMtx_);
+    if (pool_.isEmpty()) {
+        pool_.resize(1);
+    }
+    pool_.last().setGnssAltitudeEllipsoid(altitudeEllipsoid);
+}
+
 void Dataset::addGnssUtc(qint64 unixUs) {
     if (activeZeroing_) {
         return;

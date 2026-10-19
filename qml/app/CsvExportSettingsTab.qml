@@ -38,7 +38,8 @@ Column {
         { key: "contact_distance", label: qsTr("Contact distance"),              tip: qsTr("Distance to the marked contact") + " — ContactDistance" },
         { key: "rangefinder",      label: qsTr("Rangefinder"),                   tip: qsTr("Rangefinder distance (red line)") + " — Rangefinder" },
         { key: "gnss_altitude_msl", label: qsTr("GNSS altitude (above sea level)"), tip: qsTr("Antenna altitude above mean sea level, RTK fixed only (MAVLink, UBX, NMEA GGA)") + " — GNSS Altitude MSL" },
-        { key: "gnss_utc_datetime", label: qsTr("GNSS position date/time (UTC)"), tip: qsTr("UTC date and time carried by the GNSS position message (NMEA RMC, UBX, MAVLink)") + " — GNSS UTC DateTime" }
+        { key: "gnss_utc_datetime", label: qsTr("GNSS position date/time (UTC)"), tip: qsTr("UTC date and time carried by the GNSS position message (NMEA RMC, UBX, MAVLink)") + " — GNSS UTC DateTime" },
+        { key: "gnss_altitude_ellipsoid", label: qsTr("GNSS altitude (above ellipsoid)"), tip: qsTr("Antenna altitude above the WGS84 ellipsoid, RTK fixed only (MAVLink 2, UBX, NMEA GGA)") + " — GNSS Altitude Ellipsoid" }
     ]
 
     function doExport() {

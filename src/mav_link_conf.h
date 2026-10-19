@@ -569,9 +569,18 @@ struct __attribute__((packed)) MAVLink_MSG_GPS_RAW_INT
     uint16_t cog = UINT16_MAX; // Course over ground (NOT heading, but direction of movement) in degrees * 100, 0.0..359.99 degrees. If unknown, set to: UINT16_MAX
     uint8_t fix_type;
     uint8_t satellites_visible = UINT8_MAX; // Number of satellites visible. If unknown, set to UINT8_MAX
+    int32_t alt_ellipsoid = 0;
 
     static uint32_t getID() {
         return 24;
+    }
+
+    bool hasAltitudeEllipsoid() {
+        return alt_ellipsoid != 0;
+    }
+
+    double altitudeEllipsoid() {
+        return double(alt_ellipsoid)*0.001;
     }
 
     double latitude() {

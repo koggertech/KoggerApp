@@ -1903,6 +1903,14 @@
         <translation>Data i czas UTC z komunikatu GNSS z pozycją (NMEA RMC, UBX, MAVLink)</translation>
     </message>
     <message>
+        <source>GNSS altitude (above ellipsoid)</source>
+        <translation>GNSS wysokość (nad elipsoidą)</translation>
+    </message>
+    <message>
+        <source>Antenna altitude above the WGS84 ellipsoid, RTK fixed only (MAVLink 2, UBX, NMEA GGA)</source>
+        <translation>Wysokość anteny nad elipsoidą WGS84, tylko RTK Fixed (MAVLink 2, UBX, NMEA GGA)</translation>
+    </message>
+    <message>
         <source>Post-processing distance (green line)</source>
         <translation>Odległość z postprzetwarzania (zielona linia)</translation>
     </message>

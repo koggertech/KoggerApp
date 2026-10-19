@@ -112,6 +112,7 @@ signals:
     void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
     void positionCompleteRTK(Position position);
     void gnssAltitudeMslComplete(double altitudeMsl);
+    void gnssAltitudeEllipsoidComplete(double altitudeEllipsoid);
     void gnssUtcComplete(qint64 unixUs);
     void depthComplete(float depth);
     void gnssVelocityComplete(double hSpeed, double course);

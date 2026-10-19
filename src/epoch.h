@@ -228,6 +228,7 @@ public:
     void setPositionNED(const NED& ned);
     void setExternalPosition(Position position);
     void setGnssAltitudeMsl(double altitudeMsl);
+    void setGnssAltitudeEllipsoid(double altitudeEllipsoid);
     void setGnssUtc(qint64 unixUs);
     void setPositionRef(LLARef* ref);
 
@@ -502,6 +503,7 @@ public:
     Position getPositionGNSS() { return _positionGNSS; }
     Position getExternalPosition() { return _positionExternal; }
     double gnssAltitudeMsl() const { return gnssAltitudeMsl_; }
+    double gnssAltitudeEllipsoid() const { return gnssAltitudeEllipsoid_; }
     qint64 gnssUtcUs() const { return gnssUtcUs_; }
     Position getSonarPosition() { return sonarPosition_; }
     const Position& getSonarPositionCRef() const { return sonarPosition_; }
@@ -712,6 +714,7 @@ protected:
     Position _positionExternal;
     Position sonarPosition_;
     double gnssAltitudeMsl_ = NAN;
+    double gnssAltitudeEllipsoid_ = NAN;
     qint64 gnssUtcUs_ = 0;
 
     struct {

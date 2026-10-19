@@ -206,6 +206,10 @@ void Epoch::setGnssAltitudeMsl(double altitudeMsl) {
     gnssAltitudeMsl_ = altitudeMsl;
 }
 
+void Epoch::setGnssAltitudeEllipsoid(double altitudeEllipsoid) {
+    gnssAltitudeEllipsoid_ = altitudeEllipsoid;
+}
+
 void Epoch::setGnssUtc(qint64 unixUs) {
     gnssUtcUs_ = unixUs;
 }

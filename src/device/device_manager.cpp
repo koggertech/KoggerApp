@@ -261,6 +261,8 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                 prot_nmea.skip(); // HDOP
 
                 float height_msl = prot_nmea.readDouble(); // Orthometric height (MSL reference)
+                prot_nmea.skip();
+                const double geoid_separation = prot_nmea.readDouble();
 
                 if (q == '1' || q == '2' || q == '4' || q == '5') {
                     uint16_t year = 1971;
@@ -278,6 +280,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                         emit positionCompleteRTK(pos);
                         if (isfinite(height_msl)) {
                             emit gnssAltitudeMslComplete(height_msl);
+                            if (isfinite(geoid_separation)) {
+                                emit gnssAltitudeEllipsoidComplete(double(height_msl) + geoid_separation);
+                            }
                         }
                     }
                 }
@@ -331,11 +336,12 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                 int32_t lon_int = ubx_frame.read<S4>();
                 int32_t lat_int = ubx_frame.read<S4>();
 
-                ubx_frame.readSkip(4);
+                const int32_t height_mm = ubx_frame.read<S4>();
                 const bool is_rtk_fixed = (fix_flags & 0x01) && (fix_flags >> 6) == 2;
                 if (is_rtk_fixed && ubx_frame.readAvailable() >= 4) {
                     const int32_t hmsl_mm = ubx_frame.read<S4>();
                     emit gnssAltitudeMslComplete(double(hmsl_mm) * 0.001);
+                    emit gnssAltitudeEllipsoidComplete(double(height_mm) * 0.001);
                 }
 
                 QDate date(year, month, day);
@@ -424,6 +430,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     MAVLink_MSG_GPS_RAW_INT raw = mavlink_frame.read<MAVLink_MSG_GPS_RAW_INT>();
                     if (raw.isValid() && raw.isRtkFixed()) {
                         emit gnssAltitudeMslComplete(raw.altitudeMsl());
+                        if (raw.hasAltitudeEllipsoid()) {
+                            emit gnssAltitudeEllipsoidComplete(raw.altitudeEllipsoid());
+                        }
                     }
                 }
 

@@ -1492,6 +1492,10 @@ bool Core::exportUSBLToCSV(QString filePath)
 
     logger_.dataExport("epoch,yaw,pitch,roll,north,east,ping_counter,carrier_counter,snr,azimuth_deg,elevation_deg,distance_m\n");
 
+    const auto finiteOrEmpty = [](double value) {
+        return std::isfinite(value) ? QString("%1").arg(value) : QString();
+    };
+
     for (int i = 0; i < datasetPtr_->size(); i += 1) {
         Epoch* epoch = datasetPtr_->fromIndex(i);
 
@@ -1502,16 +1506,15 @@ bool Core::exportUSBLToCSV(QString filePath)
 
         // pos.ned.isCoordinatesValid() && epoch->isAttAvail() &&
         if( epoch->isUsblSolutionAvailable()) {
-            QString row_data;
+            const auto usbl = epoch->usblSolution();
+            QStringList cells;
+            cells << QString::number(i)
+                  << finiteOrEmpty(epoch->yaw()) << finiteOrEmpty(epoch->pitch()) << finiteOrEmpty(epoch->roll())
+                  << finiteOrEmpty(boatPosNed.n) << finiteOrEmpty(boatPosNed.e)
+                  << QString::number(usbl.ping_counter) << QString::number(usbl.carrier_counter) << finiteOrEmpty(usbl.snr)
+                  << finiteOrEmpty(usbl.azimuth_deg) << finiteOrEmpty(usbl.elevation_deg) << finiteOrEmpty(usbl.distance_m);
 
-            row_data.append(QString("%1").arg(i));
-            row_data.append(QString(",%1,%2,%3").arg(epoch->yaw()).arg(epoch->pitch()).arg(epoch->roll()));
-            row_data.append(QString(",%1,%2").arg(boatPosNed.n).arg(boatPosNed.e));
-            row_data.append(QString(",%1,%2,%3").arg(epoch->usblSolution().ping_counter).arg(epoch->usblSolution().carrier_counter).arg(epoch->usblSolution().snr));
-            row_data.append(QString(",%1,%2,%3").arg(epoch->usblSolution().azimuth_deg).arg(epoch->usblSolution().elevation_deg).arg(epoch->usblSolution().distance_m));
-
-            row_data.append("\n");
-            logger_.dataExport(row_data);
+            logger_.dataExport(cells.join(QLatin1Char(',')) + QLatin1Char('\n'));
         }
     }
 
@@ -1541,6 +1544,7 @@ static const CsvFieldDef kCsvFieldDefs[] = {
     {"contact_distance", true},
     {"gnss_altitude_msl", true},
     {"gnss_utc_datetime", true},
+    {"gnss_altitude_ellipsoid", true},
 };
 }
 
@@ -1627,35 +1631,17 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
     bool sonar_height     = csvExportFieldEnabled("sonar_height");
     bool bottom_height    = csvExportFieldEnabled("bottom_height");
 
-    bool ext_pos_lla_find = false;
-    bool ext_pos_ned_find = false;
-
     bool contactInfo     = csvExportFieldEnabled("contact_info");
     bool contactDistance = csvExportFieldEnabled("contact_distance");
     bool gnssAltitudeMsl = csvExportFieldEnabled("gnss_altitude_msl");
     bool gnssUtc         = csvExportFieldEnabled("gnss_utc_datetime");
-
-    bool gnssAltitudeMslFind = false;
-    bool gnssUtcFind = false;
+    bool gnssAltitudeEll = csvExportFieldEnabled("gnss_altitude_ellipsoid");
 
     int row_cnt = datasetPtr_->size();
 
     auto btP = datasetPtr_->getBottomTrackParam();
     datasetPtr_->setChannelOffset(channelId, btP.offset.x, btP.offset.y, btP.offset.z);
     datasetPtr_->spatialProcessing();
-
-    for (int i = 0; i < row_cnt; i++) {
-        Epoch* epoch = datasetPtr_->fromIndex(i);
-
-        Position position = epoch->getExternalPosition();
-        ext_pos_lla_find |= position.lla.isValid();
-        ext_pos_ned_find |= position.ned.isValid();
-        gnssAltitudeMslFind |= std::isfinite(epoch->gnssAltitudeMsl());
-        gnssUtcFind |= epoch->gnssUtcUs() != 0;
-    }
-
-    gnssAltitudeMsl = gnssAltitudeMsl && gnssAltitudeMslFind;
-    gnssUtc = gnssUtc && gnssUtcFind;
 
     if (meas_nbr)
         logger_.dataExport("Number,");
@@ -1679,13 +1665,13 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
         }
     }
 
-    if (external_pos_lla && ext_pos_lla_find) {
+    if (external_pos_lla) {
         logger_.dataExport("ExtLatitude,");
         logger_.dataExport("ExtLongitude,");
         logger_.dataExport("ExtAltitude,");
     }
 
-    if (external_pos_neu && ext_pos_ned_find) {
+    if (external_pos_neu) {
         logger_.dataExport("ExtNorth,");
         logger_.dataExport("ExtEast,");
         logger_.dataExport("ExtHeight,");
@@ -1713,15 +1699,23 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
     if (gnssUtc) {
         tailHeader << QStringLiteral("GNSS UTC DateTime");
     }
+    if (gnssAltitudeEll) {
+        tailHeader << QStringLiteral("GNSS Altitude Ellipsoid");
+    }
 
     logger_.dataExport(tailHeader.join(QLatin1Char(',')));
     logger_.dataExport("\n");
 
+    const auto finiteOrEmpty = [](double value, int precision) {
+        return std::isfinite(value) ? QString::number(value, 'f', precision) : QString();
+    };
+
     int prev_timestamp = 0;
     int prev_unix = 0;
     int prev_event_id = 0;
+    bool eventSeen = false;
     float prev_dist_proc = 0;
-    double prev_lat = 0, prev_lon = 0;
+    double prev_lat = NAN, prev_lon = NAN;
 
     float decimation_m = decimation;
     float decimation_path = 0;
@@ -1771,13 +1765,14 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
                 prev_timestamp = epoch->eventTimestamp();
                 prev_event_id = epoch->eventID();
                 prev_unix = epoch->eventUnix();
+                eventSeen = true;
             }
-            row_data.append(QString("%1,%2,%3,").arg(prev_unix).arg(prev_timestamp).arg(prev_event_id));
+            row_data.append(eventSeen ? QString("%1,%2,%3,").arg(prev_unix).arg(prev_timestamp).arg(prev_event_id) : QStringLiteral(",,,"));
         }
 
         if (bottom_depth) {
             prev_dist_proc = epoch->distProccesing(channelId);
-            row_data.append(QString("%1,").arg((float)(prev_dist_proc)));
+            row_data.append(std::isfinite(prev_dist_proc) ? QString("%1,").arg((float)(prev_dist_proc)) : QStringLiteral(","));
         }
 
         if (pos_lat_lon) {
@@ -1786,13 +1781,13 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
                 prev_lon = epoch->lon();
             }
 
-            row_data.append(QString::number(prev_lat, 'f', 8));
+            row_data.append(finiteOrEmpty(prev_lat, 8));
             row_data.append(",");
-            row_data.append(QString::number(prev_lon, 'f', 8));
+            row_data.append(finiteOrEmpty(prev_lon, 8));
             row_data.append(",");
 
             if (pos_time) {
-                if (epoch->isPosAvail() && epoch->positionTimeUnix() != 0) {
+                if (epoch->isPosAvail() && epoch->positionTimeUnix() != 0 && epoch->time()->sec > 0) {
                     DateTime time_epoch = *epoch->time();
 
                     DateTime* dt = epoch->time();
@@ -1819,21 +1814,21 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
 
         Position position = epoch->getExternalPosition();
 
-        if (external_pos_lla && ext_pos_lla_find) {
-            row_data.append(QString::number(position.lla.latitude, 'f', 10));
+        if (external_pos_lla) {
+            row_data.append(finiteOrEmpty(position.lla.latitude, 10));
             row_data.append(",");
-            row_data.append(QString::number(position.lla.longitude, 'f', 10));
+            row_data.append(finiteOrEmpty(position.lla.longitude, 10));
             row_data.append(",");
-            row_data.append(QString::number(position.lla.altitude, 'f', 3));
+            row_data.append(finiteOrEmpty(position.lla.altitude, 3));
             row_data.append(",");
         }
 
-        if (external_pos_neu && ext_pos_ned_find) {
-            row_data.append(QString::number(position.ned.n, 'f', 10));
+        if (external_pos_neu) {
+            row_data.append(finiteOrEmpty(position.ned.n, 10));
             row_data.append(",");
-            row_data.append(QString::number(position.ned.e, 'f', 10));
+            row_data.append(finiteOrEmpty(position.ned.e, 10));
             row_data.append(",");
-            row_data.append(QString::number(-position.ned.d, 'f', 3));
+            row_data.append(finiteOrEmpty(-position.ned.d, 3));
             row_data.append(",");
         }
 
@@ -1866,18 +1861,21 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
             tailRow << (hasContact ? contact.info : QString());
         }
         if (contactDistance) {
-            tailRow << (hasContact ? QString::number(contact.echogramDistance, 'f', 4) : QString());
+            tailRow << (hasContact ? finiteOrEmpty(contact.echogramDistance, 4) : QString());
         }
         if (rangefinder) {
-            tailRow << (epoch->distAvail() ? QString::number((float)epoch->rangeFinder()) : QStringLiteral("0"));
+            tailRow << (epoch->distAvail() && std::isfinite(epoch->rangeFinder()) ? QString::number((float)epoch->rangeFinder()) : QString());
         }
         if (gnssAltitudeMsl) {
-            tailRow << (std::isfinite(epoch->gnssAltitudeMsl()) ? QString::number(epoch->gnssAltitudeMsl(), 'f', 3) : QString());
+            tailRow << finiteOrEmpty(epoch->gnssAltitudeMsl(), 3);
         }
         if (gnssUtc) {
             tailRow << (epoch->gnssUtcUs() != 0
                             ? QDateTime::fromMSecsSinceEpoch(epoch->gnssUtcUs() / 1000, QTimeZone::utc()).toString(QStringLiteral("yyyy-MM-dd'T'HH:mm:ss.zzz'Z'"))
                             : QString());
+        }
+        if (gnssAltitudeEll) {
+            tailRow << finiteOrEmpty(epoch->gnssAltitudeEllipsoid(), 3);
         }
         row_data.append(tailRow.join(QLatin1Char(',')));
 
@@ -2820,6 +2818,7 @@ void Core::createDeviceManagerConnections()
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::positionCompleteRTK,    datasetPtr_, &Dataset::addPositionRTK,  deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssAltitudeMslComplete, datasetPtr_, &Dataset::addGnssAltitudeMsl, deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssUtcComplete,     datasetPtr_, &Dataset::addGnssUtc,   deviceManagerConnection));
+    deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssAltitudeEllipsoidComplete, datasetPtr_, &Dataset::addGnssAltitudeEllipsoid, deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssVelocityComplete,   datasetPtr_, &Dataset::addGnssVelocity, deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::simpleNavV2Complete,   datasetPtr_, &Dataset::addSimpleNavV2,  deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::boatStatusComplete,     datasetPtr_, &Dataset::addBoatStatus,   deviceManagerConnection));
@@ -2870,6 +2869,7 @@ void Core::createDeviceManagerConnections()
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::positionCompleteRTK,    datasetPtr_, &Dataset::addPositionRTK,  deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssAltitudeMslComplete, datasetPtr_, &Dataset::addGnssAltitudeMsl, deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssUtcComplete,     datasetPtr_, &Dataset::addGnssUtc,   deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssAltitudeEllipsoidComplete, datasetPtr_, &Dataset::addGnssAltitudeEllipsoid, deviceManagerConnection);
 
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::depthComplete,          datasetPtr_, &Dataset::addDepth,        deviceManagerConnection);
 
