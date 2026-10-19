@@ -312,6 +312,7 @@ Rectangle {
     property bool _downloadDiscardAccepted: false
     property int _downloadPartialType: 0
     property string _downloadPartialReason: ""
+    property bool _uploadFenceOn: false
 
     function _anyDialogOpen() {
         return closePrompt.visible || uploadPrompt.visible || !!pendingAfterSave
@@ -360,6 +361,8 @@ Rectangle {
         var w = []
         if (_dmw && _dmw.pilotArmState > 0)
             w.push(qsTr("The boat is armed. The uploaded mission replaces the one on the vehicle; in Auto the boat switches to the new route at once."))
+        if (_dmw && _dmw.pilotArmState > 0 && plan && plan.fenceCount > 0)
+            w.push(qsTr("The geofence is switched on right after the upload. If the boat is outside it now, the autopilot at once returns it along its track or holds it."))
         if (_dmw && _dmw.proxyLinkActive)
             w.push(qsTr("A ground station is connected through the proxy link. Two stations must not upload missions at the same time."))
         return w
@@ -383,7 +386,9 @@ Rectangle {
 
     function startUpload() {
         uploadPrompt.visible = false
-        if (plan) plan.uploadToVehicle()
+        if (!plan) return
+        _uploadFenceOn = plan.fenceCount > 0
+        plan.uploadToVehicle()
     }
 
     function uploadResultText(r) {
@@ -396,6 +401,7 @@ Rectangle {
         case -6: return qsTr("the vehicle ended the transfer before receiving all items")
         case -7: return qsTr("the link uses MAVLink 1; geofence and rally points need MAVLink 2")
         case -8: return qsTr("cancelled")
+        case -9: return qsTr("the vehicle did not confirm the geofence parameters")
         case 1:  return qsTr("error on the vehicle")
         case 2:  return qsTr("unsupported coordinate frame")
         case 3:  return qsTr("unsupported command")
@@ -437,7 +443,10 @@ Rectangle {
             if (typeof notifications === "undefined" || !notifications) return
             notifications.dismiss(root._uploadTag)
             var reason = root.uploadResultText(result)
-            if (ok) notifications.info(qsTr("Mission uploaded to the vehicle"))
+            if (ok) notifications.info(root._uploadFenceOn ? qsTr("Mission uploaded to the vehicle, geofence on") : qsTr("Mission uploaded to the vehicle"))
+            else if (missionType === 1 && result === -9) notifications.warning(root._uploadFenceOn
+                ? qsTr("The route and geofence are on the vehicle, but the geofence was not switched on: %1. Rally points were not uploaded.").arg(reason)
+                : qsTr("The route is on the vehicle, but the geofence was not switched off: %1. Rally points were not uploaded.").arg(reason))
             else if (missionType === 1) notifications.warning(qsTr("The route is on the vehicle, but the geofence upload failed: %1").arg(reason))
             else if (missionType === 2) notifications.warning(qsTr("The route and geofence are on the vehicle, but the rally points upload failed: %1").arg(reason))
             else notifications.warning(qsTr("Mission upload failed: %1").arg(reason))

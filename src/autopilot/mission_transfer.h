@@ -27,10 +27,20 @@ struct MissionItem
 
 using MissionItems = QVector<MissionItem>;
 
+struct ParamWrite
+{
+    QByteArray name;
+    float value = 0.0f;
+    uint8_t type = 0;
+};
+
+using ParamWrites = QVector<ParamWrite>;
+
 struct MissionBatch
 {
     int missionType = 0;
     MissionItems items;
+    ParamWrites paramsAfter;
 };
 
 using MissionBatches = QVector<MissionBatch>;
@@ -41,6 +51,8 @@ using MissionBatches = QVector<MissionBatch>;
  *
  * Upload, per batch: MISSION_COUNT, then one MISSION_ITEM_INT per MISSION_REQUEST_INT /
  * MISSION_REQUEST from the vehicle, until MISSION_ACK. An empty batch clears that list.
+ * Once a batch is accepted, its paramsAfter are written in order: PARAM_SET, confirmed by a
+ * PARAM_VALUE with the same name and value; a batch that is refused writes none of them.
  * Download, per mission type: MISSION_REQUEST_LIST, the vehicle answers MISSION_COUNT, then
  * MISSION_REQUEST_INT for every seq and MISSION_ITEM_INT back, closed by our MISSION_ACK.
  *
@@ -62,7 +74,8 @@ public:
         ResultBusy = -5,
         ResultIncomplete = -6,
         ResultMavlink1 = -7,
-        ResultCancelled = -8
+        ResultCancelled = -8,
+        ResultParamNotConfirmed = -9
     };
 
     static constexpr int kAckTimeoutMs = 1500;
@@ -75,7 +88,7 @@ public slots:
     void startUpload(const autopilot::MissionBatches& batches, int targetSystem, int targetComponent);
     /** Reads the lists of @p missionTypes in order. Emits downloadFinished() once with what was read. */
     void startDownload(const QVector<int>& missionTypes, int targetSystem, int targetComponent);
-    /** Feeds a payload of MISSION_REQUEST (40), MISSION_COUNT (44), MISSION_ACK (47), MISSION_REQUEST_INT (51) or MISSION_ITEM_INT (73). */
+    /** Feeds a payload of PARAM_VALUE (22), MISSION_REQUEST (40), MISSION_COUNT (44), MISSION_ACK (47), MISSION_REQUEST_INT (51) or MISSION_ITEM_INT (73). */
     void handleFrame(quint32 msgId, const QByteArray& payload);
     /** Ends a running transfer with @p result without talking to the vehicle. */
     void abort(int result);
@@ -89,7 +102,7 @@ signals:
     void downloadFinished(bool ok, int result, int missionType, const autopilot::MissionBatches& batches);
 
 private:
-    enum class State { Idle, UploadCount, UploadItems, DownloadList, DownloadItems };
+    enum class State { Idle, UploadCount, UploadItems, UploadParams, DownloadList, DownloadItems };
 
     bool busy() const { return state_ != State::Idle; }
     bool downloading() const { return state_ == State::DownloadList || state_ == State::DownloadItems; }
@@ -97,11 +110,14 @@ private:
 
     void handleUploadFrame(quint32 msgId, const QByteArray& payload);
     void handleDownloadFrame(quint32 msgId, const QByteArray& payload);
+    void handleParamValue(const QByteArray& payload);
 
     void startUploadBatch();
+    void uploadBatchAccepted();
     void uploadBatchDone();
     void sendCount();
     void sendItem(int seq);
+    void sendParam();
 
     void startDownloadList();
     void downloadListDone();
@@ -125,6 +141,7 @@ private:
     int targetSystem_ = 0;
     int targetComponent_ = 0;
     int lastItem_ = -1;
+    int paramIndex_ = 0;
     int requested_ = 0;
     int expectedCount_ = 0;
     int retries_ = 0;

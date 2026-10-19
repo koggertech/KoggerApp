@@ -22,6 +22,13 @@ autopilot::MissionItems toVehicleFence(const FlatMission& mission);
 /** Rally points as MAV_MISSION_TYPE_RALLY items: NAV_RALLY_POINT, frame GLOBAL_RELATIVE_ALT, altitude 0. */
 autopilot::MissionItems toVehicleRally(const FlatMission& mission);
 
+/**
+ * Parameters written after the fence list is accepted, so the fence is enforced exactly when the
+ * vehicle holds zones: with zones FENCE_TYPE = polygons only (no circle around home),
+ * FENCE_ACTION = SmartRTL or Hold, then FENCE_ENABLE = 1; without zones FENCE_ENABLE = 0.
+ */
+autopilot::ParamWrites fenceParams(bool hasZones);
+
 /** Route, fence and rally in upload order; empty fence / rally batches clear those lists on the vehicle. */
 autopilot::MissionBatches toVehicleUpload(const FlatMission& mission);
 

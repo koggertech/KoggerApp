@@ -14,6 +14,8 @@ namespace {
 constexpr uint16_t kCmdFenceVertexInclusion = 5001;
 constexpr uint16_t kCmdFenceVertexExclusion = 5002;
 constexpr uint16_t kCmdRallyPoint = 5100;
+constexpr float kFenceTypePolygon = 4.0f;
+constexpr float kFenceActionSmartRtlOrHold = 4.0f;
 
 int32_t toDegE7(double degrees)
 {
@@ -95,12 +97,26 @@ autopilot::MissionItems toVehicleRally(const FlatMission& mission)
     return out;
 }
 
+autopilot::ParamWrites fenceParams(bool hasZones)
+{
+    if (!hasZones) {
+        return { { QByteArrayLiteral("FENCE_ENABLE"), 0.0f, kMavParamTypeInt8 } };
+    }
+    return {
+        { QByteArrayLiteral("FENCE_TYPE"), kFenceTypePolygon, kMavParamTypeInt8 },
+        { QByteArrayLiteral("FENCE_ACTION"), kFenceActionSmartRtlOrHold, kMavParamTypeInt8 },
+        { QByteArrayLiteral("FENCE_ENABLE"), 1.0f, kMavParamTypeInt8 }
+    };
+}
+
 autopilot::MissionBatches toVehicleUpload(const FlatMission& mission)
 {
+    autopilot::MissionItems fence = toVehicleFence(mission);
+    autopilot::ParamWrites params = fenceParams(!fence.isEmpty());
     return {
-        { MavMissionTypeMission, toVehicleMission(mission) },
-        { MavMissionTypeFence, toVehicleFence(mission) },
-        { MavMissionTypeRally, toVehicleRally(mission) }
+        { MavMissionTypeMission, toVehicleMission(mission), {} },
+        { MavMissionTypeFence, std::move(fence), std::move(params) },
+        { MavMissionTypeRally, toVehicleRally(mission), {} }
     };
 }
 

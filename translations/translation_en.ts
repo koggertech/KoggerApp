@@ -6741,6 +6741,31 @@ udp://@:1234
         <source>Cancel</source>
         <translation>Cancel</translation>
     </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="365"/>
+        <source>The geofence is switched on right after the upload. If the boat is outside it now, the autopilot at once returns it along its track or holds it.</source>
+        <translation>The geofence is switched on right after the upload. If the boat is outside it now, the autopilot at once returns it along its track or holds it.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="404"/>
+        <source>the vehicle did not confirm the geofence parameters</source>
+        <translation>the vehicle did not confirm the geofence parameters</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="446"/>
+        <source>Mission uploaded to the vehicle, geofence on</source>
+        <translation>Mission uploaded to the vehicle, geofence on</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="448"/>
+        <source>The route and geofence are on the vehicle, but the geofence was not switched on: %1. Rally points were not uploaded.</source>
+        <translation>The route and geofence are on the vehicle, but the geofence was not switched on: %1. Rally points were not uploaded.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="449"/>
+        <source>The route is on the vehicle, but the geofence was not switched off: %1. Rally points were not uploaded.</source>
+        <translation>The route is on the vehicle, but the geofence was not switched off: %1. Rally points were not uploaded.</translation>
+    </message>
 </context>
 <context>
     <name>MissionItemCard</name>

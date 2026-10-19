@@ -10,6 +10,8 @@ constexpr uint8_t kMavGcsComponentId = 190;
 constexpr uint8_t kMavModeFlagCustomModeEnabled = 1;
 constexpr float kMavArmForceMagic = 21196.0f;
 constexpr uint8_t kMavDataStreamExtendedStatus = 2;
+constexpr uint8_t kMavParamTypeInt8 = 2;
+constexpr int kMavParamIdLength = 16;
 
 enum MavCommandId : uint16_t {
     MavCmdDoSetMode = 176,
@@ -273,7 +275,32 @@ struct __attribute__((packed)) MAVLink_MSG_MISSION_ITEM_INT
     static int v1Length() { return 37; }
 };
 
+struct __attribute__((packed)) MAVLink_MSG_PARAM_VALUE
+{
+    float param_value = 0.0f;
+    uint16_t param_count = 0;
+    uint16_t param_index = 0;
+    char param_id[kMavParamIdLength] = {};
+    uint8_t param_type = 0;
+
+    static uint32_t getID() { return 22; }
+};
+
+struct __attribute__((packed)) MAVLink_MSG_PARAM_SET
+{
+    float param_value = 0.0f;
+    uint8_t target_system = 0;
+    uint8_t target_component = 0;
+    char param_id[kMavParamIdLength] = {};
+    uint8_t param_type = 0;
+
+    static uint32_t getID() { return 23; }
+    static int v1Length() { return 23; }
+};
+
 static_assert(sizeof(MAVLink_MSG_COMMAND_LONG) == 33);
+static_assert(sizeof(MAVLink_MSG_PARAM_VALUE) == 25);
+static_assert(sizeof(MAVLink_MSG_PARAM_SET) == 23);
 static_assert(sizeof(MAVLink_MSG_REQUEST_DATA_STREAM) == 6);
 static_assert(sizeof(MAVLink_MSG_MISSION_SET_CURRENT) == 4);
 static_assert(sizeof(MAVLink_MSG_MISSION_CURRENT) == 18);

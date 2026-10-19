@@ -6747,6 +6747,31 @@ udp://@:1234
         <source>Cancel</source>
         <translation>Отмена</translation>
     </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="365"/>
+        <source>The geofence is switched on right after the upload. If the boat is outside it now, the autopilot at once returns it along its track or holds it.</source>
+        <translation>Геозона включится сразу после загрузки. Если лодка сейчас вне её, автопилот сразу вернёт её по пройденному пути или остановит.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="404"/>
+        <source>the vehicle did not confirm the geofence parameters</source>
+        <translation>лодка не подтвердила параметры геозоны</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="446"/>
+        <source>Mission uploaded to the vehicle, geofence on</source>
+        <translation>Миссия загружена в лодку, геозона включена</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="448"/>
+        <source>The route and geofence are on the vehicle, but the geofence was not switched on: %1. Rally points were not uploaded.</source>
+        <translation>Маршрут и геозона загружены в лодку, но геозона не включена: %1. Ралли-точки не загружены.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="449"/>
+        <source>The route is on the vehicle, but the geofence was not switched off: %1. Rally points were not uploaded.</source>
+        <translation>Маршрут загружен в лодку, но геозона не выключена: %1. Ралли-точки не загружены.</translation>
+    </message>
 </context>
 <context>
     <name>MissionItemCard</name>

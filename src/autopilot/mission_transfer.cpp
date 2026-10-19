@@ -1,6 +1,7 @@
 #include "mission_transfer.h"
 
 #include <algorithm>
+#include <cstring>
 
 #include "autopilot_messages.h"
 #include "frame_codec.h"
@@ -90,6 +91,13 @@ bool MissionTransfer::addressedToUs(int targetSystem, int targetComponent) const
 
 void MissionTransfer::handleUploadFrame(quint32 msgId, const QByteArray& payload)
 {
+    if (state_ == State::UploadParams) {
+        if (msgId == MAVLink_MSG_PARAM_VALUE::getID()) {
+            handleParamValue(payload);
+        }
+        return;
+    }
+
     if (msgId == MAVLink_MSG_MISSION_REQUEST_INT::getID() || msgId == MAVLink_MSG_MISSION_REQUEST::getID()) {
         const auto request = decodePayload<MAVLink_MSG_MISSION_REQUEST_INT>(payload);
         if (!addressedToUs(request.target_system, request.target_component) || request.mission_type != missionType_) {
@@ -124,8 +132,26 @@ void MissionTransfer::handleUploadFrame(quint32 msgId, const QByteArray& payload
             finish(false, ResultIncomplete);
             return;
         }
-        uploadBatchDone();
+        uploadBatchAccepted();
     }
+}
+
+void MissionTransfer::handleParamValue(const QByteArray& payload)
+{
+    const ParamWrites& params = batches_.at(batchIndex_).paramsAfter;
+    const ParamWrite& expected = params.at(paramIndex_);
+    const auto value = decodePayload<MAVLink_MSG_PARAM_VALUE>(payload);
+    const QByteArray name(value.param_id, int(qstrnlen(value.param_id, kMavParamIdLength)));
+    if (name != expected.name || value.param_value != expected.value) {
+        return;
+    }
+    retries_ = 0;
+    if (++paramIndex_ < params.size()) {
+        sendParam();
+        timer_.start();
+        return;
+    }
+    uploadBatchDone();
 }
 
 void MissionTransfer::handleDownloadFrame(quint32 msgId, const QByteArray& payload)
@@ -213,6 +239,19 @@ void MissionTransfer::startUploadBatch()
     timer_.start();
 }
 
+void MissionTransfer::uploadBatchAccepted()
+{
+    if (batches_.at(batchIndex_).paramsAfter.isEmpty()) {
+        uploadBatchDone();
+        return;
+    }
+    state_ = State::UploadParams;
+    paramIndex_ = 0;
+    retries_ = 0;
+    sendParam();
+    timer_.start();
+}
+
 void MissionTransfer::uploadBatchDone()
 {
     doneBefore_ += int(items_.size());
@@ -238,7 +277,7 @@ void MissionTransfer::startDownloadList()
 
 void MissionTransfer::downloadListDone()
 {
-    batches_.append(MissionBatch{ missionType_, items_ });
+    batches_.append(MissionBatch{ missionType_, items_, {} });
     if (batchIndex_ + 1 < downloadTypes_.size()) {
         ++batchIndex_;
         startDownloadList();
@@ -280,6 +319,18 @@ void MissionTransfer::sendItem(int seq)
     emit sendMessage(MAVLink_MSG_MISSION_ITEM_INT::getID(), payloadOf(item), MAVLink_MSG_MISSION_ITEM_INT::v1Length());
 }
 
+void MissionTransfer::sendParam()
+{
+    const ParamWrite& p = batches_.at(batchIndex_).paramsAfter.at(paramIndex_);
+    MAVLink_MSG_PARAM_SET set;
+    set.param_value = p.value;
+    set.target_system = uint8_t(targetSystem_);
+    set.target_component = uint8_t(targetComponent_);
+    std::memcpy(set.param_id, p.name.constData(), size_t(std::min<qsizetype>(p.name.size(), kMavParamIdLength)));
+    set.param_type = p.type;
+    emit sendMessage(MAVLink_MSG_PARAM_SET::getID(), payloadOf(set), MAVLink_MSG_PARAM_SET::v1Length());
+}
+
 void MissionTransfer::sendRequestList()
 {
     MAVLink_MSG_MISSION_REQUEST_LIST list;
@@ -315,7 +366,7 @@ void MissionTransfer::onTimeout()
         return;
     }
     if (++retries_ > kMaxRetries) {
-        finish(false, ResultNoResponse);
+        finish(false, state_ == State::UploadParams ? ResultParamNotConfirmed : ResultNoResponse);
         return;
     }
     switch (state_) {
@@ -326,6 +377,9 @@ void MissionTransfer::onTimeout()
         if (lastItem_ >= 0 && requested_ < items_.size()) {
             sendItem(lastItem_);
         }
+        break;
+    case State::UploadParams:
+        sendParam();
         break;
     case State::DownloadList:
         sendRequestList();

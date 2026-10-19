@@ -925,7 +925,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                 if (fromAutopilot && vru_.online
                     && (msgId == MAVLink_MSG_MISSION_REQUEST::getID() || msgId == MAVLink_MSG_MISSION_REQUEST_INT::getID()
                         || msgId == MAVLink_MSG_MISSION_ACK::getID() || msgId == MAVLink_MSG_MISSION_COUNT::getID()
-                        || msgId == MAVLink_MSG_MISSION_ITEM_INT::getID())) {
+                        || msgId == MAVLink_MSG_MISSION_ITEM_INT::getID() || msgId == MAVLink_MSG_PARAM_VALUE::getID())) {
                     const uint16_t length = mavlink_frame.payloadLen();
                     emit missionFrameReceived(msgId, QByteArray(reinterpret_cast<const char*>(mavlink_frame.read(length)), length));
                 }
