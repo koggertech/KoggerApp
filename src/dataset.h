@@ -439,6 +439,7 @@ public slots:
     void addArtificalYaw();
     void addPositionRTK(Position position);
     void addGnssAltitudeMsl(double altitudeMsl);
+    void addGnssUtc(qint64 unixUs);
 
     void addDepth(float depth);
 

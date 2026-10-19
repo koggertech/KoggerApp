@@ -1752,12 +1752,20 @@
         <translation>Rangefinder distance (red line)</translation>
     </message>
     <message>
-        <source>GNSS altitude (MSL)</source>
-        <translation>GNSS altitude (MSL)</translation>
+        <source>GNSS altitude (above sea level)</source>
+        <translation>GNSS altitude (above sea level)</translation>
     </message>
     <message>
-        <source>GNSS altitude from MAVLink, UBX, NMEA GGA; RTK fixed only</source>
-        <translation>GNSS altitude from MAVLink, UBX, NMEA GGA; RTK fixed only</translation>
+        <source>Antenna altitude above mean sea level, RTK fixed only (MAVLink, UBX, NMEA GGA)</source>
+        <translation>Antenna altitude above mean sea level, RTK fixed only (MAVLink, UBX, NMEA GGA)</translation>
+    </message>
+    <message>
+        <source>GNSS position date/time (UTC)</source>
+        <translation>GNSS position date/time (UTC)</translation>
+    </message>
+    <message>
+        <source>UTC date and time carried by the GNSS position message (NMEA RMC, UBX, MAVLink)</source>
+        <translation>UTC date and time carried by the GNSS position message (NMEA RMC, UBX, MAVLink)</translation>
     </message>
     <message>
         <source>Post-processing distance (green line)</source>

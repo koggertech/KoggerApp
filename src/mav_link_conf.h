@@ -488,6 +488,24 @@ inline uint8_t getMAVLinkExtra(uint32_t msgid)
     return 0;
 }
 
+struct __attribute__((packed)) MAVLink_MSG_SYSTEM_TIME
+{
+    uint64_t time_unix_usec;
+    uint32_t time_boot_ms;
+
+    static uint32_t getID() {
+        return 2;
+    }
+
+    bool hasUnixTime() {
+        return time_unix_usec != 0;
+    }
+
+    int64_t unixOffsetUs() {
+        return int64_t(time_unix_usec) - int64_t(time_boot_ms) * 1000;
+    }
+};
+
 struct __attribute__((packed)) MAVLink_MSG_GLOBAL_POSITION_INT
 {
     uint32_t time_boot_ms; // Timestamp (time since system boot), ms

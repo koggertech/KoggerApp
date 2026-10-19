@@ -1887,12 +1887,20 @@
         <translation>Odległość z głębokościomierza (czerwona linia)</translation>
     </message>
     <message>
-        <source>GNSS altitude (MSL)</source>
-        <translation>Wysokość GNSS (n.p.m.)</translation>
+        <source>GNSS altitude (above sea level)</source>
+        <translation>GNSS wysokość (nad poziomem morza)</translation>
     </message>
     <message>
-        <source>GNSS altitude from MAVLink, UBX, NMEA GGA; RTK fixed only</source>
-        <translation>Wysokość GNSS z MAVLink, UBX, NMEA GGA; tylko RTK Fixed</translation>
+        <source>Antenna altitude above mean sea level, RTK fixed only (MAVLink, UBX, NMEA GGA)</source>
+        <translation>Wysokość anteny n.p.m., tylko RTK Fixed (MAVLink, UBX, NMEA GGA)</translation>
+    </message>
+    <message>
+        <source>GNSS position date/time (UTC)</source>
+        <translation>GNSS data/czas pozycji (UTC)</translation>
+    </message>
+    <message>
+        <source>UTC date and time carried by the GNSS position message (NMEA RMC, UBX, MAVLink)</source>
+        <translation>Data i czas UTC z komunikatu GNSS z pozycją (NMEA RMC, UBX, MAVLink)</translation>
     </message>
     <message>
         <source>Post-processing distance (green line)</source>

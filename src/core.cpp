@@ -11,6 +11,7 @@
 #include <QUrl>
 #include <QStandardPaths>
 #include <QDateTime>
+#include <QTimeZone>
 #include <QProcess>
 #include <QDesktopServices>
 #include <QClipboard>
@@ -1539,6 +1540,7 @@ static const CsvFieldDef kCsvFieldDefs[] = {
     {"contact_info",     true},
     {"contact_distance", true},
     {"gnss_altitude_msl", true},
+    {"gnss_utc_datetime", true},
 };
 }
 
@@ -1631,8 +1633,10 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
     bool contactInfo     = csvExportFieldEnabled("contact_info");
     bool contactDistance = csvExportFieldEnabled("contact_distance");
     bool gnssAltitudeMsl = csvExportFieldEnabled("gnss_altitude_msl");
+    bool gnssUtc         = csvExportFieldEnabled("gnss_utc_datetime");
 
     bool gnssAltitudeMslFind = false;
+    bool gnssUtcFind = false;
 
     int row_cnt = datasetPtr_->size();
 
@@ -1647,9 +1651,11 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
         ext_pos_lla_find |= position.lla.isValid();
         ext_pos_ned_find |= position.ned.isValid();
         gnssAltitudeMslFind |= std::isfinite(epoch->gnssAltitudeMsl());
+        gnssUtcFind |= epoch->gnssUtcUs() != 0;
     }
 
     gnssAltitudeMsl = gnssAltitudeMsl && gnssAltitudeMslFind;
+    gnssUtc = gnssUtc && gnssUtcFind;
 
     if (meas_nbr)
         logger_.dataExport("Number,");
@@ -1703,6 +1709,9 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
     }
     if (gnssAltitudeMsl) {
         tailHeader << QStringLiteral("GNSS Altitude MSL");
+    }
+    if (gnssUtc) {
+        tailHeader << QStringLiteral("GNSS UTC DateTime");
     }
 
     logger_.dataExport(tailHeader.join(QLatin1Char(',')));
@@ -1864,6 +1873,11 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
         }
         if (gnssAltitudeMsl) {
             tailRow << (std::isfinite(epoch->gnssAltitudeMsl()) ? QString::number(epoch->gnssAltitudeMsl(), 'f', 3) : QString());
+        }
+        if (gnssUtc) {
+            tailRow << (epoch->gnssUtcUs() != 0
+                            ? QDateTime::fromMSecsSinceEpoch(epoch->gnssUtcUs() / 1000, QTimeZone::utc()).toString(QStringLiteral("yyyy-MM-dd'T'HH:mm:ss.zzz'Z'"))
+                            : QString());
         }
         row_data.append(tailRow.join(QLatin1Char(',')));
 
@@ -2805,6 +2819,7 @@ void Core::createDeviceManagerConnections()
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::positionComplete,       datasetPtr_, &Dataset::addPosition,     deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::positionCompleteRTK,    datasetPtr_, &Dataset::addPositionRTK,  deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssAltitudeMslComplete, datasetPtr_, &Dataset::addGnssAltitudeMsl, deviceManagerConnection));
+    deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssUtcComplete,     datasetPtr_, &Dataset::addGnssUtc,   deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssVelocityComplete,   datasetPtr_, &Dataset::addGnssVelocity, deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::simpleNavV2Complete,   datasetPtr_, &Dataset::addSimpleNavV2,  deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::boatStatusComplete,     datasetPtr_, &Dataset::addBoatStatus,   deviceManagerConnection));
@@ -2854,6 +2869,7 @@ void Core::createDeviceManagerConnections()
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::positionComplete,       datasetPtr_, &Dataset::addPosition,     deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::positionCompleteRTK,    datasetPtr_, &Dataset::addPositionRTK,  deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssAltitudeMslComplete, datasetPtr_, &Dataset::addGnssAltitudeMsl, deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssUtcComplete,     datasetPtr_, &Dataset::addGnssUtc,   deviceManagerConnection);
 
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::depthComplete,          datasetPtr_, &Dataset::addDepth,        deviceManagerConnection);
 

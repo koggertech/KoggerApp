@@ -206,6 +206,10 @@ void Epoch::setGnssAltitudeMsl(double altitudeMsl) {
     gnssAltitudeMsl_ = altitudeMsl;
 }
 
+void Epoch::setGnssUtc(qint64 unixUs) {
+    gnssUtcUs_ = unixUs;
+}
+
 void Epoch::setPositionRef(LLARef* ref) {
     if (ref != nullptr && ref->isInit) {
         _positionGNSS.LLA2NED(ref);

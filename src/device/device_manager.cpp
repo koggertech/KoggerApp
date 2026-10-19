@@ -219,7 +219,6 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                 uint16_t ms = 0;
 
                 bool isCorrect =  prot_nmea.readTime(&h, &m, &s, &ms);
-                Q_UNUSED(isCorrect);
 
                 char c = prot_nmea.readChar();
                 if (c == 'A' || c == 'D') {
@@ -240,6 +239,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     uint32_t unix_time = static_cast<uint32_t>(dt.toSecsSinceEpoch());
 
                     emit positionComplete(lat, lon, unix_time, (uint32_t)ms*1000*1000);
+                    if (isCorrect && date.isValid()) {
+                        emit gnssUtcComplete(qint64(unix_time) * 1000000 + qint64(ms) * 1000);
+                    }
                 }
             }
 
@@ -315,7 +317,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                 h = ubx_frame.read<U1>();
                 m = ubx_frame.read<U1>();
                 s = ubx_frame.read<U1>();
-                ubx_frame.read<U1>(); // Validity flags
+                uint8_t time_valid = ubx_frame.read<U1>();
                 ubx_frame.readSkip(4); // Time accuracy estimate (UTC)
                 nanosec = ubx_frame.read<S4>();
 
@@ -344,6 +346,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
 
                 if (fix_type > 1 && fix_type < 5) {
                     emit positionComplete(double(lat_int)*0.0000001, double(lon_int)*0.0000001, unix_time, nanosec);
+                    if ((time_valid & 0x03) == 0x03) {
+                        emit gnssUtcComplete(qint64(unix_time) * 1000000 + nanosec / 1000);
+                    }
                 }
 
                 // if (isConsoled_) {
@@ -390,9 +395,28 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     MAVLink_MSG_GLOBAL_POSITION_INT pos = mavlink_frame.read<MAVLink_MSG_GLOBAL_POSITION_INT>();
                     if (pos.isValid()) {
                         emit positionComplete(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
+                        if (mavlinkUnixOffsetValid_ && mavlink_frame.systemID() == mavlinkUnixOffsetSysId_) {
+                            if (pos.time_boot_msec() < mavlinkLastPositionBootMs_) {
+                                mavlinkUnixOffsetValid_ = false;
+                            }
+                            mavlinkLastPositionBootMs_ = pos.time_boot_msec();
+                            if (mavlinkUnixOffsetValid_) {
+                                emit gnssUtcComplete(qint64(pos.time_boot_msec()) * 1000 + mavlinkUnixOffsetUs_);
+                            }
+                        }
                         emit gnssVelocityComplete(pos.velocityH(), 0);
                         vru_.velocityH = pos.velocityH();
                         emit vruChanged();
+                    }
+                }
+
+                if (mavlink_frame.msgId() == MAVLink_MSG_SYSTEM_TIME::getID()) {
+                    MAVLink_MSG_SYSTEM_TIME system_time = mavlink_frame.read<MAVLink_MSG_SYSTEM_TIME>();
+                    if (system_time.hasUnixTime()) {
+                        mavlinkUnixOffsetUs_ = system_time.unixOffsetUs();
+                        mavlinkUnixOffsetSysId_ = mavlink_frame.systemID();
+                        mavlinkUnixOffsetValid_ = true;
+                        mavlinkLastPositionBootMs_ = 0;
                     }
                 }
 
@@ -839,6 +863,9 @@ void DeviceManager::onPositionUpdated(const QGeoPositionInfo &info)
     smplNav.roll = 0;
 
     emit positionComplete(smplNav.latitude, smplNav.longitude, info.timestamp().toSecsSinceEpoch(), info.timestamp().toMSecsSinceEpoch());
+    if (info.timestamp().isValid()) {
+        emit gnssUtcComplete(info.timestamp().toMSecsSinceEpoch() * 1000);
+    }
     emit attitudeComplete(smplNav.yaw, 0.0, 0.0);
 
     // LOGGING
@@ -884,6 +911,9 @@ DevQProperty* DeviceManager::getDevice(QUuid uuid, Link *link, uint8_t addr)
 
 void DeviceManager::delAllDev()
 {
+    mavlinkUnixOffsetValid_ = false;
+    mavlinkLastPositionBootMs_ = 0;
+
     QList<QUuid> keysToDelete;
     for (auto i = devTree_.cbegin(), end = devTree_.cend(); i != end; ++i) {
         keysToDelete.append(i.key());
