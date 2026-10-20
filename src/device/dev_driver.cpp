@@ -1849,6 +1849,41 @@ void DevDriver::receivedDVLMode(Parsers::Type type, Parsers::Version ver, Parser
     Q_UNUSED(resp);
 }
 
+namespace {
+
+// NAN is ordinary in a USBL solution rather than a fault: v1/v2 payloads carry
+// no SNR at all, and a beacon that has not been located yet has no position.
+// Printing "nan" for those makes a healthy line read as a broken one.
+QString usblNum(double v, int prec)
+{
+    return qIsFinite(v) ? QString::number(v, 'f', prec) : QStringLiteral("--");
+}
+
+// One decoded line per acoustic fix, at the rate the fixes arrive.
+//
+// The hex frame dump lives behind the console's "Binary" toggle. With that
+// toggle off -- which is the default and the readable way to watch a run --
+// nothing from the device reached the console at all, so a working link was
+// indistinguishable from a dead one. This is the text form of the same data.
+QString usblConsoleLine(const char* kind, const IDBinUsblSolution::UsblSolution& s)
+{
+    return QString("USBL %1: addr %2, dist %3 m, az %4, el %5, snr %6"
+                   ", head %7 %8, yaw %9, beacon %10 %11")
+        .arg(QString::fromLatin1(kind))
+        .arg(static_cast<int>(s.id))
+        .arg(usblNum(s.distance_m, 2))
+        .arg(usblNum(s.azimuth_deg, 1))
+        .arg(usblNum(s.elevation_deg, 1))
+        .arg(usblNum(s.snr, 1))
+        .arg(usblNum(s.usbl_latitude, 7))
+        .arg(usblNum(s.usbl_longitude, 7))
+        .arg(usblNum(s.usbl_yaw, 1))
+        .arg(usblNum(s.beacon_latitude, 7))
+        .arg(usblNum(s.beacon_longitude, 7));
+}
+
+} // namespace
+
 void DevDriver::receivedUSBL(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
 {
     Q_UNUSED(type);
@@ -1862,17 +1897,29 @@ void DevDriver::receivedUSBL(Parsers::Type type, Parsers::Version ver, Parsers::
     // a beacon activation response, so the version is not enough.
     switch(idUSBL->lastPayloadKind()) {
     case IDBinUsblSolution::PayloadKind::Solution:
+#ifndef SEPARATE_READING
+        core.consoleInfo(usblConsoleLine("solution", idUSBL->usblSolution()));
+#endif
         emit usblSolutionComplete(idUSBL->usblSolution());
         break;
     case IDBinUsblSolution::PayloadKind::AcousticNav:
+#ifndef SEPARATE_READING
+        core.consoleInfo(usblConsoleLine("acoustic-nav", idUSBL->usblSolution()));
+#endif
         emit acousticNavSolutionComplete(idUSBL->acousticNavSolution());
         emit usblSolutionComplete(idUSBL->usblSolution());
         break;
     case IDBinUsblSolution::PayloadKind::BaseToBeacon:
+#ifndef SEPARATE_READING
+        core.consoleInfo(usblConsoleLine("base-to-beacon", idUSBL->usblSolution()));
+#endif
         emit baseToBeaconComplete(idUSBL->baseToBeacon());
         emit usblSolutionComplete(idUSBL->usblSolution());
         break;
     case IDBinUsblSolution::PayloadKind::BeaconActivation:
+#ifndef SEPARATE_READING
+        core.consoleInfo(QStringLiteral("USBL beacon-activation"));
+#endif
         emit beaconActivationComplete(0);
         break;
     case IDBinUsblSolution::PayloadKind::None:

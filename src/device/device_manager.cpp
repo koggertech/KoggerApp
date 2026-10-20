@@ -55,6 +55,7 @@ DeviceManager::DeviceManager()
       progress_(0),
       isConsoled_(false),
       nmeaConsoled_(true),
+      mavlinkConsoled_(false),
       break_(false),
       upgradeUuid_(QUuid()),
       upgradeAddr_(0)
@@ -74,6 +75,7 @@ DeviceManager::DeviceManager()
     qRegisterMetaType<IDBinDVL::DVLSolution>("IDBinDVL::DVLSolution");
     qRegisterMetaType<uint32_t>("uint32_t");
     qRegisterMetaType<FrameParser>("FrameParser");
+    qRegisterMetaType<Position>("Position");
 
     heartbeatClock_.start();
     autopilotTimer_.setInterval(1000);
@@ -660,7 +662,6 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                 uint16_t ms = 0;
 
                 bool isCorrect =  prot_nmea.readTime(&h, &m, &s, &ms);
-                Q_UNUSED(isCorrect);
 
                 char c = prot_nmea.readChar();
                 if (c == 'A' || c == 'D') {
@@ -681,6 +682,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     uint32_t unix_time = static_cast<uint32_t>(dt.toSecsSinceEpoch());
 
                     emit positionComplete(lat, lon, unix_time, (uint32_t)ms*1000*1000);
+                    if (isCorrect && date.isValid()) {
+                        emit gnssUtcComplete(qint64(unix_time) * 1000000 + qint64(ms) * 1000);
+                    }
                 }
             }
 
@@ -700,6 +704,8 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                 prot_nmea.skip(); // HDOP
 
                 float height_msl = prot_nmea.readDouble(); // Orthometric height (MSL reference)
+                prot_nmea.skip();
+                const double geoid_separation = prot_nmea.readDouble();
 
                 if (q == '1' || q == '2' || q == '4' || q == '5') {
                     uint16_t year = 1971;
@@ -715,6 +721,12 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
 
                     if(q == '4') {
                         emit positionCompleteRTK(pos);
+                        if (isfinite(height_msl)) {
+                            emit gnssAltitudeMslComplete(height_msl);
+                            if (isfinite(geoid_separation)) {
+                                emit gnssAltitudeEllipsoidComplete(double(height_msl) + geoid_separation);
+                            }
+                        }
                     }
                 }
             }
@@ -753,13 +765,12 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                 h = ubx_frame.read<U1>();
                 m = ubx_frame.read<U1>();
                 s = ubx_frame.read<U1>();
-                ubx_frame.read<U1>(); // Validity flags
+                uint8_t time_valid = ubx_frame.read<U1>();
                 ubx_frame.readSkip(4); // Time accuracy estimate (UTC)
                 nanosec = ubx_frame.read<S4>();
 
                 uint8_t fix_type = ubx_frame.read<U1>();
                 uint8_t fix_flags = ubx_frame.read<U1>();
-                Q_UNUSED(fix_flags);
 
                 ubx_frame.read<U1>();
                 uint8_t satellites_in_used = ubx_frame.read<U1>();
@@ -767,6 +778,14 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
 
                 int32_t lon_int = ubx_frame.read<S4>();
                 int32_t lat_int = ubx_frame.read<S4>();
+
+                const int32_t height_mm = ubx_frame.read<S4>();
+                const bool is_rtk_fixed = (fix_flags & 0x01) && (fix_flags >> 6) == 2;
+                if (is_rtk_fixed && ubx_frame.readAvailable() >= 4) {
+                    const int32_t hmsl_mm = ubx_frame.read<S4>();
+                    emit gnssAltitudeMslComplete(double(hmsl_mm) * 0.001);
+                    emit gnssAltitudeEllipsoidComplete(double(height_mm) * 0.001);
+                }
 
                 QDate date(year, month, day);
                 QTime time(h, m, s);
@@ -776,6 +795,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
 
                 if (fix_type > 1 && fix_type < 5) {
                     emit positionComplete(double(lat_int)*0.0000001, double(lon_int)*0.0000001, unix_time, nanosec);
+                    if ((time_valid & 0x03) == 0x03) {
+                        emit gnssUtcComplete(qint64(unix_time) * 1000000 + nanosec / 1000);
+                    }
                 }
 
                 // if (isConsoled_) {
@@ -845,9 +867,40 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                             vru_.longitude = pos.longitude();
                         }
                         emit positionComplete(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
+                        if (mavlinkUnixOffsetValid_ && mavlink_frame.systemID() == mavlinkUnixOffsetSysId_) {
+                            if (pos.time_boot_msec() < mavlinkLastPositionBootMs_) {
+                                mavlinkUnixOffsetValid_ = false;
+                            }
+                            mavlinkLastPositionBootMs_ = pos.time_boot_msec();
+                            if (mavlinkUnixOffsetValid_) {
+                                emit gnssUtcComplete(qint64(pos.time_boot_msec()) * 1000 + mavlinkUnixOffsetUs_);
+                            }
+                        }
                         emit gnssVelocityComplete(pos.velocityH(), 0);
                         vru_.velocityH = pos.velocityH();
                         publishVru();
+                    }
+                }
+
+                if (mavlink_frame.msgId() == MAVLink_MSG_SYSTEM_TIME::getID()) {
+                    MAVLink_MSG_SYSTEM_TIME system_time = mavlink_frame.read<MAVLink_MSG_SYSTEM_TIME>();
+                    if (system_time.hasUnixTime()) {
+                        mavlinkUnixOffsetUs_ = system_time.unixOffsetUs();
+                        mavlinkUnixOffsetSysId_ = mavlink_frame.systemID();
+                        mavlinkUnixOffsetValid_ = true;
+                        mavlinkLastPositionBootMs_ = 0;
+                    }
+                }
+
+                const bool isGpsRaw = mavlink_frame.msgId() == MAVLink_MSG_GPS_RAW_INT::getID();
+                MAVLink_MSG_GPS_RAW_INT gpsRaw{};
+                if (isGpsRaw) {
+                    gpsRaw = mavlink_frame.read<MAVLink_MSG_GPS_RAW_INT>();
+                    if (gpsRaw.isValid() && gpsRaw.isRtkFixed()) {
+                        emit gnssAltitudeMslComplete(gpsRaw.altitudeMsl());
+                        if (gpsRaw.hasAltitudeEllipsoid()) {
+                            emit gnssAltitudeEllipsoidComplete(gpsRaw.altitudeEllipsoid());
+                        }
                     }
                 }
 
@@ -973,9 +1026,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     }
                 }
 
-                if (fromAutopilotComponent && msgId == MAVLink_MSG_GPS_RAW_INT::getID()) {
+                if (fromAutopilotComponent && isGpsRaw) {
                     const int length = mavlink_frame.payloadLen();
-                    const auto gps = mavlink_frame.read<MAVLink_MSG_GPS_RAW_INT>();
+                    const MAVLink_MSG_GPS_RAW_INT& gps = gpsRaw;
                     const int fixType = length > kGpsRawFixTypeOffset ? int(gps.fix_type) : 0;
                     const int satellites = length > kGpsRawSatellitesOffset
                                                ? (gps.satellites_visible == kGpsSatellitesUnknown ? -1 : int(gps.satellites_visible))
@@ -1024,7 +1077,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     }
                 }
 #ifndef SEPARATE_READING
-                core.consoleProtoText(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
+                if (mavlinkConsoled_) {
+                    core.consoleProtoText(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
+                }
 #endif
             }
             else {
@@ -1270,6 +1325,11 @@ void DeviceManager::setNmeaConsoled(bool isConsoled)
     nmeaConsoled_ = isConsoled;
 }
 
+void DeviceManager::setMavlinkConsoled(bool isConsoled)
+{
+    mavlinkConsoled_ = isConsoled;
+}
+
 void DeviceManager::upgradeLastDev(QByteArray data)
 {
     if (lastDevs_ != nullptr) {
@@ -1454,6 +1514,9 @@ void DeviceManager::onPositionUpdated(const QGeoPositionInfo &info)
     smplNav.roll = 0;
 
     emit positionComplete(smplNav.latitude, smplNav.longitude, info.timestamp().toSecsSinceEpoch(), info.timestamp().toMSecsSinceEpoch());
+    if (info.timestamp().isValid()) {
+        emit gnssUtcComplete(info.timestamp().toMSecsSinceEpoch() * 1000);
+    }
     emit attitudeComplete(smplNav.yaw, 0.0, 0.0);
 
     // LOGGING
@@ -1499,6 +1562,9 @@ DevQProperty* DeviceManager::getDevice(QUuid uuid, Link *link, uint8_t addr)
 
 void DeviceManager::delAllDev()
 {
+    mavlinkUnixOffsetValid_ = false;
+    mavlinkLastPositionBootMs_ = 0;
+
     QList<QUuid> keysToDelete;
     for (auto i = devTree_.cbegin(), end = devTree_.cend(); i != end; ++i) {
         keysToDelete.append(i.key());

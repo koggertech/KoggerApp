@@ -117,6 +117,7 @@ public slots:
     void binFrameOut(Parsers::ProtoBinOut protoOut);
     void setProtoBinConsoled(bool isConsoled);
     void setNmeaConsoled(bool isConsoled);
+    void setMavlinkConsoled(bool isConsoled);
     void upgradeLastDev(QByteArray data);
 
     void beaconActivationReceive(uint8_t id);
@@ -195,6 +196,9 @@ signals:
     void rangefinderComplete(const ChannelId& channelId, float distance);
     void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
     void positionCompleteRTK(Position position);
+    void gnssAltitudeMslComplete(double altitudeMsl);
+    void gnssAltitudeEllipsoidComplete(double altitudeEllipsoid);
+    void gnssUtcComplete(qint64 unixUs);
     void depthComplete(float depth);
     void gnssVelocityComplete(double hSpeed, double course);
     void simpleNavV2Complete(uint8_t gnssFixType,
@@ -318,10 +322,15 @@ private:
     QUuid lastUuid_;
     QUuid proxyLinkUuid_;
     QUuid mavlinUuid_;
+    int64_t mavlinkUnixOffsetUs_ = 0;
+    bool mavlinkUnixOffsetValid_ = false;
+    uint8_t mavlinkUnixOffsetSysId_ = 0;
+    uint32_t mavlinkLastPositionBootMs_ = 0;
     int lastAddress_;
     int progress_;
     bool isConsoled_;
     bool nmeaConsoled_;
+    bool mavlinkConsoled_;
     volatile bool break_;
 #ifdef SEPARATE_READING
     bool onOpen_{ false };

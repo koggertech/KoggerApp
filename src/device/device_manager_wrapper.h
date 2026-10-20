@@ -22,6 +22,7 @@ public:
     Q_PROPERTY(bool standAvailable READ standAvailable NOTIFY standAvailableChanged)
     Q_PROPERTY(bool protoBinConsoled READ getProtoBinConsoled WRITE setProtoBinConsoled NOTIFY protoBinConsoledChanged)
     Q_PROPERTY(bool nmeaConsoled READ getNmeaConsoled WRITE setNmeaConsoled NOTIFY nmeaConsoledChanged)
+    Q_PROPERTY(bool mavlinkConsoled READ getMavlinkConsoled WRITE setMavlinkConsoled NOTIFY mavlinkConsoledChanged)
     Q_PROPERTY(StreamListModel* streamsList READ streamsList NOTIFY streamChanged)
     Q_PROPERTY(float vruVoltage READ vruVoltage NOTIFY vruChanged)
     Q_PROPERTY(float vruCurrent READ vruCurrent NOTIFY vruChanged)
@@ -121,6 +122,7 @@ public:
 
     bool getProtoBinConsoled() const { return protoBinConsoledState_; };
     bool getNmeaConsoled() const { return nmeaConsoledState_; };
+    bool getMavlinkConsoled() const { return mavlinkConsoledState_; };
     bool getUSBLBeaconDirectAsk() const { return USBLBeaconDirectAskState_; };
     int getAverageChartLosses() const {
         return averageChartLosses_;
@@ -167,6 +169,15 @@ public slots:
         }
     }
 
+    void setMavlinkConsoled(bool state) {
+        const bool changed = (mavlinkConsoledState_ != state);
+        mavlinkConsoledState_ = state;
+        getWorker()->setMavlinkConsoled(mavlinkConsoledState_);
+        if (changed) {
+            emit mavlinkConsoledChanged();
+        }
+    }
+
     void setUSBLBeaconDirectAsk(bool is_ask) {
         const bool changed = (USBLBeaconDirectAskState_ != is_ask);
         USBLBeaconDirectAskState_ = is_ask;
@@ -201,6 +212,7 @@ signals:
     void chartLossesChanged();
     void protoBinConsoledChanged();
     void nmeaConsoledChanged();
+    void mavlinkConsoledChanged();
     void USBLBeaconDirectAskChanged();
 
 private:
@@ -234,5 +246,6 @@ private:
     int averageChartLosses_;
     bool protoBinConsoledState_;
     bool nmeaConsoledState_;
+    bool mavlinkConsoledState_;
     bool USBLBeaconDirectAskState_;
 }; // class DeviceWrapper

@@ -480,6 +480,18 @@ Item {
                     }
                 }
 
+                Toggle {
+                    id: mavlinkConsoled
+                    visible: root.protoTogglesVisible
+                    label: qsTr("MAVLink")
+                    checked: !!root.store && root.store.consoleMavlink
+                    onToggled: function(value) {
+                        if (root.store)
+                            root.store.consoleMavlink = value
+                        checked = Qt.binding(function() { return !!root.store && root.store.consoleMavlink })
+                    }
+                }
+
                 Item { Layout.fillWidth: true }
 
                 KCircleIconButton {

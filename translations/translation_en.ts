@@ -2503,6 +2503,30 @@ udp://@:1234
         <translation>Rangefinder distance (red line)</translation>
     </message>
     <message>
+        <source>GNSS altitude (above sea level)</source>
+        <translation>GNSS altitude (above sea level)</translation>
+    </message>
+    <message>
+        <source>Antenna altitude above mean sea level, RTK fixed only (MAVLink, UBX, NMEA GGA)</source>
+        <translation>Antenna altitude above mean sea level, RTK fixed only (MAVLink, UBX, NMEA GGA)</translation>
+    </message>
+    <message>
+        <source>GNSS position date/time (UTC)</source>
+        <translation>GNSS position date/time (UTC)</translation>
+    </message>
+    <message>
+        <source>UTC date and time carried by the GNSS position message (NMEA RMC, UBX, MAVLink)</source>
+        <translation>UTC date and time carried by the GNSS position message (NMEA RMC, UBX, MAVLink)</translation>
+    </message>
+    <message>
+        <source>GNSS altitude (above ellipsoid)</source>
+        <translation>GNSS altitude (above ellipsoid)</translation>
+    </message>
+    <message>
+        <source>Antenna altitude above the WGS84 ellipsoid, RTK fixed only (MAVLink 2, UBX, NMEA GGA)</source>
+        <translation>Antenna altitude above the WGS84 ellipsoid, RTK fixed only (MAVLink 2, UBX, NMEA GGA)</translation>
+    </message>
+    <message>
         <location filename="../qml/app/CsvExportSettingsTab.qml" line="30"/>
         <source>Post-processing distance (green line)</source>
         <translation>Post-processing distance (green line)</translation>
