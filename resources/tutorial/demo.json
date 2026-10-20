@@ -1,0 +1,67 @@
+{
+  "id": "demo",
+  "version": 1,
+  "devOnly": true,
+  "title": "Tutorial engine demo",
+  "defaults": {
+    "dim": { "opacity": 0.72 },
+    "spotlight": { "padding": 6, "radius": 10 },
+    "buttons": { "close": true },
+    "onMissing": "skip",
+    "timeoutMs": 2500
+  },
+  "steps": [
+    {
+      "id": "intro",
+      "spotlight": { "enabled": false },
+      "arrow": { "enabled": false },
+      "title": "Tutorial demo",
+      "text": "This scenario shows every building block of the tutorial engine. Tap anywhere to continue.",
+      "comment": "First card of the developer demo scenario",
+      "enter": [ { "set": "settingsPanelOpen", "value": false } ],
+      "advance": "anywhere"
+    },
+    {
+      "id": "quickActions",
+      "anchor": "hotActions.settings",
+      "spotlight": { "shape": "circle", "anchors": ["hotActions.expand"] },
+      "title": "Settings and quick actions",
+      "text": "The logo opens the settings, the arrow next to it unfolds the quick actions. One step can frame several elements.",
+      "advance": "anywhere",
+      "buttons": { "back": true }
+    },
+    {
+      "id": "gear",
+      "anchor": "scene3d.settingsGear",
+      "title": "3D scene settings",
+      "text": "Tap the gear. The tap reaches the button itself and the step continues once settings are open.",
+      "enter": [ { "set": "settingsPanelOpen", "value": false } ],
+      "advance": "target",
+      "until": { "property": "settingsPanelOpen", "equals": true },
+      "spotlight": { "shape": "circle" }
+    },
+    {
+      "id": "tutorialsRow",
+      "checkpoint": true,
+      "anchor": "settings.tutorials",
+      "title": "Tutorials",
+      "text": "All tutorials live here. A closed tutorial can be continued from its last checkpoint.",
+      "enter": [ { "call": "openAppSettingsAtGroup", "args": ["app.preference"] } ],
+      "delayMs": 300,
+      "advance": "button",
+      "spotlight": { "passThrough": false },
+      "buttons": { "next": true, "back": true, "skip": true }
+    },
+    {
+      "id": "done",
+      "spotlight": { "enabled": false },
+      "arrow": { "enabled": false },
+      "bubble": { "icon": "ui/check.svg" },
+      "title": "That's it",
+      "text": "The scenario is marked as completed.",
+      "enter": [ { "set": "settingsPanelOpen", "value": false } ],
+      "advance": "button",
+      "buttons": { "next": true, "nextLabel": "Finish" }
+    }
+  ]
+}

@@ -15,6 +15,8 @@ qt_add_qml_module(kogger_kqml_types
         KCheckBox.qml
         KCircleIconButton.qml
         KCloseBadge.qml
+        KCoachArrow.qml
+        KCoachBubble.qml
         KCombo.qml
         KDragBar.qml
         KFocusRing.qml
@@ -25,11 +27,13 @@ qt_add_qml_module(kogger_kqml_types
         KScrollBar.qml
         KSlider.qml
         KSpinBox.qml
+        KSpotlight.qml
         KSwitch.qml
         KTabBar.qml
         KTapArea.qml
         KToggleRow.qml
         KToolTip.qml
+        KTutorialAnchor.qml
         Tokens.qml
         ZOrder.qml
         UsblFieldLogic.js)

@@ -2303,6 +2303,7 @@ function openCsvExportSettings()    { _openSettingsSubPage("csvExport") }
 function openConsoleSettings()      { _openSettingsSubPage("console") }
 function openAboutSettings()        { _openSettingsSubPage("about") }
 function openControlsHelp()         { _openSettingsSubPage("controls") }
+function openTutorialsSettings()    { _openSettingsSubPage("tutorials") }
 function openDeveloperSettings()    { _openSettingsSubPage("developer") }
 function openLicenseView(title, file) {
     licenseViewTitle = title

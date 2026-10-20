@@ -562,6 +562,17 @@ Column {
             }
 
             KIslandRow {
+                id: tutorialsRow
+                label: qsTr("Tutorials")
+                chevron: true
+                interactive: true
+                toolTipText: qsTr("Step-by-step guides through the application")
+                onClicked: if (root.store) root.store.openTutorialsSettings()
+            }
+
+            KTutorialAnchor { key: "settings.tutorials"; target: tutorialsRow }
+
+            KIslandRow {
                 visible: Qt.platform.os !== "android"
                 label: qsTr("Key bindings")
                 chevron: true

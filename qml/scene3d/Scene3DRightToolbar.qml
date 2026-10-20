@@ -482,6 +482,8 @@ Item {
             toolTipText: qsTr("3D scene settings")
             visible: root.store !== null
 
+            KTutorialAnchor { key: "scene3d.settingsGear" }
+
             onClicked: {
                 root.cancelRuler(); root.closePills()
                 if (root.store && typeof root.store.openAppSettingsAtGroup === "function")

@@ -717,6 +717,7 @@ Rectangle {
                         text: root.plan ? root.plan.name : ""
                         onEditingFinished: if (root.plan && root.plan.name !== text) root.plan.name = text
                     }
+                    KTutorialAnchor { key: "missions.name" }
                 }
 
                 Text {
@@ -729,10 +730,12 @@ Rectangle {
                     font.pixelSize: Tokens.fontSm
                     elide: Text.ElideMiddle
                     Layout.fillWidth: true
+                    KTutorialAnchor { key: "missions.fileStatus" }
                 }
 
                 Rectangle {
                     id: vehicleBadge
+                    KTutorialAnchor { key: "missions.vehicleBadge" }
                     readonly property int badgeState: root._vehicleBadgeState
                     readonly property bool actionable: (badgeState === 4 || badgeState === 5) && !root._uploading
                     visible: badgeState > 0
@@ -788,10 +791,20 @@ Rectangle {
 
                 KCircleIconButton {
                     Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
+                    iconSource: "qrc:/icons/ui/question-mark.svg"; iconTintColor: AppPalette.text
+                    fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
+                    toolTipText: qsTr("Help")
+                    onClicked: if (typeof tutorial !== "undefined" && tutorial) tutorial.start("missions")
+                    KTutorialAnchor { key: "missions.help" }
+                }
+                Item { Layout.preferredWidth: Tokens.spaceXs; Layout.preferredHeight: 1 }
+                KCircleIconButton {
+                    Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
                     iconSource: "qrc:/icons/ui/file_plus.svg"; iconTintColor: AppPalette.text
                     fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: qsTr("New mission")
                     onClicked: root.guardUnsaved(function() { if (root.plan) root.plan.newPlan() })
+                    KTutorialAnchor { key: "missions.new" }
                 }
                 KCircleIconButton {
                     Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
@@ -799,6 +812,7 @@ Rectangle {
                     fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: qsTr("Open mission")
                     onClicked: root.guardUnsaved(function() { root._prepareDialog(openDialog); openDialog.open() })
+                    KTutorialAnchor { key: "missions.open" }
                 }
                 KCircleIconButton {
                     Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
@@ -809,7 +823,9 @@ Rectangle {
                     borderColor: root.plan && root.plan.dirty ? AppPalette.accentBorder : AppPalette.border
                     toolTipText: qsTr("Save mission")
                     onClicked: root.saveAction()
+                    KTutorialAnchor { key: "missions.save" }
                 }
+                Item { Layout.preferredWidth: Tokens.spaceXs; Layout.preferredHeight: 1 }
                 KCircleIconButton {
                     Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
                     iconSource: "qrc:/icons/ui/upload.svg"; iconTintColor: AppPalette.text
@@ -818,6 +834,7 @@ Rectangle {
                     fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: root._uploading ? qsTr("Uploading mission to the vehicle") : qsTr("Upload to vehicle")
                     onClicked: root.requestUpload()
+                    KTutorialAnchor { key: "missions.upload" }
                 }
                 KCircleIconButton {
                     Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
@@ -827,7 +844,9 @@ Rectangle {
                     fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: qsTr("Read mission from vehicle")
                     onClicked: root.requestDownload()
+                    KTutorialAnchor { key: "missions.download" }
                 }
+                Item { Layout.preferredWidth: Tokens.spaceXs; Layout.preferredHeight: 1 }
                 KCircleIconButton {
                     id: moreBtn
                     Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
@@ -835,6 +854,7 @@ Rectangle {
                     fillColor: moreMenu.visible ? AppPalette.accentBgStrong : AppPalette.card
                     fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: qsTr("Save as, export")
+                    KTutorialAnchor { key: "missions.more" }
                     onClicked: {
                         if (!moreMenu.visible) {
                             var p = moreBtn.mapToItem(root, 0, 0)
@@ -844,6 +864,7 @@ Rectangle {
                     }
                 }
 
+                Item { Layout.preferredWidth: Tokens.spaceXs; Layout.preferredHeight: 1 }
                 KCircleIconButton {
                     Layout.preferredWidth: root.headerBtn; Layout.minimumWidth: root.headerBtn
                     Layout.preferredHeight: root.headerBtn; Layout.minimumHeight: root.headerBtn
@@ -852,6 +873,7 @@ Rectangle {
                     fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: qsTr("Close editor")
                     onClicked: root.requestClose()
+                    KTutorialAnchor { key: "missions.close" }
                 }
             }
         }
@@ -863,6 +885,7 @@ Rectangle {
 
             Rectangle {
                 id: toolsColumn
+                KTutorialAnchor { key: "missions.tools" }
                 Layout.preferredWidth: root.toolSize + Tokens.spaceMd * 2
                 Layout.fillHeight: true
                 color: AppPalette.bgDeep
@@ -955,6 +978,7 @@ Rectangle {
                                     armed: root.ctl && (root.ctl.tool === toolSlot.modelData.tool || (shapeTool && root.ctl.tool === traceTool))
                                     iconSource: toolSlot.modelData.icon
                                     toolTipText: toolSlot.modelData.tip
+                                    KTutorialAnchor { key: "missions.tool." + toolSlot.modelData.tool }
                                     borderColor: armed ? AppPalette.accentBorder : (attention ? AppPalette.linkIdleBorder : AppPalette.border)
                                     borderWidth: attention ? 2 : 1
                                     onClicked: {
@@ -1020,12 +1044,14 @@ Rectangle {
                         ToolButton {
                             iconSource: "qrc:/icons/ui/arrow-back-up.svg"
                             toolTipText: qsTr("Undo")
+                            KTutorialAnchor { key: "missions.undo" }
                             enabled: root.plan && root.plan.canUndo
                             onClicked: if (root.plan) root.plan.undo()
                         }
                         ToolButton {
                             iconSource: "qrc:/icons/ui/arrow-forward-up.svg"
                             toolTipText: qsTr("Redo")
+                            KTutorialAnchor { key: "missions.redo" }
                             enabled: root.plan && root.plan.canRedo
                             onClicked: if (root.plan) root.plan.redo()
                         }
@@ -1034,16 +1060,19 @@ Rectangle {
                         ToolButton {
                             iconSource: "qrc:/icons/ui/fit-in-view.svg"
                             toolTipText: qsTr("Fit mission in view")
+                            KTutorialAnchor { key: "missions.fit" }
                             onClicked: if (root.ctl) root.ctl.fitToPlan()
                         }
                         ToolButton {
                             iconSource: "qrc:/icons/ui/plus.svg"
                             toolTipText: qsTr("Zoom in")
+                            KTutorialAnchor { key: "missions.zoomIn" }
                             onClicked: if (root.view && root.view.zoomButtonAnimated) root.view.zoomButtonAnimated(4)
                         }
                         ToolButton {
                             iconSource: "qrc:/icons/ui/minus.svg"
                             toolTipText: qsTr("Zoom out")
+                            KTutorialAnchor { key: "missions.zoomOut" }
                             onClicked: if (root.view && root.view.zoomButtonAnimated) root.view.zoomButtonAnimated(-4)
                         }
 
@@ -1051,6 +1080,7 @@ Rectangle {
 
                         ToolButton {
                             id: layerBtn
+                            KTutorialAnchor { key: "missions.layers" }
                             iconSource: "qrc:/icons/ui/layers-selected.svg"
                             toolTipText: (typeof core !== "undefined" && core) ? core.mapTileProviderName : ""
                             toolTipSuppressed: layerSwitch.listShown || layerSwitch.listPinned
@@ -1092,6 +1122,7 @@ Rectangle {
 
             Item {
                 id: sceneArea
+                KTutorialAnchor { key: "missions.map" }
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
@@ -1160,6 +1191,7 @@ Rectangle {
                     border.color: AppPalette.border
                     border.width: 1
                     visible: hintText.text.length > 0
+                    KTutorialAnchor { key: "missions.hint" }
 
                     Text {
                         id: hintText
@@ -1362,6 +1394,7 @@ Rectangle {
             Rectangle {
                 id: panel
                 Layout.preferredWidth: root.panelWidth
+                KTutorialAnchor { key: "missions.panel" }
                 Layout.fillHeight: true
                 color: AppPalette.bgDeep
 
@@ -1388,6 +1421,9 @@ Rectangle {
 
                         KIsland {
                             title: qsTr("Plan")
+                            id: planIsland
+                            KTutorialAnchor { key: "missions.plan"; target: planIsland }
+                            KTutorialAnchor { key: "missions.startPoint"; target: homeRow }
                             width: parent.width
 
                             KIslandRow {
@@ -1490,6 +1526,7 @@ Rectangle {
 
                         KIsland {
                             id: routeIsland
+                            KTutorialAnchor { key: "missions.route"; target: routeIsland }
                             title: qsTr("Route")
                             width: parent.width
                             footer: root.itemIds.length === 0 ? qsTr("No items yet. Use the tools on the left.") : ""
@@ -1593,6 +1630,8 @@ Rectangle {
 
                         KIsland {
                             title: qsTr("Summary")
+                            id: summaryIsland
+                            KTutorialAnchor { key: "missions.summary"; target: summaryIsland }
                             width: parent.width
 
                             KIslandRow { label: qsTr("Length");    caption: root.formatLength(root.estimates.lengthMeters) }
