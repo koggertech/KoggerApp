@@ -2,49 +2,88 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="pl_PL">
 <context>
+    <name>AboutPage</name>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="47"/>
+        <source>Full notices, component provenance and where to obtain the sources are in THIRD_PARTY_NOTICES.md in the source tree.</source>
+        <translation>Pełne informacje, pochodzenie komponentów i adresy źródeł znajdują się w pliku THIRD_PARTY_NOTICES.md w drzewie źródeł.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="46"/>
+        <source>Third-party components</source>
+        <translation>Komponenty zewnętrzne</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="36"/>
+        <location filename="../qml/app/AboutPage.qml" line="41"/>
+        <source>Application license</source>
+        <translation>Licencja aplikacji</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="33"/>
+        <source>KoggerApp is distributed under the GNU General Public License v3.</source>
+        <translation>KoggerApp jest rozpowszechniany na licencji GNU General Public License v3.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="32"/>
+        <source>License</source>
+        <translation>Licencja</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="15"/>
+        <source>The FreeType License (FTL)</source>
+        <translation>Licencja FreeType (FTL)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AboutPage.qml" line="26"/>
+        <source>Revision %1</source>
+        <translation>Rewizja %1</translation>
+    </message>
+</context>
+<context>
     <name>AimPanelSettingsTab</name>
     <message>
-        <location filename="../qml/app/AimPanelSettingsTab.qml" line="16"/>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="31"/>
         <source>Show information panel</source>
         <translation>Pokaż panel informacyjny</translation>
     </message>
     <message>
-        <location filename="../qml/app/AimPanelSettingsTab.qml" line="22"/>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="38"/>
         <source>Fields:</source>
         <translation>Pola:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AimPanelSettingsTab.qml" line="29"/>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="49"/>
         <source>Channel</source>
         <translation>Kanał</translation>
     </message>
     <message>
-        <location filename="../qml/app/AimPanelSettingsTab.qml" line="34"/>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="55"/>
         <source>Epoch</source>
         <translation>Epoka</translation>
     </message>
     <message>
-        <location filename="../qml/app/AimPanelSettingsTab.qml" line="39"/>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="61"/>
         <source>Resolution</source>
         <translation>Rozdzielczość</translation>
     </message>
     <message>
-        <location filename="../qml/app/AimPanelSettingsTab.qml" line="44"/>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="67"/>
         <source>Frequency</source>
         <translation>Częstotliwość</translation>
     </message>
     <message>
-        <location filename="../qml/app/AimPanelSettingsTab.qml" line="49"/>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="73"/>
         <source>Pulse count</source>
         <translation>Liczba impulsów</translation>
     </message>
     <message>
-        <location filename="../qml/app/AimPanelSettingsTab.qml" line="54"/>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="79"/>
         <source>Booster</source>
         <translation>Wzmacniacz</translation>
     </message>
     <message>
-        <location filename="../qml/app/AimPanelSettingsTab.qml" line="59"/>
+        <location filename="../qml/app/AimPanelSettingsTab.qml" line="85"/>
         <source>Speed of sound</source>
         <translation>Prędkość dźwięku</translation>
     </message>
@@ -90,952 +129,1049 @@
     </message>
 </context>
 <context>
+    <name>AppIdentityCard</name>
+    <message>
+        <location filename="../qml/app/AppIdentityCard.qml" line="66"/>
+        <source>Developer mode enabled</source>
+        <translation>Włączono tryb dla programistów</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppIdentityCard.qml" line="61"/>
+        <source>Tap once more to unlock developer features</source>
+        <translation>Naciśnij jeszcze raz, aby odblokować funkcje dla programistów</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppIdentityCard.qml" line="50"/>
+        <source>Developer mode is already enabled</source>
+        <translation>Tryb dla programistów jest już włączony</translation>
+    </message>
+</context>
+<context>
     <name>AppSettingsPage</name>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="557"/>
         <source>Controls</source>
         <translation>Sterowanie</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="560"/>
         <source>Navigation hints for the application</source>
         <translation>Wskazówki dotyczące nawigacji w aplikacji</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="606"/>
         <source>About</source>
         <translation>O programie</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1889"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2146"/>
         <source>Video</source>
         <translation>Wideo</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1890"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2147"/>
         <source>Per-window video settings.</source>
         <translation>Ustawienia wideo dla okien.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1908"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2166"/>
         <source>No video windows displayed. You can add one while editing the workspace.</source>
         <translation>Brak wyświetlanych okien wideo. Możesz dodać okno podczas edycji przestrzeni roboczej.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="657"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="680"/>
         <source>Layout %1</source>
         <translation>Układ %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="659"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="682"/>
         <source>Active</source>
         <translation>Aktywny</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2065"/>
         <source>Dataset: with position zeroing on</source>
         <translation>Zbiór danych: zerowanie pozycji</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="794"/>
         <source>Servo</source>
         <translation>Serwo</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="491"/>
         <source>Hide important notifications</source>
         <translation>Ukrywaj ważne powiadomienia</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="492"/>
         <source>Auto-hide warning notifications like info ones</source>
         <translation>Automatycznie ukrywaj powiadomienia ostrzegawcze jak informacyjne</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3080"/>
         <source>Show the scale bar in the 3D scene</source>
         <translation>Pokaż podziałkę skali w scenie 3D</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3097"/>
         <source>USBL beacons</source>
         <translation>Bakeny USBL</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3099"/>
         <source>Show the acoustic nodes and their tracks in the 3D scene</source>
         <translation>Pokaż węzły akustyczne i ich trasy w scenie 3D</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2678"/>
         <source>Show the surface quality label in the 3D scene</source>
         <translation>Pokaż etykietę jakości powierzchni w scenie 3D</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2795"/>
         <source>Orient the 3D view to north (north stays up)</source>
         <translation>Zorientuj widok 3D na północ (północ u góry)</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2814"/>
         <source>Sync the cursor between the 2D echogram and the 3D scene</source>
         <translation>Synchronizuj kursor między echogramem 2D a sceną 3D</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1942"/>
         <source>Left-side beam angle offset for the mosaic, °</source>
         <translation>Przesunięcie kąta wiązki lewej dla mozaiki, °</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1958"/>
         <source>Right-side beam angle offset for the mosaic, °</source>
         <translation>Przesunięcie kąta wiązki prawej dla mozaiki, °</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1977"/>
         <source>Show the current mosaic trace line</source>
         <translation>Pokaż bieżącą linię trasy mozaiki</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2319"/>
         <source>Sync the cursor position across all echograms</source>
         <translation>Synchronizuj pozycję kursora między wszystkimi echogramami</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2336"/>
         <source>Sync scroll and zoom across echograms</source>
         <translation>Synchronizuj przewijanie i powiększenie między echogramami</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2352"/>
         <source>Configure the information panel</source>
         <translation>Skonfiguruj panel informacyjny</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1485"/>
         <source>Colour theme for isobaths (palette by depth)</source>
         <translation>Motyw kolorów izobat (paleta wg głębokości)</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1544"/>
         <source>Max triangulation edge length</source>
         <translation>Maks. długość krawędzi triangulacji</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1566"/>
         <source>Isobath interval — spacing between depth lines</source>
         <translation>Odstęp izobat — odległość między liniami głębokości</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1590"/>
         <source>Surface extrapolation radius around the track</source>
         <translation>Promień ekstrapolacji powierzchni wokół trasy</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1636"/>
         <source>Choose the surface .csv file</source>
         <translation>Wybierz plik .csv powierzchni</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1669"/>
         <source>Export the surface to CSV</source>
         <translation>Eksportuj powierzchnię do CSV</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="644"/>
         <source>Edit workspace panes</source>
         <translation>Edycja paneli obszaru roboczego</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="657"/>
         <source>Floating window over the workspace, independent of the layout</source>
         <translation>Pływające okno nad obszarem roboczym, niezależne od układu</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="505"/>
         <source>Hide echogram controls when there is no matching data; off shows everything</source>
         <translation>Ukryj elementy echogramu bez odpowiadających danych; wył. — pokaż wszystko</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="518"/>
         <source>Shift the workspace aside when the settings panel opens, instead of overlaying on top</source>
         <translation>Przesuwaj obszar roboczy przy otwarciu panelu ustawień zamiast nakładać na wierzch</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="264"/>
         <source>Choose export folder</source>
         <translation>Wybierz folder eksportu</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="288"/>
         <source>Open the CSV export tab</source>
         <translation>Otwórz kartę eksportu CSV</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3354"/>
         <source>Data</source>
         <translation>Dane</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3397"/>
         <source>Cancel</source>
         <translation>Anuluj</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1684"/>
         <source>Surface exported to %1</source>
         <translation>Powierzchnia wyeksportowana do %1</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1685"/>
         <source>Surface export failed</source>
         <translation>Nie udało się wyeksportować powierzchni</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1679"/>
         <source>Invalid characters in file name</source>
         <translation>Niedozwolone znaki w nazwie pliku</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="912"/>
         <source>Fills black stripes in the echogram by interpolating the given number of steps forward / backward.</source>
         <translation>Wypełnia czarne pasy na echogramie, interpolując zadaną liczbę kroków w przód / w tył.</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="960"/>
         <source>Sonar mount-point offset along the X / Y axes, in millimeters.</source>
         <translation>Przesunięcie punktu montażu sonaru wzdłuż osi X / Y, w milimetrach.</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1016"/>
         <source>Zeroes position coordinates relative to the start point.</source>
         <translation>Zeruje współrzędne pozycji względem punktu początkowego.</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1030"/>
         <source>Zeroes the bottom-track depth reference.</source>
         <translation>Zeruje odniesienie głębokości toru dna.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1769"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2350"/>
         <source>Information panel</source>
         <translation>Panel informacyjny</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1754"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2317"/>
         <source>Sync echograms</source>
         <translation>Synchronizacja echogramów</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1760"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2332"/>
         <source>Sync view</source>
         <translation>Synchronizacja widoku</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="487"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="545"/>
         <source>Rotate layout with device</source>
         <translation>Obracaj układ z urządzeniem</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2267"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3171"/>
         <source>Limit downloads on metered networks</source>
         <translation>Ogranicz pobieranie w sieci taryfowej</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2257"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3215"/>
         <source>Metered network (limited)</source>
         <translation>Sieć taryfowa (ograniczona)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2423"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3386"/>
         <source>Clear?</source>
         <translation>Wyczyścić?</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1520"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1044"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2005"/>
         <source>Open TGC settings</source>
         <translation>Otwórz ustawienia TGC</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="710"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1014"/>
         <source>Pos zeroing</source>
         <translation>Zerowanie pozycji</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="717"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1028"/>
         <source>Bottom track zeroing</source>
         <translation>Zerowanie śledzenia dna</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="472"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="504"/>
         <source>Hide UI elements for missing data</source>
         <translation>Ukryj elementy UI dla brakujących danych</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="319"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="328"/>
         <source>Language:</source>
         <translation>Język:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="338"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1071"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1313"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="348"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1478"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1794"/>
         <source>Theme:</source>
         <translation>Motyw:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="309"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="318"/>
         <source>Interface</source>
         <translation>Interfejs</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="617"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="891"/>
         <source>Dataset</source>
         <translation>Zbiór danych</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="422"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="755"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="433"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1088"/>
         <source>Bottom Track</source>
         <translation>Ślad dna</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="205"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="204"/>
         <source>Export</source>
         <translation>Eksport</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="537"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="591"/>
         <source>UI Saving</source>
         <translation>Zapisywanie UI</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="310"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="319"/>
         <source>Language, theme, UI scale and panel visibility.</source>
         <translation>Język, motyw, skala interfejsu i widoczność paneli.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="440"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="448"/>
         <source>UI scale:</source>
         <translation>Skala interfejsu:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="618"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="892"/>
         <source>Black-stripe filtering and sonar mount-point offset.</source>
         <translation>Filtrowanie czarnych pasów i przesunięcie punktu montażu sonaru.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="736"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1069"/>
         <source>Boat track</source>
         <translation>Ślad łodzi</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="737"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1070"/>
         <source>Vessel track displayed in the 3D scene.</source>
         <translation>Trasa łodzi w scenie 3D.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="78"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="41"/>
         <source>Show in 3D</source>
         <translation>Pokaż w 3D</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="547"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="617"/>
+        <source>Developer switches and diagnostics. Turning the mode off hides this row again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="636"/>
         <source>Workspace</source>
         <translation>Obszar roboczy</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="548"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="637"/>
         <source>Workspace layouts and pane editing.</source>
         <translation>Układy obszaru roboczego i edycja paneli.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="597"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="702"/>
         <source>Delete layout</source>
         <translation>Usuń układ</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="605"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="711"/>
         <source>Create layout</source>
         <translation>Utwórz układ</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="756"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1089"/>
         <source>Bottom detection presets, thresholds and search window.</source>
         <translation>Presety wykrywania dna, progi i okno wyszukiwania.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1006"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1403"/>
         <source>Isobaths</source>
         <translation>Izobaty</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1007"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1404"/>
         <source>Equal-depth contour lines on the surface.</source>
         <translation>Linie jednakowej głębokości na powierzchni.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1321"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1487"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1802"/>
         <source>Midnight</source>
         <translation>Północ</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1487"/>
         <source>Default</source>
         <translation>Normalna</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1321"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1487"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1802"/>
         <source>Blue</source>
         <translation>Niebieski</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1321"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1487"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1802"/>
         <source>Sepia</source>
         <translation>Sepia</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1321"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1487"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1802"/>
         <source>Sepia New</source>
         <translation>Nowa Sepia</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1321"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1487"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1802"/>
         <source>WRGBD</source>
         <translation>WRGBD</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1321"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1487"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1802"/>
         <source>WhiteBlack</source>
         <translation>Biało-Czarny</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1487"/>
         <source>Standard</source>
         <translation>Standard</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1321"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1487"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1802"/>
         <source>DeepBlue</source>
         <translation>Modry</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1321"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1487"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1802"/>
         <source>Ice</source>
         <translation>Lód</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1079"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1321"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1487"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1802"/>
         <source>Green</source>
         <translation>Zielony</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1098"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1537"/>
         <source>Edge limit, m:</source>
         <translation>Limit krawędzi, m:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1119"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1559"/>
         <source>Step, m:</source>
         <translation>Krok, m:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1142"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1583"/>
         <source>Extra width, m:</source>
         <translation>Dodatkowa szerokość, m:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1186"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1626"/>
         <source>Enter path</source>
         <translation>Wprowadź ścieżkę</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1207"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1651"/>
         <source>Select folder and set .csv file name</source>
         <translation>Wybierz folder i ustaw nazwę pliku .csv</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="283"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1224"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="285"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1668"/>
         <source>Export to CSV</source>
         <translation>Eksport do CSV</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1241"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1719"/>
         <source>Mosaic</source>
         <translation>Mozaika</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1242"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1720"/>
         <source>Side-scan mosaic visualisation.</source>
         <translation>Wizualizacja mozaiki sonaru bocznego.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1321"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1802"/>
         <source>BlackWhite</source>
         <translation>Czarno-Biały</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1338"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1819"/>
         <source>Channels:</source>
         <translation>Kanały:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1449"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1930"/>
         <source>Angle, °:</source>
         <translation>Kąt, °:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1493"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1976"/>
         <source>Trace line</source>
         <translation>Linia trasy</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1504"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1988"/>
         <source>Data source:</source>
         <translation>Źródło danych:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="725"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1526"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1043"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2011"/>
         <source>TGC</source>
         <translation>TGC</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1526"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2011"/>
         <source>Raw</source>
         <translation>Raw</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1568"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2081"/>
         <source>Calc last N epochs:</source>
         <translation>Oblicz N ost. epok:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1588"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2103"/>
         <source>All</source>
         <translation>Wszystkie</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1594"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2109"/>
         <source>Clear old data (*)</source>
         <translation>Wyczyść stare dane (*)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1777"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2652"/>
         <source>3D scene</source>
         <translation>Scena 3D</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1778"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2653"/>
         <source>3D scene settings, map provider switching.</source>
         <translation>Ustawienia sceny 3D, zmiana dostawcy map.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1789"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2668"/>
         <source>Rendering</source>
         <translation>Renderowanie</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1797"/>
-        <source>Reset depth zoom</source>
-        <translation>Zresetuj powiększenie</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2423"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3370"/>
         <source>Reset surface</source>
         <translation>Zresetuj powierzchnię</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1807"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2676"/>
         <source>Show surface quality</source>
         <translation>Pokaż jakość powierzchni</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1817"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2692"/>
         <source>Force zoom</source>
         <translation>Stały zoom</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1698"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1830"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2243"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2710"/>
         <source>Loupe</source>
         <translation>Lupa</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1706"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1842"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="566"/>
+        <source>Tutorials</source>
+        <translation>Samouczki</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="569"/>
+        <source>Step-by-step guides through the application</source>
+        <translation>Przewodniki krok po kroku po aplikacji</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2257"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2731"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2894"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3006"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3062"/>
         <source>Size</source>
         <translation>Rozmiar</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1724"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2274"/>
         <source>Zoom</source>
         <translation>Powiększenie</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1959"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2080"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2133"/>
-        <source>Size:</source>
-        <translation>Rozmiar:</translation>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2365"/>
+        <source>Vehicle mission</source>
+        <translation>Misja łodzi</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1863"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2366"/>
+        <source>The mission read from the autopilot, followed in the 3D scene while it runs.</source>
+        <translation>Misja odczytana z autopilota, śledzona w scenie 3D podczas wykonywania.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2381"/>
+        <source>In the 3D scene</source>
+        <translation>W scenie 3D</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2389"/>
+        <source>Geofence</source>
+        <translation>Geofence</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2402"/>
+        <source>Rally points</source>
+        <translation>Punkty rally</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2415"/>
+        <source>Vehicle home (H)</source>
+        <translation>Dom łodzi (H)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2428"/>
+        <source>Line from the boat to the target</source>
+        <translation>Linia od łodzi do celu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2441"/>
+        <source>Point numbers</source>
+        <translation>Numery punktów</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2457"/>
+        <source>Route lines</source>
+        <translation>Linie trasy</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2465"/>
+        <source>Ahead</source>
+        <translation>Przed łodzią</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2475"/>
+        <source>Current leg</source>
+        <translation>Bieżący odcinek</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2485"/>
+        <source>Flown</source>
+        <translation>Przebyte</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2496"/>
+        <source>Line width</source>
+        <translation>Grubość linii</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2518"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2551"/>
+        <source>%1 px</source>
+        <translation>%1 px</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2529"/>
+        <source>Current leg width</source>
+        <translation>Grubość bieżącego odcinka</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2564"/>
+        <source>Defaults</source>
+        <translation>Domyślne</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2572"/>
+        <source>Behaviour</source>
+        <translation>Zachowanie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2580"/>
+        <source>Read the mission automatically</source>
+        <translation>Odczytuj misję automatycznie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2581"/>
+        <source>When the vehicle connects and when its mission changes. Off: read it by hand from the editor or the autopilot card</source>
+        <translation>Po podłączeniu łodzi i gdy jej misja się zmieni. Wyłączone: odczytuj ręcznie z edytora lub karty autopilota</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2594"/>
+        <source>Start an uploaded mission from its beginning</source>
+        <translation>Rozpoczynaj wgraną misję od początku</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2595"/>
+        <source>After an upload outside Auto the vehicle&apos;s current item is reset, so Auto starts at the first point instead of the item number left from an earlier run</source>
+        <translation>Po wgraniu poza trybem Auto bieżący element na łodzi jest zerowany, więc Auto zaczyna od pierwszego punktu, a nie od numeru z poprzedniego przejazdu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2751"/>
         <source>Zoom, %:</source>
         <translation>Powiększenie, %:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1895"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2793"/>
         <source>North mode</source>
         <translation>Tryb północny</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1906"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2812"/>
         <source>Sync echogram</source>
         <translation>Synchr. echogramu</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1918"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2831"/>
         <source>Grid</source>
         <translation>Siatka</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1928"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2852"/>
         <source>Circle</source>
         <translation>Kołowa</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1939"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2873"/>
         <source>Labels</source>
         <translation>Etykiety</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1986"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2913"/>
         <source>Step</source>
         <translation>Krok</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2013"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2932"/>
         <source>Angle</source>
         <translation>Kąt</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2035"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2948"/>
         <source>Shadows</source>
         <translation>Cienie</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2068"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2993"/>
         <source>Boat</source>
         <translation>Łódź</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2047"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2966"/>
         <source>Navigation arrow</source>
         <translation>Strzałka nawigacyjna</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2060"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2987"/>
         <source>Shape</source>
         <translation>Kształt</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2068"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2993"/>
         <source>Arrow</source>
         <translation>Strzałka</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2101"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3022"/>
         <source>Compass</source>
         <translation>Kompas</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2153"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3078"/>
         <source>Scale bar</source>
         <translation>Podziałka</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2644"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3043"/>
         <source>Position</source>
         <translation>Pozycja</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2189"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2612"/>
+        <source>Mission editor</source>
+        <translation>Edytor misji</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3144"/>
         <source>Map</source>
         <translation>Mapa</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2198"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3152"/>
         <source>Show map tiles</source>
         <translation>Pokaż kafelki mapy</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2233"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3238"/>
         <source>Internet available</source>
         <translation>Internet dostępny</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2234"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3239"/>
         <source>Internet unavailable</source>
         <translation>Internet niedostępny</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2277"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3247"/>
         <source>Providers</source>
         <translation>Dostawcy</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2357"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3272"/>
         <source>Cache: empty</source>
         <translation>Pamięć podręczna: pusta</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2364"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3279"/>
         <source>Cache since %1  •  %2 MB</source>
         <translation>Pamięć podręczna od %1  •  %2 MB</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2389"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3308"/>
         <source>Navigator</source>
         <translation>Nawigator</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2397"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3316"/>
         <source>Use angle</source>
         <translation>Użyj orientacji</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2408"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3334"/>
         <source>Navigator view</source>
         <translation>Widok nawigatora</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="206"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="205"/>
         <source>Export plot data as XTF, CSV (regular or complex) or USBL.</source>
         <translation>Eksport zbioru danych do XTF, CSV (zwykły lub złożony) lub USBL.</translation>
     </message>
     <message>
-        <source>Workspace Layout</source>
-        <translation type="vanished">Układ obszaru roboczego</translation>
-    </message>
-    <message>
-        <source>Pane editing, favorites and ready-made layout presets.</source>
-        <translation type="vanished">Edycja paneli, ulubione i gotowe presety układów.</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="554"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="643"/>
         <source>Edit</source>
         <translation>Edytuj</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="496"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="473"/>
         <source>Sidebar position:</source>
         <translation>Pozycja paska bocznego:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="501"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="479"/>
         <source>Left</source>
         <translation>Lewo</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="502"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="480"/>
         <source>Right</source>
         <translation>Prawo</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="525"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="584"/>
         <source>Quick action menu</source>
         <translation>Menu szybkich akcji</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2485"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3455"/>
         <source>Test</source>
         <translation>Test</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2486"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3456"/>
         <source>Developer knobs — visible only in MANUAL_TESTING builds.</source>
         <translation>Parametry dla programistów — widoczne tylko w kompilacjach MANUAL_TESTING.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2500"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3470"/>
         <source>Double-tap tolerance, px:</source>
         <translation>Tolerancja podwójnego dotknięcia, px:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2530"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3500"/>
         <source>Split grab thickness, px:</source>
         <translation>Grubość chwytu krawędzi, px:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2559"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3529"/>
         <source>Sidebar slide, ms:</source>
         <translation>Animacja panelu bocznego, ms:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2588"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3558"/>
         <source>Workspace adjust, ms:</source>
         <translation>Dostosowanie obszaru roboczego, ms:</translation>
     </message>
     <message>
-        <source>Layout presets</source>
-        <translation type="vanished">Szablony układów</translation>
-    </message>
-    <message>
-        <source>Single window</source>
-        <translation type="vanished">Jedno okno</translation>
-    </message>
-    <message>
-        <source>One pane</source>
-        <translation type="vanished">Jeden panel</translation>
-    </message>
-    <message>
-        <source>Two windows</source>
-        <translation type="vanished">Dwa okna</translation>
-    </message>
-    <message>
-        <source>Side by side</source>
-        <translation type="vanished">Obok siebie</translation>
-    </message>
-    <message>
-        <source>Three windows</source>
-        <translation type="vanished">Trzy okna</translation>
-    </message>
-    <message>
-        <source>Four windows</source>
-        <translation type="vanished">Cztery okna</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="821"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1146"/>
         <source>Normal 2D</source>
         <translation>Normalny 2D</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="822"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1148"/>
         <source>Narrow 2D</source>
         <translation>Wąski 2D</translation>
     </message>
     <message>
-        <source>2 top panes, 1 bottom pane</source>
-        <translation type="vanished">2 górne panele, 1 dolny</translation>
-    </message>
-    <message>
-        <source>2 × 2 grid</source>
-        <translation type="vanished">Siatka 2 × 2</translation>
-    </message>
-    <message>
-        <source>After applying a preset, choose 2D or 3D mode for each pane.</source>
-        <translation type="vanished">Po zastosowaniu szablonu wybierz tryb 2D lub 3D dla każdego panelu.</translation>
-    </message>
-    <message>
-        <source>Favorite layouts</source>
-        <translation type="vanished">Ulubione układy</translation>
-    </message>
-    <message>
-        <source>No favorite layouts yet</source>
-        <translation type="vanished">Brak ulubionych układów</translation>
-    </message>
-    <message>
-        <source>Add current layout to favorites</source>
-        <translation type="vanished">Dodaj bieżący układ do ulubionych</translation>
-    </message>
-    <message>
-        <source>Current layout is in favorites</source>
-        <translation type="vanished">Bieżący układ jest w ulubionych</translation>
-    </message>
-    <message>
-        <source>Remove favorite</source>
-        <translation type="vanished">Usuń z ulubionych</translation>
-    </message>
-    <message>
-        <source>Reset workspace</source>
-        <translation type="vanished">Resetuj obszar roboczy</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="479"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="517"/>
         <source>Workspace shift</source>
         <translation>Przesunięcie obszaru roboczego</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="486"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="531"/>
         <source>Bring window to front</source>
         <translation>Przenoś okno na wierzch</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="487"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="532"/>
         <source>Raise and focus the app window on key events</source>
         <translation>Podnoś i aktywuj okno aplikacji przy kluczowych zdarzeniach</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="561"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="656"/>
         <source>Global pop-up</source>
         <translation>Globalne okno podręczne</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="512"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="577"/>
         <source>Key bindings</source>
         <translation>Przypisania klawiszy</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="544"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="598"/>
         <source>Console</source>
         <translation>Konsola</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="545"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="601"/>
         <source>Colour marking and log buffer size</source>
         <translation>Kolorowanie i rozmiar bufora logu</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="995"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1391"/>
         <source>Processing</source>
         <translation>Przetwarzanie</translation>
     </message>
     <message>
-        <source>Realtime</source>
-        <translation type="vanished">W czasie rzeczywistym</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="877"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1233"/>
         <source>Horizontal window</source>
         <translation>Okno poziome</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="897"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1267"/>
         <source>Vertical gap, %</source>
         <translation>Szczelina pionowa, %</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="937"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1335"/>
         <source>Max range, m</source>
         <translation>Maks. zasięg, m</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="917"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1301"/>
         <source>Min range, m</source>
         <translation>Min. zasięg, m</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="836"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1162"/>
         <source>Gain slope</source>
         <translation>Pochylenie wzmocnienia</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="857"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1199"/>
         <source>Threshold</source>
         <translation>Próg</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="410"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="420"/>
         <source>Toolset:</source>
         <translation>Zestaw narzędzi:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="823"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1526"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1150"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2011"/>
         <source>Side-Scan</source>
         <translation>Skan boczny</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="668"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="958"/>
         <source>S.offset XY, mm:</source>
         <translation>Przesunięcie boczne XY, mm:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="421"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="432"/>
         <source>Fish Finders</source>
         <translation>Echosondery</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="635"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="910"/>
         <source>FBS forward / backward:</source>
         <translation>FCP do przodu / do tyłu:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="423"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="434"/>
         <source>Maximum</source>
         <translation>Maksimum</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="298"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="305"/>
         <source>USBL to CSV</source>
         <translation>USBL do CSV</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="293"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="299"/>
         <source>Complex signal to CSV</source>
         <translation>Sygnał złożony do CSV</translation>
     </message>
@@ -1045,142 +1181,441 @@
         <translation>Ścieżka eksportu...</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="272"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="274"/>
         <source>Export folder</source>
         <translation>Folder eksportu</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="288"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="293"/>
         <source>Export to XTF</source>
         <translation>Eksport do XTF</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1614"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2197"/>
         <source>Echograms</source>
         <translation>Echogramy</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1615"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2198"/>
         <source>Per-echogram display settings.</source>
         <translation>Ustawienia wyświetlania poszczególnych echogramów.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1631"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2214"/>
         <source>No echograms displayed</source>
         <translation>Brak wyświetlanych echogramów</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="721"/>
         <source>Widget panels</source>
         <translation>Panele widżetów</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="722"/>
         <source>On-scene data panels: grid size and drag-in widgets.</source>
         <translation>Panele danych na scenie: rozmiar siatki i przeciąganie widżetów.</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="831"/>
         <source>Panel %1</source>
         <translation>Panel %1</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="732"/>
         <source>USBL</source>
         <translation>USBL</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="868"/>
         <source>Delete panel</source>
         <translation>Usuń panel</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="753"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="784"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="815"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="859"/>
         <source>Edit panel</source>
         <translation>Edytuj panel</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="878"/>
         <source>Create panel</source>
         <translation>Utwórz panel</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1062"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1147"/>
         <source>Bottom search settings for an ordinary sounder with one beam pointing down.</source>
         <translation>Ustawienia szukania dna dla zwykłej echosondy z jedną wiązką w dół.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1064"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1149"/>
         <source>For a sounder with a narrow beam: the bottom echo is shorter, so the search is finer.</source>
         <translation>Dla echosondy o wąskiej wiązce: echo dna jest krótsze, więc szukanie jest dokładniejsze.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1066"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1151"/>
         <source>For a side-scan sonar: the beam looks sideways, not down.</source>
         <translation>Dla sonaru bocznego: wiązka patrzy w bok, nie w dół.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1078"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1163"/>
         <source>Lifts the weak echo at long range so the bottom is found far out too.</source>
         <translation>Podnosi słabe echo na dużej odległości, aby dno było znajdowane także daleko.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1115"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1200"/>
         <source>How clear the echo must be to count as bottom. Where it is weaker, the bottom line breaks.</source>
         <translation>Jak wyraźne musi być echo, aby uznać je za dno. Gdzie jest słabsze, linia dna się przerywa.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1149"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1234"/>
         <source>Smooths the bottom line over neighbouring pings. Wider is smoother but lags more.</source>
         <translation>Wygładza linię dna po sąsiednich sondowaniach. Szerzej — gładziej, ale z większym opóźnieniem.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1183"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1268"/>
         <source>Refines the depth near the one already found and rejects false bottoms from re-reflections. 0 is off.</source>
         <translation>Uściśla głębokość obok już znalezionej i odrzuca fałszywe dno od odbić. 0 — wyłączone.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1217"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1302"/>
         <source>The bottom is not searched for closer than this.</source>
         <translation>Dno nie jest szukane bliżej niż ta wartość.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1251"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1336"/>
         <source>The bottom is not searched for further than this.</source>
         <translation>Dno nie jest szukane dalej niż ta wartość.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1360"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1392"/>
         <source>Recompute the bottom over the whole open file. Manual edits are left alone.</source>
         <translation>Przelicz dno na całym otwartym pliku. Ręczne edycje pozostają nietknięte.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="600"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="614"/>
         <source>Developer mode</source>
         <translation>Tryb dla programistów</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="602"/>
-        <source>Unlocks panels and controls meant for development. Turning it off hides this row again.</source>
-        <translation>Odblokowuje panele i kontrolki przeznaczone dla programistów. Wyłączenie ukryje ten wiersz ponownie.</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="724"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="763"/>
         <source>Stand</source>
         <translation>Stanowisko</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1505"/>
         <source>Surface colouring:</source>
         <translation>Kolorowanie powierzchni:</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1512"/>
         <source>Gradient</source>
         <translation>Gradient</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1513"/>
         <source>Bands</source>
         <translation>Przedziały</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1525"/>
         <source>Depth legend</source>
         <translation>Legenda głębokości</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1526"/>
         <source>Show the depth colour scale over the 3D scene</source>
         <translation>Pokazuj skalę kolorów głębokości nad sceną 3D</translation>
+    </message>
+</context>
+<context>
+    <name>AutopilotPopup</name>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="232"/>
+        <source>no autopilot link</source>
+        <translation>brak łączności z autopilotem</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="177"/>
+        <source>Manual</source>
+        <translation>Ręczny (Manual)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="39"/>
+        <source>No GPS</source>
+        <translation>Brak GPS</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="40"/>
+        <source>No fix</source>
+        <translation>Brak fixa</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="44"/>
+        <source>RTK float</source>
+        <translation>RTK float</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="45"/>
+        <source>RTK fixed</source>
+        <translation>RTK fixed</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="46"/>
+        <source>Static</source>
+        <translation>Statyczny</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="74"/>
+        <source>Mission complete</source>
+        <translation>Misja zakończona</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="76"/>
+        <source>Paused</source>
+        <translation>Wstrzymana</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="77"/>
+        <source>Pt %1/%2</source>
+        <translation>P %1/%2</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="86"/>
+        <source>Reading the vehicle mission…</source>
+        <translation>Odczyt misji z łodzi…</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="87"/>
+        <source>The mission on the vehicle has changed; read it again</source>
+        <translation>Misja na łodzi zmieniła się, odczytaj ją ponownie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="88"/>
+        <source>The vehicle mission has not been read</source>
+        <translation>Misja z łodzi nie została jeszcze odczytana</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="89"/>
+        <source>No mission on the vehicle</source>
+        <translation>Brak misji na łodzi</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="90"/>
+        <source>This plan is on the vehicle</source>
+        <translation>Ten plan jest na łodzi</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="90"/>
+        <source>The vehicle has another mission than the open plan</source>
+        <translation>Łódź ma inną misję niż otwarty plan</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="106"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="704"/>
+        <source>%1 m</source>
+        <translation>%1 m</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="106"/>
+        <source>%1 km</source>
+        <translation>%1 km</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="111"/>
+        <source>&lt;1 min</source>
+        <translation>&lt;1 min</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="113"/>
+        <source>%1 min</source>
+        <translation>%1 min</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="114"/>
+        <source>%1 h %2 min</source>
+        <translation>%1 h %2 min</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="148"/>
+        <source>Going to %1</source>
+        <translation>Przejście: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="153"/>
+        <source>Bat. %1 %</source>
+        <translation>Bat. %1 %</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="165"/>
+        <source>Link %1 %</source>
+        <translation>Łącze %1 %</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="167"/>
+        <source>Sat. %1</source>
+        <translation>Sat. %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="171"/>
+        <source>%1 dBm</source>
+        <translation>%1 dBm</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="178"/>
+        <source>Hold</source>
+        <translation>Stop (Hold)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="179"/>
+        <source>Loiter</source>
+        <translation>Utrzymanie pozycji (Loiter)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="180"/>
+        <source>Auto</source>
+        <translation>Misja (Auto)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="181"/>
+        <source>RTL</source>
+        <translation>Powrót (RTL)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="233"/>
+        <source>no response</source>
+        <translation>brak odpowiedzi</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="234"/>
+        <source>temporarily rejected</source>
+        <translation>tymczasowo odrzucono</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="235"/>
+        <source>denied</source>
+        <translation>odmowa</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="236"/>
+        <source>unsupported</source>
+        <translation>nieobsługiwane</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="237"/>
+        <source>failed</source>
+        <translation>błąd</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="238"/>
+        <source>cancelled</source>
+        <translation>anulowano</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="245"/>
+        <source>Arm/disarm</source>
+        <translation>Uzbrojenie/rozbrojenie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="246"/>
+        <source>Mode change</source>
+        <translation>Zmiana trybu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="247"/>
+        <source>Mission start</source>
+        <translation>Start misji</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="248"/>
+        <source>Go to point</source>
+        <translation>Przejście do punktu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="250"/>
+        <source>Command %1</source>
+        <translation>Polecenie %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="291"/>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="381"/>
+        <source>Vehicle: %1</source>
+        <translation>Łódź: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="494"/>
+        <source>Tap again to arm</source>
+        <translation>Dotknij ponownie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="551"/>
+        <source>Arm (tap twice)</source>
+        <translation>Uzbrój (dotknij dwa razy)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="697"/>
+        <source>To point</source>
+        <translation>Do punktu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="702"/>
+        <source>Cross-track</source>
+        <translation>Odchylenie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="739"/>
+        <source>Tap again to skip</source>
+        <translation>Naciśnij ponownie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="739"/>
+        <source>Next point</source>
+        <translation>Następny punkt</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="745"/>
+        <source>Read again</source>
+        <translation>Odczytaj ponownie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="746"/>
+        <source>Read the mission from the vehicle again</source>
+        <translation>Odczytaj ponownie misję z łodzi</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="707"/>
+        <source>GPS</source>
+        <translation>GPS</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="712"/>
+        <source>%1 sat.</source>
+        <translation>%1 sat.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="718"/>
+        <source>To home</source>
+        <translation>Do domu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="495"/>
+        <source>No autopilot</source>
+        <translation>Brak autopilota</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="170"/>
+        <source>m/s</source>
+        <translation>m/s</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="551"/>
+        <source>Disarm</source>
+        <translation>Rozbrój</translation>
     </message>
 </context>
 <context>
@@ -1209,11 +1644,6 @@
         <location filename="../qml/app/BottomTrackEditPopup.qml" line="23"/>
         <source>Erase bottom track</source>
         <translation>Wymaż ślad dna</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/BottomTrackEditPopup.qml" line="112"/>
-        <source>Close</source>
-        <translation>Zamknij</translation>
     </message>
 </context>
 <context>
@@ -1251,52 +1681,63 @@
 <context>
     <name>CalcMethodTINSettings</name>
     <message>
+        <location filename="../qml/legacy_qml/scene3d/CalcMethodTINSettings.qml" line="11"/>
         <source>TIN edge length limit:</source>
-        <translation type="vanished">TIN Limit długości krawędzi:</translation>
+        <translation>TIN Limit długości krawędzi:</translation>
     </message>
 </context>
 <context>
     <name>ChartBox</name>
     <message>
+        <location filename="../qml/legacy_qml/scene2d/ChartBox.qml" line="22"/>
         <source>Chart</source>
-        <translation type="vanished">Wykres</translation>
+        <translation>Wykres</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/scene2d/ChartBox.qml" line="31"/>
         <source>On</source>
-        <translation type="vanished">Włącz</translation>
+        <translation>Włącz</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/scene2d/ChartBox.qml" line="44"/>
         <source>Shot</source>
-        <translation type="vanished">Zrzut</translation>
+        <translation>Zrzut</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/scene2d/ChartBox.qml" line="99"/>
         <source>Resolution, mm</source>
-        <translation type="vanished">Rozdzielczość, mm</translation>
+        <translation>Rozdzielczość, mm</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/scene2d/ChartBox.qml" line="121"/>
         <source>Number of Samples</source>
-        <translation type="vanished">Liczba próbek</translation>
+        <translation>Liczba próbek</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/scene2d/ChartBox.qml" line="143"/>
         <source>Offset of Samples</source>
-        <translation type="vanished">Przesunięcie próbek</translation>
+        <translation>Przesunięcie próbek</translation>
     </message>
 </context>
 <context>
     <name>ConnectionViewer</name>
     <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="574"/>
         <source>Name</source>
         <translation>Nazwa</translation>
     </message>
     <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="611"/>
         <source>Clear name</source>
         <translation>Wyczyść nazwę</translation>
     </message>
     <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="672"/>
         <source>URL</source>
         <translation>URL</translation>
     </message>
     <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="690"/>
         <source>Any URL that FFmpeg can open:
 rtsp://192.168.1.10:554/stream
 http://camera.local/video.cgi  (MJPEG, HLS, DASH)
@@ -1311,19 +1752,22 @@ udp://@:1234
 %1  (plik lokalny)</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="768"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="878"/>
         <source>+Video</source>
         <translation>+Wideo</translation>
     </message>
     <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1124"/>
         <source>Choose recording folder</source>
         <translation>Wybór folderu nagrywania</translation>
     </message>
     <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="886"/>
         <source>Proxy MAVLink telemetry to 127.0.0.1:14550</source>
         <translation>Proxy telemetrii MAVLink na 127.0.0.1:14550</translation>
     </message>
     <message>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="385"/>
         <source>Connection settings</source>
         <translation>Ustawienia połączenia</translation>
     </message>
@@ -1332,224 +1776,189 @@ udp://@:1234
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="276"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="279"/>
         <source>Connections:</source>
         <translation>Połączenia:</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="358"/>
-        <source>Settings</source>
-        <translation>Ustawienia</translation>
-    </message>
-    <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="402"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="494"/>
         <source>Unpin</source>
         <translation>Odepnij</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="402"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="494"/>
         <source>Pin</source>
         <translation>Przypnij</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="410"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="503"/>
         <source>Auto reconnect</source>
         <translation>Auto-połączenie</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="416"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="516"/>
         <source>Delete</source>
         <translation>Usuń</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="424"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="510"/>
         <source>Remove from recent</source>
         <translation>Usuń z ostatnich</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="621"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="826"/>
         <source>Auto search baudrate</source>
         <translation>Auto-wykrywanie prędkości</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="472"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="625"/>
         <source>IP</source>
         <translation>IP</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="518"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="723"/>
         <source>src</source>
         <translation>src</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="541"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="746"/>
         <source>dst</source>
         <translation>dst</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="571"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="776"/>
         <source>srv</source>
         <translation>srv</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="602"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="807"/>
         <source>baudrate</source>
         <translation>Prędkość</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="431"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="531"/>
         <source>Close</source>
         <translation>Zamknij</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="431"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="531"/>
         <source>Open</source>
         <translation>Otwórz</translation>
     </message>
     <message>
-        <source>Add connection, start recording:</source>
-        <translation type="vanished">Dodaj połączenie, rozpocznij nagrywanie:</translation>
-    </message>
-    <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="661"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="866"/>
         <source>+UDP</source>
         <translation>+UDP</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="667"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="872"/>
         <source>+TCP</source>
         <translation>+TCP</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="674"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="885"/>
         <source>MAVProxy</source>
         <translation>MAVProxy</translation>
     </message>
     <message>
-        <source>● KLF</source>
-        <translation type="vanished">● KLF</translation>
-    </message>
-    <message>
-        <source>● CSV</source>
-        <translation type="vanished">● CSV</translation>
-    </message>
-    <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="685"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="897"/>
         <source>Import</source>
         <translation>Import</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="955"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1204"/>
         <source>Separator:</source>
         <translation>Separator:</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="967"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1216"/>
         <source>Row:</source>
         <translation>Wiersz:</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="977"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1226"/>
         <source>Time col:</source>
         <translation>Kol. czasu:</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="998"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1247"/>
         <source>Lat/Lon/Alt:</source>
         <translation>Szer/Dług/Wys:</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1010"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1259"/>
         <source>NEU:</source>
         <translation>NEU:</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1030"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1279"/>
         <source>CSV path...</source>
         <translation>Ścieżka CSV...</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1047"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1296"/>
         <source>Please choose a file</source>
         <translation>Proszę wybrać plik</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1095"/>
-        <source>Undefined</source>
-        <translation>Niezdefiniowane</translation>
-    </message>
-    <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1120"/>
-        <source>Flash Firmware</source>
-        <translation>Flash Firmware</translation>
-    </message>
-    <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1162"/>
-        <source>Part Number:</source>
-        <translation>Part Number:</translation>
-    </message>
-    <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="644"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="849"/>
         <source>Add connection:</source>
         <translation>Dodaj połączenie:</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="692"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="905"/>
         <source>Recording:</source>
         <translation>Nagrywanie:</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="754"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="968"/>
         <source>Recording settings</source>
         <translation>Ustawienia nagrywania</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="770"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="984"/>
         <source>Press REC to record KLF and CSV logs</source>
         <translation>Naciśnij REC, aby nagrać logi KLF i CSV</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="771"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="985"/>
         <source>Press REC to record CSV log</source>
         <translation>Naciśnij REC, aby nagrać log CSV</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="772"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="986"/>
         <source>Press REC to record KLF log</source>
         <translation>Naciśnij REC, aby nagrać log KLF</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="827"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1047"/>
         <source>■ STOP</source>
         <translation>■ STOP</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="827"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1047"/>
         <source>● REC</source>
         <translation>● REC</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="850"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1076"/>
         <source>Log folder:</source>
         <translation>Folder logów:</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="897"/>
-        <source>Browse…</source>
-        <translation>Przeglądaj…</translation>
-    </message>
-    <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="913"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1183"/>
         <source>Select log folder</source>
         <translation>Wybierz folder logów</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="923"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1150"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1152"/>
         <source>KLF</source>
         <translation>KLF</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="933"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1151"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1152"/>
         <source>CSV</source>
         <translation>CSV</translation>
     </message>
@@ -1557,48 +1966,42 @@ udp://@:1234
 <context>
     <name>ConnectionsSettingsPage</name>
     <message>
-        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="19"/>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="51"/>
         <source>Connections</source>
         <translation>Połączenia</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="20"/>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="52"/>
         <source>Connections and logging.</source>
         <translation>Połączenia i rejestrowanie.</translation>
     </message>
     <message>
-        <source>Stop KLF logging</source>
-        <translation type="vanished">Zatrzymaj zapis KLF</translation>
-    </message>
-    <message>
-        <source>Start KLF logging</source>
-        <translation type="vanished">Rozpocznij zapis KLF</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="36"/>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="98"/>
         <source>Stop recording</source>
         <translation>Zatrzymaj nagrywanie</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="36"/>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="98"/>
         <source>Start recording</source>
         <translation>Rozpocznij nagrywanie</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="68"/>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="124"/>
         <source>Disconnect</source>
         <translation>Rozłącz</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="68"/>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="124"/>
         <source>Open last link</source>
         <translation>Otwórz ostatnie połączenie</translation>
     </message>
     <message>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="74"/>
         <source>Searching the local network…</source>
         <translation>Wyszukiwanie w sieci lokalnej…</translation>
     </message>
     <message>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="74"/>
         <source>Find KOGGER devices in the local network (UDP)</source>
         <translation>Znajdź urządzenia KOGGER w sieci lokalnej (UDP)</translation>
     </message>
@@ -1606,77 +2009,80 @@ udp://@:1234
 <context>
     <name>Console</name>
     <message>
+        <location filename="../qml/legacy_qml/menus/Console.qml" line="37"/>
         <source>Auto scroll</source>
-        <translation type="vanished">Automatyczne przewijanie</translation>
+        <translation>Automatyczne przewijanie</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/menus/Console.qml" line="48"/>
         <source>Binnary</source>
-        <translation type="vanished">Binarny</translation>
+        <translation>Binarny</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/menus/Console.qml" line="72"/>
         <source>Close console</source>
-        <translation type="vanished">Zamknij konsolę</translation>
+        <translation>Zamknij konsolę</translation>
     </message>
 </context>
 <context>
     <name>ConsolePanelDrawer</name>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="508"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="515"/>
         <source>Maximize</source>
         <translation>Maksymalizuj</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="508"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="515"/>
         <source>Restore</source>
         <translation>Przywróć</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="420"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="427"/>
         <source>Console</source>
         <translation>Konsola</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="448"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="455"/>
         <source>Auto scroll</source>
         <translation>Auto przewijanie</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="455"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="462"/>
         <source>Binary</source>
         <translation>Binarny</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="523"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="530"/>
         <source>Settings</source>
         <translation>Ustawienia</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="501"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="497"/>
         <source>Copy selected lines</source>
         <translation>Kopiuj zaznaczone wiersze</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="502"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="498"/>
         <source>Copy the whole log</source>
         <translation>Kopiuj cały log</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="34"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="41"/>
         <source>All</source>
         <translation>Wszystko</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="35"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="42"/>
         <source>App</source>
         <translation>Aplikacja</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="36"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="43"/>
         <source>Protocol</source>
         <translation>Protokół</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConsolePanelDrawer.qml" line="467"/>
+        <location filename="../qml/app/ConsolePanelDrawer.qml" line="474"/>
         <source>NMEA</source>
         <translation>NMEA</translation>
     </message>
@@ -1695,7 +2101,7 @@ udp://@:1234
     </message>
     <message>
         <location filename="../qml/app/ConsoleSettingsTab.qml" line="37"/>
-        <source>Highlight log syntax with the app theme's colours</source>
+        <source>Highlight log syntax with the app theme&apos;s colours</source>
         <translation>Podświetlanie składni logu kolorami motywu aplikacji</translation>
     </message>
     <message>
@@ -1745,219 +2151,337 @@ udp://@:1234
     </message>
 </context>
 <context>
-    <name>FirmwareUpgradeSession</name>
+    <name>ControlsHelpPage</name>
     <message>
-        <location filename="../src/firmware_upgrade_session.cpp" line="49"/>
-        <source>Failed to open firmware file: %1</source>
-        <translation>Nie udało się otworzyć pliku oprogramowania: %1</translation>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="16"/>
+        <source>Workspace</source>
+        <translation>Obszar roboczy</translation>
     </message>
     <message>
-        <location filename="../src/firmware_upgrade_session.cpp" line="54"/>
-        <source>No device to flash with file %1</source>
-        <translation>Brak urządzenia do wgrania pliku %1</translation>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="19"/>
+        <source>Maximise or restore a pane</source>
+        <translation>Powiększ lub przywróć okno</translation>
     </message>
     <message>
-        <location filename="../src/firmware_upgrade_session.cpp" line="112"/>
-        <source>Flashing %1 with %2: waiting for the device</source>
-        <translation>Wgrywanie %2 na %1: oczekiwanie na urządzenie</translation>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="20"/>
+        <source>Double-tap the pane — 2D, 3D, video, popups</source>
+        <translation>Dwukrotne dotknięcie okna — 2D, 3D, wideo, okna wyskakujące</translation>
     </message>
     <message>
-        <location filename="../src/firmware_upgrade_session.cpp" line="117"/>
-        <source>Flashing %1 with %2: %3%</source>
-        <translation>Wgrywanie %2 na %1: %3%</translation>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="21"/>
+        <source>Double-click the pane — 2D, 3D, video, popups</source>
+        <translation>Dwukrotne kliknięcie okna — 2D, 3D, wideo, okna wyskakujące</translation>
     </message>
     <message>
-        <location filename="../src/firmware_upgrade_session.cpp" line="135"/>
-        <source>Device %1 successfully flashed with file %2</source>
-        <translation>Urządzenie %1 pomyślnie wgrano plikiem %2</translation>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="25"/>
+        <source>Reset a splitter to the middle</source>
+        <translation>Przywróć separator na środek</translation>
     </message>
     <message>
-        <location filename="../src/firmware_upgrade_session.cpp" line="139"/>
-        <source>Flashing device %1 with file %2 interrupted: the device did not come back</source>
-        <translation>Wgrywanie pliku %2 na urządzenie %1 przerwane: urządzenie nie wróciło</translation>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="26"/>
+        <source>Double-tap the splitter between panes</source>
+        <translation>Dwukrotne dotknięcie separatora między oknami</translation>
     </message>
     <message>
-        <location filename="../src/firmware_upgrade_session.cpp" line="143"/>
-        <source>Failed to flash device %1 with file %2 (error code %3)</source>
-        <translation>Nie udało się wgrać pliku %2 na urządzenie %1 (kod błędu: %3)</translation>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="27"/>
+        <source>Double-click the splitter between panes</source>
+        <translation>Dwukrotne kliknięcie separatora między oknami</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="32"/>
+        <source>2D echogram</source>
+        <translation>Echogram 2D</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="35"/>
+        <source>Pick a sounding</source>
+        <translation>Wybierz pomiar</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="36"/>
+        <source>Drag one finger — shows the loupe and the sounding details</source>
+        <translation>Przeciągnij jednym palcem — pokazuje lupę i dane pomiaru</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="37"/>
+        <source>Drag with the left button — shows the loupe and the sounding details</source>
+        <translation>Przeciągnij lewym przyciskiem — pokazuje lupę i dane pomiaru</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="41"/>
+        <source>Place a contact</source>
+        <translation>Ustaw kontakt</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="42"/>
+        <source>Contact quick action, then tap the echogram or the 3D scene</source>
+        <translation>Przycisk „Kontakt” w szybkich akcjach, potem dotknięcie echogramu lub sceny 3D</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="43"/>
+        <source>Contact quick action, then left-click the echogram or the 3D scene</source>
+        <translation>Przycisk „Kontakt” w szybkich akcjach, potem kliknięcie lewym przyciskiem echogramu lub sceny 3D</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="47"/>
+        <source>Scroll the echogram</source>
+        <translation>Przewiń echogram</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="48"/>
+        <source>Horizontal pinch</source>
+        <translation>Poziomy gest szczypania</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="48"/>
+        <source>Wheel</source>
+        <translation>Kółko myszy</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="52"/>
+        <source>Move the echogram up and down</source>
+        <translation>Przesuń echogram w górę i w dół</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="53"/>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="77"/>
+        <source>Vertical pinch</source>
+        <translation>Pionowy gest szczypania</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="53"/>
+        <source>Shift + wheel</source>
+        <translation>Shift + kółko myszy</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="57"/>
+        <source>Change the vertical scale</source>
+        <translation>Zmień skalę pionową</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="58"/>
+        <source>Stretch the pinch vertically</source>
+        <translation>Rozciągnij gest szczypania w pionie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="58"/>
+        <source>Ctrl + wheel</source>
+        <translation>Ctrl + kółko myszy</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="63"/>
+        <source>3D scene</source>
+        <translation>Scena 3D</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="66"/>
+        <source>Move the camera</source>
+        <translation>Przesuwaj kamerę</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="67"/>
+        <source>Drag one finger</source>
+        <translation>Przeciągnij jednym palcem</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="67"/>
+        <source>Drag with the left button</source>
+        <translation>Przeciągnij lewym przyciskiem</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="71"/>
+        <source>Rotate the camera</source>
+        <translation>Obracaj kamerę</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="72"/>
+        <source>Rotate the pinch</source>
+        <translation>Obrót gestu szczypania</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="72"/>
+        <source>Ctrl + drag sideways</source>
+        <translation>Ctrl + przeciąganie w poziomie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="76"/>
+        <source>Tilt the camera</source>
+        <translation>Pochylaj kamerę</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ControlsHelpPage.qml" line="77"/>
+        <source>Ctrl + drag up or down</source>
+        <translation>Ctrl + przeciąganie w pionie</translation>
     </message>
 </context>
 <context>
     <name>Core</name>
     <message>
-        <location filename="../src/core.cpp" line="3012"/>
+        <location filename="../src/core.cpp" line="3419"/>
         <source>Internet connection restored</source>
         <translation>Połączenie internetowe przywrócone</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="3013"/>
+        <location filename="../src/core.cpp" line="3420"/>
         <source>Internet connection lost</source>
         <translation>Utracono połączenie internetowe</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="3025"/>
+        <location filename="../src/core.cpp" line="3432"/>
         <source>Metered network detected</source>
         <translation>Wykryto sieć taryfową</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2261"/>
-        <location filename="../src/core.cpp" line="2285"/>
+        <location filename="../src/core.cpp" line="2539"/>
+        <location filename="../src/core.cpp" line="2563"/>
         <source>street</source>
         <translation>schemat</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2267"/>
-        <location filename="../src/core.cpp" line="2273"/>
-        <location filename="../src/core.cpp" line="2279"/>
+        <location filename="../src/core.cpp" line="2545"/>
+        <location filename="../src/core.cpp" line="2551"/>
+        <location filename="../src/core.cpp" line="2557"/>
         <source>satellite</source>
         <translation>satelita</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2647"/>
+        <location filename="../src/core.cpp" line="3021"/>
         <source>Connected</source>
         <translation>Połączono</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2647"/>
+        <location filename="../src/core.cpp" line="3021"/>
         <source>Connected: %1</source>
         <translation>Połączono: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2658"/>
+        <location filename="../src/core.cpp" line="3032"/>
         <source>Disconnected</source>
         <translation>Rozłączono</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2658"/>
+        <location filename="../src/core.cpp" line="3032"/>
         <source>Disconnected: %1</source>
         <translation>Rozłączono: %1</translation>
     </message>
     <message>
-        <source>KLF logging enabled</source>
-        <translation type="vanished">Logowanie KLF włączone</translation>
-    </message>
-    <message>
-        <location filename="../src/core.cpp" line="1007"/>
+        <location filename="../src/core.cpp" line="1137"/>
         <source>KLF logging disabled</source>
         <translation>Logowanie KLF wyłączone</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="999"/>
+        <location filename="../src/core.cpp" line="1129"/>
         <source>KLF logging not started</source>
         <translation>Logowanie KLF nie zostało uruchomione</translation>
     </message>
     <message>
-        <source>CSV logging enabled</source>
-        <translation type="vanished">Logowanie CSV włączone</translation>
-    </message>
-    <message>
-        <location filename="../src/core.cpp" line="1184"/>
+        <location filename="../src/core.cpp" line="1444"/>
         <source>CSV logging disabled</source>
         <translation>Logowanie CSV wyłączone</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1176"/>
+        <location filename="../src/core.cpp" line="1436"/>
         <source>CSV logging not started</source>
         <translation>Logowanie CSV nie zostało uruchomione</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="996"/>
+        <location filename="../src/core.cpp" line="1126"/>
         <source>KLF logging started:
 %1</source>
         <translation>Rozpoczęto logowanie KLF:
 %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1005"/>
+        <location filename="../src/core.cpp" line="1135"/>
         <source>KLF log saved:
 %1</source>
         <translation>Zapisano log KLF:
 %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1173"/>
+        <location filename="../src/core.cpp" line="1433"/>
         <source>CSV logging started:
 %1</source>
         <translation>Rozpoczęto logowanie CSV:
 %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1182"/>
+        <location filename="../src/core.cpp" line="1442"/>
         <source>CSV log saved:
 %1</source>
         <translation>Zapisano log CSV:
 %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1070"/>
+        <location filename="../src/core.cpp" line="1329"/>
         <source>Invalid log folder:
 %1</source>
         <translation>Nieprawidłowa ścieżka folderu logów:
 %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1076"/>
+        <location filename="../src/core.cpp" line="1335"/>
         <source>Log folder is not writable:
 %1</source>
         <translation>Brak uprawnień do zapisu w folderze logów:
 %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2419"/>
+        <location filename="../src/core.cpp" line="2726"/>
         <source>File opened</source>
         <translation>Otwarto plik</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2420"/>
+        <location filename="../src/core.cpp" line="2727"/>
         <source>File opened: %1</source>
         <translation>Otwarto plik: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="515"/>
-        <location filename="../src/core.cpp" line="775"/>
+        <location filename="../src/core.cpp" line="663"/>
+        <location filename="../src/core.cpp" line="914"/>
         <source>File closed</source>
         <translation>Zamknięto plik</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="516"/>
-        <location filename="../src/core.cpp" line="776"/>
+        <location filename="../src/core.cpp" line="664"/>
+        <location filename="../src/core.cpp" line="915"/>
         <source>File closed: %1</source>
         <translation>Zamknięto plik: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1669"/>
+        <location filename="../src/core.cpp" line="1926"/>
         <source>Exported to CSV: %1</source>
         <translation>Wyeksportowano do CSV: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1700"/>
+        <location filename="../src/core.cpp" line="1957"/>
         <source>Exported to XTF: %1</source>
         <translation>Wyeksportowano do XTF: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1272"/>
+        <location filename="../src/core.cpp" line="1532"/>
         <source>Complex signals exported to CSV: %1</source>
         <translation>Sygnały zespolone wyeksportowane do CSV: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1316"/>
+        <location filename="../src/core.cpp" line="1576"/>
         <source>USBL exported to CSV: %1</source>
         <translation>USBL wyeksportowany do CSV: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1677"/>
+        <location filename="../src/core.cpp" line="1934"/>
         <source>Export failed</source>
         <translation>Eksport nie powiódł się</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1220"/>
-        <location filename="../src/core.cpp" line="1269"/>
-        <location filename="../src/core.cpp" line="1283"/>
-        <location filename="../src/core.cpp" line="1313"/>
-        <location filename="../src/core.cpp" line="1406"/>
-        <location filename="../src/core.cpp" line="1666"/>
-        <location filename="../src/core.cpp" line="1685"/>
-        <location filename="../src/core.cpp" line="1697"/>
+        <location filename="../src/core.cpp" line="1480"/>
+        <location filename="../src/core.cpp" line="1529"/>
+        <location filename="../src/core.cpp" line="1543"/>
+        <location filename="../src/core.cpp" line="1573"/>
+        <location filename="../src/core.cpp" line="1665"/>
+        <location filename="../src/core.cpp" line="1923"/>
+        <location filename="../src/core.cpp" line="1942"/>
+        <location filename="../src/core.cpp" line="1954"/>
         <source>Export failed: %1</source>
         <translation>Eksport nie powiódł się: %1</translation>
     </message>
@@ -1965,26 +2489,22 @@ udp://@:1234
 <context>
     <name>CsvExportSettingsTab</name>
     <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="76"/>
         <source>Thin out points: keep one per given distance interval (m); off exports every point</source>
         <translation>Przerzedzanie: jeden punkt na zadany odstęp (m); wył. — wszystkie punkty</translation>
     </message>
     <message>
-        <source>Export the dataset to CSV with the selected columns (folder from the Export group)</source>
-        <translation>Eksportuj zbiór do CSV z wybranymi kolumnami (folder z grupy Eksport)</translation>
-    </message>
-    <message>
-        <source>Restore the default column selection</source>
-        <translation>Przywróć domyślny wybór kolumn</translation>
-    </message>
-    <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="28"/>
         <source>Sequential measurement number (epoch)</source>
         <translation>Kolejny numer pomiaru (epoka)</translation>
     </message>
     <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="29"/>
         <source>Event columns: UNIX time, timestamp and ID</source>
         <translation>Kolumny zdarzenia: czas UNIX, znacznik czasu i ID</translation>
     </message>
     <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="38"/>
         <source>Rangefinder distance (red line)</source>
         <translation>Odległość z głębokościomierza (czerwona linia)</translation>
     </message>
@@ -2013,133 +2533,349 @@ udp://@:1234
         <translation>Wysokość anteny nad elipsoidą WGS84, tylko RTK Fixed (MAVLink 2, UBX, NMEA GGA)</translation>
     </message>
     <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="30"/>
         <source>Post-processing distance (green line)</source>
         <translation>Odległość z postprzetwarzania (zielona linia)</translation>
     </message>
     <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="31"/>
         <source>Coordinates: latitude and longitude</source>
         <translation>Współrzędne: szerokość i długość</translation>
     </message>
     <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="32"/>
         <source>UTC date and time from GNSS</source>
         <translation>Data i czas UTC z GNSS</translation>
     </message>
     <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="33"/>
         <source>External position: latitude / longitude / altitude</source>
         <translation>Pozycja zewnętrzna: szerokość / długość / wysokość</translation>
     </message>
     <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="34"/>
         <source>External position in local NEU (north / east / up)</source>
         <translation>Pozycja zewnętrzna w lokalnym NEU (północ / wschód / góra)</translation>
     </message>
     <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="35"/>
         <source>Absolute height of the sonar</source>
         <translation>Bezwzględna wysokość sonaru</translation>
     </message>
     <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="36"/>
         <source>Absolute height of the bottom</source>
         <translation>Bezwzględna wysokość dna</translation>
     </message>
     <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="37"/>
         <source>Title, coordinates, depth and origin (2D/3D) of the marked contact</source>
         <translation>Nazwa, współrzędne, głębokość i źródło (2D/3D) oznaczonego kontaktu</translation>
     </message>
     <message>
-        <location filename="../qml/app/CsvExportSettingsTab.qml" line="54"/>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="75"/>
         <source>Decimation, m:</source>
         <translation>Decymacja, m:</translation>
     </message>
     <message>
-        <location filename="../qml/app/CsvExportSettingsTab.qml" line="73"/>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="67"/>
         <source>Export to CSV</source>
         <translation>Eksport do CSV</translation>
     </message>
     <message>
-        <location filename="../qml/app/CsvExportSettingsTab.qml" line="86"/>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="164"/>
         <source>Columns to export</source>
         <translation>Kolumny do eksportu</translation>
     </message>
     <message>
-        <location filename="../qml/app/CsvExportSettingsTab.qml" line="97"/>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="175"/>
         <source>Reset</source>
         <translation>Resetuj</translation>
     </message>
     <message>
-        <location filename="../qml/app/CsvExportSettingsTab.qml" line="45"/>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="56"/>
         <source>Export the dataset to CSV. Pick which columns to include below — the defaults match the built-in export. The destination folder is set in the Export group.</source>
         <translation>Eksportuj zbiór danych do CSV. Poniżej wybierz, które kolumny dołączyć — domyślne odpowiadają wbudowanemu eksportowi. Folder docelowy ustawia się w grupie «Eksport».</translation>
     </message>
     <message>
-        <location filename="../qml/app/CsvExportSettingsTab.qml" line="19"/>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="28"/>
         <source>Number</source>
         <translation>Numer</translation>
     </message>
     <message>
-        <location filename="../qml/app/CsvExportSettingsTab.qml" line="20"/>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="29"/>
         <source>Event (UNIX / timestamp / ID)</source>
         <translation>Zdarzenie (UNIX / znacznik / ID)</translation>
     </message>
     <message>
-        <location filename="../qml/app/CsvExportSettingsTab.qml" line="21"/>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="38"/>
         <source>Rangefinder</source>
         <translation>Głębinomierz</translation>
     </message>
     <message>
-        <location filename="../qml/app/CsvExportSettingsTab.qml" line="22"/>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="30"/>
         <source>Beam distance</source>
         <translation>Odległość wiązki</translation>
     </message>
     <message>
-        <location filename="../qml/app/CsvExportSettingsTab.qml" line="23"/>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="31"/>
         <source>Position (lat / lon)</source>
         <translation>Pozycja (szer / dług)</translation>
     </message>
     <message>
-        <location filename="../qml/app/CsvExportSettingsTab.qml" line="24"/>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="32"/>
         <source>GNSS UTC date / time</source>
         <translation>GNSS UTC data / czas</translation>
     </message>
     <message>
-        <location filename="../qml/app/CsvExportSettingsTab.qml" line="25"/>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="33"/>
         <source>External position (LLA)</source>
         <translation>Pozycja zewnętrzna (LLA)</translation>
     </message>
     <message>
-        <location filename="../qml/app/CsvExportSettingsTab.qml" line="26"/>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="34"/>
         <source>External position (NEU)</source>
         <translation>Pozycja zewnętrzna (NEU)</translation>
     </message>
     <message>
-        <location filename="../qml/app/CsvExportSettingsTab.qml" line="27"/>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="35"/>
         <source>Sonar height</source>
         <translation>Wysokość sonaru</translation>
     </message>
     <message>
-        <location filename="../qml/app/CsvExportSettingsTab.qml" line="28"/>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="36"/>
         <source>Bottom height</source>
         <translation>Wysokość dna</translation>
     </message>
     <message>
-        <location filename="../qml/app/CsvExportSettingsTab.qml" line="35"/>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="37"/>
         <source>Contact</source>
         <translation>Kontakt</translation>
     </message>
     <message>
-        <location filename="../qml/app/CsvExportSettingsTab.qml" line="97"/>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="112"/>
         <source>Sonar offset XYZ, mm</source>
         <translation>Przesunięcie sonaru XYZ, mm</translation>
     </message>
     <message>
-        <location filename="../qml/app/CsvExportSettingsTab.qml" line="98"/>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="113"/>
         <source>Mount offset of the transducer, applied to the exported coordinates only.</source>
         <translation>Przesunięcie montażowe przetwornika, stosowane tylko do eksportowanych współrzędnych.</translation>
     </message>
 </context>
 <context>
+    <name>DataFieldCatalog</name>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="18"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="181"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="235"/>
+        <source>m/s</source>
+        <translation>m/s</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="22"/>
+        <source>Device charge</source>
+        <translation>Ładunek urządzenia</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="13"/>
+        <source>Time</source>
+        <translation>Czas</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="14"/>
+        <source>Depth</source>
+        <translation>Głębokość</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="15"/>
+        <source>Rangefinder</source>
+        <translation>Dalmierz</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="16"/>
+        <source>Bottom track</source>
+        <translation>Ślad dna</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="17"/>
+        <source>Speed</source>
+        <translation>Prędkość</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="18"/>
+        <source>Ground speed</source>
+        <translation>Prędkość naziemna</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="19"/>
+        <source>Coordinate</source>
+        <translation>Współrzędne</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="20"/>
+        <source>Selected point</source>
+        <translation>Wybrany punkt</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="21"/>
+        <source>Temperature</source>
+        <translation>Temperatura</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="23"/>
+        <source>Battery</source>
+        <translation>Bateria</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="24"/>
+        <source>Current</source>
+        <translation>Prąd</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="25"/>
+        <source>Flight mode</source>
+        <translation>Tryb lotu</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="26"/>
+        <source>Arm state</source>
+        <translation>Stan uzbrojenia</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="27"/>
+        <source>Autopilot link</source>
+        <translation>Łącze z autopilotem</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="28"/>
+        <source>Echogram delivery</source>
+        <translation>Dostarczanie echogramów</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="42"/>
+        <source>Beacon range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="43"/>
+        <source>Beacon azimuth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="44"/>
+        <source>Beacon elevation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="45"/>
+        <source>Acoustic SNR</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="45"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="219"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="249"/>
+        <source>dB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="46"/>
+        <source>Beacon position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="47"/>
+        <source>Beacon depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="48"/>
+        <source>Fix age</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="48"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="222"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="252"/>
+        <source>s</source>
+        <translation type="unfinished">s</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="49"/>
+        <source>Acoustic link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="50"/>
+        <source>Last beacon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="51"/>
+        <source>USBL data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="56"/>
+        <source>TRACKING</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="57"/>
+        <source>STALE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="58"/>
+        <source>NO SOLUTION</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="203"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="255"/>
+        <source>yes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="203"/>
+        <source>no</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="14"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="15"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="16"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="42"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="47"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="167"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="169"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="171"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="177"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="216"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="220"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="231"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="232"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="233"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="237"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="246"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="251"/>
+        <source>m</source>
+        <translation>m</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="17"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="173"/>
+        <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="234"/>
+        <source>km/h</source>
+        <translation>km/h</translation>
+    </message>
+</context>
+<context>
     <name>Dataset</name>
     <message>
-        <location filename="../src/dataset.cpp" line="1325"/>
-        <location filename="../src/dataset.cpp" line="1327"/>
+        <location filename="../src/dataset.cpp" line="1287"/>
+        <location filename="../src/dataset.cpp" line="1289"/>
         <source>None</source>
         <translation>Brak</translation>
     </message>
@@ -2147,126 +2883,936 @@ udp://@:1234
 <context>
     <name>DevDriver</name>
     <message>
-        <location filename="../src/device/dev_driver.cpp" line="1273"/>
+        <location filename="../src/device/dev_driver.cpp" line="1492"/>
         <source>Sync config rejected by device</source>
         <translation>Konfiguracja synchronizacji odrzucona przez urządzenie</translation>
     </message>
 </context>
 <context>
+    <name>DeveloperSettingsTab</name>
+    <message>
+        <location filename="../qml/app/DeveloperSettingsTab.qml" line="30"/>
+        <source>Developer mode</source>
+        <translation type="unfinished">Tryb dla programistów</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeveloperSettingsTab.qml" line="31"/>
+        <source>Unlocks panels and controls meant for development. Turning it off hides this page.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeveloperSettingsTab.qml" line="50"/>
+        <source>Isobaths pipeline status</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeveloperSettingsTab.qml" line="51"/>
+        <source>Shows the bathymetry pipeline state in the Isobaths group. Polling adds load to the pipeline — keep it off unless diagnosing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeveloperSettingsTab.qml" line="68"/>
+        <source>Mosaic pipeline status</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeveloperSettingsTab.qml" line="69"/>
+        <source>Shows the mosaic pipeline state in the Mosaic group. Polling adds load to the pipeline — keep it off unless diagnosing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeveloperSettingsTab.qml" line="88"/>
+        <source>Application log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeveloperSettingsTab.qml" line="89"/>
+        <source>Log file is not active</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeveloperSettingsTab.qml" line="97"/>
+        <source>Open folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeveloperSettingsTab.qml" line="104"/>
+        <source>Copy path</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>DeviceItem</name>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="24"/>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="305"/>
         <source>Echogram</source>
-        <translation type="vanished">Echogram</translation>
+        <translation>Echogram</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="27"/>
         <source>Resolution, mm</source>
-        <translation type="vanished">Rozdzielczość, mm</translation>
+        <translation>Rozdzielczość, mm</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="47"/>
         <source>Number of Samples</source>
-        <translation type="vanished">Liczba próbek</translation>
+        <translation>Liczba próbek</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="67"/>
         <source>Offset of Samples</source>
-        <translation type="vanished">Przesunięcie próbek</translation>
+        <translation>Przesunięcie próbek</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="88"/>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="336"/>
         <source>Rangefinder</source>
-        <translation type="vanished">Głębinomierz</translation>
+        <translation>Głębinomierz</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="91"/>
         <source>Max distance, mm</source>
-        <translation type="vanished">Maks. odległość, mm</translation>
+        <translation>Maks. odległość, mm</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="111"/>
         <source>Dead zone, mm</source>
-        <translation type="vanished">Martwa strefa, mm</translation>
+        <translation>Martwa strefa, mm</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="131"/>
         <source>Confidence threshold, %</source>
-        <translation type="vanished">Próg zaufania, %</translation>
+        <translation>Próg zaufania, %</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="152"/>
         <source>Transducer</source>
-        <translation type="vanished">Przetwornik</translation>
+        <translation>Przetwornik</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="155"/>
         <source>Pulse count</source>
-        <translation type="vanished">Liczba impulsów</translation>
+        <translation>Liczba impulsów</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="175"/>
         <source>Frequency, kHz</source>
-        <translation type="vanished">Częstotliwość, kHz</translation>
+        <translation>Częstotliwość, kHz</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="195"/>
         <source>Booster</source>
-        <translation type="vanished">Wzmacniacz</translation>
+        <translation>Wzmacniacz</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="214"/>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="328"/>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="363"/>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="394"/>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="425"/>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="456"/>
         <source>Off</source>
-        <translation type="vanished">Wyłącz</translation>
+        <translation>Wyłącz</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="214"/>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="363"/>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="425"/>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="456"/>
         <source>On</source>
-        <translation type="vanished">Włącz</translation>
+        <translation>Włącz</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="238"/>
         <source>DSP</source>
-        <translation type="vanished">DSP</translation>
+        <translation>DSP</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="241"/>
         <source>Horizontal smoothing factor</source>
-        <translation type="vanished">Współczynnik wygładzania poziomego</translation>
+        <translation>Współczynnik wygładzania poziomego</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="261"/>
         <source>Speed of Sound, m/s</source>
-        <translation type="vanished">Prędkość dźwięku, m/s</translation>
+        <translation>Prędkość dźwięku, m/s</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="282"/>
         <source>Dataset</source>
-        <translation type="vanished">Zbiór danych</translation>
+        <translation>Zbiór danych</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="285"/>
         <source>Period, ms</source>
-        <translation type="vanished">Okres, ms</translation>
+        <translation>Okres, ms</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="328"/>
         <source>8-bit</source>
-        <translation type="vanished">8-bitowy</translation>
+        <translation>8-bitowy</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="328"/>
         <source>16-bit</source>
-        <translation type="vanished">16-bitowy</translation>
+        <translation>16-bitowy</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="363"/>
         <source>NMEA</source>
-        <translation type="vanished">NMEA</translation>
+        <translation>NMEA</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="371"/>
         <source>AHRS</source>
-        <translation type="vanished">AHRS</translation>
+        <translation>AHRS</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="394"/>
         <source>Euler</source>
-        <translation type="vanished">Euler</translation>
+        <translation>Euler</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="394"/>
         <source>Quat.</source>
-        <translation type="vanished">Kwat.</translation>
+        <translation>Kwat.</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="402"/>
         <source>Temperature</source>
-        <translation type="vanished">Temperatura</translation>
+        <translation>Temperatura</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="433"/>
         <source>Timestamp</source>
-        <translation type="vanished">Znacznik czasu</translation>
+        <translation>Znacznik czasu</translation>
+    </message>
+</context>
+<context>
+    <name>DeviceParamCatalog</name>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="9"/>
+        <source>Resolution, mm</source>
+        <translation>Rozdzielczość, mm</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="12"/>
+        <source>Sample count</source>
+        <translation>Liczba próbek</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="15"/>
+        <source>Offset</source>
+        <translation>Offset próbek</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="19"/>
+        <source>Max distance, mm</source>
+        <translation>Maks. odległość, mm</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="22"/>
+        <source>Dead zone, mm</source>
+        <translation>Strefa martwa, mm</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="25"/>
+        <source>Confidence threshold, %</source>
+        <translation>Próg pewności, %</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="29"/>
+        <source>Pulse count</source>
+        <translation>Liczba impulsów</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="32"/>
+        <source>Frequency, kHz</source>
+        <translation>Częstotliwość, kHz</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="35"/>
+        <source>Booster</source>
+        <translation>Wzmacniacz</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="38"/>
+        <source>Horizontal smoothing</source>
+        <translation>Wygładzanie poziome</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="41"/>
+        <source>Sound speed, m/s</source>
+        <translation>Prędkość dźwięku, m/s</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="45"/>
+        <source>Period, ms</source>
+        <translation>Okres, ms</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="48"/>
+        <source>Echogram</source>
+        <translation>Echogram</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="49"/>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="54"/>
+        <source>Off</source>
+        <translation>Wyłącz</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="49"/>
+        <source>8-bit</source>
+        <translation>8-bitowy</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="52"/>
+        <source>Rangefinder</source>
+        <translation>Głębokościomierz</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="54"/>
+        <source>On</source>
+        <translation>Włącz</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="54"/>
+        <source>NMEA</source>
+        <translation>NMEA</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="65"/>
+        <source>AHRS</source>
+        <translation>AHRS</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="67"/>
+        <source>Temperature</source>
+        <translation>Temperatura</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="69"/>
+        <source>Timestamp</source>
+        <translation>Znacznik czasu</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="72"/>
+        <source>Baudrate</source>
+        <translation>Prędkość transmisji</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="74"/>
+        <source>Settings file</source>
+        <translation>Plik ustawień</translation>
+    </message>
+</context>
+<context>
+    <name>DeviceParamRow</name>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="53"/>
+        <source>Pin to favourites</source>
+        <translation>Przypnij do ulubionych</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="53"/>
+        <source>Unpin from favourites</source>
+        <translation>Odepnij z ulubionych</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="106"/>
+        <source>Set baudrate</source>
+        <translation>Ustaw</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="107"/>
+        <source>Apply the selected baud rate</source>
+        <translation>Ustaw wybraną prędkość transmisji</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="121"/>
+        <source>Import</source>
+        <translation>Import</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="127"/>
+        <source>Export</source>
+        <translation>Eksport</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="122"/>
+        <source>Load all device settings from an XML file</source>
+        <translation>Wczytaj wszystkie ustawienia urządzenia z pliku XML</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceParamRow.qml" line="128"/>
+        <source>Save all device settings to an XML file</source>
+        <translation>Zapisz wszystkie ustawienia urządzenia do pliku XML</translation>
+    </message>
+</context>
+<context>
+    <name>DeviceSettingsPage</name>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1886"/>
+        <source>Information</source>
+        <translation>Informacje</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1915"/>
+        <source>Model</source>
+        <translation>Model</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1920"/>
+        <source>Board type</source>
+        <translation>Typ płytki</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1925"/>
+        <source>Serial number</source>
+        <translation>Numer seryjny</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1932"/>
+        <source>not set</source>
+        <translation>nie ustawiono</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1937"/>
+        <source>Firmware version</source>
+        <translation>Wersja firmware</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1942"/>
+        <source>Bootloader version</source>
+        <translation>Wersja bootloadera</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1947"/>
+        <source>Running</source>
+        <translation>Tryb</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1952"/>
+        <source>Bootloader</source>
+        <translation>Bootloader</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1953"/>
+        <source>Firmware</source>
+        <translation>Firmware</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1958"/>
+        <source>Bus address</source>
+        <translation>Adres na magistrali</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1963"/>
+        <source>Connection</source>
+        <translation>Połączenie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1968"/>
+        <source>Chip UID</source>
+        <translation>UID układu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1903"/>
+        <source>Copy</source>
+        <translation>Kopiuj</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1909"/>
+        <source>Device info copied to clipboard</source>
+        <translation>Informacje o urządzeniu skopiowane do schowka</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="434"/>
+        <source>Write current settings to device memory</source>
+        <translation>Zapisz bieżące ustawienia do pamięci urządzenia</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1644"/>
+        <source>Erase device settings (reset)</source>
+        <translation>Wymaż ustawienia urządzenia (reset)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1650"/>
+        <source>Reboot the device</source>
+        <translation>Uruchom ponownie urządzenie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1814"/>
+        <source>Choose firmware</source>
+        <translation>Wybierz oprogramowanie układowe</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="293"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1312"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1570"/>
+        <source>Echogram</source>
+        <translation>Echogram</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="294"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1344"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1583"/>
+        <source>Rangefinder</source>
+        <translation>Głębokościomierz</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="295"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1596"/>
+        <source>Transducer</source>
+        <translation>Przetwornik</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="298"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1634"/>
+        <source>Actions</source>
+        <translation>Działania</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="433"/>
+        <source>Flash settings</source>
+        <translation>Zapisz</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1643"/>
+        <source>Erase settings</source>
+        <translation>Wymaż</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1649"/>
+        <source>Reboot</source>
+        <translation>Restart</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1662"/>
+        <source>Settings file</source>
+        <translation>Plik ustawień</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1721"/>
+        <source>Upgrade</source>
+        <translation>Aktualizacja</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1804"/>
+        <source>Enter path</source>
+        <translation>Wprowadź ścieżkę</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1824"/>
+        <source>UPGRADE</source>
+        <translation>Aktualizacja</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1776"/>
+        <source>Please choose a file</source>
+        <translation>Proszę wybrać plik</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="439"/>
+        <source>Settings written to device: %1</source>
+        <translation>Ustawienia zapisane w urządzeniu: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1645"/>
+        <source>Settings erased on device: %1</source>
+        <translation>Ustawienia wymazane: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1651"/>
+        <source>Reboot command sent: %1</source>
+        <translation>Wysłano polecenie restartu: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="71"/>
+        <source>Baudrate set: %1</source>
+        <translation>Ustawiono prędkość transmisji: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1350"/>
+        <source>On</source>
+        <translation>Włącz</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1318"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1350"/>
+        <source>Off</source>
+        <translation>Wyłącz</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="296"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1609"/>
+        <source>DSP</source>
+        <translation>CPS</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1350"/>
+        <source>NMEA</source>
+        <translation>NMEA</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1318"/>
+        <source>8-bit</source>
+        <translation>8-bitowy</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1306"/>
+        <source>Frequency, kHz</source>
+        <translation>Częstotliwość, kHz</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1365"/>
+        <source>Confidence threshold, %</source>
+        <translation>Próg pewności, %</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1245"/>
+        <source>Period, ms</source>
+        <translation>Okres, ms</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1689"/>
+        <source>Open settings file</source>
+        <translation>Otwórz plik ustawień</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1702"/>
+        <source>Save settings file</source>
+        <translation>Zapisz plik ustawień</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="297"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1621"/>
+        <source>Dataset</source>
+        <translation>Zbiór danych</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="562"/>
+        <source> &amp; </source>
+        <translation> i </translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="643"/>
+        <source>Armed — waiting for data.</source>
+        <translation>Gotowy — oczekiwanie na dane.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="965"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1101"/>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="589"/>
+        <source>Connecting…</source>
+        <translation>Łączenie…</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="965"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1101"/>
+        <source>Download</source>
+        <translation>Pobierz</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="997"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1134"/>
+        <source>Downloading… %1%</source>
+        <translation>Pobieranie… %1%</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1183"/>
+        <source>Downloads are saved to &quot;%1&quot;</source>
+        <translation>Pobrane pliki zapisywane są w „%1”</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="952"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1087"/>
+        <source>Saved &quot;%1&quot; to &quot;%2&quot;</source>
+        <translation>Plik „%1” zapisano w „%2”</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="822"/>
+        <source>Free space</source>
+        <translation>Wolne miejsce</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="643"/>
+        <source>Idle</source>
+        <translation>Bezczynny</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="894"/>
+        <source>Logs (%1)</source>
+        <translation>Logi (%1)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="560"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="616"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="654"/>
+        <source>Nav</source>
+        <translation>Nav</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="609"/>
+        <source>No data from %1 · nothing recorded for %2</source>
+        <translation>Brak danych z %1 · nic nie nagrano od %2</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="528"/>
+        <source>h</source>
+        <translation>h</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="528"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="529"/>
+        <source>m</source>
+        <translation>min</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="523"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="529"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="530"/>
+        <source>s</source>
+        <translation>s</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="910"/>
+        <source>No logs listed yet — tap Refresh to enumerate the recorder&apos;s archive.</source>
+        <translation>Brak listy logów — naciśnij Odśwież, aby pobrać archiwum rejestratora.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="591"/>
+        <source>No response</source>
+        <translation>Brak odpowiedzi</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="592"/>
+        <source>No update for %1 — showing last known.</source>
+        <translation>Brak aktualizacji przez %1 — pokazano ostatnie znane.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="608"/>
+        <source>Recording stopped</source>
+        <translation>Nagrywanie zatrzymane</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="620"/>
+        <source>%1 connected</source>
+        <translation>%1 podłączony</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="620"/>
+        <source>%1 disconnected</source>
+        <translation>%1 odłączony</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="624"/>
+        <source>Saving to log #%1 — %2</source>
+        <translation>Zapisywanie do logu #%1 — %2</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="625"/>
+        <source>Saving — %1</source>
+        <translation>Zapisywanie — %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="610"/>
+        <source>Nothing recorded for %1 — source silent.</source>
+        <translation>Nic nie nagrano od %1 — źródło milczy.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="965"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1101"/>
+        <source>Re-download</source>
+        <translation>Pobierz ponownie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="468"/>
+        <source>Recorder</source>
+        <translation>Rejestrator</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="644"/>
+        <source>Recorder is coming up.</source>
+        <translation>Rejestrator uruchamia się.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="623"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="640"/>
+        <source>Recording</source>
+        <translation>Nagrywanie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="596"/>
+        <source>Recording failed</source>
+        <translation>Błąd nagrywania</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="599"/>
+        <source>Recording is disabled.</source>
+        <translation>Nagrywanie wyłączone.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="599"/>
+        <source>Recording off</source>
+        <translation>Nagrywanie wył.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="597"/>
+        <source>Recording stopped — check the recorder.</source>
+        <translation>Nagrywanie zatrzymane — sprawdź rejestrator.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="902"/>
+        <source>Refresh</source>
+        <translation>Odśwież</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="998"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1135"/>
+        <source>Saved</source>
+        <translation>Zapisano</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="634"/>
+        <source>Saving to log #%1 — %2 connected.</source>
+        <translation>Zapisywanie do logu #%1 — %2 podłączony.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="633"/>
+        <source>Saving to log #%1 — %2 are connected.</source>
+        <translation>Zapisywanie do logu #%1 — %2 podłączone.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="635"/>
+        <source>Saving to log #%1.</source>
+        <translation>Zapisywanie do logu #%1.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="638"/>
+        <source>Saving — %1 connected.</source>
+        <translation>Zapisywanie — %1 podłączony.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="637"/>
+        <source>Saving — %1 are connected.</source>
+        <translation>Zapisywanie — %1 podłączone.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="639"/>
+        <source>Saving.</source>
+        <translation>Zapisywanie.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="644"/>
+        <source>Starting…</source>
+        <translation>Uruchamianie…</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="596"/>
+        <source>Storage lost</source>
+        <translation>Utracono nośnik</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="863"/>
+        <source>Values may be outdated.</source>
+        <translation>Dane mogą być nieaktualne.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="589"/>
+        <source>Waiting for the recorder.</source>
+        <translation>Oczekiwanie na rejestrator.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="853"/>
+        <source>⚠ Dropping frames</source>
+        <translation>⚠ Gubienie ramek</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="652"/>
+        <source>S1</source>
+        <translation>S1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="653"/>
+        <source>S2</source>
+        <translation>S2</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="558"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="616"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="652"/>
+        <source>Sonar 1</source>
+        <translation>Sonar 1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="559"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="616"/>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="653"/>
+        <source>Sonar 2</source>
+        <translation>Sonar 2</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1292"/>
+        <source>Distance, m</source>
+        <translation>Odległość, m</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1328"/>
+        <source>Resolution, cm</source>
+        <translation>Rozdzielczość, cm</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1500"/>
+        <source>Advanced settings</source>
+        <translation>Ustawienia zaawansowane</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1223"/>
+        <source>Not applied to the device</source>
+        <translation>Nie zastosowano na urządzeniu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="292"/>
+        <source>Group &quot;%1&quot; settings were not applied</source>
+        <translation>Ustawienia grupy &quot;%1&quot; nie zostały zastosowane</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1408"/>
+        <source>Favourites:</source>
+        <translation>Ulubione:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="152"/>
+        <source>Favourites are full: up to %1 settings</source>
+        <translation>Ulubione są pełne: maksymalnie %1 ustawień</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1524"/>
+        <source>Finish pinning settings</source>
+        <translation>Zakończ przypinanie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1525"/>
+        <source>Pin settings to favourites</source>
+        <translation>Przypnij ustawienia do ulubionych</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeviceSettingsPage.qml" line="1425"/>
+        <source>Tap a star next to a setting to pin it here</source>
+        <translation>Naciśnij gwiazdkę obok ustawienia, aby przypiąć je tutaj</translation>
     </message>
 </context>
 <context>
     <name>DeviceSettingsTab</name>
     <message>
-        <location filename="../qml/app/DeviceSettingsTab.qml" line="27"/>
+        <location filename="../qml/app/DeviceSettingsTab.qml" line="69"/>
         <source>Settings:</source>
         <translation>Ustawienia:</translation>
     </message>
@@ -2274,769 +3820,382 @@ udp://@:1234
 <context>
     <name>DeviceTopologyView</name>
     <message>
-        <location filename="../qml/app/DeviceTopologyView.qml" line="87"/>
+        <location filename="../qml/app/DeviceTopologyView.qml" line="106"/>
         <source>Port %1</source>
         <translation>Port %1</translation>
     </message>
 </context>
 <context>
-    <name>DeviceSettingsPage</name>
+    <name>DisplaySettings</name>
     <message>
-        <source>Information</source>
-        <translation>Informacje</translation>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="83"/>
+        <source>Plot</source>
+        <translation>Wykres</translation>
     </message>
     <message>
-        <source>Model</source>
-        <translation>Model</translation>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="88"/>
+        <source>Number of graphs:</source>
+        <translation>Liczba wykresów:</translation>
     </message>
     <message>
-        <source>Board type</source>
-        <translation>Typ płytki</translation>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="107"/>
+        <source>Synchronization</source>
+        <translation>Synchronizacja</translation>
     </message>
     <message>
-        <source>Serial number</source>
-        <translation>Numer seryjny</translation>
-    </message>
-    <message>
-        <source>not set</source>
-        <translation>nie ustawiono</translation>
-    </message>
-    <message>
-        <source>Firmware version</source>
-        <translation>Wersja firmware</translation>
-    </message>
-    <message>
-        <source>Bootloader version</source>
-        <translation>Wersja bootloadera</translation>
-    </message>
-    <message>
-        <source>Running</source>
-        <translation>Tryb</translation>
-    </message>
-    <message>
-        <source>Bootloader</source>
-        <translation>Bootloader</translation>
-    </message>
-    <message>
-        <source>Firmware</source>
-        <translation>Firmware</translation>
-    </message>
-    <message>
-        <source>Bus address</source>
-        <translation>Adres na magistrali</translation>
-    </message>
-    <message>
-        <source>Connection</source>
-        <translation>Połączenie</translation>
-    </message>
-    <message>
-        <source>Chip UID</source>
-        <translation>UID układu</translation>
-    </message>
-    <message>
-        <source>Copy</source>
-        <translation>Kopiuj</translation>
-    </message>
-    <message>
-        <source>Device info copied to clipboard</source>
-        <translation>Informacje o urządzeniu skopiowane do schowka</translation>
-    </message>
-    <message>
-        <source>Write current settings to device memory</source>
-        <translation>Zapisz bieżące ustawienia do pamięci urządzenia</translation>
-    </message>
-    <message>
-        <source>Erase device settings (reset)</source>
-        <translation>Wymaż ustawienia urządzenia (reset)</translation>
-    </message>
-    <message>
-        <source>Reboot the device</source>
-        <translation>Uruchom ponownie urządzenie</translation>
-    </message>
-    <message>
-        <source>Choose firmware</source>
-        <translation>Wybierz oprogramowanie układowe</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="69"/>
-        <source>Echogram</source>
-        <translation>Echogram</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="192"/>
-        <source>Echogram</source>
-        <translation>Echogram</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="97"/>
-        <source>Rangefinder</source>
-        <translation>Głębokościomierz</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="206"/>
-        <source>Rangefinder</source>
-        <translation>Głębokościomierz</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="125"/>
-        <source>Transducer</source>
-        <translation>Przetwornik</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="59"/>
-        <source>Settings:</source>
-        <translation>Ustawienia:</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="254"/>
-        <source>Actions</source>
-        <translation>Działania</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="266"/>
-        <source>Flash settings</source>
-        <translation>Zapisz</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="271"/>
-        <source>Erase settings</source>
-        <translation>Wymaż</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="276"/>
-        <source>Reboot</source>
-        <translation>Restart</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="307"/>
-        <source>Settings file</source>
-        <translation>Plik ustawień</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="380"/>
-        <source>Upgrade</source>
-        <translation>Aktualizacja</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="474"/>
-        <source>Enter path</source>
-        <translation>Wprowadź ścieżkę</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="487"/>
-        <source>UPGRADE</source>
-        <translation>Aktualizacja</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="434"/>
-        <source>Please choose a file</source>
-        <translation>Proszę wybrać plik</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="267"/>
-        <source>Settings written to device: %1</source>
-        <translation>Ustawienia zapisane w urządzeniu: %1</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="272"/>
-        <source>Settings erased on device: %1</source>
-        <translation>Ustawienia wymazane: %1</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="277"/>
-        <source>Reboot command sent: %1</source>
-        <translation>Wysłano polecenie restartu: %1</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="297"/>
-        <source>Baudrate set: %1</source>
-        <translation>Ustawiono prędkość transmisji: %1</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="209"/>
-        <source>On</source>
-        <translation>Włącz</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="195"/>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="209"/>
-        <source>Off</source>
-        <translation>Wyłącz</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="157"/>
-        <source>DSP</source>
-        <translation>CPS</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="209"/>
-        <source>NMEA</source>
-        <translation>NMEA</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="195"/>
-        <source>8-bit</source>
-        <translation>8-bitowy</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="138"/>
-        <source>Frequency, kHz</source>
-        <translation>Częstotliwość, kHz</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="116"/>
-        <source>Confidence threshold, %</source>
-        <translation>Próg pewności, %</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="186"/>
-        <source>Period, ms</source>
-        <translation>Okres, ms</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="335"/>
-        <source>Open settings file</source>
-        <translation>Otwórz plik ustawień</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="348"/>
-        <source>Save settings file</source>
-        <translation>Zapisz plik ustawień</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="179"/>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="125"/>
         <source>Dataset</source>
         <translation>Zbiór danych</translation>
     </message>
     <message>
-        <source> &amp; </source>
-        <translation> i </translation>
-    </message>
-    <message>
-        <source>Armed — waiting for data.</source>
-        <translation>Gotowy — oczekiwanie na dane.</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Anuluj</translation>
-    </message>
-    <message>
-        <source>Connecting…</source>
-        <translation>Łączenie…</translation>
-    </message>
-    <message>
-        <source>Current log</source>
-        <translation>Bieżący log</translation>
-    </message>
-    <message>
-        <source>Download</source>
-        <translation>Pobierz</translation>
-    </message>
-    <message>
-        <source>Downloading… %1%</source>
-        <translation>Pobieranie… %1%</translation>
-    </message>
-    <message>
-        <source>Downloads are saved to "%1"</source>
-        <translation>Pobrane pliki zapisywane są w „%1”</translation>
-    </message>
-    <message>
-        <source>Saved "%1" to "%2"</source>
-        <translation>Plik „%1” zapisano w „%2”</translation>
-    </message>
-    <message>
-        <source>Free space</source>
-        <translation>Wolne miejsce</translation>
-    </message>
-    <message>
-        <source>Idle</source>
-        <translation>Bezczynny</translation>
-    </message>
-    <message>
-        <source>Logs (%1)</source>
-        <translation>Logi (%1)</translation>
-    </message>
-    <message>
-        <source>Nav</source>
-        <translation>Nav</translation>
-    </message>
-    <message>
-        <source>No data from %1 · nothing recorded for %2</source>
-        <translation>Brak danych z %1 · nic nie nagrano od %2</translation>
-    </message>
-    <message>
-        <source>No log yet</source>
-        <translation>Brak logów</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="199"/>
-        <source>h</source>
-        <translation>h</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="200"/>
-        <source>m</source>
-        <translation>min</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="197"/>
-        <source>s</source>
-        <translation>s</translation>
-    </message>
-    <message>
-        <source>No logs listed yet — tap Refresh to enumerate the recorder's archive.</source>
-        <translation>Brak listy logów — naciśnij Odśwież, aby pobrać archiwum rejestratora.</translation>
-    </message>
-    <message>
-        <source>No response</source>
-        <translation>Brak odpowiedzi</translation>
-    </message>
-    <message>
-        <source>No update for %1 — showing last known.</source>
-        <translation>Brak aktualizacji przez %1 — pokazano ostatnie znane.</translation>
-    </message>
-    <message>
-        <source>Recording stopped</source>
-        <translation>Nagrywanie zatrzymane</translation>
-    </message>
-    <message>
-        <source>%1 connected</source>
-        <translation>%1 podłączony</translation>
-    </message>
-    <message>
-        <source>%1 disconnected</source>
-        <translation>%1 odłączony</translation>
-    </message>
-    <message>
-        <source>Saving to log #%1 — %2</source>
-        <translation>Zapisywanie do logu #%1 — %2</translation>
-    </message>
-    <message>
-        <source>Saving — %1</source>
-        <translation>Zapisywanie — %1</translation>
-    </message>
-    <message>
-        <source>Nothing recorded for %1 — source silent.</source>
-        <translation>Nic nie nagrano od %1 — źródło milczy.</translation>
-    </message>
-    <message>
-        <source>Re-download</source>
-        <translation>Pobierz ponownie</translation>
-    </message>
-    <message>
-        <source>Recorder</source>
-        <translation>Rejestrator</translation>
-    </message>
-    <message>
-        <source>Recorder is coming up.</source>
-        <translation>Rejestrator uruchamia się.</translation>
-    </message>
-    <message>
-        <source>Recording</source>
-        <translation>Nagrywanie</translation>
-    </message>
-    <message>
-        <source>Recording failed</source>
-        <translation>Błąd nagrywania</translation>
-    </message>
-    <message>
-        <source>Recording is disabled.</source>
-        <translation>Nagrywanie wyłączone.</translation>
-    </message>
-    <message>
-        <source>Recording off</source>
-        <translation>Nagrywanie wył.</translation>
-    </message>
-    <message>
-        <source>Recording stopped — check the recorder.</source>
-        <translation>Nagrywanie zatrzymane — sprawdź rejestrator.</translation>
-    </message>
-    <message>
-        <source>Refresh</source>
-        <translation>Odśwież</translation>
-    </message>
-    <message>
-        <source>Saved</source>
-        <translation>Zapisano</translation>
-    </message>
-    <message>
-        <source>Saving to log #%1 — %2 connected.</source>
-        <translation>Zapisywanie do logu #%1 — %2 podłączony.</translation>
-    </message>
-    <message>
-        <source>Saving to log #%1 — %2 are connected.</source>
-        <translation>Zapisywanie do logu #%1 — %2 podłączone.</translation>
-    </message>
-    <message>
-        <source>Saving to log #%1.</source>
-        <translation>Zapisywanie do logu #%1.</translation>
-    </message>
-    <message>
-        <source>Saving — %1 connected.</source>
-        <translation>Zapisywanie — %1 podłączony.</translation>
-    </message>
-    <message>
-        <source>Saving — %1 are connected.</source>
-        <translation>Zapisywanie — %1 podłączone.</translation>
-    </message>
-    <message>
-        <source>Saving.</source>
-        <translation>Zapisywanie.</translation>
-    </message>
-    <message>
-        <source>Starting…</source>
-        <translation>Uruchamianie…</translation>
-    </message>
-    <message>
-        <source>Storage lost</source>
-        <translation>Utracono nośnik</translation>
-    </message>
-    <message>
-        <source>Values may be outdated.</source>
-        <translation>Dane mogą być nieaktualne.</translation>
-    </message>
-    <message>
-        <source>Waiting for the recorder.</source>
-        <translation>Oczekiwanie na rejestrator.</translation>
-    </message>
-    <message>
-        <source>⚠ Dropping frames</source>
-        <translation>⚠ Gubienie ramek</translation>
-    </message>
-    <message>
-        <source>S1</source>
-        <translation>S1</translation>
-    </message>
-    <message>
-        <source>S2</source>
-        <translation>S2</translation>
-    </message>
-    <message>
-        <source>Sonar 1</source>
-        <translation>Sonar 1</translation>
-    </message>
-    <message>
-        <source>Sonar 2</source>
-        <translation>Sonar 2</translation>
-    </message>
-    <message>
-        <source>Distance, m</source>
-        <translation>Odległość, m</translation>
-    </message>
-    <message>
-        <source>Resolution, cm</source>
-        <translation>Rozdzielczość, cm</translation>
-    </message>
-    <message>
-        <source>Advanced settings</source>
-        <translation>Ustawienia zaawansowane</translation>
-    </message>
-    <message>
-        <source>Not applied to the device</source>
-        <translation>Nie zastosowano na urządzeniu</translation>
-    </message>
-    <message>
-        <source>Group "%1" settings were not applied</source>
-        <translation>Ustawienia grupy "%1" nie zostały zastosowane</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="1"/>
-        <source>Favourites:</source>
-        <translation>Ulubione:</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="1"/>
-        <source>Favourites are full: up to %1 settings</source>
-        <translation>Ulubione są pełne: maksymalnie %1 ustawień</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="1"/>
-        <source>Finish pinning settings</source>
-        <translation>Zakończ przypinanie</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="1"/>
-        <source>Pin settings to favourites</source>
-        <translation>Przypnij ustawienia do ulubionych</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/DeviceSettingsPage.qml" line="1"/>
-        <source>Tap a star next to a setting to pin it here</source>
-        <translation>Naciśnij gwiazdkę obok ustawienia, aby przypiąć je tutaj</translation>
-    </message>
-</context>
-<context>
-    <name>DisplaySettings</name>
-    <message>
-        <source>Plot</source>
-        <translation type="vanished">Wykres</translation>
-    </message>
-    <message>
-        <source>Number of graphs:</source>
-        <translation type="vanished">Liczba wykresów:</translation>
-    </message>
-    <message>
-        <source>Synchronization</source>
-        <translation type="vanished">Synchronizacja</translation>
-    </message>
-    <message>
-        <source>Dataset</source>
-        <translation type="vanished">Zbiór danych</translation>
-    </message>
-    <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="133"/>
         <source>FBS, f/b</source>
-        <translation type="vanished">FCP, p/t</translation>
+        <translation>FCP, p/t</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="178"/>
         <source>S.offset, mm:</source>
-        <translation type="vanished">S.przes, mm:</translation>
+        <translation>S.przes, mm:</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="261"/>
+        <source>TGC</source>
+        <translation type="unfinished">TGC</translation>
+    </message>
+    <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="266"/>
         <source>Near gain:</source>
-        <translation type="vanished">Wzm. bliski:</translation>
+        <translation>Wzm. bliski:</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="305"/>
         <source>Far gain:</source>
-        <translation type="vanished">Wzm. daleki:</translation>
+        <translation>Wzm. daleki:</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="422"/>
         <source>Compensate</source>
-        <translation type="vanished">Kompensacja</translation>
+        <translation>Kompensacja</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="437"/>
         <source>Bottom-Track processing</source>
-        <translation type="vanished">Przetwarzanie śledzenia dna</translation>
+        <translation>Przetwarzanie śledzenia dna</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="474"/>
         <source>Preset:</source>
-        <translation type="vanished">Szablon:</translation>
+        <translation>Szablon:</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="484"/>
         <source>Normal 2D</source>
-        <translation type="vanished">Normalne 2D</translation>
+        <translation>Normalne 2D</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="484"/>
         <source>Narrow 2D</source>
-        <translation type="vanished">Wąskie 2D</translation>
+        <translation>Wąskie 2D</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="484"/>
         <source>Side-Scan</source>
-        <translation type="vanished">Skan boczny</translation>
+        <translation>Skan boczny</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="506"/>
         <source>Gain slope:</source>
-        <translation type="vanished">Nachylenie wzmocnienia:</translation>
+        <translation>Nachylenie wzmocnienia:</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="562"/>
         <source>Threshold:</source>
-        <translation type="vanished">Próg:</translation>
+        <translation>Próg:</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="618"/>
         <source>Horizontal window:</source>
-        <translation type="vanished">Okno poziome:</translation>
+        <translation>Okno poziome:</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="659"/>
         <source>Vertical gap, %:</source>
-        <translation type="vanished">Pionowa szczelina, %:</translation>
+        <translation>Pionowa szczelina, %:</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="701"/>
         <source>Min range, m:</source>
-        <translation type="vanished">Min. zasięg, m:</translation>
+        <translation>Min. zasięg, m:</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="761"/>
         <source>Max range, m:</source>
-        <translation type="vanished">Maks. zasięg, m:</translation>
+        <translation>Maks. zasięg, m:</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="820"/>
         <source>Sonar offset XYZ, mm:</source>
-        <translation type="vanished">Przesunięcie sonaru XYZ, mm:</translation>
+        <translation>Przesunięcie sonaru XYZ, mm:</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="911"/>
         <source>Processing</source>
-        <translation type="vanished">Przetwarzanie</translation>
+        <translation>Przetwarzanie</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="920"/>
         <source>Realtime</source>
-        <translation type="vanished">Realtime</translation>
+        <translation>Realtime</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="942"/>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1367"/>
         <source>Export</source>
-        <translation type="vanished">Eksport</translation>
+        <translation>Eksport</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1009"/>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1352"/>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1468"/>
         <source>Enter path</source>
-        <translation type="vanished">Wprowadź ścieżkę</translation>
+        <translation>Wprowadź ścieżkę</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1026"/>
         <source>Select folder for export</source>
-        <translation type="vanished">Wybierz folder, do którego chcesz wyeksportować</translation>
+        <translation>Wybierz folder, do którego chcesz wyeksportować</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1048"/>
         <source>Decimation, m:</source>
-        <translation type="vanished">Decymacja, m:</translation>
+        <translation>Decymacja, m:</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1069"/>
         <source>Export to CSV</source>
-        <translation type="vanished">Eksport do CSV</translation>
+        <translation>Eksport do CSV</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1081"/>
         <source>Export to XTF</source>
-        <translation type="vanished">Eksport do XTF</translation>
+        <translation>Eksport do XTF</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1089"/>
         <source>Complex signal to CSV</source>
-        <translation type="vanished">Sygnał złożony do CSV</translation>
+        <translation>Sygnał złożony do CSV</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1097"/>
         <source>USBL to CSV</source>
-        <translation type="vanished">USBL do CSV</translation>
+        <translation>USBL do CSV</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1107"/>
         <source>Preference</source>
-        <translation type="vanished">Preferencje</translation>
+        <translation>Preferencje</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1110"/>
         <source>Language:</source>
-        <translation type="vanished">Język:</translation>
+        <translation>Język:</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1119"/>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1125"/>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1131"/>
         <source>English</source>
-        <translation type="vanished">Angielski</translation>
+        <translation>Angielski</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1119"/>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1127"/>
         <source>Russian</source>
-        <translation type="vanished">Rosyjski</translation>
+        <translation>Rosyjski</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1119"/>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1129"/>
         <source>Polish</source>
-        <translation type="vanished">Polski</translation>
+        <translation>Polski</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1146"/>
         <source>Display theme:</source>
-        <translation type="vanished">Motyw:</translation>
+        <translation>Motyw:</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1155"/>
         <source>Dark</source>
-        <translation type="vanished">Ciemny</translation>
+        <translation>Ciemny</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1155"/>
         <source>Super Dark</source>
-        <translation type="vanished">Super Ciemny</translation>
+        <translation>Super Ciemny</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1155"/>
         <source>Light</source>
-        <translation type="vanished">Jasny</translation>
+        <translation>Jasny</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1155"/>
         <source>Super Light</source>
-        <translation type="vanished">Super Jasny</translation>
+        <translation>Super Jasny</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1155"/>
+        <source>OneDarkPro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1155"/>
+        <source>Monokai</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1155"/>
+        <source>Kimbie Dark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1155"/>
+        <source>Solarized Dark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1168"/>
         <source>Instruments grade:</source>
-        <translation type="vanished">Klasa instrumentów:</translation>
+        <translation>Klasa instrumentów:</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1177"/>
         <source>Fish Finders</source>
-        <translation type="vanished">Wykrywanie ryb</translation>
+        <translation>Wykrywanie ryb</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1177"/>
         <source>Bottom Tracking</source>
-        <translation type="vanished">Śledzenie dna</translation>
+        <translation>Śledzenie dna</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1177"/>
         <source>Maximum</source>
-        <translation type="vanished">Maksimum</translation>
+        <translation>Maksimum</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1192"/>
         <source>Interface</source>
-        <translation type="vanished">Interfejs</translation>
+        <translation>Interfejs</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1200"/>
         <source>Extra info panel</source>
-        <translation type="vanished">Dodatkowy panel informacyjny</translation>
+        <translation>Dodatkowy panel informacyjny</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1222"/>
         <source>filter</source>
-        <translation type="vanished">filtr</translation>
+        <translation>filtr</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1231"/>
         <source>Profiles button</source>
-        <translation type="vanished">Profile</translation>
+        <translation>Profile</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1240"/>
         <source>Autopilot info</source>
-        <translation type="vanished">Informacje o autopilocie</translation>
+        <translation>Informacje o autopilocie</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1248"/>
         <source>Console</source>
-        <translation type="vanished">Konsola</translation>
+        <translation>Konsola</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1269"/>
         <source>Keyboard shortcuts</source>
-        <translation type="vanished">Skróty klawiaturowe</translation>
+        <translation>Skróty klawiaturowe</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1275"/>
         <source>UI state backup</source>
-        <translation type="vanished">Kopia zapasowa stanu UI</translation>
+        <translation>Kopia zapasowa stanu UI</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1381"/>
         <source>Export UI state</source>
-        <translation type="vanished">Eksportuj stan interfejsu</translation>
+        <translation>Eksportuj stan interfejsu</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1483"/>
         <source>Import</source>
-        <translation type="vanished">Import</translation>
+        <translation>Import</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1497"/>
         <source>Import UI state</source>
-        <translation type="vanished">Importuj stan interfejsu</translation>
+        <translation>Importuj stan interfejsu</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1570"/>
         <source>Depth</source>
-        <translation type="vanished">Głębokość</translation>
+        <translation>Głębokość</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1581"/>
         <source>Speed</source>
-        <translation type="vanished">Prędkość</translation>
+        <translation>Prędkość</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1592"/>
         <source>Coordinates</source>
-        <translation type="vanished">Współrzędne</translation>
+        <translation>Współrzędne</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1603"/>
         <source>Active point</source>
-        <translation type="vanished">Punkt aktywny</translation>
+        <translation>Punkt aktywny</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1614"/>
         <source>Navigation info</source>
-        <translation type="vanished">Informacje nawigacyjne</translation>
+        <translation>Informacje nawigacyjne</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/settings/DisplaySettings.qml" line="1625"/>
         <source>Boat Status</source>
-        <translation type="vanished">Status łodzi</translation>
+        <translation>Status łodzi</translation>
     </message>
 </context>
 <context>
     <name>DopplerBox</name>
     <message>
+        <location filename="../qml/legacy_qml/devices/DopplerBox.qml" line="19"/>
         <source>Range Modes</source>
-        <translation type="vanished">Tryby zasięgu</translation>
+        <translation>Tryby zasięgu</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DopplerBox.qml" line="28"/>
         <source>Mode1</source>
-        <translation type="vanished">Tryb 1</translation>
+        <translation>Tryb 1</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DopplerBox.qml" line="40"/>
         <source>Mode2</source>
-        <translation type="vanished">Tryb 2</translation>
+        <translation>Tryb 2</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DopplerBox.qml" line="52"/>
         <source>Mode3</source>
-        <translation type="vanished">Tryb 3</translation>
+        <translation>Tryb 3</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/DopplerBox.qml" line="64"/>
         <source>Mode4 range, m</source>
-        <translation type="vanished">Tryb4 zasięg, m</translation>
+        <translation>Tryb4 zasięg, m</translation>
     </message>
 </context>
 <context>
@@ -3085,290 +4244,278 @@ udp://@:1234
         <translation>Tło</translation>
     </message>
     <message>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="224"/>
         <source>Data</source>
         <translation>Dane</translation>
     </message>
     <message>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="426"/>
         <source>Display parameters</source>
         <translation>Parametry wyświetlania</translation>
     </message>
     <message>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="77"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="153"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="193"/>
         <source>Visibility</source>
         <translation>Widoczność</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="70"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="128"/>
         <source>Open TGC settings</source>
         <translation>Otwórz ustawienia TGC</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="99"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="43"/>
         <source>Channels</source>
         <translation>Kanały</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="131"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="72"/>
         <source>Echogram</source>
         <translation>Echogram</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="136"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="91"/>
         <source>Theme</source>
         <translation>Motyw</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="138"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="99"/>
         <source>Blue</source>
         <translation>Niebieski</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="138"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="99"/>
         <source>Sepia</source>
         <translation>Sepia</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="138"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="99"/>
         <source>Sepia New</source>
         <translation>Nowa Sepia</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="138"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="99"/>
         <source>WRGBD</source>
         <translation>WRGBD</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="138"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="99"/>
         <source>WhiteBlack</source>
         <translation>Biało-Czarny</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="138"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="99"/>
         <source>BlackWhite</source>
         <translation>Czarno-Biały</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="138"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="99"/>
         <source>DeepBlue</source>
         <translation>Modry</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="138"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="99"/>
         <source>Ice</source>
         <translation>Lód</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="138"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="99"/>
         <source>Green</source>
         <translation>Zielony</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="138"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="99"/>
         <source>Midnight</source>
         <translation>Północ</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="144"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="107"/>
         <source>Source data</source>
         <translation>Dane źródłowe</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="146"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="135"/>
         <source>Raw</source>
         <translation>Raw</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="146"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="135"/>
         <source>Side-Scan</source>
         <translation>Skan boczny</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="146"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="135"/>
         <source>TGC</source>
         <translation>TGC</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="160"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="149"/>
         <source>Bottom-Track</source>
         <translation>Śledzenie dna</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="164"/>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="195"/>
-        <source>Value</source>
-        <translation>Wartość</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="172"/>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="201"/>
-        <source>Graphics</source>
-        <translation>Grafika</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="177"/>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="206"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="167"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="207"/>
         <source>Type</source>
         <translation>Typ</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="179"/>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="208"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="175"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="215"/>
         <source>Line</source>
         <translation>Linia</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="179"/>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="208"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="175"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="215"/>
         <source>Points</source>
         <translation>Punkty</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="191"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="189"/>
         <source>Rangefinder</source>
         <translation>Dalmierz</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="218"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="244"/>
         <source>Attitude</source>
         <translation>Orientacja</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="225"/>
-        <source>Temperature</source>
-        <translation>Temperatura</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="234"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="260"/>
         <source>Doppler Beams</source>
         <translation>Wiązki dopplerowskie</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="240"/>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="243"/>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="246"/>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="249"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="275"/>
         <location filename="../qml/app/EchogramSettingsPanel.qml" line="278"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="281"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="284"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="331"/>
         <source>Depth</source>
         <translation>Głębokość</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="241"/>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="244"/>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="247"/>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="250"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="276"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="279"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="282"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="285"/>
         <source>Velocity</source>
         <translation>Prędkość</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="242"/>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="245"/>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="248"/>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="251"/>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="419"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="277"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="280"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="283"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="286"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="607"/>
         <source>Mode</source>
         <translation>Tryb</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="268"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="312"/>
         <source>Doppler Instrument</source>
         <translation>Urządzenie dopplerowskie</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="277"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="330"/>
         <source>Abs. Velocity</source>
         <translation>Bezwzgl. prędkość</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="295"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="357"/>
         <source>DVL Legend</source>
         <translation>DVL Legenda</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="300"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="375"/>
         <source>Position</source>
         <translation>Pozycja</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="302"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="380"/>
         <source>Top</source>
         <translation>Góra</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="302"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="380"/>
         <source>Center</source>
         <translation>Centrum</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="302"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="380"/>
         <source>Bottom</source>
         <translation>Dół</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="312"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="388"/>
         <source>Acoustic angle</source>
         <translation>Kąt akustyczny</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="320"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="404"/>
         <source>Doppler Profiler</source>
         <translation>Profil Dopplera</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="325"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="412"/>
         <source>GNSS data</source>
         <translation>Dane GNSS</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="333"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="431"/>
         <source>Grid</source>
         <translation>Siatka</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="340"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="448"/>
         <source>Fill width</source>
         <translation>Wypełnij</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="347"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="465"/>
         <source>Invert</source>
         <translation>Odwróć</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="362"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="501"/>
         <source>Vertical lines</source>
         <translation>Linie pionowe</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="379"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="517"/>
         <source>Angle range, °</source>
         <translation>Zakres kątowy, °</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="395"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="556"/>
         <source>Velocity range, m/s</source>
         <translation>Zakres prędkości, m/s</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="414"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="590"/>
         <source>Distance auto range</source>
         <translation>Automatyczny zakres odległości</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="421"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="612"/>
         <source>Last data</source>
         <translation>Ostatnie dane</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="421"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="612"/>
         <source>Last on screen</source>
         <translation>Ostatnie na ekranie</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="421"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="612"/>
         <source>Max on screen</source>
         <translation>Maks. na ekranie</translation>
     </message>
     <message>
-        <location filename="../qml/app/EchogramSettingsPanel.qml" line="430"/>
+        <location filename="../qml/app/EchogramSettingsPanel.qml" line="619"/>
         <source>Horizontal</source>
         <translation>Poziomy</translation>
     </message>
@@ -3384,84 +4531,204 @@ udp://@:1234
 <context>
     <name>ExportDist</name>
     <message>
+        <location filename="../qml/legacy_qml/devices/ExportDist.qml" line="27"/>
         <source>Export:</source>
-        <translation type="vanished">Eksport:</translation>
+        <translation>Eksport:</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/ExportDist.qml" line="34"/>
         <source>Distance</source>
-        <translation type="vanished">Odległość</translation>
+        <translation>Odległość</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/ExportDist.qml" line="47"/>
         <source>Export to CSV</source>
-        <translation type="vanished">Eksport do CSV</translation>
+        <translation>Eksport do CSV</translation>
+    </message>
+</context>
+<context>
+    <name>ExtraInfoPanel</name>
+    <message>
+        <location filename="../qml/legacy_qml/settings/ExtraInfoPanel.qml" line="123"/>
+        <location filename="../qml/legacy_qml/settings/ExtraInfoPanel.qml" line="124"/>
+        <location filename="../qml/legacy_qml/settings/ExtraInfoPanel.qml" line="126"/>
+        <source>°</source>
+        <translation type="unfinished">°</translation>
+    </message>
+    <message>
+        <location filename="../qml/legacy_qml/settings/ExtraInfoPanel.qml" line="125"/>
+        <location filename="../qml/legacy_qml/settings/ExtraInfoPanel.qml" line="127"/>
+        <source> m</source>
+        <translation type="unfinished"> m</translation>
+    </message>
+    <message>
+        <location filename="../qml/legacy_qml/settings/ExtraInfoPanel.qml" line="128"/>
+        <source> km/h</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/legacy_qml/settings/ExtraInfoPanel.qml" line="167"/>
+        <source>Boat position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/legacy_qml/settings/ExtraInfoPanel.qml" line="176"/>
+        <source>Lat.:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/legacy_qml/settings/ExtraInfoPanel.qml" line="183"/>
+        <source>Lon.:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/legacy_qml/settings/ExtraInfoPanel.qml" line="193"/>
+        <source>Active point</source>
+        <translation type="unfinished">Punkt aktywny</translation>
+    </message>
+    <message>
+        <location filename="../qml/legacy_qml/settings/ExtraInfoPanel.qml" line="202"/>
+        <source>Dist.:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/legacy_qml/settings/ExtraInfoPanel.qml" line="209"/>
+        <source>Ang.:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/legacy_qml/settings/ExtraInfoPanel.qml" line="231"/>
+        <source>SimpleNavV2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/legacy_qml/settings/ExtraInfoPanel.qml" line="331"/>
+        <source>IDBinBoatStatus</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>FactoryBox</name>
     <message>
+        <location filename="../qml/legacy_qml/devices/FactoryBox.qml" line="22"/>
         <source>Please choose a file</source>
-        <translation type="vanished">Proszę wybrać plik</translation>
+        <translation>Proszę wybrać plik</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/FactoryBox.qml" line="57"/>
         <source>Factory</source>
-        <translation type="vanished">Ustawienia fabryczne</translation>
+        <translation>Ustawienia fabryczne</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/FactoryBox.qml" line="60"/>
         <source>PN</source>
-        <translation type="vanished">PN</translation>
+        <translation>PN</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/FactoryBox.qml" line="67"/>
         <source>Enter PN</source>
-        <translation type="vanished">Wprowadź PN</translation>
+        <translation>Wprowadź PN</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/FactoryBox.qml" line="256"/>
         <source>Write</source>
-        <translation type="vanished">Zapis</translation>
+        <translation>Zapis</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/FactoryBox.qml" line="270"/>
         <source>Read</source>
-        <translation type="vanished">Odczyt</translation>
+        <translation>Odczyt</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/FactoryBox.qml" line="284"/>
         <source>Check</source>
-        <translation type="vanished">Sprawdź</translation>
+        <translation>Sprawdź</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/FactoryBox.qml" line="298"/>
         <source>Upgrade</source>
-        <translation type="vanished">Aktualizacja</translation>
+        <translation>Aktualizacja</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/FactoryBox.qml" line="317"/>
         <source>FLASH</source>
-        <translation type="vanished">PROGRAMUJ</translation>
+        <translation>PROGRAMUJ</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/FactoryBox.qml" line="332"/>
         <source>Simple FLASH</source>
-        <translation type="vanished">Proste PROG</translation>
+        <translation>Proste PROG</translation>
+    </message>
+</context>
+<context>
+    <name>FactorySettingsGroup</name>
+    <message>
+        <location filename="../qml/app/FactorySettingsGroup.qml" line="26"/>
+        <source>Factory</source>
+        <translation type="unfinished">Ustawienia fabryczne</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/FactorySettingsGroup.qml" line="27"/>
+        <source>Factory setup for new devices.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/FactorySettingsGroup.qml" line="38"/>
+        <source>Access key:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/FactorySettingsGroup.qml" line="42"/>
+        <source>✓ saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/FactorySettingsGroup.qml" line="66"/>
+        <source>Key saved — paste to replace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/FactorySettingsGroup.qml" line="66"/>
+        <source>Paste key…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/FactorySettingsGroup.qml" line="76"/>
+        <source>Set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/FactorySettingsGroup.qml" line="87"/>
+        <source>Device:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/FactorySettingsGroup.qml" line="105"/>
+        <source>Refresh device list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/FactorySettingsGroup.qml" line="114"/>
+        <source>Selected device is not ready.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/FactorySettingsGroup.qml" line="121"/>
+        <source>Start flashing</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>FavoriteLayoutCard</name>
     <message>
-        <source>Favorite %1</source>
-        <translation type="vanished">Ulubione %1</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/FavoriteLayoutCard.qml" line="61"/>
+        <location filename="../qml/app/FavoriteLayoutCard.qml" line="26"/>
         <source>Layout %1</source>
         <translation>Układ %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/FavoriteLayoutCard.qml" line="71"/>
+        <location filename="../qml/app/FavoriteLayoutCard.qml" line="73"/>
         <source>Active</source>
         <translation>Aktywny</translation>
-    </message>
-    <message>
-        <source>%1 panes (active)</source>
-        <translation type="vanished">%1 paneli (aktywny)</translation>
-    </message>
-    <message>
-        <source>%1 panes</source>
-        <translation type="vanished">%1 paneli</translation>
     </message>
 </context>
 <context>
@@ -3485,7 +4752,7 @@ udp://@:1234
         <translation>Otwieranie plików logów i ponowne otwieranie ostatnich.</translation>
     </message>
     <message>
-        <location filename="../qml/app/FilesSettingsPage.qml" line="39"/>
+        <location filename="../qml/app/FilesSettingsPage.qml" line="32"/>
         <source>Open last file</source>
         <translation>Otwórz ostatni plik</translation>
     </message>
@@ -3493,95 +4760,132 @@ udp://@:1234
 <context>
     <name>FilesViewer</name>
     <message>
+        <location filename="../qml/devices/FilesViewer.qml" line="330"/>
         <source>Open %1</source>
         <translation>Otwórz %1</translation>
     </message>
     <message>
-        <location filename="../qml/devices/FilesViewer.qml" line="158"/>
+        <location filename="../qml/devices/FilesViewer.qml" line="202"/>
         <source>Open file:</source>
         <translation>Otwórz plik:</translation>
     </message>
     <message>
-        <location filename="../qml/devices/FilesViewer.qml" line="182"/>
+        <location filename="../qml/devices/FilesViewer.qml" line="226"/>
         <source>File path...</source>
         <translation>Ścieżka pliku...</translation>
     </message>
     <message>
-        <location filename="../qml/devices/FilesViewer.qml" line="197"/>
+        <location filename="../qml/devices/FilesViewer.qml" line="241"/>
         <source>Open file</source>
         <translation>Otwórz plik</translation>
     </message>
     <message>
-        <location filename="../qml/devices/FilesViewer.qml" line="203"/>
-        <location filename="../qml/devices/FilesViewer.qml" line="226"/>
+        <location filename="../qml/devices/FilesViewer.qml" line="247"/>
+        <location filename="../qml/devices/FilesViewer.qml" line="270"/>
         <source>Please choose a file</source>
         <translation>Proszę wybrać plik</translation>
     </message>
     <message>
-        <location filename="../qml/devices/FilesViewer.qml" line="220"/>
+        <location filename="../qml/devices/FilesViewer.qml" line="264"/>
         <source>Append file</source>
         <translation>Dołącz plik</translation>
     </message>
     <message>
-        <location filename="../qml/devices/FilesViewer.qml" line="241"/>
+        <location filename="../qml/devices/FilesViewer.qml" line="285"/>
         <source>Close file</source>
         <translation>Zamknij plik</translation>
     </message>
     <message>
-        <location filename="../qml/devices/FilesViewer.qml" line="261"/>
+        <location filename="../qml/devices/FilesViewer.qml" line="305"/>
         <source>Recently opened:</source>
         <translation>Ostatnio otwarte:</translation>
     </message>
+</context>
+<context>
+    <name>FirmwareUpgradeSession</name>
     <message>
-        <location filename="../qml/devices/FilesViewer.qml" line="315"/>
-        <source>Remove</source>
-        <translation>Usuń</translation>
+        <location filename="../src/firmware_upgrade_session.cpp" line="49"/>
+        <source>Failed to open firmware file: %1</source>
+        <translation>Nie udało się otworzyć pliku oprogramowania: %1</translation>
+    </message>
+    <message>
+        <location filename="../src/firmware_upgrade_session.cpp" line="54"/>
+        <source>No device to flash with file %1</source>
+        <translation>Brak urządzenia do wgrania pliku %1</translation>
+    </message>
+    <message>
+        <location filename="../src/firmware_upgrade_session.cpp" line="112"/>
+        <source>Flashing %1 with %2: waiting for the device</source>
+        <translation>Wgrywanie %2 na %1: oczekiwanie na urządzenie</translation>
+    </message>
+    <message>
+        <location filename="../src/firmware_upgrade_session.cpp" line="117"/>
+        <source>Flashing %1 with %2: %3%</source>
+        <translation>Wgrywanie %2 na %1: %3%</translation>
+    </message>
+    <message>
+        <location filename="../src/firmware_upgrade_session.cpp" line="135"/>
+        <source>Device %1 successfully flashed with file %2</source>
+        <translation>Urządzenie %1 pomyślnie wgrano plikiem %2</translation>
+    </message>
+    <message>
+        <location filename="../src/firmware_upgrade_session.cpp" line="139"/>
+        <source>Flashing device %1 with file %2 interrupted: the device did not come back</source>
+        <translation>Wgrywanie pliku %2 na urządzenie %1 przerwane: urządzenie nie wróciło</translation>
+    </message>
+    <message>
+        <location filename="../src/firmware_upgrade_session.cpp" line="143"/>
+        <source>Failed to flash device %1 with file %2 (error code %3)</source>
+        <translation>Nie udało się wgrać pliku %2 na urządzenie %1 (kod błędu: %3)</translation>
     </message>
 </context>
 <context>
     <name>FlashBox</name>
     <message>
+        <location filename="../qml/legacy_qml/devices/FlashBox.qml" line="29"/>
         <source>Write</source>
-        <translation type="vanished">Zapis</translation>
+        <translation>Zapis</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/FlashBox.qml" line="39"/>
         <source>Erase</source>
-        <translation type="vanished">Czyść</translation>
+        <translation>Czyść</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/FlashBox.qml" line="49"/>
         <source>Reboot</source>
-        <translation type="vanished">Uruchom ponownie</translation>
+        <translation>Uruchom ponownie</translation>
     </message>
 </context>
 <context>
     <name>GlobalPanePopup</name>
     <message>
-        <location filename="../qml/app/GlobalPanePopup.qml" line="167"/>
+        <location filename="../qml/app/GlobalPanePopup.qml" line="181"/>
         <source>Video</source>
         <translation>Wideo</translation>
     </message>
     <message>
-        <location filename="../qml/app/GlobalPanePopup.qml" line="136"/>
+        <location filename="../qml/app/GlobalPanePopup.qml" line="140"/>
         <source>Choose pane type</source>
         <translation>Wybierz typ panelu</translation>
     </message>
     <message>
-        <location filename="../qml/app/GlobalPanePopup.qml" line="147"/>
+        <location filename="../qml/app/GlobalPanePopup.qml" line="162"/>
         <source>2D</source>
         <translation>2D</translation>
     </message>
     <message>
-        <location filename="../qml/app/GlobalPanePopup.qml" line="155"/>
+        <location filename="../qml/app/GlobalPanePopup.qml" line="171"/>
         <source>3D</source>
         <translation>3D</translation>
     </message>
     <message>
-        <location filename="../qml/app/GlobalPanePopup.qml" line="167"/>
+        <location filename="../qml/app/GlobalPanePopup.qml" line="191"/>
         <source>3D is already used in another pane</source>
         <translation>3D jest już używane w innym panelu</translation>
     </message>
     <message>
-        <location filename="../qml/app/GlobalPanePopup.qml" line="20"/>
+        <location filename="../qml/app/GlobalPanePopup.qml" line="21"/>
         <source>Global pop-up</source>
         <translation>Globalne okno podręczne</translation>
     </message>
@@ -3589,173 +4893,182 @@ udp://@:1234
 <context>
     <name>HotActionsPanel</name>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1836"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1849"/>
         <source>Set contact</source>
         <translation>Ustaw kontakt</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1836"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1849"/>
         <source>Cancel contact</source>
         <translation>Anuluj kontakt</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="881"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1506"/>
         <source>Port %1</source>
         <translation>Port %1</translation>
     </message>
     <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1961"/>
         <source>Open settings</source>
         <translation>Otwórz ustawienia</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="164"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="197"/>
         <source>Device</source>
         <translation>Urządzenie</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1155"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1824"/>
         <source>Console</source>
         <translation>Konsola</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1155"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1824"/>
         <source>Hide console</source>
         <translation>Ukryj konsolę</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="953"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1644"/>
         <source>Set 700 kHz</source>
         <translation>Ustaw 700 kHz</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="969"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1661"/>
         <source>Set 450 kHz</source>
         <translation>Ustaw 450 kHz</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="983"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1675"/>
         <source>Device settings</source>
         <translation>Ustawienia urządzenia</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="614"/>
-        <source>Recording</source>
-        <translation>Nagrywanie</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="614"/>
-        <location filename="../qml/app/HotActionsPanel.qml" line="800"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1225"/>
         <source>Start recording</source>
         <translation>Rozpocznij nagrywanie</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="800"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1225"/>
         <source>Stop recording</source>
         <translation>Zatrzymaj nagrywanie</translation>
     </message>
     <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1414"/>
         <source>Lock input</source>
         <translation>Zablokuj dotyk</translation>
     </message>
     <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1413"/>
         <source>Input locked · hold to unlock</source>
         <translation>Dotyk zablokowany · przytrzymaj, aby odblokować</translation>
     </message>
     <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="986"/>
         <source>Start recording · hold for options</source>
         <translation>Rozpocznij nagrywanie · przytrzymaj, aby zobaczyć opcje</translation>
     </message>
     <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="985"/>
         <source>Stop recording · hold for options</source>
         <translation>Zatrzymaj nagrywanie · przytrzymaj, aby zobaczyć opcje</translation>
     </message>
     <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1170"/>
         <source>Start recording · hold to collapse</source>
         <translation>Rozpocznij nagrywanie · przytrzymaj, aby zwinąć</translation>
     </message>
     <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1169"/>
         <source>Stop recording · hold to collapse</source>
         <translation>Zatrzymaj nagrywanie · przytrzymaj, aby zwinąć</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="827"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1252"/>
         <source>Recording settings</source>
         <translation>Ustawienia nagrywania</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1044"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1742"/>
         <source>Power off</source>
         <translation>Wyłącz zasilanie</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1179"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1918"/>
         <source>Settings profiles</source>
         <translation>Profile ustawień</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1179"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1918"/>
         <source>Close profiles</source>
         <translation>Zamknij profile</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1531"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="2313"/>
         <source>Bottom track editing</source>
         <translation>Edycja śladu dna</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="286"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="370"/>
         <source>Open layout settings</source>
         <translation>Otwórz ustawienia układu</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="429"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="639"/>
         <source>Layouts</source>
         <translation>Układy</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1020"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1718"/>
         <source>Close second window</source>
         <translation>Zamknij drugie okno</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1021"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1719"/>
         <source>Open second window</source>
         <translation>Otwórz drugie okno</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1250"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1871"/>
+        <source>Mission planner</source>
+        <translation>Planer misji</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1894"/>
+        <source>Close autopilot</source>
+        <translation>Zamknij autopilota</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1894"/>
+        <source>Autopilot</source>
+        <translation>Autopilot</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1991"/>
         <source>Collapse hotkeys</source>
         <translation>Zwiń menu szybkich akcji</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1250"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="1991"/>
         <source>Open hotkeys</source>
         <translation>Otwórz menu szybkich akcji</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1530"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="2312"/>
         <source>Close bottom track editing</source>
         <translation>Zamknij edytor śladu dna</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="1222"/>
-        <source>Settings</source>
-        <translation>Ustawienia</translation>
-    </message>
-    <message>
-        <source>No panels yet.</source>
-        <translation>Brak paneli.</translation>
-    </message>
-    <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="493"/>
         <source>Open panel settings</source>
         <translation>Otwórz ustawienia paneli</translation>
     </message>
     <message>
+        <location filename="../qml/app/HotActionsPanel.qml" line="744"/>
         <source>Widget panels</source>
         <translation>Panele widżetów</translation>
     </message>
     <message>
-        <location filename="../qml/app/HotActionsPanel.qml" line="449"/>
+        <location filename="../qml/app/HotActionsPanel.qml" line="470"/>
         <source>Panel %1</source>
         <translation>Panel %1</translation>
     </message>
@@ -3763,102 +5076,102 @@ udp://@:1234
 <context>
     <name>HotkeysDialog</name>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="83"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="75"/>
         <source>Scroll up</source>
         <translation>Przewiń w górę</translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="85"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="77"/>
         <source>Scroll down</source>
         <translation>Przewiń w dół</translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="87"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="79"/>
         <source>Scroll to start</source>
         <translation>Przewiń na początek</translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="89"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="81"/>
         <source>Scroll to end</source>
         <translation>Przewiń na koniec</translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="410"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="544"/>
         <source>Scroll to top</source>
         <translation>Do góry</translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="43"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="44"/>
         <source>Application</source>
         <translation>Aplikacja</translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="44"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="45"/>
         <source>Echograms</source>
         <translation>Echogramy</translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="45"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="46"/>
         <source>3D</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="46"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="47"/>
         <source>Mosaic</source>
         <translation>Mozaika</translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="47"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="48"/>
         <source>Isobaths</source>
         <translation>Izobaty</translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="153"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="281"/>
         <source>Already used by: %1</source>
         <translation>Już w użyciu: %1</translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="174"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="302"/>
         <source>Key bindings</source>
         <translation>Przypisania klawiszy</translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="194"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="322"/>
         <source>Key</source>
         <translation>Klawisz</translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="203"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="331"/>
         <source>Parameter</source>
         <translation>Parametr</translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="213"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="341"/>
         <source>Action</source>
         <translation>Działanie</translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="300"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="435"/>
         <source>…</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="380"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="522"/>
         <source>Press any key  •  click again to cancel</source>
         <translation>Naciśnij dowolny klawisz • kliknij ponownie, aby anulować</translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="381"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="523"/>
         <source>Click a key to reassign</source>
         <translation>Kliknij aby ponownie przypisać</translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="393"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="557"/>
         <source>Reset to defaults</source>
         <translation>Przywróć domyślne</translation>
     </message>
     <message>
-        <location filename="../qml/settings/HotkeysDialog.qml" line="403"/>
+        <location filename="../qml/settings/HotkeysDialog.qml" line="567"/>
         <source>Close</source>
         <translation>Zamknij</translation>
     </message>
@@ -3866,29 +5179,14 @@ udp://@:1234
 <context>
     <name>HotkeysManager</name>
     <message>
-        <location filename="../src/hotkeys_manager.cpp" line="19"/>
+        <location filename="../src/hotkeys_manager.cpp" line="22"/>
         <source>Close menu</source>
         <translation>Zamknij menu</translation>
     </message>
     <message>
-        <location filename="../src/hotkeys_manager.cpp" line="20"/>
-        <source>Connection button</source>
-        <translation>Przycisk Połącz</translation>
-    </message>
-    <message>
-        <location filename="../src/hotkeys_manager.cpp" line="21"/>
+        <location filename="../src/hotkeys_manager.cpp" line="23"/>
         <source>Settings button</source>
         <translation>Przycisk Ustawienia</translation>
-    </message>
-    <message>
-        <location filename="../src/hotkeys_manager.cpp" line="22"/>
-        <source>3D button</source>
-        <translation>Przycisk 3D</translation>
-    </message>
-    <message>
-        <location filename="../src/hotkeys_manager.cpp" line="23"/>
-        <source>2D button</source>
-        <translation>Przycisk 2D</translation>
     </message>
     <message>
         <location filename="../src/hotkeys_manager.cpp" line="24"/>
@@ -4036,62 +5334,62 @@ udp://@:1234
         <translation>Przełącz Śledzenie dna</translation>
     </message>
     <message>
-        <location filename="../src/hotkeys_manager.cpp" line="54"/>
+        <location filename="../src/hotkeys_manager.cpp" line="55"/>
         <source>Toggle isobaths</source>
         <translation>Przełącz izobaty</translation>
     </message>
     <message>
-        <location filename="../src/hotkeys_manager.cpp" line="55"/>
+        <location filename="../src/hotkeys_manager.cpp" line="56"/>
         <source>Toggle mosaic</source>
         <translation>Przełącz mozaikę</translation>
     </message>
     <message>
-        <location filename="../src/hotkeys_manager.cpp" line="57"/>
+        <location filename="../src/hotkeys_manager.cpp" line="58"/>
         <source>Mosaic previous theme</source>
         <translation>Poprzedni temat mozaiki</translation>
     </message>
     <message>
-        <location filename="../src/hotkeys_manager.cpp" line="58"/>
+        <location filename="../src/hotkeys_manager.cpp" line="59"/>
         <source>Mosaic next theme</source>
         <translation>Następny temat mozaiki</translation>
     </message>
     <message>
-        <location filename="../src/hotkeys_manager.cpp" line="59"/>
+        <location filename="../src/hotkeys_manager.cpp" line="60"/>
         <source>Mosaic lower level up</source>
         <translation>Zwiększ dolny poziom mozaiki</translation>
     </message>
     <message>
-        <location filename="../src/hotkeys_manager.cpp" line="60"/>
+        <location filename="../src/hotkeys_manager.cpp" line="61"/>
         <source>Mosaic lower level down</source>
         <translation>Zmniejsz dolny poziom mozaiki</translation>
     </message>
     <message>
-        <location filename="../src/hotkeys_manager.cpp" line="61"/>
+        <location filename="../src/hotkeys_manager.cpp" line="62"/>
         <source>Mosaic upper level up</source>
         <translation>Zwiększ górny poziom mozaiki</translation>
     </message>
     <message>
-        <location filename="../src/hotkeys_manager.cpp" line="62"/>
+        <location filename="../src/hotkeys_manager.cpp" line="63"/>
         <source>Mosaic upper level down</source>
         <translation>Zmniejsz górny poziom mozaiki</translation>
     </message>
     <message>
-        <location filename="../src/hotkeys_manager.cpp" line="64"/>
+        <location filename="../src/hotkeys_manager.cpp" line="65"/>
         <source>Surface previous theme</source>
         <translation>Poprzedni temat powierzchni</translation>
     </message>
     <message>
-        <location filename="../src/hotkeys_manager.cpp" line="65"/>
+        <location filename="../src/hotkeys_manager.cpp" line="66"/>
         <source>Surface next theme</source>
         <translation>Następny temat powierzchni</translation>
     </message>
     <message>
-        <location filename="../src/hotkeys_manager.cpp" line="66"/>
+        <location filename="../src/hotkeys_manager.cpp" line="67"/>
         <source>Surface isobaths step down</source>
         <translation>Zmniejsz krok izobaty</translation>
     </message>
     <message>
-        <location filename="../src/hotkeys_manager.cpp" line="67"/>
+        <location filename="../src/hotkeys_manager.cpp" line="68"/>
         <source>Surface isobaths step up</source>
         <translation>Zwiększ krok izobaty</translation>
     </message>
@@ -4123,36 +5421,371 @@ udp://@:1234
     </message>
 </context>
 <context>
+    <name>IsobathsPipelineStatus</name>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="16"/>
+        <source>Pipeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="17"/>
+        <source>Surface</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="18"/>
+        <source>Renderer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="19"/>
+        <source>Input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="20"/>
+        <source>Triangulation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="21"/>
+        <source>Iso processor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="48"/>
+        <source>on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="48"/>
+        <source>off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="53"/>
+        <source>idle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="54"/>
+        <source>bottom track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="55"/>
+        <source>isobaths</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="56"/>
+        <source>mosaic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="57"/>
+        <source>surface</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="76"/>
+        <source>Waiting for the first snapshot…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="78"/>
+        <source>Surface computation is off — nothing will be built</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="80"/>
+        <source>Isobaths computation is off in the processor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="82"/>
+        <source>Isobaths are not enabled in the scene</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="84"/>
+        <source>No depth points reached triangulation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="86"/>
+        <source>Surface mesh is empty — no points accepted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="88"/>
+        <source>Triangulation produced no triangles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="90"/>
+        <source>No mesh tiles initialised</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="92"/>
+        <source>Colour intervals are empty — isobath levels cannot be derived</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="94"/>
+        <source>Tiles never reached the renderer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="96"/>
+        <source>Renderer has isobaths disabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="98"/>
+        <source>Surface is drawn, but no isobath labels were built</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="99"/>
+        <source>Pipeline healthy — surface and isobaths are live</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="103"/>
+        <source>State</source>
+        <translation type="unfinished">Stan</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="104"/>
+        <source>Surface calc</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="105"/>
+        <source>Iso calc</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="106"/>
+        <source>In 3D</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="107"/>
+        <source>Opening</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="108"/>
+        <source>BT busy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="109"/>
+        <source>Tile DB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="113"/>
+        <source>Chart idx</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="114"/>
+        <source>Epoch idx</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="115"/>
+        <source>Surf. queue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="116"/>
+        <source>BT queue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="120"/>
+        <source>Points</source>
+        <translation type="unfinished">Punkty</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="121"/>
+        <source>Triangles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="122"/>
+        <source>In mesh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="126"/>
+        <source>Mesh init</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="127"/>
+        <source>Has data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="128"/>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="147"/>
+        <source>Tiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="129"/>
+        <source>Zoom</source>
+        <translation type="unfinished">Powiększenie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="130"/>
+        <source>Grid</source>
+        <translation type="unfinished">Siatka</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="131"/>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="143"/>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="150"/>
+        <source>Step, m</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="132"/>
+        <source>Min Z, m</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="133"/>
+        <source>Max Z, m</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="134"/>
+        <source>Colours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="135"/>
+        <source>Edge, m</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="136"/>
+        <source>Extra, m</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="140"/>
+        <source>Mesh linked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="141"/>
+        <source>Segments</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="142"/>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="148"/>
+        <source>Labels</source>
+        <translation type="unfinished">Etykiety</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="149"/>
+        <source>Vis. keys</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="151"/>
+        <source>Iso layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/IsobathsPipelineStatus.qml" line="152"/>
+        <source>Mosaic</source>
+        <translation type="unfinished">Mozaika</translation>
+    </message>
+</context>
+<context>
     <name>KCircleIconButton</name>
     <message>
-        <location filename="../qml/kqml_types/KCircleIconButton.qml" line="64"/>
+        <location filename="../qml/kqml_types/KCircleIconButton.qml" line="72"/>
         <source>Close</source>
         <translation>Zamknij</translation>
     </message>
     <message>
-        <location filename="../qml/kqml_types/KCircleIconButton.qml" line="66"/>
+        <location filename="../qml/kqml_types/KCircleIconButton.qml" line="74"/>
         <source>Menu</source>
         <translation>Menu</translation>
     </message>
     <message>
-        <location filename="../qml/kqml_types/KCircleIconButton.qml" line="68"/>
+        <location filename="../qml/kqml_types/KCircleIconButton.qml" line="76"/>
         <source>Settings</source>
         <translation>Ustawienia</translation>
     </message>
     <message>
-        <location filename="../qml/kqml_types/KCircleIconButton.qml" line="70"/>
+        <location filename="../qml/kqml_types/KCircleIconButton.qml" line="78"/>
         <source>Assign popup</source>
         <translation>Przypisz okno podręczne</translation>
     </message>
     <message>
-        <location filename="../qml/kqml_types/KCircleIconButton.qml" line="72"/>
+        <location filename="../qml/kqml_types/KCircleIconButton.qml" line="80"/>
         <source>Pane mode</source>
         <translation>Tryb panelu</translation>
     </message>
     <message>
-        <location filename="../qml/kqml_types/KCircleIconButton.qml" line="74"/>
+        <location filename="../qml/kqml_types/KCircleIconButton.qml" line="82"/>
         <source>Move pane</source>
         <translation>Przesuń panel</translation>
+    </message>
+</context>
+<context>
+    <name>KCoachBubble</name>
+    <message>
+        <location filename="../qml/kqml_types/KCoachBubble.qml" line="21"/>
+        <source>Back</source>
+        <translation>Wstecz</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/KCoachBubble.qml" line="22"/>
+        <source>Skip</source>
+        <translation>Pomiń</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/KCoachBubble.qml" line="23"/>
+        <source>Next</source>
+        <translation>Dalej</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/KCoachBubble.qml" line="25"/>
+        <source>Leave the tutorial?</source>
+        <translation>Opuścić samouczek?</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/KCoachBubble.qml" line="26"/>
+        <source>You can continue it later from Settings → Tutorials.</source>
+        <translation>Możesz go kontynuować później: Ustawienia → Samouczki.</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/KCoachBubble.qml" line="198"/>
+        <source>Close tutorial</source>
+        <translation>Zamknij samouczek</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/KCoachBubble.qml" line="246"/>
+        <source>Stay</source>
+        <translation>Zostań</translation>
+    </message>
+    <message>
+        <location filename="../qml/kqml_types/KCoachBubble.qml" line="255"/>
+        <source>Leave</source>
+        <translation>Wyjdź</translation>
     </message>
 </context>
 <context>
@@ -4168,126 +5801,136 @@ udp://@:1234
         <translation>Aktywny</translation>
     </message>
     <message>
-        <source>Create a new layout from the current panes or a preset, then arrange it in edit mode.</source>
-        <translation type="vanished">Utwórz nowy układ na podstawie bieżących paneli lub presetu, a następnie ułóż go w trybie edycji.</translation>
-    </message>
-    <message>
-        <source>From current panes</source>
-        <translation type="vanished">Z bieżących paneli</translation>
-    </message>
-    <message>
-        <source>Snapshot the current workspace</source>
-        <translation type="vanished">Zrzut bieżącego obszaru roboczego</translation>
-    </message>
-    <message>
         <location filename="../qml/app/LayoutCreatePage.qml" line="14"/>
         <source>Create a new layout by copying an existing one (the active one is marked) or from a preset, then arrange it in edit mode.</source>
         <translation>Utwórz nowy układ, kopiując istniejący (aktywny jest oznaczony) lub z presetu, a następnie ułóż go w trybie edycji.</translation>
     </message>
     <message>
-        <location filename="../qml/app/LayoutCreatePage.qml" line="18"/>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="19"/>
         <source>Copy existing layout</source>
         <translation>Skopiuj istniejący układ</translation>
     </message>
     <message>
-        <location filename="../qml/app/LayoutCreatePage.qml" line="42"/>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="52"/>
         <source>Layout presets</source>
         <translation>Presety układów</translation>
     </message>
     <message>
-        <location filename="../qml/app/LayoutCreatePage.qml" line="46"/>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="56"/>
         <source>Single window</source>
         <translation>Jedno okno</translation>
     </message>
     <message>
-        <location filename="../qml/app/LayoutCreatePage.qml" line="46"/>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="56"/>
         <source>One pane</source>
         <translation>Jeden panel</translation>
     </message>
     <message>
-        <location filename="../qml/app/LayoutCreatePage.qml" line="47"/>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="57"/>
         <source>Two windows</source>
         <translation>Dwa okna</translation>
     </message>
     <message>
-        <location filename="../qml/app/LayoutCreatePage.qml" line="47"/>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="57"/>
         <source>Side by side</source>
         <translation>Obok siebie</translation>
     </message>
     <message>
-        <location filename="../qml/app/LayoutCreatePage.qml" line="48"/>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="58"/>
         <source>Three windows</source>
         <translation>Trzy okna</translation>
     </message>
     <message>
-        <location filename="../qml/app/LayoutCreatePage.qml" line="48"/>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="58"/>
         <source>2 top panes, 1 bottom pane</source>
         <translation>2 panele u góry, 1 na dole</translation>
     </message>
     <message>
-        <location filename="../qml/app/LayoutCreatePage.qml" line="49"/>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="59"/>
         <source>Four windows</source>
         <translation>Cztery okna</translation>
     </message>
     <message>
-        <location filename="../qml/app/LayoutCreatePage.qml" line="49"/>
+        <location filename="../qml/app/LayoutCreatePage.qml" line="59"/>
         <source>2 × 2 grid</source>
         <translation>Siatka 2 × 2</translation>
     </message>
 </context>
 <context>
+    <name>LicensePage</name>
+    <message>
+        <location filename="../qml/app/LicensePage.qml" line="20"/>
+        <source>The license text could not be read from the application resources.</source>
+        <translation>Nie udało się odczytać tekstu licencji z zasobów aplikacji.</translation>
+    </message>
+</context>
+<context>
+    <name>Link</name>
+    <message>
+        <location filename="../src/link/link.cpp" line="105"/>
+        <source>local UDP port (src) %1 is already in use by another link or program</source>
+        <translation>lokalny port UDP (src) %1 jest już zajęty przez inne połączenie lub program</translation>
+    </message>
+    <message>
+        <location filename="../src/link/link.cpp" line="106"/>
+        <source>cannot bind local UDP port (src) %1: %2</source>
+        <translation>nie można zająć lokalnego portu UDP (src) %1: %2</translation>
+    </message>
+</context>
+<context>
     <name>LinkManager</name>
     <message>
-        <location filename="../src/link/link_manager.cpp" line="662"/>
+        <location filename="../src/link/link_manager.cpp" line="676"/>
         <source>Connected: %1</source>
         <translation>Połączono: %1</translation>
     </message>
     <message>
-        <location filename="../src/link/link_manager.cpp" line="665"/>
+        <location filename="../src/link/link_manager.cpp" line="679"/>
         <source>Disconnected: %1</source>
         <translation>Rozłączono: %1</translation>
     </message>
     <message>
-        <location filename="../src/link/link_manager.cpp" line="685"/>
+        <location filename="../src/link/link_manager.cpp" line="751"/>
         <source>Link not available</source>
         <translation>Łącze niedostępne</translation>
     </message>
     <message>
-        <location filename="../src/link/link_manager.cpp" line="686"/>
+        <location filename="../src/link/link_manager.cpp" line="752"/>
         <source>Link not available: %1</source>
         <translation>Łącze niedostępne: %1</translation>
     </message>
     <message>
-        <location filename="../src/link/link_manager.cpp" line="691"/>
+        <location filename="../src/link/link_manager.cpp" line="757"/>
         <source>Link available</source>
         <translation>Łącze ponownie dostępne</translation>
     </message>
     <message>
-        <location filename="../src/link/link_manager.cpp" line="692"/>
+        <location filename="../src/link/link_manager.cpp" line="758"/>
         <source>Link available: %1</source>
         <translation>Łącze ponownie dostępne: %1</translation>
     </message>
     <message>
-        <location filename="../src/link/link_manager.cpp" line="670"/>
+        <location filename="../src/link/link_manager.cpp" line="736"/>
         <source>No data from link</source>
         <translation>Brak danych z łącza</translation>
     </message>
     <message>
-        <location filename="../src/link/link_manager.cpp" line="671"/>
+        <location filename="../src/link/link_manager.cpp" line="737"/>
         <source>No data from link: %1</source>
         <translation>Brak danych z łącza: %1</translation>
     </message>
     <message>
-        <location filename="../src/link/link_manager.cpp" line="666"/>
+        <location filename="../src/link/link_manager.cpp" line="732"/>
         <source>Receiving data from link</source>
         <translation>Odbieranie danych z łącza</translation>
     </message>
     <message>
-        <location filename="../src/link/link_manager.cpp" line="667"/>
+        <location filename="../src/link/link_manager.cpp" line="733"/>
         <source>Receiving data from link: %1</source>
         <translation>Odbieranie danych z łącza: %1</translation>
     </message>
     <message>
+        <location filename="../src/link/link_manager.cpp" line="774"/>
         <source>Link &quot;%1&quot; not opened: %2</source>
         <translation>Połączenie „%1” nie zostało otwarte: %2</translation>
     </message>
@@ -4295,180 +5938,1349 @@ udp://@:1234
 <context>
     <name>LocationExtraSettings</name>
     <message>
+        <location filename="../qml/legacy_qml/scene3d/LocationExtraSettings.qml" line="60"/>
         <source>Location settings</source>
-        <translation type="vanished">Śledzenie łodzi</translation>
+        <translation>Śledzenie łodzi</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/scene3d/LocationExtraSettings.qml" line="71"/>
         <source>Use angle</source>
-        <translation type="vanished">Użyj orientacji</translation>
+        <translation>Użyj orientacji</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/scene3d/LocationExtraSettings.qml" line="83"/>
         <source>Navigator view</source>
-        <translation type="vanished">Widok nawigatora</translation>
+        <translation>Widok nawigatora</translation>
     </message>
 </context>
 <context>
     <name>MainMenuBar</name>
     <message>
+        <location filename="../qml/legacy_qml/menus/MainMenuBar.qml" line="134"/>
         <source>Connections</source>
-        <translation type="vanished">Połączenia</translation>
+        <translation>Połączenia</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/menus/MainMenuBar.qml" line="149"/>
         <source>Settings</source>
-        <translation type="vanished">Ustawienia</translation>
+        <translation>Ustawienia</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/menus/MainMenuBar.qml" line="168"/>
         <source>Display 3D</source>
-        <translation type="vanished">Pokaż 3D</translation>
+        <translation>Pokaż 3D</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/menus/MainMenuBar.qml" line="194"/>
         <source>Display 2D</source>
-        <translation type="vanished">Pokaż 2D</translation>
-    </message>
-</context>
-<context>
-    <name>MosaicDB</name>
-    <message>
-        <location filename="../src/data_processor/mosaic_db.cpp" line="66"/>
-        <source>Mosaic cache is unavailable — distant areas may stay incomplete</source>
-        <translation>Pamięć podręczna mozaiki jest niedostępna — odległe obszary mogą pozostać niekompletne</translation>
+        <translation>Pokaż 2D</translation>
     </message>
 </context>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1"/>
+        <location filename="../qml/app/MainWindow.qml" line="1169"/>
         <source>Controls</source>
         <translation>Sterowanie</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1"/>
+        <location filename="../qml/app/MainWindow.qml" line="1168"/>
         <source>About</source>
         <translation>O programie</translation>
     </message>
     <message>
+        <location filename="../qml/app/MainWindow.qml" line="1160"/>
         <source>Servo panel</source>
         <translation>Panel serwa</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="920"/>
+        <location filename="../qml/app/MainWindow.qml" line="1174"/>
         <source>Devices</source>
         <translation>Urządzenia</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="59"/>
+        <location filename="../qml/app/MainWindow.qml" line="79"/>
         <source>Please choose a file</source>
         <translation>Proszę wybrać plik</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="841"/>
+        <location filename="../qml/app/MainWindow.qml" line="1166"/>
         <source>Information panel</source>
         <translation>Panel informacyjny</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1139"/>
+        <location filename="../qml/app/MainWindow.qml" line="1715"/>
         <source>Language:</source>
         <translation>Język:</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1183"/>
+        <location filename="../qml/app/MainWindow.qml" line="1759"/>
         <source>Continue</source>
         <translation>Kontynuuj</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1130"/>
+        <location filename="../qml/app/MainWindow.qml" line="1706"/>
         <source>Welcome to KoggerApp!</source>
         <translation>Witamy w KoggerApp!</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="842"/>
+        <location filename="../qml/app/MainWindow.qml" line="1170"/>
+        <source>Tutorials</source>
+        <translation>Samouczki</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MainWindow.qml" line="1171"/>
+        <source>Developer mode</source>
+        <translation>Tryb dla programistów</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MainWindow.qml" line="1173"/>
         <source>Create layout</source>
         <translation>Utwórz układ</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1156"/>
+        <location filename="../qml/app/MainWindow.qml" line="1732"/>
         <source>Choose which settings to show</source>
         <translation>Wybierz, które ustawienia pokazywać</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1163"/>
+        <location filename="../qml/app/MainWindow.qml" line="1739"/>
         <source>Fish Finders</source>
         <translation>Echosondery</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1164"/>
+        <location filename="../qml/app/MainWindow.qml" line="1740"/>
         <source>Bottom Track</source>
         <translation>Ślad dna</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1165"/>
+        <location filename="../qml/app/MainWindow.qml" line="1741"/>
         <source>Maximum</source>
         <translation>Maksimum</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1173"/>
+        <location filename="../qml/app/MainWindow.qml" line="1749"/>
         <source>You can change this later in settings.</source>
         <translation>Można to zmienić później w ustawieniach.</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="23"/>
-        <location filename="../qml/app/MainWindow.qml" line="55"/>
+        <location filename="../qml/app/MainWindow.qml" line="24"/>
+        <location filename="../qml/app/MainWindow.qml" line="103"/>
         <source>KoggerApp, KOGGER</source>
         <translation>KoggerApp, KOGGER</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="56"/>
+        <location filename="../qml/app/MainWindow.qml" line="104"/>
         <source> — Second window</source>
         <translation> — Drugie okno</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="835"/>
-        <location filename="../qml/app/MainWindow.qml" line="843"/>
+        <location filename="../qml/app/MainWindow.qml" line="1157"/>
+        <location filename="../qml/app/MainWindow.qml" line="1176"/>
         <source>Settings</source>
         <translation>Ustawienia</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="836"/>
+        <location filename="../qml/app/MainWindow.qml" line="1158"/>
         <source>Quick action menu</source>
         <translation>Menu szybkich akcji</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="838"/>
+        <location filename="../qml/app/MainWindow.qml" line="1163"/>
         <source>UI Saving</source>
         <translation>Zapisywanie UI</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="839"/>
+        <location filename="../qml/app/MainWindow.qml" line="1164"/>
         <source>TGC</source>
         <translation>TGC</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="920"/>
+        <location filename="../qml/app/MainWindow.qml" line="1167"/>
         <source>Console</source>
         <translation>Konsola</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="840"/>
+        <location filename="../qml/app/MainWindow.qml" line="1165"/>
         <source>Export to CSV</source>
         <translation>Eksport do CSV</translation>
     </message>
     <message>
+        <location filename="../qml/app/MainWindow.qml" line="1159"/>
         <source>Create panel</source>
         <translation>Utwórz panel</translation>
     </message>
     <message>
+        <location filename="../qml/app/MainWindow.qml" line="1159"/>
         <source>Edit panel</source>
         <translation>Edytuj panel</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1108"/>
+        <location filename="../qml/app/MainWindow.qml" line="1161"/>
         <source>USBL panel</source>
         <translation>Panel USBL</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1109"/>
+        <location filename="../qml/app/MainWindow.qml" line="1162"/>
         <source>Stand panel</source>
         <translation>Panel stanowiska</translation>
+    </message>
+</context>
+<context>
+    <name>MissionCoordFields</name>
+    <message>
+        <location filename="../qml/app/MissionCoordFields.qml" line="82"/>
+        <source>Lat</source>
+        <translation>Szer.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionCoordFields.qml" line="90"/>
+        <source>Lon</source>
+        <translation>Dł.</translation>
+    </message>
+</context>
+<context>
+    <name>MissionEditorOverlay</name>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="196"/>
+        <source>km</source>
+        <translation>km</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="196"/>
+        <source>m</source>
+        <translation>m</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="203"/>
+        <source>%1 h %2 min</source>
+        <translation>%1 h %2 min</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="204"/>
+        <source>%1 min %2 s</source>
+        <translation>%1 min %2 s</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="205"/>
+        <source>%1 s</source>
+        <translation>%1 s</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="210"/>
+        <source>Item</source>
+        <translation>Element</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="215"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="961"/>
+        <source>Waypoint</source>
+        <translation>Punkt trasy</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="216"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="962"/>
+        <source>Survey</source>
+        <translation>Poligon</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="217"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="963"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1731"/>
+        <source>Corridor</source>
+        <translation>Korytarz</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="218"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="964"/>
+        <source>Rally point</source>
+        <translation>Punkt zborny</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="219"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="965"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1611"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1731"/>
+        <source>Geofence</source>
+        <translation>Geofence</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="236"/>
+        <source>Saved to %1</source>
+        <translation>Zapisano w %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="425"/>
+        <source>Reading the mission from the vehicle</source>
+        <translation>Odczyt misji z łodzi</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="356"/>
+        <source>Loaded from the vehicle: route %1 points, geofence %2 zones, rally %3 points</source>
+        <translation>Wczytano z łodzi: trasa %1 punktów, geofence %2 stref, rally %3 punktów</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="357"/>
+        <source>%1 items the editor does not support were dropped.</source>
+        <translation>Pominięto elementów nieobsługiwanych przez edytor: %1.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="363"/>
+        <source>The boat is armed. The uploaded mission replaces the one on the vehicle; in Auto the boat switches to the new route at once.</source>
+        <translation>Łódź jest uzbrojona. Wgrana misja zastąpi misję na łodzi; w trybie Auto łódź od razu popłynie nową trasą.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="367"/>
+        <source>A ground station is connected through the proxy link. Two stations must not upload missions at the same time.</source>
+        <translation>Przez łącze proxy podłączona jest inna stacja naziemna. Dwie stacje nie mogą wgrywać misji jednocześnie.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="426"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="835"/>
+        <source>Uploading mission to the vehicle</source>
+        <translation>Wgrywanie misji do łodzi</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="396"/>
+        <source>no autopilot connected</source>
+        <translation>autopilot nie jest podłączony</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="375"/>
+        <source>Cannot upload: %1</source>
+        <translation>Nie można wgrać: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="397"/>
+        <source>the vehicle does not respond</source>
+        <translation>łódź nie odpowiada</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="398"/>
+        <source>the vehicle asked for an item that is not in the mission</source>
+        <translation>łódź zażądała elementu, którego nie ma w misji</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="399"/>
+        <source>the connection to the vehicle was lost</source>
+        <translation>utracono połączenie z łodzią</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="400"/>
+        <source>another upload is in progress</source>
+        <translation>trwa już inne wgrywanie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="401"/>
+        <source>the vehicle ended the transfer before receiving all items</source>
+        <translation>łódź zakończyła transfer przed odebraniem wszystkich elementów</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="402"/>
+        <source>the link uses MAVLink 1; geofence and rally points need MAVLink 2</source>
+        <translation>łącze używa MAVLink 1; geofence i punkty rally wymagają MAVLink 2</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="405"/>
+        <source>error on the vehicle</source>
+        <translation>błąd na łodzi</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="406"/>
+        <source>unsupported coordinate frame</source>
+        <translation>nieobsługiwany układ współrzędnych</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="407"/>
+        <source>unsupported command</source>
+        <translation>nieobsługiwane polecenie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="408"/>
+        <source>no space for the mission on the vehicle</source>
+        <translation>brak miejsca na misję na łodzi</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="409"/>
+        <source>invalid item</source>
+        <translation>nieprawidłowy element</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="410"/>
+        <source>items out of sequence</source>
+        <translation>zła kolejność elementów</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="411"/>
+        <source>denied by the vehicle</source>
+        <translation>łódź odmówiła</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="403"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="412"/>
+        <source>cancelled</source>
+        <translation>anulowano</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="414"/>
+        <source>invalid parameter %1</source>
+        <translation>nieprawidłowy parametr %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="326"/>
+        <source>The route was read, but the geofence could not be read: %1. The vehicle&apos;s geofence and rally points are left as they are on the next upload.</source>
+        <translation>Trasa odczytana, ale nie udało się odczytać geofence: %1. Przy następnym wgraniu geofence i punkty rally na łodzi pozostaną bez zmian.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="327"/>
+        <source>The route was read, but the geofence could not be read: %1</source>
+        <translation>Trasa odczytana, ale nie udało się odczytać geofence: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="329"/>
+        <source>The route and geofence were read, but the rally points could not be read: %1. The vehicle&apos;s rally points are left as they are on the next upload.</source>
+        <translation>Trasa i geofence odczytane, ale nie udało się odczytać punktów rally: %1. Przy następnym wgraniu punkty rally na łodzi pozostaną bez zmian.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="330"/>
+        <source>The route and geofence were read, but the rally points could not be read: %1</source>
+        <translation>Trasa i geofence odczytane, ale nie udało się odczytać punktów rally: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="440"/>
+        <source>Could not read the mission from the vehicle: %1</source>
+        <translation>Nie udało się odczytać misji z łodzi: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="446"/>
+        <source>Mission uploaded to the vehicle</source>
+        <translation>Misja wgrana do łodzi</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="450"/>
+        <source>The route is on the vehicle, but the geofence upload failed: %1</source>
+        <translation>Trasa jest w łodzi, ale nie udało się wgrać geofence: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="451"/>
+        <source>The route and geofence are on the vehicle, but the rally points upload failed: %1</source>
+        <translation>Trasa i geofence są w łodzi, ale nie udało się wgrać punktów rally: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="452"/>
+        <source>Mission upload failed: %1</source>
+        <translation>Nie udało się wgrać misji: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="465"/>
+        <source>The vehicle has no mission</source>
+        <translation>Łódź nie ma misji</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="469"/>
+        <source>The vehicle has this plan</source>
+        <translation>Łódź ma ten plan</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="476"/>
+        <source>The vehicle mission was read while the editor was closed and was not opened</source>
+        <translation>Misję z łodzi odczytano, gdy edytor był zamknięty, i nie otwarto jej</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="481"/>
+        <source>The vehicle mission was read but not opened because a dialog is open; read it again when done</source>
+        <translation>Misję z łodzi odczytano, ale nie otwarto, bo otwarte jest okno dialogowe; odczytaj ją ponownie potem</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="620"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="813"/>
+        <source>Open mission</source>
+        <translation>Otwórz misję</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="622"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="634"/>
+        <source>Mission files (*.kmission)</source>
+        <translation>Pliki misji (*.kmission)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="622"/>
+        <source>All files (*)</source>
+        <translation>Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="632"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="824"/>
+        <source>Save mission</source>
+        <translation>Zapisz misję</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="653"/>
+        <source>Export QGroundControl plan</source>
+        <translation>Eksport planu QGroundControl</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="655"/>
+        <source>QGC plan (*.plan)</source>
+        <translation>Plan QGC (*.plan)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="662"/>
+        <source>Export Mission Planner waypoints</source>
+        <translation>Eksport punktów dla Mission Planner</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="664"/>
+        <source>Waypoints (*.waypoints)</source>
+        <translation>Punkty trasy (*.waypoints)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="664"/>
+        <source>Text (*.txt)</source>
+        <translation>Tekst (*.txt)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="693"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1654"/>
+        <source>Mission</source>
+        <translation>Misja</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="726"/>
+        <source>not saved yet</source>
+        <translation>jeszcze nie zapisana</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="727"/>
+        <source>unsaved changes</source>
+        <translation>niezapisane zmiany</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="768"/>
+        <source>Reading the vehicle mission…</source>
+        <translation>Odczyt misji z łodzi…</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="769"/>
+        <source>No mission on the vehicle</source>
+        <translation>Brak misji na łodzi</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="770"/>
+        <source>This plan is on the vehicle</source>
+        <translation>Ten plan jest na łodzi</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="771"/>
+        <source>The vehicle mission changed · Read again</source>
+        <translation>Misja na łodzi zmieniła się · Odczytaj</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="772"/>
+        <source>The vehicle has another mission · Open</source>
+        <translation>Łódź ma inną misję · Otwórz</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="796"/>
+        <source>Help</source>
+        <translation>Pomoc</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="805"/>
+        <source>New mission</source>
+        <translation>Nowa misja</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="835"/>
+        <source>Upload to vehicle</source>
+        <translation>Wgraj do łodzi</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="845"/>
+        <source>Read mission from vehicle</source>
+        <translation>Odczytaj misję z łodzi</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="856"/>
+        <source>Save as, export</source>
+        <translation>Zapisz jako, eksport</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="874"/>
+        <source>Close editor</source>
+        <translation>Zamknij edytor</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="960"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1475"/>
+        <source>Start point</source>
+        <translation>Punkt startowy</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="960"/>
+        <source>Start</source>
+        <translation>Start</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="961"/>
+        <source>Waypoint</source>
+        <comment>tool caption</comment>
+        <translation>Punkt</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="962"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1731"/>
+        <source>Survey area</source>
+        <translation>Poligon</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="964"/>
+        <source>Rally</source>
+        <translation>Rally</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1014"/>
+        <source>Finish shape</source>
+        <translation>Zakończ kształt</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1026"/>
+        <source>Cancel shape</source>
+        <translation>Anuluj kształt</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1037"/>
+        <source>Remove last vertex</source>
+        <translation>Usuń ostatni wierzchołek</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1046"/>
+        <source>Undo</source>
+        <translation>Cofnij</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1053"/>
+        <source>Redo</source>
+        <translation>Ponów</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1062"/>
+        <source>Fit mission in view</source>
+        <translation>Dopasuj misję do widoku</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1068"/>
+        <source>Zoom in</source>
+        <translation>Przybliż</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1074"/>
+        <source>Zoom out</source>
+        <translation>Oddal</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1205"/>
+        <source>Tap the map to place the start point</source>
+        <translation>Dotknij mapy, aby ustawić punkt startowy</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1206"/>
+        <source>Tap the map to add waypoints</source>
+        <translation>Dotknij mapy, aby dodać punkty trasy</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1207"/>
+        <source>Tap the map to add rally points</source>
+        <translation>Dotknij mapy, aby dodać punkty zborne</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1208"/>
+        <source>Tap to add corners, ✓ finishes the area</source>
+        <translation>Dotykaj, aby dodać narożniki, ✓ kończy obszar</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1208"/>
+        <source>Tap the map to outline the area (3 corners or more)</source>
+        <translation>Dotykaj mapy, aby obrysować obszar (co najmniej 3 narożniki)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1209"/>
+        <source>Tap to extend the axis, ✓ finishes the corridor</source>
+        <translation>Dotykaj, aby wydłużyć oś, ✓ kończy korytarz</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1209"/>
+        <source>Tap the map along the corridor axis (2 points or more)</source>
+        <translation>Dotykaj mapy wzdłuż osi korytarza (co najmniej 2 punkty)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1210"/>
+        <source>Tap to add corners, ✓ finishes the zone</source>
+        <translation>Dotykaj, aby dodać narożniki, ✓ kończy strefę</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1210"/>
+        <source>Tap the map to outline the zone (3 corners or more)</source>
+        <translation>Dotykaj mapy, aby obrysować strefę (co najmniej 3 narożniki)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1211"/>
+        <source>Drag handles to edit, + inserts a vertex</source>
+        <translation>Przeciągaj uchwyty, aby edytować, + wstawia wierzchołek</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1212"/>
+        <source>Pick a tool on the left or tap an item to select it</source>
+        <translation>Wybierz narzędzie po lewej lub dotknij elementu, aby go zaznaczyć</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1272"/>
+        <source>Back to the start point</source>
+        <translation>Wróć do punktu startowego</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1423"/>
+        <source>Plan</source>
+        <translation>Plan</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1430"/>
+        <source>Cruise speed, m/s</source>
+        <translation>Prędkość przelotowa, m/s</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1445"/>
+        <source>At the end</source>
+        <translation>Na końcu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1450"/>
+        <source>Hold position</source>
+        <translation>Pozostań na miejscu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1450"/>
+        <source>Return to start point</source>
+        <translation>Wróć do punktu startowego</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1450"/>
+        <source>Return to launch (RTL)</source>
+        <translation>Wróć do miejsca uzbrojenia (RTL)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1450"/>
+        <source>Nothing (autopilot setting)</source>
+        <translation>Nic (ustawienie autopilota)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1738"/>
+        <source>Rectangle</source>
+        <translation>Prostokąt</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1739"/>
+        <source>Circle</source>
+        <translation>Okrąg</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1742"/>
+        <source>Straight line</source>
+        <translation>Linia prosta</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1743"/>
+        <source>Draw point by point</source>
+        <translation>Narysuj punkt po punkcie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1744"/>
+        <source>Inclusion zone: rectangle</source>
+        <translation>Strefa dozwolona: prostokąt</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1746"/>
+        <source>Exclusion zone: rectangle</source>
+        <translation>Strefa zakazana: prostokąt</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1747"/>
+        <source>Exclusion zone: circle</source>
+        <translation>Strefa zakazana: okrąg</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1476"/>
+        <source>placed</source>
+        <translation>ustawiony</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1461"/>
+        <source>RTL goes to the autopilot&apos;s arming position, which may differ from the start point; the boat then holds position there</source>
+        <translation>RTL prowadzi do miejsca uzbrojenia autopilota, które może różnić się od punktu startowego; tam łódź utrzymuje pozycję</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1467"/>
+        <source>No end command is added: after the last point the autopilot follows its MIS_DONE_BEHAVE parameter. By default (0) the boat cuts the throttle and drifts; 1 makes it hold position (Loiter)</source>
+        <translation>Polecenie końcowe nie jest dodawane: po ostatnim punkcie autopilot działa według parametru MIS_DONE_BEHAVE. Domyślnie (0) łódź zdejmuje gaz i dryfuje; przy 1 utrzymuje pozycję (Loiter)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1476"/>
+        <source>not set — tap the tool</source>
+        <translation>nie ustawiony — naciśnij narzędzie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1506"/>
+        <source>Show on map</source>
+        <translation>Pokaż na mapie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1530"/>
+        <source>Route</source>
+        <translation>Trasa</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1532"/>
+        <source>No items yet. Use the tools on the left.</source>
+        <translation>Brak elementów. Użyj narzędzi po lewej.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1590"/>
+        <source>Rally points</source>
+        <translation>Punkty zborne</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1632"/>
+        <source>Summary</source>
+        <translation>Podsumowanie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1637"/>
+        <source>Length</source>
+        <translation>Długość</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1638"/>
+        <source>Time</source>
+        <translation>Czas</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1639"/>
+        <source>Waypoints</source>
+        <translation>Punkty trasy</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1643"/>
+        <source>Mission items</source>
+        <translation>Elementy misji</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1740"/>
+        <source>Outline it point by point</source>
+        <translation>Obrysuj punkt po punkcie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1745"/>
+        <source>Inclusion zone: outline point by point</source>
+        <translation>Strefa dozwolona: obrysuj punkt po punkcie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1748"/>
+        <source>Exclusion zone: outline point by point</source>
+        <translation>Strefa zakazana: obrysuj punkt po punkcie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1812"/>
+        <source>Save as…</source>
+        <translation>Zapisz jako…</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1813"/>
+        <source>Export for QGroundControl (.plan)</source>
+        <translation>Eksport dla QGroundControl (.plan)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1814"/>
+        <source>Export for Mission Planner (.waypoints)</source>
+        <translation>Eksport dla Mission Planner (.waypoints)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1888"/>
+        <source>Upload the mission to the vehicle?</source>
+        <translation>Wgrać misję do łodzi?</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1910"/>
+        <source>Upload</source>
+        <translation>Wgraj</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1950"/>
+        <source>The mission has unsaved changes.</source>
+        <translation>Misja ma niezapisane zmiany.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1959"/>
+        <source>Save</source>
+        <translation>Zapisz</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1975"/>
+        <source>Discard</source>
+        <translation>Odrzuć</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1915"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1985"/>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="365"/>
+        <source>The geofence is switched on right after the upload. If the boat is outside it now, the autopilot at once returns it along its track or holds it.</source>
+        <translation>Geofence włączy się zaraz po wgraniu. Jeśli łódź jest teraz poza nim, autopilot od razu zawróci ją po przebytej trasie lub zatrzyma.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="404"/>
+        <source>the vehicle did not confirm the geofence parameters</source>
+        <translation>łódź nie potwierdziła parametrów geofence</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="446"/>
+        <source>Mission uploaded to the vehicle, geofence on</source>
+        <translation>Misja wgrana do łodzi, geofence włączony</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="448"/>
+        <source>The route and geofence are on the vehicle, but the geofence was not switched on: %1. Rally points were not uploaded.</source>
+        <translation>Trasa i geofence są w łodzi, ale geofence nie został włączony: %1. Punkty rally nie zostały wgrane.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="449"/>
+        <source>The route is on the vehicle, but the geofence was not switched off: %1. Rally points were not uploaded.</source>
+        <translation>Trasa jest w łodzi, ale geofence nie został wyłączony: %1. Punkty rally nie zostały wgrane.</translation>
+    </message>
+</context>
+<context>
+    <name>MissionItemCard</name>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="99"/>
+        <source>Coordinates copied</source>
+        <translation>Skopiowano współrzędne</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="180"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="362"/>
+        <source>Inclusion zone</source>
+        <translation>Strefa dozwolona</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="180"/>
+        <source>Exclusion zone</source>
+        <translation>Strefa zakazana</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="181"/>
+        <source>Not generated</source>
+        <translation>Nie wygenerowano</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="182"/>
+        <source>%1 lines, %2 waypoints</source>
+        <translation>%1 linii, %2 punktów</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="194"/>
+        <source>Move up</source>
+        <translation>W górę</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="201"/>
+        <source>Move down</source>
+        <translation>W dół</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="211"/>
+        <source>Delete</source>
+        <translation>Usuń</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="327"/>
+        <source>%1 corners</source>
+        <translation>narożniki: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="328"/>
+        <source>%1 axis points</source>
+        <translation>%1 punktów osi</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="337"/>
+        <source>Copy coordinates</source>
+        <translation>Kopiuj współrzędne</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="345"/>
+        <source>Show on map</source>
+        <translation>Pokaż na mapie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="371"/>
+        <source>Hold, s</source>
+        <translation>Postój, s</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="391"/>
+        <source>Speed, m/s</source>
+        <translation>Prędkość, m/s</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="399"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="441"/>
+        <source>0 = plan cruise speed</source>
+        <translation>0 = prędkość przelotowa planu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="412"/>
+        <source>Accept radius, m</source>
+        <translation>Promień akceptacji, m</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="420"/>
+        <source>0 = autopilot default (WP_RADIUS)</source>
+        <translation>0 = wartość autopilota (WP_RADIUS)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="433"/>
+        <source>Survey speed, m/s</source>
+        <translation>Prędkość na poligonie, m/s</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="454"/>
+        <source>Line spacing</source>
+        <translation>Odstęp linii</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="455"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="489"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="501"/>
+        <source>m</source>
+        <translation>m</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="469"/>
+        <source>Angle, °</source>
+        <translation>Kąt, °</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="488"/>
+        <source>Width</source>
+        <translation>Szerokość</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="500"/>
+        <source>Turnaround</source>
+        <translation>Wybieg</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="513"/>
+        <source>Entry</source>
+        <translation>Wejście</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="519"/>
+        <source>auto</source>
+        <translation>auto</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="519"/>
+        <source>manual</source>
+        <translation>ręcznie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="531"/>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="543"/>
+        <source>Crosshatch</source>
+        <translation>Siatka krzyżowa</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="554"/>
+        <source>Length %1 m</source>
+        <translation>Długość %1 m</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="555"/>
+        <source>, area %1 ha</source>
+        <translation>, powierzchnia %1 ha</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionItemCard.qml" line="556"/>
+        <source>, spacing raised to %1 m</source>
+        <translation>, odstęp zwiększony do %1 m</translation>
+    </message>
+</context>
+<context>
+    <name>MissionPlan</name>
+    <message>
+        <location filename="../src/mission/mission_expander.cpp" line="93"/>
+        <source>Generated points leave the valid coordinate range</source>
+        <translation>Wygenerowane punkty wykraczają poza dopuszczalny zakres współrzędnych</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_expander.cpp" line="124"/>
+        <source>Invalid position</source>
+        <translation>Nieprawidłowa pozycja</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_expander.cpp" line="137"/>
+        <location filename="../src/mission/mission_expander.cpp" line="151"/>
+        <source>Line spacing raised to %1 m to stay within %2 lines</source>
+        <translation>Odstęp linii zwiększono do %1 m, aby zmieścić się w %2 liniach</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_expander.cpp" line="140"/>
+        <source>Survey area %1 km² is unusually large</source>
+        <translation>Poligon %1 km² jest nietypowo duży</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_expander.cpp" line="203"/>
+        <source>Fence needs at least %1 vertices</source>
+        <translation>Geofence wymaga co najmniej %1 wierzchołków</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_expander.cpp" line="213"/>
+        <source>Fence polygon is self-intersecting</source>
+        <translation>Wielokąt geofence przecina sam siebie</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_expander.cpp" line="247"/>
+        <source>%1 waypoints lie outside the inclusion fence</source>
+        <translation>%1 punktów leży poza strefą dozwoloną</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_expander.cpp" line="250"/>
+        <source>%1 waypoints lie inside an exclusion zone</source>
+        <translation>%1 punktów leży wewnątrz strefy zakazanej</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_expander.cpp" line="256"/>
+        <source>%1 mission items exceed the flight controller capacity of %2</source>
+        <translation>%1 elementów misji przekracza pojemność kontrolera lotu (%2)</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_expander.cpp" line="258"/>
+        <source>%1 mission items, close to the flight controller capacity of %2</source>
+        <translation>%1 elementów misji, blisko pojemności kontrolera lotu (%2)</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_expander.cpp" line="261"/>
+        <source>Estimated time %1 h exceeds %2 h</source>
+        <translation>Szacowany czas %1 h przekracza %2 h</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_expander.cpp" line="264"/>
+        <source>Route length %1 km exceeds %2 km</source>
+        <translation>Długość trasy %1 km przekracza %2 km</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_expander.cpp" line="267"/>
+        <source>Start point is not set</source>
+        <translation>Punkt startowy nie jest ustawiony</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_export.cpp" line="38"/>
+        <location filename="../src/mission/mission_export.cpp" line="45"/>
+        <source>export: cannot open file for writing (%1)</source>
+        <translation>export: nie można otworzyć pliku do zapisu (%1)</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_export.cpp" line="49"/>
+        <source>export: write failed (%1)</source>
+        <translation>export: zapis nie powiódł się (%1)</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_file_io.cpp" line="565"/>
+        <source>load: cannot open file</source>
+        <translation>load: nie można otworzyć pliku</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_file_io.cpp" line="569"/>
+        <source>load: file larger than %1 MB</source>
+        <translation>load: plik większy niż %1 MB</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_file_io.cpp" line="575"/>
+        <source>load: invalid JSON: </source>
+        <translation>load: nieprawidłowy JSON: </translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_file_io.cpp" line="579"/>
+        <source>load: root must be object</source>
+        <translation>load: element główny musi być obiektem</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_file_io.cpp" line="597"/>
+        <location filename="../src/mission/mission_file_io.cpp" line="608"/>
+        <source>save: cannot open file for writing (%1)</source>
+        <translation>save: nie można otworzyć pliku do zapisu (%1)</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_file_io.cpp" line="601"/>
+        <location filename="../src/mission/mission_file_io.cpp" line="612"/>
+        <source>save: write failed (%1)</source>
+        <translation>save: zapis nie powiódł się (%1)</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_generators.cpp" line="178"/>
+        <source>Polygon needs at least 3 vertices</source>
+        <translation>Wielokąt wymaga co najmniej 3 wierzchołków</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_generators.cpp" line="183"/>
+        <location filename="../src/mission/mission_generators.cpp" line="261"/>
+        <source>Invalid vertex</source>
+        <translation>Nieprawidłowy wierzchołek</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_generators.cpp" line="188"/>
+        <source>Line spacing below minimum</source>
+        <translation>Odstęp linii poniżej minimum</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_generators.cpp" line="199"/>
+        <source>Polygon is self-intersecting</source>
+        <translation>Wielokąt przecina sam siebie</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_generators.cpp" line="203"/>
+        <source>Area larger than %1 km is not supported</source>
+        <translation>Obszar większy niż %1 km nie jest obsługiwany</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_generators.cpp" line="208"/>
+        <source>Polygon has no area</source>
+        <translation>Wielokąt ma zerową powierzchnię</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_generators.cpp" line="219"/>
+        <source>No lines fit the polygon</source>
+        <translation>Żadna linia nie mieści się w wielokącie</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_generators.cpp" line="256"/>
+        <source>Axis needs at least 2 vertices</source>
+        <translation>Oś wymaga co najmniej 2 punktów</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_generators.cpp" line="266"/>
+        <source>Invalid width or spacing</source>
+        <translation>Nieprawidłowa szerokość lub odstęp</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_generators.cpp" line="281"/>
+        <source>Axis vertices coincide</source>
+        <translation>Punkty osi pokrywają się</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_generators.cpp" line="285"/>
+        <source>Axis longer than %1 km is not supported</source>
+        <translation>Oś dłuższa niż %1 km nie jest obsługiwana</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_generators.cpp" line="321"/>
+        <source>No lines generated</source>
+        <translation>Nie wygenerowano linii</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_generators.cpp" line="339"/>
+        <source>Width %1 m is too large for the bends at vertices %2, lines trimmed there</source>
+        <translation>Szerokość %1 m jest za duża dla zakrętów przy wierzchołkach %2, linie tam przycięto</translation>
+    </message>
+</context>
+<context>
+    <name>MissionRunPointCard</name>
+    <message>
+        <location filename="../qml/app/MissionRunPointCard.qml" line="38"/>
+        <source>no autopilot link</source>
+        <translation>brak łączności z autopilotem</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionRunPointCard.qml" line="39"/>
+        <source>no response</source>
+        <translation>brak odpowiedzi</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionRunPointCard.qml" line="40"/>
+        <source>temporarily rejected</source>
+        <translation>tymczasowo odrzucono</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionRunPointCard.qml" line="41"/>
+        <source>denied</source>
+        <translation>odmowa</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionRunPointCard.qml" line="42"/>
+        <source>unsupported</source>
+        <translation>nieobsługiwane</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionRunPointCard.qml" line="43"/>
+        <source>failed</source>
+        <translation>błąd</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionRunPointCard.qml" line="44"/>
+        <source>cancelled</source>
+        <translation>anulowano</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionRunPointCard.qml" line="51"/>
+        <source>Go to point: %1</source>
+        <translation>Przejście do punktu: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionRunPointCard.qml" line="76"/>
+        <source>Going to %1</source>
+        <translation>Przejście: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionRunPointCard.qml" line="183"/>
+        <source>Point %1 of %2</source>
+        <translation>Punkt %1 z %2</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionRunPointCard.qml" line="184"/>
+        <source>current target</source>
+        <translation>bieżący cel</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionRunPointCard.qml" line="205"/>
+        <source>Tap again to go</source>
+        <translation>Naciśnij ponownie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionRunPointCard.qml" line="206"/>
+        <source>Go here</source>
+        <translation>Płyń tutaj</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionRunPointCard.qml" line="206"/>
+        <source>Start from here</source>
+        <translation>Zacznij stąd</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionRunPointCard.qml" line="207"/>
+        <source>The boat skips to this point at once</source>
+        <translation>Łódź od razu popłynie do tego punktu, pomijając pośrednie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MissionRunPointCard.qml" line="194"/>
+        <source>The mission continues from this point when the boat is switched to Auto</source>
+        <translation>Misja będzie kontynuowana od tego punktu po przełączeniu łodzi w tryb Auto</translation>
     </message>
 </context>
 <context>
@@ -4477,6 +7289,397 @@ udp://@:1234
         <location filename="../qml/app/ModeSettingsPanel.qml" line="20"/>
         <source>Settings</source>
         <translation>Ustawienia</translation>
+    </message>
+</context>
+<context>
+    <name>MosaicDB</name>
+    <message>
+        <location filename="../src/data_processor/mosaic_db.cpp" line="67"/>
+        <source>Mosaic cache is unavailable — distant areas may stay incomplete</source>
+        <translation>Pamięć podręczna mozaiki jest niedostępna — odległe obszary mogą pozostać niekompletne</translation>
+    </message>
+</context>
+<context>
+    <name>MosaicPipelineStatus</name>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="16"/>
+        <source>Pipeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="17"/>
+        <source>Epoch probe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="18"/>
+        <source>Beams</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="19"/>
+        <source>Channels</source>
+        <translation type="unfinished">Kanały</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="20"/>
+        <source>Geometry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="21"/>
+        <source>Renderer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="48"/>
+        <source>on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="48"/>
+        <source>off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="55"/>
+        <source>none</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="60"/>
+        <source>idle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="61"/>
+        <source>bottom track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="62"/>
+        <source>isobaths</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="63"/>
+        <source>mosaic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="64"/>
+        <source>surface</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="71"/>
+        <source>amplitude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="72"/>
+        <source>side-scan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="73"/>
+        <source>TGC</source>
+        <translation type="unfinished">TGC</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="104"/>
+        <source>Waiting for the first snapshot…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="106"/>
+        <source>Mosaic computation is off — nothing will be built</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="108"/>
+        <source>Mosaic is not enabled in the scene</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="110"/>
+        <source>No mosaic channel selected — pick a side-scan channel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="112"/>
+        <source>No epochs in the dataset window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="114"/>
+        <source>No valid epochs in the probed window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="116"/>
+        <source>No sonar position — mosaic cannot place a strip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="118"/>
+        <source>No valid yaw — the strip cannot be oriented</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="120"/>
+        <source>No beam on the selected channels — check channel and subchannel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="122"/>
+        <source>No bottom point on the beams — mosaic cannot project them</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="124"/>
+        <source>Position, yaw, beam and bottom never come together in one epoch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="126"/>
+        <source>Usable epochs are not adjacent — a strip needs two neighbours in a row</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="128"/>
+        <source>Renderer has the mosaic layer disabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="130"/>
+        <source>Tiles never reached the renderer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="131"/>
+        <source>Pipeline healthy — mosaic strips are being laid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="135"/>
+        <source>State</source>
+        <translation type="unfinished">Stan</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="136"/>
+        <source>Mosaic calc</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="137"/>
+        <source>In 3D</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="138"/>
+        <source>BT calc</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="139"/>
+        <source>Opening</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="140"/>
+        <source>Zeroing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="141"/>
+        <source>Fake last N</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="142"/>
+        <source>Tile DB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="146"/>
+        <source>Window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="147"/>
+        <source>Checked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="148"/>
+        <source>Valid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="149"/>
+        <source>Position</source>
+        <translation type="unfinished">Pozycja</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="150"/>
+        <source>Yaw</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="154"/>
+        <source>Left beam</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="155"/>
+        <source>Right beam</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="156"/>
+        <source>Left bottom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="157"/>
+        <source>Right bottom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="158"/>
+        <source>Usable L / R</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="159"/>
+        <source>Pairs L / R</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="163"/>
+        <source>Left ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="164"/>
+        <source>Left sub</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="165"/>
+        <source>Right ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="166"/>
+        <source>Right sub</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="167"/>
+        <source>Source</source>
+        <translation type="unfinished">Źródło</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="168"/>
+        <source>Level low</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="169"/>
+        <source>Level high</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="173"/>
+        <source>L offset, °</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="174"/>
+        <source>R offset, °</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="175"/>
+        <source>Res, px/m</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="176"/>
+        <source>Last calc</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="177"/>
+        <source>Last accept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="178"/>
+        <source>Last trace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="179"/>
+        <source>Queue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="180"/>
+        <source>Last idx</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="184"/>
+        <source>Tiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="185"/>
+        <source>Vis. keys</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="186"/>
+        <source>Mesh tiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="187"/>
+        <source>Mesh zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="188"/>
+        <source>Mesh init</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="189"/>
+        <source>Has data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="190"/>
+        <source>Mosaic layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="191"/>
+        <source>Iso layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="192"/>
+        <source>Meas. lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MosaicPipelineStatus.qml" line="193"/>
+        <source>Grid</source>
+        <translation type="unfinished">Siatka</translation>
     </message>
 </context>
 <context>
@@ -4498,22 +7701,22 @@ udp://@:1234
 <context>
     <name>Pane3DWindow</name>
     <message>
-        <location filename="../qml/app/Pane3DWindow.qml" line="98"/>
+        <location filename="../qml/app/Pane3DWindow.qml" line="122"/>
         <source>Surface: </source>
         <translation>Powierzchnia: </translation>
     </message>
     <message>
-        <location filename="../qml/app/Pane3DWindow.qml" line="98"/>
+        <location filename="../qml/app/Pane3DWindow.qml" line="122"/>
         <source> cm/cell</source>
         <translation> cm/komórka</translation>
     </message>
     <message>
-        <location filename="../qml/app/Pane3DWindow.qml" line="100"/>
+        <location filename="../qml/app/Pane3DWindow.qml" line="124"/>
         <source>Mosaic: </source>
         <translation>Mozaika: </translation>
     </message>
     <message>
-        <location filename="../qml/app/Pane3DWindow.qml" line="100"/>
+        <location filename="../qml/app/Pane3DWindow.qml" line="124"/>
         <source> cm/pix</source>
         <translation> cm/piks</translation>
     </message>
@@ -4521,40 +7724,40 @@ udp://@:1234
 <context>
     <name>PaneEditorChrome</name>
     <message>
-        <location filename="../qml/app/PaneEditorChrome.qml" line="287"/>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="300"/>
         <source>Video</source>
         <translation>Wideo</translation>
     </message>
     <message>
-        <location filename="../qml/app/PaneEditorChrome.qml" line="388"/>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="411"/>
         <source>Pane %1</source>
         <translation>Panel %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/PaneEditorChrome.qml" line="366"/>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="389"/>
         <source>No pop-up</source>
         <translation>Bez pop-up</translation>
     </message>
     <message>
-        <location filename="../qml/app/PaneEditorChrome.qml" line="366"/>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="389"/>
         <source>Remove pop-up</source>
         <translation>Usuń pop-up</translation>
     </message>
     <message>
-        <location filename="../qml/app/PaneEditorChrome.qml" line="162"/>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="163"/>
         <source>Move pane</source>
         <translation>Przenieś panel</translation>
     </message>
     <message>
-        <location filename="../qml/app/PaneEditorChrome.qml" line="423"/>
-        <location filename="../qml/app/PaneEditorChrome.qml" line="444"/>
-        <location filename="../qml/app/PaneEditorChrome.qml" line="465"/>
-        <location filename="../qml/app/PaneEditorChrome.qml" line="486"/>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="446"/>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="467"/>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="488"/>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="509"/>
         <source>Add pane</source>
         <translation>Dodaj panel</translation>
     </message>
     <message>
-        <location filename="../qml/app/PaneEditorChrome.qml" line="204"/>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="206"/>
         <source>Remove pane</source>
         <translation>Usuń panel</translation>
     </message>
@@ -4564,32 +7767,32 @@ udp://@:1234
         <translation>Powiązanie pop-up</translation>
     </message>
     <message>
-        <location filename="../qml/app/PaneEditorChrome.qml" line="255"/>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="257"/>
         <source>Choose pane type</source>
         <translation>Wybierz typ panelu</translation>
     </message>
     <message>
-        <location filename="../qml/app/PaneEditorChrome.qml" line="266"/>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="279"/>
         <source>2D</source>
         <translation>2D</translation>
     </message>
     <message>
-        <location filename="../qml/app/PaneEditorChrome.qml" line="276"/>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="290"/>
         <source>3D</source>
         <translation>3D</translation>
     </message>
     <message>
-        <location filename="../qml/app/PaneEditorChrome.qml" line="290"/>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="312"/>
         <source>3D is already used in another pane</source>
         <translation>3D jest już używane w innym panelu</translation>
     </message>
     <message>
-        <location filename="../qml/app/PaneEditorChrome.qml" line="339"/>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="362"/>
         <source>Fullscreen pop-up</source>
         <translation>Wyskakujące okno pełnoekranowe</translation>
     </message>
     <message>
-        <location filename="../qml/app/PaneEditorChrome.qml" line="376"/>
+        <location filename="../qml/app/PaneEditorChrome.qml" line="399"/>
         <source>No neighboring panes available</source>
         <translation>Brak dostępnych sąsiednich paneli</translation>
     </message>
@@ -4597,15 +7800,25 @@ udp://@:1234
 <context>
     <name>ParamGroup</name>
     <message>
+        <location filename="../qml/legacy_qml/menus/ParamGroup.qml" line="9"/>
         <source>Group</source>
-        <translation type="vanished">Grupa</translation>
+        <translation>Grupa</translation>
     </message>
 </context>
 <context>
     <name>ParamSetup</name>
     <message>
+        <location filename="../qml/legacy_qml/menus/ParamSetup.qml" line="10"/>
         <source>Param</source>
-        <translation type="vanished">Parametr</translation>
+        <translation>Parametr</translation>
+    </message>
+</context>
+<context>
+    <name>PipelineStatusGroup</name>
+    <message>
+        <location filename="../qml/app/PipelineStatusGroup.qml" line="17"/>
+        <source>Pipeline status</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -4617,289 +7830,271 @@ udp://@:1234
     </message>
 </context>
 <context>
-    <name>VideoSurface</name>
-    <message>
-        <location filename="../qml/app/VideoSurface.qml" line="181"/>
-        <source>Video window settings</source>
-        <translation>Ustawienia okna wideo</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/VideoSurface.qml" line="136"/>
-        <source>No video source</source>
-        <translation>Brak źródła wideo</translation>
-    </message>
-</context>
-<context>
     <name>Plot2D</name>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="611"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="658"/>
         <source>Echogram settings</source>
         <translation>Ustawienia echogramu</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="649"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="557"/>
         <source>Echogram levels</source>
         <translation>Poziomy echogramu</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="784"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="833"/>
         <source>Channels:</source>
         <translation>Kanały:</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="899"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="948"/>
         <source>Echogram</source>
         <translation>Echogram</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="908"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="957"/>
         <source>Blue</source>
         <translation>Niebieski</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="908"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="957"/>
         <source>Sepia</source>
         <translation>Sepia</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="908"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="957"/>
         <source>WRGBD</source>
         <translation>WRGBD</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="908"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="957"/>
         <source>WhiteBlack</source>
         <translation>Biało-Czarny</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="908"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="957"/>
         <source>BlackWhite</source>
         <translation>Czarno-Biały</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="908"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="957"/>
         <source>Sepia New</source>
         <translation>Nowa Sepia</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="908"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="957"/>
         <source>DeepBlue</source>
         <translation>Modry</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="908"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="957"/>
         <source>Ice</source>
         <translation>Lód</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="908"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="957"/>
         <source>Green</source>
         <translation>Zielony</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="908"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="957"/>
         <source>Midnight</source>
         <translation>Północ</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="931"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="980"/>
         <source>Raw</source>
         <translation>Raw</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="931"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="980"/>
         <source>Side-Scan</source>
         <translation>Skan boczny</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="949"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="998"/>
         <source>Bottom-Track</source>
         <translation>Śledzenie dna</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="954"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="994"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1003"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1043"/>
         <source>Value</source>
         <translation>Wartość</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="989"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1038"/>
         <source>Rangefinder</source>
         <translation>Głębinomierz</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="963"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="972"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1003"/>
         <location filename="../qml/scene2d/Plot2D.qml" line="1012"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1021"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1052"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1061"/>
         <source>Line</source>
         <translation>Linia</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="931"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="980"/>
         <source>TGC</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="972"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1012"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1021"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1061"/>
         <source>Points</source>
         <translation>Punkty</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1030"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1079"/>
         <source>Attitude</source>
         <translation>Orientacja</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1038"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1087"/>
         <source>Temperature</source>
         <translation>Temperatura</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1062"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1111"/>
         <source>Doppler Beams</source>
         <translation>Wiązki dopplerowskie</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1072"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1081"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1090"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1099"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1137"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1121"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1130"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1139"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1148"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1186"/>
         <source>Depth</source>
         <translation>Głębokość</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1073"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1082"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1091"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1100"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1122"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1131"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1140"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1149"/>
         <source>Velocity</source>
         <translation>Prędkość</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1074"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1083"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1092"/>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1101"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1123"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1132"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1141"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1150"/>
         <source>Mode</source>
         <translation>Tryb</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1123"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1172"/>
         <source>Doppler Instrument</source>
         <translation>Urządzenie dopplerowskie</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1136"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1185"/>
         <source>Abs. Velocity</source>
         <translation>Bezwzgl. prędkość</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1148"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1197"/>
         <source>DVL Legend</source>
         <translation>DVL Legenda</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1158"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1207"/>
         <source>Top</source>
         <translation>Góra</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1158"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1207"/>
         <source>Center</source>
         <translation>Centrum</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1158"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1207"/>
         <source>Bottom</source>
         <translation>Dół</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1178"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1227"/>
         <source>Acoustic angle</source>
         <translation>Kąt akustyczny</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1190"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1239"/>
         <source>Doppler Profiler</source>
         <translation>Profil Dopplera</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1200"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1249"/>
         <source>GNSS data</source>
         <translation>Dane GNSS</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1219"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1268"/>
         <source>Grid</source>
         <translation>Siatka</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1225"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1274"/>
         <source>fill</source>
         <translation>wypełnienie</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1241"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1290"/>
         <source>invert</source>
         <translation>odwróć</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1279"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1344"/>
         <source>Angle range, °</source>
         <translation>Zakres kątowy, °</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1331"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1396"/>
         <source>Velocity range, m/s</source>
         <translation>Zakres prędkości, m/s</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1388"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1453"/>
         <source>Distance auto range</source>
         <translation>Automatyczny zakres odległości</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1404"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1469"/>
         <source>Last data       </source>
         <translation>Ostatnie dane       </translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1404"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1469"/>
         <source>Last on screen</source>
         <translation>Ostatnie na ekranie</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1404"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1469"/>
         <source>Max on screen</source>
         <translation>Maks. na ekranie</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1420"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1485"/>
         <source>Horizontal</source>
         <translation>Poziomy</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1428"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1493"/>
         <source>Loupe</source>
         <translation>Lupa</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1437"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1502"/>
         <source>size</source>
         <translation>rozmiar</translation>
     </message>
     <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1454"/>
+        <location filename="../qml/scene2d/Plot2D.qml" line="1519"/>
         <source>zoom</source>
         <translation>powiększenie</translation>
-    </message>
-    <message>
-        <location filename="../qml/scene2d/Plot2D.qml" line="1973"/>
-        <source>Close</source>
-        <translation>Zamknij</translation>
     </message>
 </context>
 <context>
@@ -4913,23 +8108,18 @@ udp://@:1234
 <context>
     <name>ProfilesPopup</name>
     <message>
-        <location filename="../qml/app/ProfilesPopup.qml" line="171"/>
-        <source>Close</source>
-        <translation>Zamknij</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/ProfilesPopup.qml" line="141"/>
-        <location filename="../qml/app/ProfilesPopup.qml" line="214"/>
+        <location filename="../qml/app/ProfilesPopup.qml" line="144"/>
+        <location filename="../qml/app/ProfilesPopup.qml" line="216"/>
         <source>Add profile</source>
         <translation>Dodaj profil</translation>
     </message>
     <message>
-        <location filename="../qml/app/ProfilesPopup.qml" line="233"/>
+        <location filename="../qml/app/ProfilesPopup.qml" line="235"/>
         <source>Edit profiles</source>
         <translation>Edytuj profile</translation>
     </message>
     <message>
-        <location filename="../qml/app/ProfilesPopup.qml" line="192"/>
+        <location filename="../qml/app/ProfilesPopup.qml" line="194"/>
         <source>Remove profile</source>
         <translation>Usuń profil</translation>
     </message>
@@ -4938,64 +8128,64 @@ udp://@:1234
     <name>QObject</name>
     <message>
         <location filename="../src/scene2d/plot2D_bottom_processing.cpp" line="115"/>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="105"/>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="158"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="148"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="201"/>
         <location filename="../src/scene2d/plot2D_rangefinder.cpp" line="93"/>
         <source> m</source>
         <translation> m</translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_aim.cpp" line="112"/>
+        <location filename="../src/scene2d/plot2D_aim.cpp" line="115"/>
         <source>%1 m</source>
         <translation>%1 m</translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_aim.cpp" line="133"/>
+        <location filename="../src/scene2d/plot2D_aim.cpp" line="136"/>
         <source>ON</source>
         <translation>ON</translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_aim.cpp" line="133"/>
+        <location filename="../src/scene2d/plot2D_aim.cpp" line="136"/>
         <source>OFF</source>
         <translation>OFF</translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_aim.cpp" line="118"/>
+        <location filename="../src/scene2d/plot2D_aim.cpp" line="121"/>
         <source>Channel: </source>
         <translation>Kanał: </translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_aim.cpp" line="123"/>
+        <location filename="../src/scene2d/plot2D_aim.cpp" line="126"/>
         <source>Epoch: </source>
         <translation>Epoka: </translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_aim.cpp" line="130"/>
+        <location filename="../src/scene2d/plot2D_aim.cpp" line="133"/>
         <source>Resolution, mm: </source>
         <translation>Rozdzielczość, mm: </translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_aim.cpp" line="131"/>
+        <location filename="../src/scene2d/plot2D_aim.cpp" line="134"/>
         <source>Frequency, kHz: </source>
         <translation>Częstotliwość, kHz: </translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_aim.cpp" line="132"/>
+        <location filename="../src/scene2d/plot2D_aim.cpp" line="135"/>
         <source>Pulse count: </source>
         <translation>Liczba impulsów: </translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_aim.cpp" line="133"/>
+        <location filename="../src/scene2d/plot2D_aim.cpp" line="136"/>
         <source>Booster: </source>
         <translation>Wzmacniacz: </translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_aim.cpp" line="134"/>
+        <location filename="../src/scene2d/plot2D_aim.cpp" line="137"/>
         <source>Speed of sound, m/s: </source>
         <translation>Prędkość dźwięku, m/s: </translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2694"/>
+        <location filename="../src/core.cpp" line="3082"/>
         <source>File</source>
         <translation>Plik</translation>
     </message>
@@ -5038,7 +8228,7 @@ udp://@:1234
         <translation>Instr. dopplerow.</translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="95"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="138"/>
         <source> m/s</source>
         <translation> m/s</translation>
     </message>
@@ -5051,7 +8241,12 @@ udp://@:1234
         <translation>Kontakt</translation>
     </message>
     <message>
-        <location filename="../qml/app/QuickActionSettingsTab.qml" line="82"/>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="23"/>
+        <source>Mission planner</source>
+        <translation>Planer misji</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="97"/>
         <source>Toggle which items appear and drag to reorder them.</source>
         <translation>Włączaj wyświetlanie elementów i zmieniaj ich kolejność przeciąganiem.</translation>
     </message>
@@ -5066,35 +8261,32 @@ udp://@:1234
         <translation>Nagrywanie</translation>
     </message>
     <message>
-        <source>Favorite layouts</source>
-        <translation type="vanished">Ulubione układy</translation>
-    </message>
-    <message>
         <location filename="../qml/app/QuickActionSettingsTab.qml" line="21"/>
         <source>Bottom track editing</source>
         <translation>Edycja śladu dna</translation>
     </message>
     <message>
-        <location filename="../qml/app/QuickActionSettingsTab.qml" line="22"/>
-        <source>Info</source>
-        <translation>Info</translation>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="24"/>
+        <source>Autopilot</source>
+        <translation>Autopilot</translation>
     </message>
     <message>
-        <location filename="../qml/app/QuickActionSettingsTab.qml" line="25"/>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="27"/>
         <source>Profiles</source>
         <translation>Profile</translation>
     </message>
     <message>
-        <location filename="../qml/app/QuickActionSettingsTab.qml" line="26"/>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="29"/>
         <source>Second window</source>
         <translation>Drugie okno</translation>
     </message>
     <message>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="28"/>
         <source>Lock input</source>
         <translation>Zablokuj dotyk</translation>
     </message>
     <message>
-        <location filename="../qml/app/QuickActionSettingsTab.qml" line="27"/>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="30"/>
         <source>Power off</source>
         <translation>Wyłącz zasilanie</translation>
     </message>
@@ -5104,11 +8296,12 @@ udp://@:1234
         <translation>Układy</translation>
     </message>
     <message>
-        <location filename="../qml/app/QuickActionSettingsTab.qml" line="24"/>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="26"/>
         <source>Console</source>
         <translation>Konsola</translation>
     </message>
     <message>
+        <location filename="../qml/app/QuickActionSettingsTab.qml" line="25"/>
         <source>Widget panels</source>
         <translation>Panele widżetów</translation>
     </message>
@@ -5116,64 +8309,79 @@ udp://@:1234
 <context>
     <name>RecorderBox</name>
     <message>
+        <location filename="../qml/legacy_qml/devices/RecorderBox.qml" line="82"/>
         <source>MB / </source>
-        <translation type="vanished">MB / </translation>
+        <translation>MB / </translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/RecorderBox.qml" line="82"/>
         <source> MB</source>
-        <translation type="vanished"> MB</translation>
+        <translation> MB</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/RecorderBox.qml" line="162"/>
         <source>Update list</source>
-        <translation type="vanished">Aktualizuj listę</translation>
+        <translation>Aktualizuj listę</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/RecorderBox.qml" line="172"/>
         <source>Download</source>
-        <translation type="vanished">Pobierz</translation>
+        <translation>Pobierz</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/RecorderBox.qml" line="182"/>
         <source>Pause</source>
-        <translation type="vanished">Pauza</translation>
+        <translation>Pauza</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/RecorderBox.qml" line="192"/>
         <source>Downstream sync</source>
-        <translation type="vanished">Synchronizacja podrzędna</translation>
+        <translation>Synchronizacja podrzędna</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/RecorderBox.qml" line="203"/>
         <source>Min period, ms</source>
-        <translation type="vanished">Min. okres, ms</translation>
+        <translation>Min. okres, ms</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/RecorderBox.qml" line="226"/>
         <source>Port %1</source>
-        <translation type="vanished">Port %1</translation>
+        <translation>Port %1</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/RecorderBox.qml" line="229"/>
         <source>Off</source>
-        <translation type="vanished">Wyłącz</translation>
+        <translation>Wyłącz</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/RecorderBox.qml" line="229"/>
         <source>Timer</source>
-        <translation type="vanished">Timer</translation>
+        <translation>Timer</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/RecorderBox.qml" line="237"/>
         <source>Unknown (%1)</source>
-        <translation type="vanished">Nieznany (%1)</translation>
+        <translation>Nieznany (%1)</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/RecorderBox.qml" line="278"/>
         <source>Set baudrate</source>
-        <translation type="vanished">Ustaw prędkość transmisji</translation>
+        <translation>Ustaw prędkość transmisji</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/RecorderBox.qml" line="293"/>
         <source>Flash settings</source>
-        <translation type="vanished">Ustawienia flashowania</translation>
+        <translation>Ustawienia flashowania</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/RecorderBox.qml" line="303"/>
         <source>Erase settings</source>
-        <translation type="vanished">Wyczyść ustawienia</translation>
+        <translation>Wyczyść ustawienia</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/RecorderBox.qml" line="313"/>
         <source>Reboot</source>
-        <translation type="vanished">Uruchom ponownie</translation>
+        <translation>Uruchom ponownie</translation>
     </message>
 </context>
 <context>
@@ -5189,7 +8397,7 @@ udp://@:1234
         <translation>%1 m</translation>
     </message>
     <message>
-        <location filename="../src/scene3d/domain/ruler_tool.cpp" line="226"/>
+        <location filename="../src/scene3d/domain/ruler_tool.cpp" line="211"/>
         <source>Σ %1</source>
         <translation>Σ %1</translation>
     </message>
@@ -5197,17 +8405,17 @@ udp://@:1234
 <context>
     <name>ScaleBar</name>
     <message>
-        <location filename="../src/scene3d/scene3d_renderer.cpp" line="528"/>
+        <location filename="../src/scene3d/scene3d_renderer.cpp" line="560"/>
         <source>cm</source>
         <translation>cm</translation>
     </message>
     <message>
-        <location filename="../src/scene3d/scene3d_renderer.cpp" line="530"/>
+        <location filename="../src/scene3d/scene3d_renderer.cpp" line="562"/>
         <source>m</source>
         <translation>m</translation>
     </message>
     <message>
-        <location filename="../src/scene3d/scene3d_renderer.cpp" line="532"/>
+        <location filename="../src/scene3d/scene3d_renderer.cpp" line="564"/>
         <source>km</source>
         <translation>km</translation>
     </message>
@@ -5215,13 +8423,9 @@ udp://@:1234
 <context>
     <name>Scene3DLayerControl</name>
     <message>
+        <location filename="../qml/scene3d/Scene3DLayerControl.qml" line="82"/>
         <source>Layer settings</source>
         <translation>Ustawienia warstwy</translation>
-    </message>
-    <message>
-        <location filename="../qml/scene3d/Scene3DLayerControl.qml" line="82"/>
-        <source>Settings</source>
-        <translation>Ustawienia</translation>
     </message>
     <message>
         <location filename="../qml/scene3d/Scene3DLayerControl.qml" line="106"/>
@@ -5237,20 +8441,25 @@ udp://@:1234
 <context>
     <name>Scene3DLayerPanel</name>
     <message>
+        <location filename="../qml/legacy_qml/scene3d/Scene3DLayerPanel.qml" line="50"/>
+        <location filename="../qml/legacy_qml/scene3d/Scene3DLayerPanel.qml" line="90"/>
         <source>Map settings</source>
-        <translation type="vanished">Ustawienia mapy</translation>
+        <translation>Ustawienia mapy</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/scene3d/Scene3DLayerPanel.qml" line="104"/>
         <source>Visibility</source>
-        <translation type="vanished">Widoczność</translation>
+        <translation>Widoczność</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/scene3d/Scene3DLayerPanel.qml" line="123"/>
         <source>Internet</source>
-        <translation type="vanished">Internet</translation>
+        <translation>Internet</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/scene3d/Scene3DLayerPanel.qml" line="140"/>
         <source>Providers</source>
-        <translation type="vanished">Dostawcy</translation>
+        <translation>Dostawcy</translation>
     </message>
 </context>
 <context>
@@ -5301,32 +8510,32 @@ udp://@:1234
         <translation>Ustawienia sceny 3D</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="505"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="507"/>
         <source>Point</source>
         <translation>Punkt</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="522"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="524"/>
         <source>Line</source>
         <translation>Linia</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="539"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="541"/>
         <source>Polygon</source>
         <translation>Wielokąt</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="561"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="563"/>
         <source>Finish drawing</source>
         <translation>Zakończ rysunek</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="575"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="577"/>
         <source>Undo</source>
         <translation>Cofnij</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="589"/>
+        <location filename="../qml/scene3d/Scene3DRightToolbar.qml" line="591"/>
         <source>Cancel drawing</source>
         <translation>Cofnij rysowanie</translation>
     </message>
@@ -5334,114 +8543,119 @@ udp://@:1234
 <context>
     <name>Scene3DToolbar</name>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="102"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="103"/>
         <source>Reset camera</source>
         <translation>Zresetuj kamerę</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="154"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="155"/>
         <source>Boat track</source>
         <translation>Ślad łodzi</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="167"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="168"/>
         <source>Bottom track</source>
         <translation>Śledzenie dna</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="181"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="182"/>
         <source>Isobaths</source>
         <translation>Izobaty</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="202"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="203"/>
         <source>Mosaic</source>
         <translation>Mozaika</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="187"/>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="208"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="188"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="209"/>
         <source>Midnight</source>
         <translation>Północ</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="187"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="188"/>
         <source>Default</source>
         <translation>Normalna</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="187"/>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="208"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="188"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="209"/>
         <source>Blue</source>
         <translation>Niebieski</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="187"/>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="208"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="188"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="209"/>
         <source>Sepia</source>
         <translation>Sepia</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="187"/>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="208"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="188"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="209"/>
         <source>Sepia New</source>
         <translation>Nowa Sepia</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="187"/>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="208"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="188"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="209"/>
         <source>WRGBD</source>
         <translation>WRGBD</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="187"/>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="208"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="188"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="209"/>
         <source>WhiteBlack</source>
         <translation>Biało-Czarny</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="187"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="188"/>
         <source>Standard</source>
         <translation>Standard</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="187"/>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="208"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="188"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="209"/>
         <source>DeepBlue</source>
         <translation>Modry</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="187"/>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="208"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="188"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="209"/>
         <source>Ice</source>
         <translation>Lód</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="187"/>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="208"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="188"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="209"/>
         <source>Green</source>
         <translation>Zielony</translation>
     </message>
     <message>
-        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="208"/>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="209"/>
         <source>BlackWhite</source>
         <translation>Czarno-Biały</translation>
+    </message>
+    <message>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="224"/>
+        <source>Vehicle mission</source>
+        <translation>Misja łodzi</translation>
     </message>
 </context>
 <context>
     <name>SecondaryWindow</name>
     <message>
-        <location filename="../qml/app/SecondaryWindow.qml" line="103"/>
+        <location filename="../qml/app/SecondaryWindow.qml" line="122"/>
         <source>Choose pane type</source>
         <translation>Wybierz typ panelu</translation>
     </message>
     <message>
-        <location filename="../qml/app/SecondaryWindow.qml" line="131"/>
+        <location filename="../qml/app/SecondaryWindow.qml" line="143"/>
         <source>2D</source>
         <translation>2D</translation>
     </message>
     <message>
-        <location filename="../qml/app/SecondaryWindow.qml" line="132"/>
+        <location filename="../qml/app/SecondaryWindow.qml" line="153"/>
         <source>Video</source>
         <translation>Wideo</translation>
     </message>
@@ -5451,7 +8665,7 @@ udp://@:1234
         <translation>Drugie okno</translation>
     </message>
     <message>
-        <location filename="../qml/app/SecondaryWindow.qml" line="91"/>
+        <location filename="../qml/app/SecondaryWindow.qml" line="163"/>
         <source>Echogram limit reached</source>
         <translation>Osiągnięto limit echogramów</translation>
     </message>
@@ -5459,80 +8673,253 @@ udp://@:1234
 <context>
     <name>ServoBox</name>
     <message>
+        <location filename="../qml/legacy_qml/devices/ServoBox.qml" line="9"/>
         <source>Off</source>
-        <translation type="vanished">Wyłącz</translation>
+        <translation>Wyłącz</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/ServoBox.qml" line="9"/>
         <source>ServoScan</source>
-        <translation type="vanished">ServoScan</translation>
+        <translation>ServoScan</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/ServoBox.qml" line="17"/>
         <source>Control</source>
-        <translation type="vanished">Sterowanie</translation>
+        <translation>Sterowanie</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/ServoBox.qml" line="22"/>
         <source>Enabled (sweep on CHART trigger)</source>
-        <translation type="vanished">Włączone (skan na trigger CHART)</translation>
+        <translation>Włączone (skan na trigger CHART)</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/ServoBox.qml" line="33"/>
         <source>Current angle:</source>
-        <translation type="vanished">Bieżący kąt:</translation>
+        <translation>Bieżący kąt:</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/ServoBox.qml" line="36"/>
         <source>°</source>
-        <translation type="vanished">°</translation>
+        <translation>°</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/ServoBox.qml" line="43"/>
         <source>Reverse mapping</source>
-        <translation type="vanished">Mapowanie odwrotne</translation>
+        <translation>Mapowanie odwrotne</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/ServoBox.qml" line="54"/>
         <source>Calibration</source>
-        <translation type="vanished">Kalibracja</translation>
+        <translation>Kalibracja</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/ServoBox.qml" line="57"/>
         <source>PWM min, µs</source>
-        <translation type="vanished">PWM min., µs</translation>
+        <translation>PWM min., µs</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/ServoBox.qml" line="71"/>
         <source>PWM max, µs</source>
-        <translation type="vanished">PWM maks., µs</translation>
+        <translation>PWM maks., µs</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/ServoBox.qml" line="85"/>
         <source>Servo angle range, °</source>
-        <translation type="vanished">Zakres kąta serwa, °</translation>
+        <translation>Zakres kąta serwa, °</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/ServoBox.qml" line="100"/>
         <source>Scan</source>
-        <translation type="vanished">Skan</translation>
+        <translation>Skan</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/ServoBox.qml" line="103"/>
         <source>Step, °</source>
-        <translation type="vanished">Krok, °</translation>
+        <translation>Krok, °</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/ServoBox.qml" line="127"/>
         <source>Scan range, °</source>
-        <translation type="vanished">Zakres skan., °</translation>
+        <translation>Zakres skan., °</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/ServoBox.qml" line="141"/>
         <source>Center, °</source>
-        <translation type="vanished">Środek, °</translation>
+        <translation>Środek, °</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/ServoBox.qml" line="156"/>
         <source>PWM routing</source>
-        <translation type="vanished">Routing PWM</translation>
+        <translation>Routing PWM</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/ServoBox.qml" line="159"/>
         <source>OUT1 (wired)</source>
-        <translation type="vanished">OUT1 (przewodowy)</translation>
+        <translation>OUT1 (przewodowy)</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/ServoBox.qml" line="171"/>
         <source>OUT2</source>
-        <translation type="vanished">OUT2</translation>
+        <translation>OUT2</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/ServoBox.qml" line="183"/>
         <source>OUT3</source>
-        <translation type="vanished">OUT3</translation>
+        <translation>OUT3</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelBody</name>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="91"/>
+        <source>Off</source>
+        <translation>Wył.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="91"/>
+        <source>ServoScan</source>
+        <translation>ServoScan</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="266"/>
+        <source>No servo device</source>
+        <translation>Brak urządzenia z serwem</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="268"/>
+        <source>On link %1</source>
+        <translation>Na łączu %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="287"/>
+        <source>Device</source>
+        <translation>Urządzenie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="302"/>
+        <source>Control</source>
+        <translation>Sterowanie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="305"/>
+        <source>Enabled</source>
+        <translation>Włączone</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="319"/>
+        <source>Current angle</source>
+        <translation>Bieżący kąt</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="330"/>
+        <source>Reverse mapping</source>
+        <translation>Odwrócenie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="346"/>
+        <source>Scan</source>
+        <translation>Skan</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="349"/>
+        <source>Step, °</source>
+        <translation>Krok, °</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="367"/>
+        <source>Scan range, °</source>
+        <translation>Zakres skanu, °</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="382"/>
+        <source>Center, °</source>
+        <translation>Środek, °</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="401"/>
+        <source>More settings</source>
+        <translation>Więcej ustawień</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="413"/>
+        <source>Calibration</source>
+        <translation>Kalibracja</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="419"/>
+        <source>PWM min, µs</source>
+        <translation>PWM min, µs</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="435"/>
+        <source>PWM max, µs</source>
+        <translation>PWM max, µs</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="451"/>
+        <source>Servo angle range, °</source>
+        <translation>Zakres kąta serwa, °</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="466"/>
+        <source>PWM routing</source>
+        <translation>Routing PWM</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="472"/>
+        <source>OUT1 (wired)</source>
+        <translation>OUT1 (podłączone)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="488"/>
+        <source>OUT2</source>
+        <translation>OUT2</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelBody.qml" line="504"/>
+        <source>OUT3</source>
+        <translation>OUT3</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelPopup</name>
+    <message>
+        <location filename="../qml/app/ServoPanelPopup.qml" line="121"/>
+        <source>Servo</source>
+        <translation>Serwo</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelPopup.qml" line="172"/>
+        <source>Panel settings</source>
+        <translation>Ustawienia panelu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelPopup.qml" line="152"/>
+        <source>Hide panel</source>
+        <translation>Ukryj panel</translation>
+    </message>
+</context>
+<context>
+    <name>ServoPanelSettingsPage</name>
+    <message>
+        <location filename="../qml/app/ServoPanelSettingsPage.qml" line="15"/>
+        <source>Servo scanner control: sweep, step, centre and the live angle.</source>
+        <translation>Sterowanie skanerem serwa: wychylenie, krok, środek i bieżący kąt.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelSettingsPage.qml" line="22"/>
+        <source>Show automatically</source>
+        <translation>Pokazuj automatycznie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelSettingsPage.qml" line="23"/>
+        <source>Brings the panel up when a device with servo firmware connects.</source>
+        <translation>Panel pojawi się po podłączeniu urządzenia z serwem.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/ServoPanelSettingsPage.qml" line="33"/>
+        <source>Background transparency</source>
+        <translation>Przezroczystość tła</translation>
     </message>
 </context>
 <context>
@@ -5556,7 +8943,7 @@ udp://@:1234
 <context>
     <name>SettingsSidebarBase</name>
     <message>
-        <location filename="../qml/app/SettingsSidebarBase.qml" line="13"/>
+        <location filename="../qml/app/SettingsSidebarBase.qml" line="14"/>
         <source>Settings</source>
         <translation>Ustawienia</translation>
     </message>
@@ -5566,7 +8953,7 @@ udp://@:1234
         <translation>Do góry</translation>
     </message>
     <message>
-        <location filename="../qml/app/SettingsSidebarBase.qml" line="424"/>
+        <location filename="../qml/app/SettingsSidebarBase.qml" line="429"/>
         <source>Close</source>
         <translation>Zamknij</translation>
     </message>
@@ -5574,57 +8961,324 @@ udp://@:1234
 <context>
     <name>SonarBox</name>
     <message>
+        <location filename="../qml/legacy_qml/devices/SonarBox.qml" line="31"/>
         <source>Actions</source>
-        <translation type="vanished">Działania</translation>
+        <translation>Działania</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/SonarBox.qml" line="41"/>
         <source>Flash settings</source>
-        <translation type="vanished">Ustawienia flashowania</translation>
+        <translation>Ustawienia flashowania</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/SonarBox.qml" line="51"/>
         <source>Erase settings</source>
-        <translation type="vanished">Wyczyść ustawienia</translation>
+        <translation>Wyczyść ustawienia</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/SonarBox.qml" line="61"/>
         <source>Reboot</source>
-        <translation type="vanished">Uruchom ponownie</translation>
+        <translation>Uruchom ponownie</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/SonarBox.qml" line="81"/>
         <source>Set baudrate</source>
-        <translation type="vanished">Ustaw prędkość transmisji</translation>
+        <translation>Ustaw prędkość transmisji</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/SonarBox.qml" line="91"/>
         <source>Settings</source>
-        <translation type="vanished">Ustawienia</translation>
+        <translation>Ustawienia</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/SonarBox.qml" line="95"/>
         <source>Open file</source>
-        <translation type="vanished">Otwórz plik</translation>
+        <translation>Otwórz plik</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/SonarBox.qml" line="117"/>
         <source>Save as file</source>
-        <translation type="vanished">Zapisz jako plik</translation>
+        <translation>Zapisz jako plik</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/SonarBox.qml" line="141"/>
         <source>Import</source>
-        <translation type="vanished">Import</translation>
+        <translation>Import</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/SonarBox.qml" line="149"/>
         <source>Export</source>
-        <translation type="vanished">Eksport</translation>
+        <translation>Eksport</translation>
+    </message>
+</context>
+<context>
+    <name>StandBadgeRow</name>
+    <message>
+        <location filename="../qml/app/StandBadgeRow.qml" line="25"/>
+        <source> pts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandBadgeRow.qml" line="26"/>
+        <source>round-trip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandBadgeRow.qml" line="27"/>
+        <source>reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandBadgeRow.qml" line="28"/>
+        <source>sweep</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandBadgeRow.qml" line="29"/>
+        <source> fire/pt</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandBadgeRow.qml" line="30"/>
+        <source>no fire</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandBadgeRow.qml" line="31"/>
+        <source> cycles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandBadgeRow.qml" line="32"/>
+        <location filename="../qml/app/StandBadgeRow.qml" line="33"/>
+        <source> ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandBadgeRow.qml" line="38"/>
+        <source>el</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandBadgeRow.qml" line="38"/>
+        <source>az</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>StandPanelPopup</name>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="303"/>
+        <source>Stand</source>
+        <translation>Stanowisko</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="334"/>
+        <source>Hide panel</source>
+        <translation>Ukryj panel</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="354"/>
+        <source>Panel settings</source>
+        <translation>Ustawienia panelu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="255"/>
+        <source>Start</source>
+        <comment>angle range</comment>
+        <translation>Początek</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="256"/>
+        <source>End</source>
+        <comment>angle range</comment>
+        <translation>Koniec</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="257"/>
+        <source>Step</source>
+        <comment>angle range</comment>
+        <translation>Krok</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="392"/>
+        <location filename="../qml/app/StandPanelPopup.qml" line="393"/>
+        <source>device</source>
+        <translation>urządzenie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="422"/>
+        <source>not sent</source>
+        <translation>nie wysłano</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="435"/>
+        <source>Configuration</source>
+        <translation>Konfiguracja</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="435"/>
+        <source>Hide configuration</source>
+        <translation>Ukryj konfigurację</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="460"/>
+        <source>Pause — takes effect at the end of the motion already commanded</source>
+        <translation>Pauza — zadziała po zakończeniu już zleconego ruchu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="470"/>
+        <source>Resume</source>
+        <translation>Wznów</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="479"/>
+        <source>Stop</source>
+        <translation>Zatrzymaj</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="486"/>
+        <source>Home</source>
+        <translation>Pozycja wyjściowa</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="509"/>
+        <source>No stand-capable device</source>
+        <translation>Brak urządzenia ze stanowiskiem</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="518"/>
+        <source>Scan order</source>
+        <translation>Kolejność skanu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="523"/>
+        <source>Az → El</source>
+        <translation>Az → El</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="524"/>
+        <source>El → Az</source>
+        <translation>El → Az</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="535"/>
+        <source>Inner</source>
+        <translation>Wewnętrzna</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="542"/>
+        <source>Outer</source>
+        <translation>Zewnętrzna</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="551"/>
+        <source>Motion</source>
+        <translation>Ruch</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="558"/>
+        <source>Reverse inner</source>
+        <translation>Wewnętrzna tam i z powrotem</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="560"/>
+        <source>The inner axis sweeps forward then back for each outer step</source>
+        <translation>Oś wewnętrzna przechodzi w przód i w tył na każdym kroku osi zewnętrznej</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="565"/>
+        <source>Continuous inner</source>
+        <translation>Wewnętrzna bez zatrzymań</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="576"/>
+        <source>Firing</source>
+        <translation>Nadawanie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="583"/>
+        <source>Fires</source>
+        <translation>Impulsy</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="589"/>
+        <source>Cycles</source>
+        <translation>Cykle</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="597"/>
+        <source>Timing</source>
+        <translation>Czasy</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="604"/>
+        <source>Settle, ms</source>
+        <translation>Stabilizacja, ms</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="611"/>
+        <source>Post-fire, ms</source>
+        <translation>Po impulsie, ms</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="636"/>
+        <source>elevation</source>
+        <translation>elewacja</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="636"/>
+        <source>azimuth</source>
+        <translation>azymut</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="449"/>
+        <source>Start</source>
+        <translation>Start</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelPopup.qml" line="567"/>
+        <source>The inner axis sweeps each leg without stopping, firing at every step boundary. At most one fire per point; post-fire wait does not apply.</source>
+        <translation>Oś wewnętrzna przechodzi każdy przebieg bez zatrzymań, nadając na granicy każdego kroku. Najwyżej jeden impuls na punkt; oczekiwanie po impulsie nie obowiązuje.</translation>
+    </message>
+</context>
+<context>
+    <name>StandPanelSettingsPage</name>
+    <message>
+        <location filename="../qml/app/StandPanelSettingsPage.qml" line="15"/>
+        <source>This panel configures and runs a calibration stand: the scan order, the inner and outer angles, the step and the dwell. The stand takes the whole configuration only as part of Start, so it is set and sent in the panel itself.</source>
+        <translation>Ten panel konfiguruje i uruchamia stanowisko kalibracyjne: kolejność skanu, kąty wewnętrzne i zewnętrzne, krok i czas postoju. Stanowisko przyjmuje całą konfigurację tylko razem ze Startem, dlatego ustawia się ją i wysyła w samym panelu.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelSettingsPage.qml" line="24"/>
+        <source>Show automatically</source>
+        <translation>Pokazuj automatycznie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelSettingsPage.qml" line="25"/>
+        <source>Brings the panel up when a device with a stand connects.</source>
+        <translation>Wyświetla panel po podłączeniu urządzenia ze stanowiskiem.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/StandPanelSettingsPage.qml" line="35"/>
+        <source>Background transparency</source>
+        <translation>Przezroczystość tła</translation>
     </message>
 </context>
 <context>
     <name>TgcSettingsTab</name>
     <message>
+        <location filename="../qml/app/TgcSettingsTab.qml" line="204"/>
         <source>Run the side-scan compensation algorithm over the data</source>
         <translation>Zastosuj algorytm kompensacji sonaru bocznego (side scan) na danych</translation>
     </message>
     <message>
+        <location filename="../qml/app/TgcSettingsTab.qml" line="42"/>
         <source>Gain</source>
         <translation>Wzmocnienie</translation>
     </message>
     <message>
+        <location filename="../qml/app/TgcSettingsTab.qml" line="54"/>
         <source>Defaults</source>
         <translation>Domyślne</translation>
     </message>
@@ -5634,17 +9288,17 @@ udp://@:1234
         <translation>Time Gain Compensation — regulacja jasności obrazu w zależności od głębokości.</translation>
     </message>
     <message>
-        <location filename="../qml/app/TgcSettingsTab.qml" line="40"/>
+        <location filename="../qml/app/TgcSettingsTab.qml" line="67"/>
         <source>Near gain:</source>
         <translation>Bliski:</translation>
     </message>
     <message>
-        <location filename="../qml/app/TgcSettingsTab.qml" line="76"/>
+        <location filename="../qml/app/TgcSettingsTab.qml" line="104"/>
         <source>Far gain:</source>
         <translation>Daleki:</translation>
     </message>
     <message>
-        <location filename="../qml/app/TgcSettingsTab.qml" line="174"/>
+        <location filename="../qml/app/TgcSettingsTab.qml" line="203"/>
         <source>Compensate</source>
         <translation>Kompensacja</translation>
     </message>
@@ -5652,34 +9306,138 @@ udp://@:1234
 <context>
     <name>TitleMeasurement</name>
     <message>
+        <location filename="../qml/legacy_qml/menus/TitleMeasurement.qml" line="12"/>
         <source>TITLE</source>
-        <translation type="vanished">TYTUŁ</translation>
+        <translation>TYTUŁ</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/menus/TitleMeasurement.qml" line="68"/>
+        <location filename="../qml/legacy_qml/menus/TitleMeasurement.qml" line="83"/>
         <source>OFF</source>
-        <translation type="vanished">Wyłącz</translation>
+        <translation>Wyłącz</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/menus/TitleMeasurement.qml" line="70"/>
+        <location filename="../qml/legacy_qml/menus/TitleMeasurement.qml" line="89"/>
         <source>CH1</source>
-        <translation type="vanished">K1</translation>
+        <translation>K1</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/menus/TitleMeasurement.qml" line="72"/>
+        <location filename="../qml/legacy_qml/menus/TitleMeasurement.qml" line="95"/>
         <source>CH2</source>
-        <translation type="vanished">K2</translation>
+        <translation>K2</translation>
     </message>
 </context>
 <context>
     <name>TitleMenuBox</name>
     <message>
+        <location filename="../qml/legacy_qml/menus/TitleMenuBox.qml" line="15"/>
         <source>TitleBox</source>
-        <translation type="vanished">Pole tytułu</translation>
+        <translation>Pole tytułu</translation>
     </message>
 </context>
 <context>
     <name>TitleSetup</name>
     <message>
+        <location filename="../qml/legacy_qml/menus/TitleSetup.qml" line="10"/>
         <source>TITLE</source>
-        <translation type="vanished">TYTUŁ</translation>
+        <translation>TYTUŁ</translation>
+    </message>
+</context>
+<context>
+    <name>TutorialOverlay</name>
+    <message>
+        <location filename="../qml/app/TutorialOverlay.qml" line="423"/>
+        <source>Tutorial stopped: a step could not be shown</source>
+        <translation>Samouczek zatrzymany: nie udało się wyświetlić kroku</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/TutorialOverlay.qml" line="531"/>
+        <source>%1 / %2</source>
+        <translation>%1 / %2</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/TutorialOverlay.qml" line="532"/>
+        <source>Tap anywhere to continue</source>
+        <translation>Dotknij w dowolnym miejscu, aby kontynuować</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/TutorialOverlay.qml" line="539"/>
+        <source>Back</source>
+        <translation>Wstecz</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/TutorialOverlay.qml" line="540"/>
+        <source>Skip tutorial</source>
+        <translation>Pomiń samouczek</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/TutorialOverlay.qml" line="541"/>
+        <source>Next</source>
+        <translation>Dalej</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/TutorialOverlay.qml" line="562"/>
+        <source>Close tutorial</source>
+        <translation>Zamknij samouczek</translation>
+    </message>
+</context>
+<context>
+    <name>TutorialsSettingsPage</name>
+    <message>
+        <location filename="../qml/app/TutorialsSettingsPage.qml" line="36"/>
+        <source>Completed</source>
+        <translation>Ukończono</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/TutorialsSettingsPage.qml" line="38"/>
+        <source>Stopped at step %1 of %2</source>
+        <translation>Zatrzymano na kroku %1 z %2</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../qml/app/TutorialsSettingsPage.qml" line="39"/>
+        <source>%n step(s)</source>
+        <translation>
+            <numerusform>%n krok</numerusform>
+            <numerusform>%n kroki</numerusform>
+            <numerusform>%n kroków</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../qml/app/TutorialsSettingsPage.qml" line="43"/>
+        <source>Tutorials</source>
+        <translation>Samouczki</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/TutorialsSettingsPage.qml" line="44"/>
+        <source>No tutorials available yet</source>
+        <translation>Brak dostępnych samouczków</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/TutorialsSettingsPage.qml" line="65"/>
+        <source>Reset</source>
+        <translation>Resetuj</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/TutorialsSettingsPage.qml" line="73"/>
+        <source>Restart</source>
+        <translation>Od nowa</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/TutorialsSettingsPage.qml" line="80"/>
+        <source>Continue</source>
+        <translation>Kontynuuj</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/TutorialsSettingsPage.qml" line="80"/>
+        <source>Start</source>
+        <translation>Rozpocznij</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/TutorialsSettingsPage.qml" line="99"/>
+        <source>Reset all tutorial progress</source>
+        <translation>Zresetuj cały postęp samouczków</translation>
     </message>
 </context>
 <context>
@@ -5690,7 +9448,7 @@ udp://@:1234
         <translation>Stan UI wyeksportowany: %1</translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="577"/>
+        <location filename="../src/ui_state_serializer.cpp" line="578"/>
         <source>UI state imported: %1</source>
         <translation>Stan UI zaimportowany: %1</translation>
     </message>
@@ -5780,18 +9538,18 @@ udp://@:1234
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="876"/>
+        <location filename="../src/ui_state_serializer.cpp" line="877"/>
         <source>payload is empty</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="880"/>
-        <location filename="../src/ui_state_serializer.cpp" line="884"/>
+        <location filename="../src/ui_state_serializer.cpp" line="881"/>
+        <location filename="../src/ui_state_serializer.cpp" line="885"/>
         <source>payload is not XML text</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="887"/>
+        <location filename="../src/ui_state_serializer.cpp" line="888"/>
         <source>invalid XML payload</source>
         <translation></translation>
     </message>
@@ -5811,13 +9569,13 @@ udp://@:1234
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="570"/>
+        <location filename="../src/ui_state_serializer.cpp" line="571"/>
         <source>Imported %1 keys. Applied %2 in live UI. Skipped path keys: %3. Skipped serial links: %4.%5</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/ui_state_serializer.cpp" line="829"/>
-        <location filename="../src/ui_state_serializer.cpp" line="871"/>
+        <location filename="../src/ui_state_serializer.cpp" line="830"/>
+        <location filename="../src/ui_state_serializer.cpp" line="872"/>
         <source>link manager is not available</source>
         <translation></translation>
     </message>
@@ -5830,22 +9588,22 @@ udp://@:1234
         <translation>Eksport całego interfejsu (układ, panele, wszystkie ustawienia echogramów/3D) do pliku JSON lub import z niego.</translation>
     </message>
     <message>
-        <location filename="../qml/app/UiSavingSettingsTab.qml" line="52"/>
+        <location filename="../qml/app/UiSavingSettingsTab.qml" line="53"/>
         <source>Export…</source>
         <translation>Eksport…</translation>
     </message>
     <message>
-        <location filename="../qml/app/UiSavingSettingsTab.qml" line="62"/>
+        <location filename="../qml/app/UiSavingSettingsTab.qml" line="64"/>
         <source>Import…</source>
         <translation>Import…</translation>
     </message>
     <message>
-        <location filename="../qml/app/UiSavingSettingsTab.qml" line="72"/>
+        <location filename="../qml/app/UiSavingSettingsTab.qml" line="74"/>
         <source>Export UI state</source>
         <translation>Eksportuj stan UI</translation>
     </message>
     <message>
-        <location filename="../qml/app/UiSavingSettingsTab.qml" line="87"/>
+        <location filename="../qml/app/UiSavingSettingsTab.qml" line="89"/>
         <source>Import UI state</source>
         <translation>Importuj stan UI</translation>
     </message>
@@ -5853,150 +9611,1095 @@ udp://@:1234
 <context>
     <name>UpgradeBox</name>
     <message>
+        <location filename="../qml/legacy_qml/devices/UpgradeBox.qml" line="72"/>
         <source>Please choose a file</source>
-        <translation type="vanished">Proszę wybrać plik</translation>
+        <translation>Proszę wybrać plik</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/UpgradeBox.qml" line="97"/>
         <source>Upgrade</source>
-        <translation type="vanished">Aktualizacja</translation>
+        <translation>Aktualizacja</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/UpgradeBox.qml" line="121"/>
         <source>Enter path</source>
-        <translation type="vanished">Wprowadź ścieżkę</translation>
+        <translation>Wprowadź ścieżkę</translation>
     </message>
     <message>
+        <location filename="../qml/legacy_qml/devices/UpgradeBox.qml" line="134"/>
         <source>UPGRADE</source>
-        <translation type="vanished">Aktualizacja</translation>
+        <translation>Aktualizacja</translation>
     </message>
 </context>
 <context>
-    <name>VideoStream</name>
+    <name>UsblGroup</name>
     <message>
-        <location filename="../src/video/video_stream.cpp" line="232"/>
-        <source>Connecting...</source>
-        <translation>Łączenie...</translation>
+        <location filename="../qml/app/UsblGroup.qml" line="43"/>
+        <source>Acoustic nodes</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/video/video_stream.cpp" line="277"/>
-        <source>out of memory</source>
-        <translation>brak pamięci</translation>
+        <location filename="../qml/app/UsblGroup.qml" line="71"/>
+        <location filename="../qml/app/UsblGroup.qml" line="72"/>
+        <source> s ago</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/video/video_stream.cpp" line="317"/>
-        <source>no video stream</source>
-        <translation>brak strumienia wideo</translation>
+        <location filename="../qml/app/UsblGroup.qml" line="74"/>
+        <source> m ago</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/video/video_stream.cpp" line="346"/>
-        <source>no decoder for this stream</source>
-        <translation>brak dekodera dla tego strumienia</translation>
+        <location filename="../qml/app/UsblGroup.qml" line="75"/>
+        <source> h ago</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/video/video_stream.cpp" line="580"/>
-        <source>Stream ended</source>
-        <translation>Strumień zakończony</translation>
+        <location filename="../qml/app/UsblGroup.qml" line="220"/>
+        <source>no nodes</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/video/video_stream.cpp" line="649"/>
-        <source>Reconnecting (%1/%2)...</source>
-        <translation>Ponowne łączenie (%1/%2)...</translation>
+        <location filename="../qml/app/UsblGroup.qml" line="221"/>
+        <source>all off</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/video/video_stream.cpp" line="245"/>
-        <source>Connection failed</source>
-        <translation>Nie udało się połączyć</translation>
+        <location filename="../qml/app/UsblGroup.qml" line="222"/>
+        <source>%1/%2 replying</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="311"/>
+        <source>Dwell</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="325"/>
+        <source>Interval between steps, and the answer window each step is allowed — a reply still counts for %1 s past it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="332"/>
+        <source>s between steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="341"/>
+        <source>Step</source>
+        <translation type="unfinished">Krok</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="344"/>
+        <source>Send the next interrogation and stop there</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="351"/>
+        <source>■ Stop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="351"/>
+        <source>▶ Start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="373"/>
+        <source>Schedule · %1 nodes · %2 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="375"/>
+        <source>Schedule · nothing to interrogate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="390"/>
+        <source>No nodes yet. Add one to start interrogating.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="550"/>
+        <source>Last known position — copy is not wired up yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="552"/>
+        <source>depth %1 %2 · elevation %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="554"/>
+        <source>m</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="565"/>
+        <source>Remove node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="580"/>
+        <source>Distance, m</source>
+        <translation type="unfinished">Odległość, m</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="585"/>
+        <source>Azimuth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="590"/>
+        <source>SNR, dB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="607"/>
+        <source>no commands — interrogated once with cmd 0</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="716"/>
+        <location filename="../qml/app/UsblGroup.qml" line="873"/>
+        <source>queued — goes out when the current answer window closes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="717"/>
+        <source>Interrogate cmd %1 now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="738"/>
+        <source>Address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="750"/>
+        <source>Commands</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="760"/>
+        <source>No commands. This node is interrogated once with cmd 0.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="837"/>
+        <source>In the schedule — click to mute this command</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="838"/>
+        <source>Muted — the schedule skips it. Click to include it again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="874"/>
+        <source>Interrogate this command now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="884"/>
+        <source>Remove this command from the node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="913"/>
+        <source> · %1 bit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="935"/>
+        <source>+ Command</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="953"/>
+        <source>only the newest received payload is kept, so it shows on one command at a time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblGroup.qml" line="974"/>
+        <source>+ Add node</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UsblNodesPopup</name>
+    <message>
+        <location filename="../qml/app/UsblNodesPopup.qml" line="195"/>
+        <location filename="../qml/app/UsblNodesPopup.qml" line="196"/>
+        <source> s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblNodesPopup.qml" line="198"/>
+        <source> m</source>
+        <translation type="unfinished"> m</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblNodesPopup.qml" line="199"/>
+        <source> h</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblNodesPopup.qml" line="347"/>
+        <location filename="../qml/app/UsblNodesPopup.qml" line="516"/>
+        <source>m</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblNodesPopup.qml" line="349"/>
+        <location filename="../qml/app/UsblNodesPopup.qml" line="531"/>
+        <source>dB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblNodesPopup.qml" line="376"/>
+        <source>No acoustic device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblNodesPopup.qml" line="377"/>
+        <source>No nodes in the USBL plan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblNodesPopup.qml" line="544"/>
+        <source>+%1 more</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblNodesPopup.qml" line="558"/>
+        <source>Schedule stopped</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UsblPanelSettingsPage</name>
+    <message>
+        <location filename="../qml/app/UsblPanelSettingsPage.qml" line="15"/>
+        <source>This panel shows one row per node in the USBL plan: its address, range and SNR, whether a request is out, how the last interrogation ended, which command that was, and how old the numbers are.</source>
+        <translation>Panel pokazuje jeden wiersz na każdy węzeł z planu USBL: adres, odległość i SNR, czy jest zaległe zapytanie, jak zakończyło się ostatnie odpytanie, jaka to była komenda i jak stare są liczby.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPanelSettingsPage.qml" line="24"/>
+        <source>Show automatically</source>
+        <translation>Pokazuj automatycznie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPanelSettingsPage.qml" line="25"/>
+        <source>Brings the panel up when a USBL device or beacon connects.</source>
+        <translation>Wyświetla panel po podłączeniu urządzenia USBL lub bakenu.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPanelSettingsPage.qml" line="35"/>
+        <source>Background transparency</source>
+        <translation>Przezroczystość tła</translation>
+    </message>
+</context>
+<context>
+    <name>UsblPlanGroup</name>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="24"/>
+        <source>USBL command plan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="36"/>
+        <source>Pick a group above, then click slots to move them into it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="39"/>
+        <source>slot %1 moved into this group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="40"/>
+        <source>slot %1 is already in this group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="64"/>
+        <source>re-apply</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="76"/>
+        <source>applied · both</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="77"/>
+        <source>applied · initiator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="78"/>
+        <source>applied · transponder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="204"/>
+        <source>Command groups</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="211"/>
+        <source>%1 of %2 groups</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="254"/>
+        <source>none</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="266"/>
+        <source>add</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="279"/>
+        <source>Command slots</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="285"/>
+        <source>click moves into %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="386"/>
+        <source>Group %1 · slots %2 · at device defaults</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="387"/>
+        <source>Group %1 · slots %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="405"/>
+        <source>Reset these slots to defaults and drop the group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="437"/>
+        <source>Initiator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="475"/>
+        <source>Send request</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="493"/>
+        <source>Remove</source>
+        <translation type="unfinished">Usuń</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="498"/>
+        <source>carries</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="517"/>
+        <source>payload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="521"/>
+        <source>hex bytes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="532"/>
+        <source>%1 bit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="540"/>
+        <source>max range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="552"/>
+        <source>mm · expect no reply</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="552"/>
+        <source>mm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="573"/>
+        <source>+ Send request</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="579"/>
+        <source>+ Handle reply</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="613"/>
+        <source>Transponder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="638"/>
+        <source>+ Handle request</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="646"/>
+        <source>nothing written as transponder — slots keep device defaults</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="660"/>
+        <source>Plan check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="666"/>
+        <source>%1 issue(s)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="666"/>
+        <source>both halves agree</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="682"/>
+        <source>Every group&apos;s request and response halves line up, so the two devices will understand each other.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="750"/>
+        <source>Apply</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="757"/>
+        <source>Each button writes all 8 slots of one half: configured slots get their configuration, the rest are reset to defaults.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="768"/>
+        <source>Apply as initiator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="769"/>
+        <source>we ask · we read the answers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="770"/>
+        <source>Apply as transponder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="771"/>
+        <source>we are asked · we answer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="806"/>
+        <source>%1 frames · %2 configured</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="816"/>
+        <source>changed since applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanGroup.qml" line="817"/>
+        <source>applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UsblPlanStore</name>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="28"/>
+        <source>Raw bytes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="29"/>
+        <source>Position + azimuth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="32"/>
+        <source>Plain interrogation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="33"/>
+        <source>Carry payload bytes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="34"/>
+        <source>Carry position + azimuth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="140"/>
+        <location filename="../qml/app/UsblPlanStore.qml" line="223"/>
+        <source>none</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="202"/>
+        <source>not an initiator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="203"/>
+        <source>interrogator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="204"/>
+        <source>pinger / beacon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="205"/>
+        <source>default transponder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="206"/>
+        <source>data relay</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="207"/>
+        <source>data source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="208"/>
+        <source>data sink</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="209"/>
+        <source>transponder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="226"/>
+        <source>Join</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="242"/>
+        <source>%1 hold identical settings, so they write the same bytes. Joining them changes nothing on the device.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="246"/>
+        <source>owns no slots, so it writes nothing and cannot be scheduled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="248"/>
+        <source>request carries %1 bit, but the transponder half has no receive section</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="251"/>
+        <source>request sends %1 bit, transponder expects %2 bit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="254"/>
+        <source>transponder answers with %1 bit, but the initiator has no reply handler to read it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="257"/>
+        <source>transponder answers %1 bit, reply handler expects %2 bit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="260"/>
+        <source>pinger expects no reply, but the transponder half is configured to answer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblPlanStore.qml" line="262"/>
+        <source>has a reply handler but never sends a request</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UsblResponseGroup</name>
+    <message>
+        <location filename="../qml/app/UsblResponseGroup.qml" line="15"/>
+        <source>USBL response</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblResponseGroup.qml" line="43"/>
+        <source>Respond to interrogation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblResponseGroup.qml" line="49"/>
+        <source>Accept addresses</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblResponseGroup.qml" line="97"/>
+        <source>Suppress self-response, µs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblResponseGroup.qml" line="115"/>
+        <source>Suppress self-request, µs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblResponseGroup.qml" line="132"/>
+        <source>Receive while idle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblResponseGroup.qml" line="142"/>
+        <source>The device cannot report these back, so this shows what was last sent — not necessarily what the device holds.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UsblStateBadge</name>
+    <message>
+        <location filename="../qml/app/UsblStateBadge.qml" line="53"/>
+        <source>REPLIED</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblStateBadge.qml" line="54"/>
+        <source>MISSED</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblStateBadge.qml" line="55"/>
+        <source>LOST</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblStateBadge.qml" line="56"/>
+        <source>NEVER</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UsblTriggerEditor</name>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="86"/>
+        <source>Handle request</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="86"/>
+        <source>Handle reply</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="103"/>
+        <source>Remove handler</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="113"/>
+        <source>Answers with no payload. Attach a section to carry data.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="122"/>
+        <source>receive payload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="123"/>
+        <source>send payload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="177"/>
+        <source>Detach</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="184"/>
+        <source>format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="203"/>
+        <source>expect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="213"/>
+        <source>bit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="220"/>
+        <source>bytes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="224"/>
+        <source>hex bytes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="232"/>
+        <source>%1 bit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="250"/>
+        <source>+ Receive payload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="256"/>
+        <source>+ Send payload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="265"/>
+        <source>+ advanced</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="279"/>
+        <source>response rewrite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="295"/>
+        <source>Remove advanced options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="301"/>
+        <source>direction</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="303"/>
+        <source>Swap request/response</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="303"/>
+        <source>Keep same</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="315"/>
+        <source>send cmd</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="317"/>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="344"/>
+        <source>Echo incoming</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="317"/>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="344"/>
+        <source>Replace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="329"/>
+        <source>cmd →</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="342"/>
+        <source>send addr</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblTriggerEditor.qml" line="356"/>
+        <source>addr →</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>VideoPaneSettingsTab</name>
     <message>
-        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="35"/>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="176"/>
         <source>Image:</source>
         <translation>Obraz:</translation>
     </message>
     <message>
-        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="45"/>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="183"/>
         <source>Fit</source>
         <translation>Dopasuj</translation>
     </message>
     <message>
-        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="46"/>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="184"/>
         <source>Crop</source>
         <translation>Wypełnij</translation>
     </message>
     <message>
-        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="47"/>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="185"/>
         <source>Stretch</source>
         <translation>Rozciągnij</translation>
     </message>
     <message>
-        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="58"/>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="196"/>
         <source>Show resolution</source>
         <translation>Pokaż rozdzielczość</translation>
     </message>
     <message>
-        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="64"/>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="87"/>
         <source>Stream:</source>
         <translation>Strumień:</translation>
     </message>
     <message>
-        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="99"/>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="106"/>
         <source>Source</source>
         <translation>Źródło</translation>
     </message>
     <message>
-        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="100"/>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="47"/>
         <source>Not selected</source>
         <translation>Nie wybrano</translation>
     </message>
     <message>
-        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="146"/>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="121"/>
         <source>Video source for this pane</source>
         <translation>Źródło wideo dla tego panelu</translation>
     </message>
     <message>
-        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="104"/>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="158"/>
         <source>Resolution</source>
         <translation>Rozdzielczość</translation>
     </message>
     <message>
-        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="111"/>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="165"/>
         <source>State</source>
         <translation>Stan</translation>
     </message>
     <message>
-        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="117"/>
+        <location filename="../qml/app/VideoPaneSettingsTab.qml" line="171"/>
         <source>Streaming</source>
         <translation>Transmisja</translation>
     </message>
 </context>
 <context>
+    <name>VideoStream</name>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="236"/>
+        <source>Connecting...</source>
+        <translation>Łączenie...</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="291"/>
+        <source>out of memory</source>
+        <translation>brak pamięci</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="331"/>
+        <source>no video stream</source>
+        <translation>brak strumienia wideo</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="360"/>
+        <source>no decoder for this stream</source>
+        <translation>brak dekodera dla tego strumienia</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="653"/>
+        <source>Stream ended</source>
+        <translation>Strumień zakończony</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="722"/>
+        <source>Reconnecting (%1/%2)...</source>
+        <translation>Ponowne łączenie (%1/%2)...</translation>
+    </message>
+    <message>
+        <location filename="../src/video/video_stream.cpp" line="247"/>
+        <location filename="../src/video/video_stream.cpp" line="709"/>
+        <source>Connection failed</source>
+        <translation>Nie udało się połączyć</translation>
+    </message>
+</context>
+<context>
+    <name>VideoSurface</name>
+    <message>
+        <location filename="../qml/app/VideoSurface.qml" line="158"/>
+        <source>Video window settings</source>
+        <translation>Ustawienia okna wideo</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/VideoSurface.qml" line="118"/>
+        <source>No video source</source>
+        <translation>Brak źródła wideo</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetCard</name>
+    <message>
+        <location filename="../qml/app/WidgetCard.qml" line="21"/>
+        <source>USBL</source>
+        <translation>USBL</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WidgetCard.qml" line="22"/>
+        <source>Servo control</source>
+        <translation>Sterowanie serwem</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WidgetCard.qml" line="23"/>
+        <source>Stand control</source>
+        <translation>Sterowanie stanowiskiem</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetEditOverlay</name>
+    <message>
+        <location filename="../qml/app/WidgetEditOverlay.qml" line="220"/>
+        <source>Remove widget</source>
+        <translation>Usuń widżet</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetPlaceStep</name>
+    <message>
+        <location filename="../qml/app/WidgetPlaceStep.qml" line="99"/>
+        <source>Reset scale to default</source>
+        <translation>Zresetuj skalę do domyślnej</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WidgetPlaceStep.qml" line="149"/>
+        <source>Drag onto the panel, or tap to add.</source>
+        <translation>Przeciągnij na panel lub kliknij.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WidgetPlaceStep.qml" line="192"/>
+        <source>All widgets are on the panel.</source>
+        <translation>Wszystkie widżety są na panelu.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WidgetPlaceStep.qml" line="70"/>
+        <source>Cell size</source>
+        <translation>Rozmiar komórek</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WidgetPlaceStep.qml" line="80"/>
+        <source>Standard</source>
+        <translation>Standardowy</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WidgetPlaceStep.qml" line="80"/>
+        <source>Large</source>
+        <translation>Duży</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WidgetPlaceStep.qml" line="33"/>
+        <source>Value</source>
+        <translation>Wartość</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WidgetPlaceStep.qml" line="35"/>
+        <source>Label + Value</source>
+        <translation>Etykieta + wart.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WidgetPlaceStep.qml" line="36"/>
+        <source>Label / Value</source>
+        <translation>Etykieta / wart.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WidgetPlaceStep.qml" line="43"/>
+        <source>Pick a representation, then drag widgets onto the panel shown in the working area. Drag a placed widget back here to remove it, or tap it to change its type.</source>
+        <translation>Wybierz reprezentację, a następnie przeciągnij widżety na panel widoczny w obszarze roboczym. Przeciągnij umieszczony widżet z powrotem tutaj, aby go usunąć, lub kliknij, aby zmienić typ.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WidgetPlaceStep.qml" line="52"/>
+        <source>Representation</source>
+        <translation>Reprezentacja</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WidgetPlaceStep.qml" line="141"/>
+        <source>Widgets</source>
+        <translation>Widżety</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WidgetPlaceStep.qml" line="109"/>
+        <source>Background transparency</source>
+        <translation>Przezroczystość tła</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/WidgetPlaceStep.qml" line="128"/>
+        <source>Save</source>
+        <translation>Zapisz</translation>
+    </message>
+</context>
+<context>
+    <name>WidgetSizeStep</name>
+    <message>
+        <location filename="../qml/app/WidgetSizeStep.qml" line="20"/>
+        <source>Choose the panel grid size. You will place widgets on the next step.</source>
+        <translation>Wybierz rozmiar siatki panelu. Widżety rozmieścisz w następnym kroku.</translation>
+    </message>
+</context>
+<context>
     <name>WorkspaceStore</name>
     <message>
-        <location filename="../qml/app/WorkspaceStore.qml" line="956"/>
+        <location filename="../qml/app/WorkspaceStore.qml" line="1367"/>
+        <location filename="../qml/app/WorkspaceStore.qml" line="5041"/>
         <source>Video</source>
         <translation>Wideo</translation>
     </message>
     <message>
-        <location filename="../qml/app/WorkspaceStore.qml" line="961"/>
+        <location filename="../qml/app/WorkspaceStore.qml" line="1372"/>
         <source>Global pop-up</source>
         <translation>Globalne okno podręczne</translation>
     </message>
     <message>
-        <location filename="../qml/app/WorkspaceStore.qml" line="965"/>
+        <location filename="../qml/app/WorkspaceStore.qml" line="1376"/>
         <source>Second window</source>
         <translation>Drugie okno</translation>
     </message>
     <message>
-        <location filename="../qml/app/WorkspaceStore.qml" line="866"/>
+        <location filename="../qml/app/WorkspaceStore.qml" line="2017"/>
         <source>Echogram</source>
         <translation>Echogram</translation>
     </message>
     <message>
+        <location filename="../qml/app/WorkspaceStore.qml" line="329"/>
         <source>No KOGGER devices found in the local network</source>
         <translation>Nie znaleziono urządzeń KOGGER w sieci lokalnej</translation>
     </message>
     <message>
+        <location filename="../qml/app/WorkspaceStore.qml" line="337"/>
         <source>Found %1: %2</source>
         <translation>Znaleziono %1: %2</translation>
     </message>
@@ -6004,942 +10707,506 @@ udp://@:1234
 <context>
     <name>WorkspaceView</name>
     <message>
-        <location filename="../qml/app/WorkspaceView.qml" line="40"/>
-        <location filename="../qml/app/WorkspaceView.qml" line="575"/>
+        <location filename="../qml/app/WorkspaceView.qml" line="45"/>
+        <location filename="../qml/app/WorkspaceView.qml" line="751"/>
         <source>Echogram</source>
         <translation>Echogram</translation>
     </message>
     <message>
-        <location filename="../qml/app/WorkspaceView.qml" line="39"/>
-        <location filename="../qml/app/WorkspaceView.qml" line="638"/>
+        <location filename="../qml/app/WorkspaceView.qml" line="44"/>
+        <location filename="../qml/app/WorkspaceView.qml" line="814"/>
         <source>Global pop-up</source>
         <translation>Globalne okno wyskakujące</translation>
     </message>
     <message>
-        <location filename="../qml/app/WorkspaceView.qml" line="46"/>
+        <location filename="../qml/app/WorkspaceView.qml" line="51"/>
         <source>Second window</source>
         <translation>Drugie okno</translation>
     </message>
 </context>
 <context>
-    <name>DataFieldCatalog</name>
+    <name>mission::MissionPlanController</name>
     <message>
-        <source>m/s</source>
-        <translation>m/s</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="124"/>
+        <source>The mission has no waypoints</source>
+        <translation>Misja nie ma punktów trasy</translation>
     </message>
     <message>
-        <source>Device charge</source>
-        <translation>Ładunek urządzenia</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="127"/>
+        <source>Start point is not set</source>
+        <translation>Punkt startowy nie jest ustawiony</translation>
     </message>
     <message>
-        <source>Time</source>
-        <translation>Czas</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="286"/>
+        <source>save: no file path</source>
+        <translation>save: brak ścieżki pliku</translation>
     </message>
     <message>
-        <source>Depth</source>
-        <translation>Głębokość</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="296"/>
+        <source>save: empty path</source>
+        <translation>save: pusta ścieżka</translation>
     </message>
     <message>
-        <source>Rangefinder</source>
-        <translation>Dalmierz</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="302"/>
+        <source>save: cannot create folder %1</source>
+        <translation>save: nie można utworzyć folderu %1</translation>
     </message>
     <message>
-        <source>Bottom track</source>
-        <translation>Ślad dna</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="329"/>
+        <source>upload: %1</source>
+        <translation>wgrywanie: %1</translation>
     </message>
     <message>
-        <source>Speed</source>
-        <translation>Prędkość</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="346"/>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="381"/>
+        <source>From vehicle</source>
+        <translation>Z łodzi</translation>
     </message>
     <message>
-        <source>Ground speed</source>
-        <translation>Prędkość naziemna</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="357"/>
+        <source>No mission has been read from the vehicle</source>
+        <translation>Misja nie została jeszcze odczytana z łodzi</translation>
     </message>
     <message>
-        <source>Coordinate</source>
-        <translation>Współrzędne</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="431"/>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="447"/>
+        <source>export: %1</source>
+        <translation>export: %1</translation>
     </message>
     <message>
-        <source>Selected point</source>
-        <translation>Wybrany punkt</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="493"/>
+        <source>json: %1 at offset %2</source>
+        <translation>json: %1 na pozycji %2</translation>
     </message>
     <message>
-        <source>Temperature</source>
-        <translation>Temperatura</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="497"/>
+        <source>json: root must be an object</source>
+        <translation>json: element główny musi być obiektem</translation>
     </message>
     <message>
-        <source>Battery</source>
-        <translation>Bateria</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="684"/>
+        <source>fence: no more than %1 polygons</source>
+        <translation>fence: nie więcej niż %1 wielokątów</translation>
     </message>
     <message>
-        <source>Current</source>
-        <translation>Prąd</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="699"/>
+        <source>home: invalid position</source>
+        <translation>home: nieprawidłowa pozycja</translation>
     </message>
     <message>
-        <source>Flight mode</source>
-        <translation>Tryb lotu</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="721"/>
+        <source>waypoint: invalid position</source>
+        <translation>waypoint: nieprawidłowa pozycja</translation>
     </message>
     <message>
-        <source>Arm state</source>
-        <translation>Stan uzbrojenia</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="763"/>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="865"/>
+        <source>rally: invalid position</source>
+        <translation>rally: nieprawidłowa pozycja</translation>
     </message>
     <message>
-        <source>m</source>
-        <translation>m</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="800"/>
+        <source>remove: unknown id</source>
+        <translation>remove: nieznany id</translation>
     </message>
     <message>
-        <source>km/h</source>
-        <translation>km/h</translation>
-    </message>
-</context>
-<context>
-    <name>WidgetSizeStep</name>
-    <message>
-        <source>Choose the panel grid size. You will place widgets on the next step.</source>
-        <translation>Wybierz rozmiar siatki panelu. Widżety rozmieścisz w następnym kroku.</translation>
-    </message>
-</context>
-<context>
-    <name>WidgetPlaceStep</name>
-    <message>
-        <source>Reset scale to default</source>
-        <translation>Zresetuj skalę do domyślnej</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="808"/>
+        <source>move: unknown id</source>
+        <translation>move: nieznany id</translation>
     </message>
     <message>
-        <source>Drag onto the panel, or tap to add.</source>
-        <translation>Przeciągnij na panel lub kliknij.</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="835"/>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="855"/>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="885"/>
+        <source>update: unknown field %1</source>
+        <translation>update: nieznane pole %1</translation>
     </message>
     <message>
-        <source>All widgets are on the panel.</source>
-        <translation>Wszystkie widżety są na panelu.</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="901"/>
+        <source>update: unknown id</source>
+        <translation>update: nieznany id</translation>
     </message>
     <message>
-        <source>Cell size</source>
-        <translation>Rozmiar komórek</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="909"/>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="954"/>
+        <source>vertex: invalid position</source>
+        <translation>vertex: nieprawidłowa pozycja</translation>
     </message>
     <message>
-        <source>Standard</source>
-        <translation>Standardowy</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="921"/>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="938"/>
+        <source>vertex: index out of range</source>
+        <translation>vertex: indeks poza zakresem</translation>
     </message>
     <message>
-        <source>Large</source>
-        <translation>Duży</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="946"/>
+        <source>vertex: unknown id</source>
+        <translation>vertex: nieznany id</translation>
     </message>
     <message>
-        <source>Value</source>
-        <translation>Wartość</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="960"/>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="978"/>
+        <source>vertex: item has no vertex list</source>
+        <translation>vertex: element nie ma listy wierzchołków</translation>
     </message>
     <message>
-        <source>Label + Value</source>
-        <translation>Etykieta + wart.</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="964"/>
+        <source>vertex: no more than %1 vertices</source>
+        <translation>vertex: nie więcej niż %1 wierzchołków</translation>
     </message>
     <message>
-        <source>Label / Value</source>
-        <translation>Etykieta / wart.</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="982"/>
+        <source>vertex: cannot remove</source>
+        <translation>vertex: nie można usunąć</translation>
     </message>
     <message>
-        <source>Pick a representation, then drag widgets onto the panel shown in the working area. Drag a placed widget back here to remove it, or tap it to change its type.</source>
-        <translation>Wybierz reprezentację, a następnie przeciągnij widżety na panel widoczny w obszarze roboczym. Przeciągnij umieszczony widżet z powrotem tutaj, aby go usunąć, lub kliknij, aby zmienić typ.</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="1213"/>
+        <source>points: each vertex must be [lat, lon]</source>
+        <translation>points: każdy wierzchołek musi być [lat, lon]</translation>
     </message>
     <message>
-        <source>Representation</source>
-        <translation>Reprezentacja</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="1218"/>
+        <source>points: vertex out of range</source>
+        <translation>points: wierzchołek poza zakresem</translation>
     </message>
     <message>
-        <source>Widgets</source>
-        <translation>Widżety</translation>
-    </message>
-    <message>
-        <source>Background transparency</source>
-        <translation>Przezroczystość tła</translation>
-    </message>
-    <message>
-        <source>Save</source>
-        <translation>Zapisz</translation>
-    </message>
-</context>
-<context>
-    <name>WidgetEditOverlay</name>
-    <message>
-        <source>Remove widget</source>
-        <translation>Usuń widżet</translation>
-    </message>
-</context>
-<context>
-    <name>WidgetCard</name>
-    <message>
-        <source>USBL</source>
-        <translation>USBL</translation>
-    </message>
-    <message>
-        <source>Servo control</source>
-        <translation>Sterowanie serwem</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/WidgetCard.qml" line="74"/>
-        <source>Stand control</source>
-        <translation>Sterowanie stanowiskiem</translation>
+        <location filename="../src/mission/mission_plan_controller.cpp" line="1224"/>
+        <source>points: needs at least %1 vertices</source>
+        <translation>points: wymaga co najmniej %1 wierzchołków</translation>
     </message>
 </context>
 <context>
-    <name>WidgetServoStep</name>
+    <name>mission::MissionRunTracker</name>
     <message>
-        <source>Controls the servo scanner of the device that has one. The panel finds it itself.</source>
-        <translation>Steruje skanerem serwa urządzenia, które je posiada. Panel sam je znajduje.</translation>
-    </message>
-    <message>
-        <source>Background transparency</source>
-        <translation>Przezroczystość tła</translation>
-    </message>
-    <message>
-        <source>Save</source>
-        <translation>Zapisz</translation>
-    </message>
-</context>
-<context>
-    <name>ServoPanelBody</name>
-    <message>
-        <source>Off</source>
-        <translation>Wył.</translation>
-    </message>
-    <message>
-        <source>ServoScan</source>
-        <translation>ServoScan</translation>
-    </message>
-    <message>
-        <source>No servo device</source>
-        <translation>Brak urządzenia z serwem</translation>
-    </message>
-    <message>
-        <source>On link %1</source>
-        <translation>Na łączu %1</translation>
-    </message>
-    <message>
-        <source>Device</source>
-        <translation>Urządzenie</translation>
-    </message>
-    <message>
-        <source>Control</source>
-        <translation>Sterowanie</translation>
-    </message>
-    <message>
-        <source>Enabled</source>
-        <translation>Włączone</translation>
-    </message>
-    <message>
-        <source>Current angle</source>
-        <translation>Bieżący kąt</translation>
-    </message>
-    <message>
-        <source>Reverse mapping</source>
-        <translation>Odwrócenie</translation>
-    </message>
-    <message>
-        <source>Scan</source>
-        <translation>Skan</translation>
-    </message>
-    <message>
-        <source>Step, °</source>
-        <translation>Krok, °</translation>
-    </message>
-    <message>
-        <source>Scan range, °</source>
-        <translation>Zakres skanu, °</translation>
-    </message>
-    <message>
-        <source>Center, °</source>
-        <translation>Środek, °</translation>
-    </message>
-    <message>
-        <source>More settings</source>
-        <translation>Więcej ustawień</translation>
-    </message>
-    <message>
-        <source>Calibration</source>
-        <translation>Kalibracja</translation>
-    </message>
-    <message>
-        <source>PWM min, µs</source>
-        <translation>PWM min, µs</translation>
-    </message>
-    <message>
-        <source>PWM max, µs</source>
-        <translation>PWM max, µs</translation>
-    </message>
-    <message>
-        <source>Servo angle range, °</source>
-        <translation>Zakres kąta serwa, °</translation>
-    </message>
-    <message>
-        <source>PWM routing</source>
-        <translation>Routing PWM</translation>
-    </message>
-    <message>
-        <source>OUT1 (wired)</source>
-        <translation>OUT1 (podłączone)</translation>
-    </message>
-    <message>
-        <source>OUT2</source>
-        <translation>OUT2</translation>
-    </message>
-    <message>
-        <source>OUT3</source>
-        <translation>OUT3</translation>
-    </message>
-</context>
-<context>
-    <name>ServoPanelPopup</name>
-    <message>
-        <source>Servo</source>
-        <translation>Serwo</translation>
-    </message>
-    <message>
-        <source>Panel settings</source>
-        <translation>Ustawienia panelu</translation>
-    </message>
-    <message>
-        <source>Hide panel</source>
-        <translation>Ukryj panel</translation>
-    </message>
-</context>
-<context>
-    <name>ServoPanelSettingsPage</name>
-    <message>
-        <source>Servo scanner control: sweep, step, centre and the live angle.</source>
-        <translation>Sterowanie skanerem serwa: wychylenie, krok, środek i bieżący kąt.</translation>
-    </message>
-    <message>
-        <source>Show automatically</source>
-        <translation>Pokazuj automatycznie</translation>
-    </message>
-    <message>
-        <source>Brings the panel up when a device with servo firmware connects.</source>
-        <translation>Panel pojawi się po podłączeniu urządzenia z serwem.</translation>
-    </message>
-    <message>
-        <source>Background transparency</source>
-        <translation>Przezroczystość tła</translation>
-    </message>
-</context>
-<context>
-    <name>UsblPanelSettingsPage</name>
-    <message>
-        <location filename="../qml/app/UsblPanelSettingsPage.qml" line="22"/>
-        <source>This panel shows one row per node in the USBL plan: its address, range and SNR, whether a request is out, how the last interrogation ended, which command that was, and how old the numbers are.</source>
-        <translation>Panel pokazuje jeden wiersz na każdy węzeł z planu USBL: adres, odległość i SNR, czy jest zaległe zapytanie, jak zakończyło się ostatnie odpytanie, jaka to była komenda i jak stare są liczby.</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/UsblPanelSettingsPage.qml" line="39"/>
-        <source>Show automatically</source>
-        <translation>Pokazuj automatycznie</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/UsblPanelSettingsPage.qml" line="40"/>
-        <source>Brings the panel up when a USBL device or beacon connects.</source>
-        <translation>Wyświetla panel po podłączeniu urządzenia USBL lub bakenu.</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/UsblPanelSettingsPage.qml" line="48"/>
-        <source>Background transparency</source>
-        <translation>Przezroczystość tła</translation>
-    </message>
-</context>
-<context>
-    <name>StandPanelSettingsPage</name>
-    <message>
-        <location filename="../qml/app/StandPanelSettingsPage.qml" line="15"/>
-        <source>This panel configures and runs a calibration stand: the scan order, the inner and outer angles, the step and the dwell. The stand takes the whole configuration only as part of Start, so it is set and sent in the panel itself.</source>
-        <translation>Ten panel konfiguruje i uruchamia stanowisko kalibracyjne: kolejność skanu, kąty wewnętrzne i zewnętrzne, krok i czas postoju. Stanowisko przyjmuje całą konfigurację tylko razem ze Startem, dlatego ustawia się ją i wysyła w samym panelu.</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelSettingsPage.qml" line="24"/>
-        <source>Show automatically</source>
-        <translation>Pokazuj automatycznie</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelSettingsPage.qml" line="25"/>
-        <source>Brings the panel up when a device with a stand connects.</source>
-        <translation>Wyświetla panel po podłączeniu urządzenia ze stanowiskiem.</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelSettingsPage.qml" line="35"/>
-        <source>Background transparency</source>
-        <translation>Przezroczystość tła</translation>
-    </message>
-</context>
-<context>
-    <name>StandPanelPopup</name>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="300"/>
-        <source>Stand</source>
-        <translation>Stanowisko</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="300"/>
-        <source>Hide panel</source>
-        <translation>Ukryj panel</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="300"/>
-        <source>Panel settings</source>
-        <translation>Ustawienia panelu</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Start</source>
-        <comment>angle range</comment>
-        <translation>Początek</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>End</source>
-        <comment>angle range</comment>
-        <translation>Koniec</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Step</source>
-        <comment>angle range</comment>
-        <translation>Krok</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>device</source>
-        <translation>urządzenie</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>not sent</source>
-        <translation>nie wysłano</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Configuration</source>
-        <translation>Konfiguracja</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Hide configuration</source>
-        <translation>Ukryj konfigurację</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Pause — takes effect at the end of the motion already commanded</source>
-        <translation>Pauza — zadziała po zakończeniu już zleconego ruchu</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Resume</source>
-        <translation>Wznów</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Stop</source>
-        <translation>Zatrzymaj</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
+        <location filename="../src/mission/mission_run.cpp" line="84"/>
         <source>Home</source>
-        <translation>Pozycja wyjściowa</translation>
+        <translation>Dom</translation>
     </message>
     <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>No stand-capable device</source>
-        <translation>Brak urządzenia ze stanowiskiem</translation>
+        <location filename="../src/mission/mission_run.cpp" line="89"/>
+        <source>Start point</source>
+        <translation>Punkt startowy</translation>
     </message>
     <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Scan order</source>
-        <translation>Kolejność skanu</translation>
+        <location filename="../src/mission/mission_run.cpp" line="91"/>
+        <source>Waypoint %1</source>
+        <translation>Punkt %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Az → El</source>
-        <translation>Az → El</translation>
+        <location filename="../src/mission/mission_run.cpp" line="93"/>
+        <source>Survey %1 · line %2/%3</source>
+        <translation>Poligon %1 · linia %2/%3</translation>
     </message>
     <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>El → Az</source>
-        <translation>El → Az</translation>
+        <location filename="../src/mission/mission_run.cpp" line="94"/>
+        <source>Survey %1</source>
+        <translation>Poligon %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Inner</source>
-        <translation>Wewnętrzna</translation>
+        <location filename="../src/mission/mission_run.cpp" line="96"/>
+        <source>Corridor %1 · line %2/%3</source>
+        <translation>Korytarz %1 · linia %2/%3</translation>
     </message>
     <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Outer</source>
-        <translation>Zewnętrzna</translation>
+        <location filename="../src/mission/mission_run.cpp" line="97"/>
+        <source>Corridor %1</source>
+        <translation>Korytarz %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Motion</source>
-        <translation>Ruch</translation>
+        <location filename="../src/mission/mission_run.cpp" line="99"/>
+        <source>Return to launch</source>
+        <translation>Powrót (RTL)</translation>
     </message>
     <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Reverse inner</source>
-        <translation>Wewnętrzna tam i z powrotem</translation>
+        <location filename="../src/mission/mission_run.cpp" line="101"/>
+        <source>Hold position</source>
+        <translation>Pozostań na miejscu</translation>
     </message>
     <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>The inner axis sweeps forward then back for each outer step</source>
-        <translation>Oś wewnętrzna przechodzi w przód i w tył na każdym kroku osi zewnętrznej</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Continuous inner</source>
-        <translation>Wewnętrzna bez zatrzymań</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Firing</source>
-        <translation>Nadawanie</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Fires</source>
-        <translation>Impulsy</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Cycles</source>
-        <translation>Cykle</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Timing</source>
-        <translation>Czasy</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Settle, ms</source>
-        <translation>Stabilizacja, ms</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Post-fire, ms</source>
-        <translation>Po impulsie, ms</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>elevation</source>
-        <translation>elewacja</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>azimuth</source>
-        <translation>azymut</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>Start</source>
-        <translation>Start</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/StandPanelPopup.qml" line="1"/>
-        <source>The inner axis sweeps each leg without stopping, firing at every step boundary. At most one fire per point; post-fire wait does not apply.</source>
-        <translation>Oś wewnętrzna przechodzi każdy przebieg bez zatrzymań, nadając na granicy każdego kroku. Najwyżej jeden impuls na punkt; oczekiwanie po impulsie nie obowiązuje.</translation>
+        <location filename="../src/mission/mission_run.cpp" line="106"/>
+        <source>Item %1</source>
+        <translation>Element %1</translation>
     </message>
 </context>
 <context>
-    <name>AboutPage</name>
+    <name>tutorial_demo</name>
     <message>
-        <location filename="../qml/app/AboutPage.qml" line="1"/>
-        <source>Full notices, component provenance and where to obtain the sources are in THIRD_PARTY_NOTICES.md in the source tree.</source>
-        <translation>Pełne informacje, pochodzenie komponentów i adresy źródeł znajdują się w pliku THIRD_PARTY_NOTICES.md w drzewie źródeł.</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="6"/>
+        <source>Tutorial engine demo</source>
+        <translation>Demo silnika samouczków</translation>
     </message>
     <message>
-        <location filename="../qml/app/AboutPage.qml" line="1"/>
-        <source>Third-party components</source>
-        <translation>Komponenty zewnętrzne</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="7"/>
+        <source>Tutorial demo</source>
+        <translation>Demo samouczka</translation>
     </message>
     <message>
-        <location filename="../qml/app/AboutPage.qml" line="1"/>
-        <source>Application license</source>
-        <translation>Licencja aplikacji</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="8"/>
+        <source>This scenario shows every building block of the tutorial engine. Tap anywhere to continue.</source>
+        <translation>Ten scenariusz pokazuje wszystkie elementy silnika samouczków. Dotknij w dowolnym miejscu, aby kontynuować.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AboutPage.qml" line="1"/>
-        <source>KoggerApp is distributed under the GNU General Public License v3.</source>
-        <translation>KoggerApp jest rozpowszechniany na licencji GNU General Public License v3.</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="9"/>
+        <source>Settings and quick actions</source>
+        <translation>Ustawienia i szybkie akcje</translation>
     </message>
     <message>
-        <location filename="../qml/app/AboutPage.qml" line="1"/>
-        <source>License</source>
-        <translation>Licencja</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="10"/>
+        <source>The logo opens the settings, the arrow next to it unfolds the quick actions. One step can frame several elements.</source>
+        <translation>Logo otwiera ustawienia, strzałka obok rozwija szybkie akcje. Jeden krok może wyróżnić kilka elementów.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AboutPage.qml" line="1"/>
-        <source>The FreeType License (FTL)</source>
-        <translation>Licencja FreeType (FTL)</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="11"/>
+        <source>3D scene settings</source>
+        <translation>Ustawienia sceny 3D</translation>
     </message>
     <message>
-        <location filename="../qml/app/AboutPage.qml" line="1"/>
-        <source>Revision %1</source>
-        <translation>Rewizja %1</translation>
-    </message>
-</context>
-<context>
-    <name>LicensePage</name>
-    <message>
-        <location filename="../qml/app/LicensePage.qml" line="1"/>
-        <source>The license text could not be read from the application resources.</source>
-        <translation>Nie udało się odczytać tekstu licencji z zasobów aplikacji.</translation>
-    </message>
-</context>
-<context>
-    <name>AppIdentityCard</name>
-    <message>
-        <location filename="../qml/app/AppIdentityCard.qml" line="1"/>
-        <source>Developer mode enabled</source>
-        <translation>Włączono tryb dla programistów</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="12"/>
+        <source>Tap the gear. The tap reaches the button itself and the step continues once settings are open.</source>
+        <translation>Dotknij koła zębatego. Dotknięcie trafia do samego przycisku, a krok będzie kontynuowany po otwarciu ustawień.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppIdentityCard.qml" line="1"/>
-        <source>Tap once more to unlock developer features</source>
-        <translation>Naciśnij jeszcze raz, aby odblokować funkcje dla programistów</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="13"/>
+        <source>Tutorials</source>
+        <translation>Samouczki</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppIdentityCard.qml" line="1"/>
-        <source>Developer mode is already enabled</source>
-        <translation>Tryb dla programistów jest już włączony</translation>
-    </message>
-</context>
-<context>
-    <name>DeviceParamCatalog</name>
-    <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>Resolution, mm</source>
-        <translation>Rozdzielczość, mm</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="14"/>
+        <source>All tutorials live here. A closed tutorial can be continued from its last checkpoint.</source>
+        <translation>Tu znajdują się wszystkie samouczki. Zamknięty samouczek można kontynuować od ostatniego punktu kontrolnego.</translation>
     </message>
     <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>Sample count</source>
-        <translation>Liczba próbek</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="15"/>
+        <source>That&apos;s it</source>
+        <translation>To wszystko</translation>
     </message>
     <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>Offset</source>
-        <translation>Offset próbek</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="16"/>
+        <source>The scenario is marked as completed.</source>
+        <translation>Scenariusz został oznaczony jako ukończony.</translation>
     </message>
     <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>Max distance, mm</source>
-        <translation>Maks. odległość, mm</translation>
-    </message>
-    <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>Dead zone, mm</source>
-        <translation>Strefa martwa, mm</translation>
-    </message>
-    <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>Confidence threshold, %</source>
-        <translation>Próg pewności, %</translation>
-    </message>
-    <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>Pulse count</source>
-        <translation>Liczba impulsów</translation>
-    </message>
-    <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>Frequency, kHz</source>
-        <translation>Częstotliwość, kHz</translation>
-    </message>
-    <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>Booster</source>
-        <translation>Wzmacniacz</translation>
-    </message>
-    <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>Horizontal smoothing</source>
-        <translation>Wygładzanie poziome</translation>
-    </message>
-    <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>Sound speed, m/s</source>
-        <translation>Prędkość dźwięku, m/s</translation>
-    </message>
-    <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>Period, ms</source>
-        <translation>Okres, ms</translation>
-    </message>
-    <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>Echogram</source>
-        <translation>Echogram</translation>
-    </message>
-    <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>Off</source>
-        <translation>Wyłącz</translation>
-    </message>
-    <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>8-bit</source>
-        <translation>8-bitowy</translation>
-    </message>
-    <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>Rangefinder</source>
-        <translation>Głębokościomierz</translation>
-    </message>
-    <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>On</source>
-        <translation>Włącz</translation>
-    </message>
-    <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>NMEA</source>
-        <translation>NMEA</translation>
-    </message>
-    <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>AHRS</source>
-        <translation>AHRS</translation>
-    </message>
-    <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>Temperature</source>
-        <translation>Temperatura</translation>
-    </message>
-    <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>Timestamp</source>
-        <translation>Znacznik czasu</translation>
-    </message>
-    <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>Baudrate</source>
-        <translation>Prędkość transmisji</translation>
-    </message>
-    <message>
-        <location filename="../qml/kqml_types/DeviceParamCatalog.qml" line="1"/>
-        <source>Settings file</source>
-        <translation>Plik ustawień</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="17"/>
+        <source>Finish</source>
+        <translation>Gotowe</translation>
     </message>
 </context>
 <context>
-    <name>DeviceParamRow</name>
+    <name>tutorial_missions</name>
     <message>
-        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
-        <source>Pin to favourites</source>
-        <translation>Przypnij do ulubionych</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="18"/>
+        <source>Mission planner</source>
+        <translation>Planer misji</translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
-        <source>Unpin from favourites</source>
-        <translation>Odepnij z ulubionych</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="19"/>
+        <source>Here you plan the vehicle&apos;s work on the map: where it starts, which points it passes, which areas it covers and where it must not go. Let&apos;s walk through the screen.</source>
+        <translation>Tu planujesz pracę łodzi na mapie: skąd startuje, przez które punkty przepływa, jakie obszary obejmuje i gdzie nie może wpływać. Przejdźmy po ekranie.</translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
-        <source>Set baudrate</source>
-        <translation>Ustaw</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="20"/>
+        <source>Mission and file</source>
+        <translation>Misja i plik</translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
-        <source>Apply the selected baud rate</source>
-        <translation>Ustaw wybraną prędkość transmisji</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="21"/>
+        <source>The mission name. Next to it, the file it is saved in and a note when there are unsaved changes.</source>
+        <translation>Nazwa misji. Obok — plik, w którym jest zapisana, i informacja o niezapisanych zmianach.</translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
-        <source>Import</source>
-        <translation>Import</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="22"/>
+        <source>Vehicle status</source>
+        <translation>Stan łodzi</translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
-        <source>Export</source>
-        <translation>Eksport</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="23"/>
+        <source>Shows whether the connected vehicle carries this plan. When the vehicle has a different mission, tap the badge to open it.</source>
+        <translation>Pokazuje, czy podłączona łódź ma ten plan. Jeśli na łodzi jest inna misja, dotknij plakietki, aby ją otworzyć.</translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
-        <source>Load all device settings from an XML file</source>
-        <translation>Wczytaj wszystkie ustawienia urządzenia z pliku XML</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="24"/>
+        <source>Files</source>
+        <translation>Pliki</translation>
     </message>
     <message>
-        <location filename="../qml/app/DeviceParamRow.qml" line="1"/>
-        <source>Save all device settings to an XML file</source>
-        <translation>Zapisz wszystkie ustawienia urządzenia do pliku XML</translation>
-    </message>
-</context>
-<context>
-    <name>ControlsHelpPage</name>
-    <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Workspace</source>
-        <translation>Obszar roboczy</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="25"/>
+        <source>Start a new mission, open one from a file or save the current one. The save button is highlighted while there are unsaved changes.</source>
+        <translation>Nowa misja, otwarcie z pliku lub zapis bieżącej. Przycisk zapisu jest podświetlony, dopóki są niezapisane zmiany.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Maximise or restore a pane</source>
-        <translation>Powiększ lub przywróć okno</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="26"/>
+        <source>Vehicle</source>
+        <translation>Łódź</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Double-tap the pane — 2D, 3D, video, popups</source>
-        <translation>Dwukrotne dotknięcie okna — 2D, 3D, wideo, okna wyskakujące</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="27"/>
+        <source>Upload the mission to the vehicle or read the one it already carries. Both need a connected autopilot.</source>
+        <translation>Wgraj misję do łodzi lub odczytaj tę, którą już ma. Obie operacje wymagają podłączonego autopilota.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Double-click the pane — 2D, 3D, video, popups</source>
-        <translation>Dwukrotne kliknięcie okna — 2D, 3D, wideo, okna wyskakujące</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="28"/>
+        <source>More and close</source>
+        <translation>Więcej i zamknij</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Reset a splitter to the middle</source>
-        <translation>Przywróć separator na środek</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="29"/>
+        <source>The menu holds Save as and export for QGroundControl (.plan) and Mission Planner (.waypoints). The cross closes the editor and asks about unsaved changes first.</source>
+        <translation>W menu: „Zapisz jako” oraz eksport dla QGroundControl (.plan) i Mission Planner (.waypoints). Krzyżyk zamyka edytor, najpierw pytając o niezapisane zmiany.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Double-tap the splitter between panes</source>
-        <translation>Dwukrotne dotknięcie separatora między oknami</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="30"/>
+        <source>Tools</source>
+        <translation>Narzędzia</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Double-click the splitter between panes</source>
-        <translation>Dwukrotne kliknięcie separatora między oknami</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="31"/>
+        <source>Everything you put on the map starts here. Pick a tool, then tap the map. Tap the active tool again to put it away.</source>
+        <translation>Wszystko, co umieszczasz na mapie, zaczyna się tutaj. Wybierz narzędzie, a potem dotknij mapy. Ponowne dotknięcie aktywnego narzędzia je wyłącza.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>2D echogram</source>
-        <translation>Echogram 2D</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="32"/>
+        <source>Start point</source>
+        <translation>Punkt startowy</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Pick a sounding</source>
-        <translation>Wybierz pomiar</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="33"/>
+        <source>Where the mission begins. Until it is placed, this button and the Start point row on the right are highlighted.</source>
+        <translation>Miejsce rozpoczęcia misji. Dopóki punkt nie zostanie ustawiony, ten przycisk i wiersz „Punkt startowy” po prawej są podświetlone.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Drag one finger — shows the loupe and the sounding details</source>
-        <translation>Przeciągnij jednym palcem — pokazuje lupę i dane pomiaru</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="34"/>
+        <source>Waypoints</source>
+        <translation>Punkty trasy</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Drag with the left button — shows the loupe and the sounding details</source>
-        <translation>Przeciągnij lewym przyciskiem — pokazuje lupę i dane pomiaru</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="35"/>
+        <source>Single points the vehicle passes in order. While the tool is active, every tap on the map adds the next point.</source>
+        <translation>Pojedyncze punkty, przez które łódź przepływa po kolei. Gdy narzędzie jest aktywne, każde dotknięcie mapy dodaje kolejny punkt.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Place a contact</source>
-        <translation>Ustaw kontakt</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="36"/>
+        <source>Survey and corridor</source>
+        <translation>Poligon i korytarz</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Contact quick action, then tap the echogram or the 3D scene</source>
-        <translation>Przycisk „Kontakt” w szybkich akcjach, potem dotknięcie echogramu lub sceny 3D</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="37"/>
+        <source>A survey covers an area with parallel passes, a corridor follows a line. You choose how to draw the shape, from a ready template or point by point, and the check mark button finishes it.</source>
+        <translation>Poligon pokrywa obszar równoległymi przejściami, korytarz biegnie wzdłuż linii. Kształt możesz wziąć z gotowego szablonu lub narysować punkt po punkcie, przycisk z ptaszkiem go kończy.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Contact quick action, then left-click the echogram or the 3D scene</source>
-        <translation>Przycisk „Kontakt” w szybkich akcjach, potem kliknięcie lewym przyciskiem echogramu lub sceny 3D</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="38"/>
+        <source>Rally points and geofence</source>
+        <translation>Punkty zborne i geofence</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Scroll the echogram</source>
-        <translation>Przewiń echogram</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="39"/>
+        <source>Rally points are safe places to return to. The geofence sets zones the vehicle must stay inside or keep out of.</source>
+        <translation>Punkty zborne to bezpieczne miejsca powrotu. Geofence wyznacza strefy, w których łódź musi pozostać lub do których nie może wpływać.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Horizontal pinch</source>
-        <translation>Poziomy gest szczypania</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="40"/>
+        <source>Undo and view</source>
+        <translation>Cofanie i widok</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Wheel</source>
-        <translation>Kółko myszy</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="41"/>
+        <source>Undo and redo your edits, fit the whole mission on screen, zoom in and out.</source>
+        <translation>Cofanie i ponawianie zmian, cała misja na ekranie, przybliżanie i oddalanie.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Move the echogram up and down</source>
-        <translation>Przesuń echogram w górę i w dół</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="42"/>
+        <source>Map layer</source>
+        <translation>Warstwa mapy</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Vertical pinch</source>
-        <translation>Pionowy gest szczypania</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="43"/>
+        <source>Tap to switch back to the previous map. Press and hold to pick one from the full list.</source>
+        <translation>Dotknięcie przełącza na poprzednią mapę. Przytrzymaj, aby wybrać z pełnej listy.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Shift + wheel</source>
-        <translation>Shift + kółko myszy</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="44"/>
+        <source>Map</source>
+        <translation>Mapa</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Change the vertical scale</source>
-        <translation>Zmień skalę pionową</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="45"/>
+        <source>Points and shapes are placed here. Tap an item to select it, drag its handles to edit, the plus sign inserts a vertex.</source>
+        <translation>Tu umieszcza się punkty i kształty. Dotknij elementu, aby go zaznaczyć, przeciągaj uchwyty, aby edytować, plus dodaje wierzchołek.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Stretch the pinch vertically</source>
-        <translation>Rozciągnij gest szczypania w pionie</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="46"/>
+        <source>Prompt</source>
+        <translation>Podpowiedź</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Ctrl + wheel</source>
-        <translation>Ctrl + kółko myszy</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="47"/>
+        <source>This prompt always says what the map expects from you right now.</source>
+        <translation>Ta podpowiedź zawsze mówi, czego mapa oczekuje od ciebie w tej chwili.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>3D scene</source>
-        <translation>Scena 3D</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="48"/>
+        <source>Mission panel</source>
+        <translation>Panel misji</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Move the camera</source>
-        <translation>Przesuwaj kamerę</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="49"/>
+        <source>The whole mission as a list: plan settings, route, rally points, geofence and the summary.</source>
+        <translation>Cała misja w formie listy: ustawienia planu, trasa, punkty zborne, geofence i podsumowanie.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Drag one finger</source>
-        <translation>Przeciągnij jednym palcem</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="50"/>
+        <source>Plan</source>
+        <translation>Plan</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Drag with the left button</source>
-        <translation>Przeciągnij lewym przyciskiem</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="51"/>
+        <source>Cruise speed and what the vehicle does after the last point: return to the start point, return to launch, hold position or leave it to the autopilot.</source>
+        <translation>Prędkość przelotowa i co łódź robi po ostatnim punkcie: wraca do punktu startowego lub do miejsca uzbrojenia, pozostaje na miejscu albo działa według ustawienia autopilota.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Rotate the camera</source>
-        <translation>Obracaj kamerę</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="52"/>
+        <source>Start point status</source>
+        <translation>Stan punktu startowego</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Rotate the pinch</source>
-        <translation>Obrót gestu szczypania</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="53"/>
+        <source>Shows whether the start point is placed. Tapping the row arms the Start point tool if it is missing, otherwise it selects the point on the map.</source>
+        <translation>Pokazuje, czy punkt startowy jest ustawiony. Jeśli go brak, dotknięcie wiersza włącza narzędzie „Punkt startowy”, w przeciwnym razie zaznacza punkt na mapie.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Ctrl + drag sideways</source>
-        <translation>Ctrl + przeciąganie w poziomie</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="54"/>
+        <source>Route</source>
+        <translation>Trasa</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Tilt the camera</source>
-        <translation>Pochylaj kamerę</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="55"/>
+        <source>Route items in the order the vehicle runs them. Tap a card to select it and open its settings. Drag a card or use its arrows to change the order.</source>
+        <translation>Elementy trasy w kolejności, w jakiej łódź je wykonuje. Dotknij karty, aby ją zaznaczyć i otworzyć ustawienia. Przeciągnij kartę lub użyj jej strzałek, aby zmienić kolejność.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ControlsHelpPage.qml" line="1"/>
-        <source>Ctrl + drag up or down</source>
-        <translation>Ctrl + przeciąganie w pionie</translation>
-    </message>
-</context>
-<context>
-    <name>Link</name>
-    <message>
-        <source>local UDP port (src) %1 is already in use by another link or program</source>
-        <translation>lokalny port UDP (src) %1 jest już zajęty przez inne połączenie lub program</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="56"/>
+        <source>Summary</source>
+        <translation>Podsumowanie</translation>
     </message>
     <message>
-        <source>cannot bind local UDP port (src) %1: %2</source>
-        <translation>nie można zająć lokalnego portu UDP (src) %1: %2</translation>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="57"/>
+        <source>Route length, time at cruise speed, the number of waypoints and how many mission items the autopilot receives out of its limit. Problems with the plan are listed here too.</source>
+        <translation>Długość trasy, czas przy prędkości przelotowej, liczba punktów trasy i ile elementów misji otrzyma autopilot w ramach swojego limitu. Tutaj są też wymienione problemy planu.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="58"/>
+        <source>That&apos;s all</source>
+        <translation>To wszystko</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="59"/>
+        <source>Open this tour again any time with this button.</source>
+        <translation>Tym przyciskiem możesz w każdej chwili ponownie otworzyć ten przewodnik.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="60"/>
+        <source>Finish</source>
+        <translation>Gotowe</translation>
     </message>
 </context>
 </TS>

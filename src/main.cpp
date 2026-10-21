@@ -46,6 +46,7 @@
 #include "video_stream_pool.h"
 #include "link_discovery.h"
 #include "control_server.h"
+#include "tutorial.h"
 
 
 // NOLINTBEGIN(bugprone-throwing-static-initialization): application-lifetime singletons; a throw here is a fatal startup failure with nothing to catch
@@ -475,6 +476,8 @@ int main(int argc, char *argv[])
     SystemBattery systemBattery;
     core.initAfterApp();
     LinkDiscovery linkDiscovery(core.getLinkManagerWrapperPtr());
+    Tutorial tutorial;
+    tutorial.loadFromDirectory(QStringLiteral(":/tutorial"));
 
     //qDebug() << "Lib paths:" << QCoreApplication::libraryPaths();
     //qDebug() << "SQL drivers:" << QSqlDatabase::drivers();
@@ -504,6 +507,8 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("linkManagerWrapper", core.getLinkManagerWrapperPtr());
     engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
     engine.rootContext()->setContextProperty("deviceTopology", core.getDeviceTopologyModelPtr());
+    engine.rootContext()->setContextProperty("missionPlan", core.getMissionPlanControllerPtr());
+    engine.rootContext()->setContextProperty("missionRun", core.getMissionRunTrackerPtr());
     videoStreams.setSourceModel(core.getLinkManagerWrapperPtr()->getModelPtr());
     QObject::connect(&videoStreams, &VideoStreamPool::streamingChanged,
                      core.getLinkManagerWrapperPtr(), &LinkManagerWrapper::setVideoStreaming);
@@ -517,6 +522,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("systemBattery", &systemBattery);
     engine.rootContext()->setContextProperty("langController", &langController);
     engine.rootContext()->setContextProperty("appUtils", &appUtils);
+    engine.rootContext()->setContextProperty("tutorial", &tutorial);
 
     // Machine-readable UI verification. Costs nothing unless KOGGER_UI_PROBE names an
     // output directory; exposed to QML so an interaction test can dump at a chosen
@@ -547,6 +553,8 @@ int main(int argc, char *argv[])
         emit inputDeviceTracker.currentModeChanged();
         emit langController.retranslated();
     });
+    QObject::connect(&langController, &LanguageController::retranslated, &tutorial, &Tutorial::retranslate);
+    QObject::connect(&uiStateSerializer, &UIStateSerializer::settingsImported, &tutorial, &Tutorial::reloadProgress);
 
     QObject::connect(&theme, &Themes::interfaceChanged, &core, []() {
         core.setConsoleOutputEnabled(theme.consoleVisible());
@@ -601,6 +609,7 @@ int main(int argc, char *argv[])
         mainWindow = qobject_cast<QQuickWindow*>(rootObject);
         if (mainWindow) {
             uiProbe.setWindow(mainWindow);
+            tutorial.setWindow(mainWindow);
         }
         if (mainWindow && UiProbe::isEnabled()) {
             uiProbe.armFromEnvironment();
@@ -615,6 +624,7 @@ int main(int argc, char *argv[])
                 controlServer.registerObject(QStringLiteral("linkManagerWrapper"),   core.getLinkManagerWrapperPtr());
                 controlServer.registerObject(QStringLiteral("deviceManagerWrapper"), core.getDeviceManagerWrapperPtr());
                 controlServer.registerObject(QStringLiteral("deviceTopology"),       core.getDeviceTopologyModelPtr());
+                controlServer.registerObject(QStringLiteral("missionPlan"),            core.getMissionPlanControllerPtr());
                 controlServer.registerObject(QStringLiteral("videoStreams"),         &videoStreams);
                 controlServer.registerObject(QStringLiteral("linkDiscovery"),        &linkDiscovery);
                 controlServer.registerObject(QStringLiteral("logViewer"),            core.getConsolePtr());
@@ -626,6 +636,7 @@ int main(int argc, char *argv[])
                 controlServer.registerObject(QStringLiteral("langController"),       &langController);
                 controlServer.registerObject(QStringLiteral("appUtils"),             &appUtils);
                 controlServer.registerObject(QStringLiteral("uiProbe"),              &uiProbe);
+                controlServer.registerObject(QStringLiteral("tutorial"),             &tutorial);
                 controlServer.registerObject(QStringLiteral("root"),                 rootObject);
                 if (auto* store = rootObject->findChild<QObject*>(QStringLiteral("workspaceStore"))) {
                     controlServer.registerObject(QStringLiteral("workspaceStore"), store);

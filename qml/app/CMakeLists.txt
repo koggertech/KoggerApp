@@ -7,6 +7,7 @@ qt_add_qml_module(kogger_app
         AppIdentityCard.qml
         AppSettingsPage.qml
         BasePanePopup.qml
+        AutopilotPopup.qml
         BottomTrackEditPopup.qml
         AimPanelSettingsTab.qml
         ConnectionsSettingsPage.qml
@@ -38,6 +39,12 @@ qt_add_qml_module(kogger_app
         LayoutSnapshotPreview.qml
         LicensePage.qml
         MainWindow.qml
+        MissionAngleDial.qml
+        MissionCoordFields.qml
+        MissionEditorOverlay.qml
+        MissionItemCard.qml
+        MissionRunPointCard.qml
+        MissionSliderRow.qml
         ModeSettingsPanel.qml
         MosaicPipelineStatus.qml
         NavButton.qml
@@ -69,6 +76,8 @@ qt_add_qml_module(kogger_app
         SettingsSidebarBase.qml
         SplashOverlay.qml
         TgcSettingsTab.qml
+        TutorialOverlay.qml
+        TutorialsSettingsPage.qml
         UiSavingSettingsTab.qml
         StandBadgeRow.qml
         StandPanelPopup.qml
@@ -104,5 +113,6 @@ qt_add_qml_module(kogger_app
         LayoutTree.js
         RecorderStatus.js
         StandLogic.js
+        TutorialLayout.js
         UsblNodeLogic.js
         UsblPlanLogic.js)

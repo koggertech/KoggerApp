@@ -39,12 +39,13 @@ Item  {
     property real buttonSize: Math.round(40 * (theme ? theme.resCoeff : 1.0))
 
     readonly property bool anyLayerMenuOpen: boatTrackCtl.menuOpen || bottomTrackCtl.menuOpen
-                                             || isobathsCtl.menuOpen || mosaicCtl.menuOpen
+                                             || isobathsCtl.menuOpen || mosaicCtl.menuOpen || missionCtl.menuOpen
     function closeLayerMenus() {
         boatTrackCtl.menuOpen = false
         bottomTrackCtl.menuOpen = false
         isobathsCtl.menuOpen = false
         mosaicCtl.menuOpen = false
+        missionCtl.menuOpen = false
     }
 
     onAnyLayerMenuOpenChanged: if (anyLayerMenuOpen && typeof core !== "undefined" && core) core.setActiveTransientUi(toolbarRoot)
@@ -71,7 +72,7 @@ Item  {
         id: toolbarFade
         hovered: toolbarHover.hovered
                  || boatTrackCtl.menuHovered || bottomTrackCtl.menuHovered
-                 || isobathsCtl.menuHovered || mosaicCtl.menuHovered
+                 || isobathsCtl.menuHovered || mosaicCtl.menuHovered || missionCtl.menuHovered
     }
 
     HoverHandler {
@@ -155,7 +156,7 @@ Item  {
             active: toolbarRoot.store ? toolbarRoot.store.boatTrackVisible : false
             onToggleRequested: { toolbarRoot.cancelRuler(); if (toolbarRoot.store) toolbarRoot.store.boatTrackVisible = !toolbarRoot.store.boatTrackVisible }
             onSettingsRequested: if (toolbarRoot.store) toolbarRoot.store.toggleAppSettingsAtGroup("app.boattrack")
-            onMenuOpenChanged: if (menuOpen) { bottomTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false; mosaicCtl.menuOpen = false }
+            onMenuOpenChanged: if (menuOpen) { bottomTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false; mosaicCtl.menuOpen = false; missionCtl.menuOpen = false }
         }
 
         Scene3DLayerControl {
@@ -169,7 +170,7 @@ Item  {
             pulse: core.dataProcessorState === 1
             onToggleRequested: { toolbarRoot.cancelRuler(); if (toolbarRoot.store) toolbarRoot.store.bottomTrackVisible = !toolbarRoot.store.bottomTrackVisible }
             onSettingsRequested: if (toolbarRoot.store) toolbarRoot.store.toggleAppSettingsAtGroup("app.bottomtrack")
-            onMenuOpenChanged: if (menuOpen) { boatTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false; mosaicCtl.menuOpen = false }
+            onMenuOpenChanged: if (menuOpen) { boatTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false; mosaicCtl.menuOpen = false; missionCtl.menuOpen = false }
         }
 
         Scene3DLayerControl {
@@ -190,7 +191,7 @@ Item  {
             onThemePicked: function(index) { if (toolbarRoot.store) toolbarRoot.store.isobathsThemeIndex = index }
             onToggleRequested: { toolbarRoot.cancelRuler(); if (toolbarRoot.store) toolbarRoot.store.isobathsVisible = !toolbarRoot.store.isobathsVisible }
             onSettingsRequested: if (toolbarRoot.store) toolbarRoot.store.toggleAppSettingsAtGroup("app.isobaths")
-            onMenuOpenChanged: if (menuOpen) { boatTrackCtl.menuOpen = false; bottomTrackCtl.menuOpen = false; mosaicCtl.menuOpen = false }
+            onMenuOpenChanged: if (menuOpen) { boatTrackCtl.menuOpen = false; bottomTrackCtl.menuOpen = false; mosaicCtl.menuOpen = false; missionCtl.menuOpen = false }
         }
 
         Scene3DLayerControl {
@@ -211,7 +212,20 @@ Item  {
             onThemePicked: function(index) { if (toolbarRoot.store) toolbarRoot.store.mosaicThemeIndex = index }
             onToggleRequested: { toolbarRoot.cancelRuler(); if (toolbarRoot.store) toolbarRoot.store.mosaicVisible = !toolbarRoot.store.mosaicVisible }
             onSettingsRequested: if (toolbarRoot.store) toolbarRoot.store.toggleAppSettingsAtGroup("app.mosaic")
-            onMenuOpenChanged: if (menuOpen) { boatTrackCtl.menuOpen = false; bottomTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false }
+            onMenuOpenChanged: if (menuOpen) { boatTrackCtl.menuOpen = false; bottomTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false; missionCtl.menuOpen = false }
+        }
+
+        Scene3DLayerControl {
+            id: missionCtl
+            buttonSize: toolbarRoot.buttonSize
+            Layout.preferredWidth: toolbarRoot.buttonSize
+            Layout.preferredHeight: toolbarRoot.buttonSize
+            iconSource: "qrc:/icons/ui/map_route.svg"
+            toolTipText: qsTr("Vehicle mission")
+            active: toolbarRoot.store ? toolbarRoot.store.missionRunVisible : false
+            onToggleRequested: { toolbarRoot.cancelRuler(); if (toolbarRoot.store) toolbarRoot.store.missionRunVisible = !toolbarRoot.store.missionRunVisible }
+            onSettingsRequested: if (toolbarRoot.store) toolbarRoot.store.toggleAppSettingsAtGroup("app.missionrun")
+            onMenuOpenChanged: if (menuOpen) { boatTrackCtl.menuOpen = false; bottomTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false; mosaicCtl.menuOpen = false }
         }
     }
 }

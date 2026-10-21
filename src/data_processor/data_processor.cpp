@@ -365,6 +365,48 @@ void DataProcessor::tryFinalizeResetProcessing()
     resetInProgress_.store(false);
 }
 
+void DataProcessor::setRealtimePaused(bool paused)
+{
+    if (realtimePaused_ == paused) {
+        return;
+    }
+    realtimePaused_ = paused;
+    applyUpdateBottomTrackSourceState(wantedBottomTrackScene3d_ && !paused, false);
+    applyUpdateBottomTrackSourceState(wantedBottomTrackSettings_ && !paused, true);
+    applyUpdateSurface(wantedSurface_ && !paused);
+    applyUpdateIsobaths(wantedIsobaths_ && !paused);
+    applyUpdateMosaic(wantedMosaic_ && !paused);
+}
+
+void DataProcessor::setUpdateBottomTrackSourceState(bool state, bool fromSettings)
+{
+    if (fromSettings) {
+        wantedBottomTrackSettings_ = state;
+    }
+    else {
+        wantedBottomTrackScene3d_ = state;
+    }
+    applyUpdateBottomTrackSourceState(state && !realtimePaused_, fromSettings);
+}
+
+void DataProcessor::setUpdateSurface(bool state)
+{
+    wantedSurface_ = state;
+    applyUpdateSurface(state && !realtimePaused_);
+}
+
+void DataProcessor::setUpdateIsobaths(bool state)
+{
+    wantedIsobaths_ = state;
+    applyUpdateIsobaths(state && !realtimePaused_);
+}
+
+void DataProcessor::setUpdateMosaic(bool state)
+{
+    wantedMosaic_ = state;
+    applyUpdateMosaic(state && !realtimePaused_);
+}
+
 void DataProcessor::setUpdateBottomTrack(bool state)
 {
     setUpdateBottomTrackSourceState(state, false);
@@ -375,7 +417,7 @@ void DataProcessor::setUpdateBottomTrackFromSettings(bool state)
     setUpdateBottomTrackSourceState(state, true);
 }
 
-void DataProcessor::setUpdateBottomTrackSourceState(bool state, bool fromSettings)
+void DataProcessor::applyUpdateBottomTrackSourceState(bool state, bool fromSettings)
 {
     if (fromSettings) {
         updateBottomTrackFromSettings_ = state;
@@ -396,7 +438,7 @@ void DataProcessor::setUpdateBottomTrackSourceState(bool state, bool fromSetting
     }
 }
 
-void DataProcessor::setUpdateSurface(bool state)
+void DataProcessor::applyUpdateSurface(bool state)
 {
     const bool wasSurface = updateSurface_;
     updateSurface_ = state;
@@ -458,7 +500,7 @@ void DataProcessor::setUpdateSurface(bool state)
     }
 }
 
-void DataProcessor::setUpdateIsobaths(bool state)
+void DataProcessor::applyUpdateIsobaths(bool state)
 {
     updateIsobaths_ = state;
     updateDatasetSpatialIndexingState();
@@ -472,7 +514,7 @@ void DataProcessor::setUpdateIsobaths(bool state)
     }
 }
 
-void DataProcessor::setUpdateMosaic(bool state)
+void DataProcessor::applyUpdateMosaic(bool state)
 {
     const bool wasMosaic = updateMosaic_;
     updateMosaic_ = state;

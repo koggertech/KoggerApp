@@ -49,7 +49,7 @@ bool LinkDiscovery::running() const
 QVariantList LinkDiscovery::found() const
 {
     QVariantList out;
-    for (const Host& host : hosts_) {
+    for (const Host& host : std::as_const(hosts_)) {
         QVariantList devices;
         for (const DeviceInfo& dev : host.devices) {
             QVariantMap d;
@@ -117,7 +117,7 @@ void LinkDiscovery::start()
     hosts_.clear();
     emit foundChanged();
 
-    for (int port : ports_) {
+    for (int port : std::as_const(ports_)) {
         auto* probe = new Probe;
         probe->port = static_cast<quint16>(port);
         probe->socket = std::make_unique<QUdpSocket>(this);
@@ -159,7 +159,7 @@ int LinkDiscovery::adoptAll(bool open)
         return 0;
 
     int count = 0;
-    for (const Host& host : hosts_) {
+    for (const Host& host : std::as_const(hosts_)) {
         linkManager_->adoptDiscoveredUdp(host.address.toString(), host.probePort, host.devicePort, hostLabel(host), open);
         ++count;
     }
@@ -176,7 +176,7 @@ void LinkDiscovery::sendProbes()
 
     const QByteArray request = buildRequest();
     const QList<QHostAddress> targets = broadcastTargets();
-    for (Probe* probe : probes_) {
+    for (Probe* probe : std::as_const(probes_)) {
         for (const QHostAddress& target : targets)
             probe->socket->writeDatagram(request, target, probe->port);
     }
@@ -271,7 +271,7 @@ void LinkDiscovery::readProbe(Probe* probe)
 
 void LinkDiscovery::closeProbes()
 {
-    for (Probe* probe : probes_) {
+    for (Probe* probe : std::as_const(probes_)) {
         probe->socket->close();
         delete probe;
     }
@@ -285,7 +285,7 @@ void LinkDiscovery::finish()
     closeProbes();
 
     int deviceCount = 0;
-    for (const Host& host : hosts_)
+    for (const Host& host : std::as_const(hosts_))
         deviceCount += host.devices.size();
 
     running_ = false;

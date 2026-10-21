@@ -47,6 +47,8 @@ Core::Core() :
     deviceManagerWrapperPtr_(std::make_unique<DeviceManagerWrapper>(this)),
     linkManagerWrapperPtr_(std::make_unique<LinkManagerWrapper>(this)),
     deviceTopologyModelPtr_(std::make_unique<DeviceTopologyModel>(deviceManagerWrapperPtr_.get(), linkManagerWrapperPtr_.get(), this)),
+    missionPlanControllerPtr_(std::make_unique<mission::MissionPlanController>(this)),
+    missionRunTrackerPtr_(std::make_unique<mission::MissionRunTracker>(missionPlanControllerPtr_.get(), this)),
     internetManager_(nullptr),
     internetThread_(nullptr),
     dataProcessor_(nullptr),
@@ -75,8 +77,10 @@ Core::Core() :
     {
         QSettings settings("KOGGER", "KoggerApp");
         bringWindowToFrontEnabled_ = settings.value("main/bringWindowToFrontEnabled", true).toBool();
+        previousMapTileProviderId_ = settings.value("scene3d/map/PreviousTileProviderId", -1).toInt();
     }
     logger_.setDatasetPtr(datasetPtr_);
+    missionPlanControllerPtr_->setFallbackDirectory(missionDirectoryFor(logger_.logDirectory()));
     createDeviceManagerConnections();
     createLinkManagerConnections();
     createControllers();
@@ -270,6 +274,44 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     qmlAppEnginePtr_->rootContext()->setContextProperty("hotkeysDisplayList", QVariantList());
     qmlAppEnginePtr_->rootContext()->setContextProperty("hotkeysController", nullptr);
 #endif
+    connect(this, &Core::languageChanged, missionPlanControllerPtr_.get(), &mission::MissionPlanController::retranslate);
+    connect(this, &Core::languageChanged, missionRunTrackerPtr_.get(), &mission::MissionRunTracker::retranslate);
+    connect(missionPlanControllerPtr_.get(), &mission::MissionPlanController::uploadRequested,
+            missionRunTrackerPtr_.get(), &mission::MissionRunTracker::onUploadRequested);
+    connect(missionPlanControllerPtr_.get(), &mission::MissionPlanController::uploadRequested,
+            deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::uploadMission);
+    connect(deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::missionDownloaded,
+            missionPlanControllerPtr_.get(), &mission::MissionPlanController::receiveVehicleMission);
+    connect(deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::missionUploadFinished,
+            missionRunTrackerPtr_.get(), &mission::MissionRunTracker::onUploadFinished);
+    connect(deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::vehicleMissionRead,
+            missionRunTrackerPtr_.get(), &mission::MissionRunTracker::onVehicleMissionRead);
+    connect(missionRunTrackerPtr_.get(), &mission::MissionRunTracker::readRequested,
+            deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::readMissionSilently);
+    connect(deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::vruChanged, this, &Core::pushMissionRunTelemetry);
+    connect(deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::missionTransferChanged, this, &Core::pushMissionRunTelemetry);
+}
+
+void Core::pushMissionRunTelemetry()
+{
+    const DeviceManagerWrapper* dmw = deviceManagerWrapperPtr_.get();
+    const AutopilotState& state = dmw->autopilotState();
+    mission::RunTelemetry t;
+    t.online = state.online;
+    t.transferActive = dmw->missionTransferActive();
+    t.transferSilent = dmw->missionTransferSilent();
+    t.flightMode = state.flightMode;
+    t.currentSeq = state.mission.seq;
+    t.total = state.mission.total;
+    t.state = state.mission.state;
+    t.missionId = state.mission.missionId;
+    t.missionReports = state.mission.reports;
+    t.latitude = state.latitude;
+    t.longitude = state.longitude;
+    t.groundSpeed = state.velocityH;
+    t.homeLat = state.homeLat;
+    t.homeLon = state.homeLon;
+    missionRunTrackerPtr_->setTelemetry(t);
 }
 
 Console* Core::getConsolePtr()
@@ -300,6 +342,16 @@ LinkManagerWrapper* Core::getLinkManagerWrapperPtr() const
 DeviceTopologyModel* Core::getDeviceTopologyModelPtr() const
 {
     return deviceTopologyModelPtr_.get();
+}
+
+mission::MissionPlanController* Core::getMissionPlanControllerPtr() const
+{
+    return missionPlanControllerPtr_.get();
+}
+
+mission::MissionRunTracker* Core::getMissionRunTrackerPtr() const
+{
+    return missionRunTrackerPtr_.get();
 }
 
 void Core::setConsoleOutputEnabled(bool enabled)
@@ -1236,6 +1288,16 @@ void Core::setLogDirectory(const QString& dir)
         clean = QUrl(clean).toLocalFile();   // accept a URL too; Logger needs a local path
     }
     logger_.setLogDirectory(clean);
+    missionPlanControllerPtr_->setFallbackDirectory(missionDirectoryFor(logger_.logDirectory()));
+}
+
+QString Core::missionDirectoryFor(const QString& logDir) const
+{
+    QDir dir(logDir);
+    if (dir.dirName().compare(QStringLiteral("logs"), Qt::CaseInsensitive) == 0) {
+        dir.cdUp();
+    }
+    return dir.filePath(QStringLiteral("missions"));
 }
 
 QString Core::logDirectory() const
@@ -2064,6 +2126,8 @@ void Core::UILoad(QObject* object, const QUrl& url)
     }
     scene3dViewPtr_->setDataset(datasetPtr_);
     scene3dViewPtr_->setDataProcessorPtr(dataProcessor_);
+    scene3dViewPtr_->setMissionPlan(missionPlanControllerPtr_.get());
+    scene3dViewPtr_->setMissionRun(missionRunTrackerPtr_.get());
 
     if (syncLoupePlot3dPtr_) {
         syncLoupePlot3dPtr_->setPlot(datasetPtr_);
@@ -2403,6 +2467,7 @@ void Core::setMapTileProvider(int providerId)
         return;
     }
 
+    rememberPreviousMapTileProvider(tileManager_->currentProviderId());
     tileManager_->setProvider(providerId);
 
     if (scene3dViewPtr_) {
@@ -2419,6 +2484,7 @@ void Core::toggleMapTileProvider()
         return;
     }
 
+    rememberPreviousMapTileProvider(tileManager_->currentProviderId());
     tileManager_->toggleProvider();
 
     if (scene3dViewPtr_) {
@@ -2427,6 +2493,26 @@ void Core::toggleMapTileProvider()
 
     QSettings settings("KOGGER", "KoggerApp");
     settings.setValue("scene3d/map/TileProviderId", tileManager_->currentProviderId());
+}
+
+void Core::switchToPreviousMapTileProvider()
+{
+    const int current = getMapTileProviderId();
+    int target = previousMapTileProviderId_;
+    if (target < 0 || target == current) {
+        target = current == map::kOsmProviderId ? map::kGoogleProviderId : map::kOsmProviderId;
+    }
+    setMapTileProvider(target);
+}
+
+void Core::rememberPreviousMapTileProvider(int providerId)
+{
+    if (previousMapTileProviderId_ == providerId) {
+        return;
+    }
+    previousMapTileProviderId_ = providerId;
+    QSettings settings("KOGGER", "KoggerApp");
+    settings.setValue("scene3d/map/PreviousTileProviderId", providerId);
 }
 
 int Core::getMapTileProviderId() const
@@ -2584,7 +2670,7 @@ void Core::setMapTileLoadingEnabled(bool enabled)
     mapTileLoadingEnabled_ = enabled;
 
     if (tileManager_) {
-        tileManager_->setMapEnabled(mapTileLoadingEnabled_);
+        tileManager_->setMapEnabled(mapTileLoadingEnabled_ || missionEditorActive_);
     }
 
     emit mapTileLoadingEnabledChanged();
@@ -2715,6 +2801,38 @@ void Core::setContactPlacementArmed(bool armed)
     }
 
     emit contactPlacementArmedChanged();
+}
+
+void Core::setMissionEditorActive(bool active)
+{
+    if (missionEditorActive_ == active) {
+        return;
+    }
+    missionEditorActive_ = active;
+
+    if (active) {
+        setContactPlacementArmed(false);
+        setBottomTrackEditTool(0);
+        if (scene3dViewPtr_) {
+            scene3dViewPtr_->setRulerEnabled(false);
+            scene3dViewPtr_->setGeoJsonEnabled(false);
+        }
+    }
+    if (mapViewControlMenuController_) {
+        mapViewControlMenuController_->setForcedVisible(active);
+    }
+    if (tileManager_) {
+        tileManager_->setMapEnabled(mapTileLoadingEnabled_ || active);
+    }
+
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->setMissionEditorActive(active);
+    }
+    if (dataProcessor_) {
+        QMetaObject::invokeMethod(dataProcessor_, "setRealtimePaused", Qt::QueuedConnection, Q_ARG(bool, active));
+    }
+
+    emit missionEditorActiveChanged();
 }
 
 void Core::setBottomTrackZeroing(bool state)

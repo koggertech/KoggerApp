@@ -11,6 +11,7 @@ target_sources(KoggerApp PRIVATE
     edge.h
     equals.h
     geojson_layer.h         geojson_layer.cpp
+    mission_layer.h         mission_layer.cpp
     grid_generator.h
     image_view.h            image_view.cpp
     map_view.h              map_view.cpp

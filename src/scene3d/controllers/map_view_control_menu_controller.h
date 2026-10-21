@@ -15,6 +15,8 @@ public:
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
 
     Q_INVOKABLE void onVisibilityChanged(bool state);
+    bool visibility() const { return visibility_; }
+    void setForcedVisible(bool forced);
     Q_INVOKABLE void onUpdateClicked();
 
 Q_SIGNALS:
@@ -28,6 +30,9 @@ private:
     /*data*/
     MapView* getMapViewPtr() const;
     GraphicsScene3dView* graphicsSceneViewPtr_;
+    void applyVisibility();
+
     std::function<void()> pendingLambda_;
     bool visibility_;
+    bool forcedVisible_ = false;
 };

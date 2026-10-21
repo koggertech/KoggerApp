@@ -23,7 +23,9 @@ QtObject {
         { key: "apVoltage", label: qsTr("Battery"),        unit: "V",            group: "autopilot" },
         { key: "apCurrent", label: qsTr("Current"),        unit: "A",            group: "autopilot" },
         { key: "apMode",    label: qsTr("Flight mode"),    unit: "",             group: "autopilot" },
-        { key: "apArm",     label: qsTr("Arm state"),      unit: "",             group: "autopilot" }
+        { key: "apArm",     label: qsTr("Arm state"),      unit: "",             group: "autopilot" },
+        { key: "apLink",    label: qsTr("Autopilot link"), unit: "%",            group: "autopilot" },
+        { key: "echoDelivery", label: qsTr("Echogram delivery"), unit: "%",      group: "general" }
     ]
 
     // USBL fields — deliberately NOT in `fields`, so the palette is unchanged for the
@@ -147,6 +149,8 @@ QtObject {
         case "apCurrent": return _autopilotValid(dmw) && !isNaN(dmw.vruCurrent)
         case "apMode":    return _autopilotValid(dmw) && dmw.pilotModeState >= 0
         case "apArm":     return _autopilotValid(dmw) && dmw.pilotArmState >= 0
+        case "apLink":    return !!(dmw && dmw.autopilotOnline && dmw.autopilotLinkQuality >= 0)
+        case "echoDelivery": return !!(dmw && dmw.echogramDeliveryKnown)
         }
         return false
     }
@@ -180,9 +184,13 @@ QtObject {
         case "apCurrent":
             return (dmw && !isNaN(dmw.vruCurrent)) ? (dmw.vruCurrent.toFixed(1) + " A") : "—"
         case "apMode":
-            return (dmw && dmw.pilotModeState >= 0) ? String(dmw.pilotModeState) : "—"
+            return (dmw && dmw.pilotModeState >= 0) ? dmw.autopilotModeName : "—"
         case "apArm":
             return (dmw && dmw.pilotArmState >= 0) ? (dmw.pilotArmState > 0 ? "ARMED" : "DISARMED") : "—"
+        case "apLink":
+            return (dmw && dmw.autopilotOnline && dmw.autopilotLinkQuality >= 0) ? (dmw.autopilotLinkQuality + " %") : "—"
+        case "echoDelivery":
+            return (dmw && dmw.echogramDeliveryKnown) ? (dmw.averageChartLosses + " %") : "—"
         }
         return "—"
     }
@@ -231,8 +239,10 @@ QtObject {
         case "sysBattery": return "87 %"
         case "apVoltage": return "12.4 V"
         case "apCurrent": return "3.2 A"
-        case "apMode":    return "3"
+        case "apMode":    return "Auto"
         case "apArm":     return "ARMED"
+        case "apLink":    return "98 %"
+        case "echoDelivery": return "96 %"
         case "usblRange":       return "18.3 " + qsTr("m")
         case "usblAzimuth":     return "127.4°"
         case "usblElevation":   return "-22.8°"

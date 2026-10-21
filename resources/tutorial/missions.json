@@ -1,0 +1,178 @@
+{
+  "id": "missions",
+  "version": 1,
+  "title": "Mission planner",
+  "defaults": {
+    "enter": [ { "on": "core", "call": "setMissionEditorActive", "args": [true] } ],
+    "advance": "anywhere",
+    "onMissing": "skip",
+    "timeoutMs": 1500,
+    "spotlight": { "padding": 6, "radius": 10 },
+    "buttons": { "back": true }
+  },
+  "steps": [
+    {
+      "id": "intro",
+      "delayMs": 450,
+      "spotlight": { "enabled": false },
+      "arrow": { "enabled": false },
+      "title": "Mission planner",
+      "text": "Here you plan the vehicle's work on the map: where it starts, which points it passes, which areas it covers and where it must not go. Let's walk through the screen."
+    },
+    {
+      "id": "name",
+      "anchor": "missions.name",
+      "spotlight": { "anchors": ["missions.fileStatus"] },
+      "title": "Mission and file",
+      "text": "The mission name. Next to it, the file it is saved in and a note when there are unsaved changes."
+    },
+    {
+      "id": "vehicleBadge",
+      "anchor": "missions.vehicleBadge",
+      "timeoutMs": 400,
+      "title": "Vehicle status",
+      "text": "Shows whether the connected vehicle carries this plan. When the vehicle has a different mission, tap the badge to open it."
+    },
+    {
+      "id": "files",
+      "anchor": "missions.new",
+      "spotlight": { "anchors": ["missions.open", "missions.save"] },
+      "title": "Files",
+      "text": "Start a new mission, open one from a file or save the current one. The save button is highlighted while there are unsaved changes."
+    },
+    {
+      "id": "vehicle",
+      "anchor": "missions.upload",
+      "spotlight": { "anchors": ["missions.download"] },
+      "title": "Vehicle",
+      "text": "Upload the mission to the vehicle or read the one it already carries. Both need a connected autopilot."
+    },
+    {
+      "id": "moreClose",
+      "anchor": "missions.more",
+      "spotlight": { "anchors": ["missions.close"] },
+      "title": "More and close",
+      "text": "The menu holds Save as and export for QGroundControl (.plan) and Mission Planner (.waypoints). The cross closes the editor and asks about unsaved changes first."
+    },
+    {
+      "id": "tools",
+      "checkpoint": true,
+      "anchor": "missions.tools",
+      "spotlight": { "padding": 0 },
+      "bubble": { "placement": "right" },
+      "title": "Tools",
+      "text": "Everything you put on the map starts here. Pick a tool, then tap the map. Tap the active tool again to put it away."
+    },
+    {
+      "id": "toolStart",
+      "anchor": "missions.tool.1",
+      "spotlight": { "shape": "circle" },
+      "bubble": { "placement": "right" },
+      "title": "Start point",
+      "text": "Where the mission begins. Until it is placed, this button and the Start point row on the right are highlighted."
+    },
+    {
+      "id": "toolWaypoint",
+      "anchor": "missions.tool.2",
+      "spotlight": { "shape": "circle" },
+      "bubble": { "placement": "right" },
+      "title": "Waypoints",
+      "text": "Single points the vehicle passes in order. While the tool is active, every tap on the map adds the next point."
+    },
+    {
+      "id": "toolShapes",
+      "anchor": "missions.tool.3",
+      "spotlight": { "anchors": ["missions.tool.4"] },
+      "bubble": { "placement": "right" },
+      "title": "Survey and corridor",
+      "text": "A survey covers an area with parallel passes, a corridor follows a line. You choose how to draw the shape, from a ready template or point by point, and the check mark button finishes it."
+    },
+    {
+      "id": "toolSafety",
+      "anchor": "missions.tool.5",
+      "spotlight": { "anchors": ["missions.tool.8"] },
+      "bubble": { "placement": "right" },
+      "title": "Rally points and geofence",
+      "text": "Rally points are safe places to return to. The geofence sets zones the vehicle must stay inside or keep out of."
+    },
+    {
+      "id": "toolView",
+      "anchor": "missions.undo",
+      "spotlight": { "anchors": ["missions.redo", "missions.fit", "missions.zoomIn", "missions.zoomOut"] },
+      "bubble": { "placement": "right" },
+      "title": "Undo and view",
+      "text": "Undo and redo your edits, fit the whole mission on screen, zoom in and out."
+    },
+    {
+      "id": "toolLayers",
+      "anchor": "missions.layers",
+      "spotlight": { "shape": "circle" },
+      "bubble": { "placement": "right" },
+      "title": "Map layer",
+      "text": "Tap to switch back to the previous map. Press and hold to pick one from the full list."
+    },
+    {
+      "id": "map",
+      "checkpoint": true,
+      "anchor": "missions.map",
+      "spotlight": { "padding": 0 },
+      "arrow": { "enabled": false },
+      "bubble": { "placement": "center" },
+      "title": "Map",
+      "text": "Points and shapes are placed here. Tap an item to select it, drag its handles to edit, the plus sign inserts a vertex."
+    },
+    {
+      "id": "hint",
+      "anchor": "missions.hint",
+      "title": "Prompt",
+      "text": "This prompt always says what the map expects from you right now."
+    },
+    {
+      "id": "panel",
+      "checkpoint": true,
+      "anchor": "missions.panel",
+      "spotlight": { "padding": 0 },
+      "bubble": { "placement": "left" },
+      "title": "Mission panel",
+      "text": "The whole mission as a list: plan settings, route, rally points, geofence and the summary."
+    },
+    {
+      "id": "plan",
+      "anchor": "missions.plan",
+      "bubble": { "placement": "left" },
+      "title": "Plan",
+      "text": "Cruise speed and what the vehicle does after the last point: return to the start point, return to launch, hold position or leave it to the autopilot."
+    },
+    {
+      "id": "startPoint",
+      "anchor": "missions.startPoint",
+      "bubble": { "placement": "left" },
+      "title": "Start point status",
+      "text": "Shows whether the start point is placed. Tapping the row arms the Start point tool if it is missing, otherwise it selects the point on the map."
+    },
+    {
+      "id": "route",
+      "anchor": "missions.route",
+      "bubble": { "placement": "left" },
+      "title": "Route",
+      "text": "Route items in the order the vehicle runs them. Tap a card to select it and open its settings. Drag a card or use its arrows to change the order."
+    },
+    {
+      "id": "summary",
+      "anchor": "missions.summary",
+      "timeoutMs": 800,
+      "bubble": { "placement": "left" },
+      "title": "Summary",
+      "text": "Route length, time at cruise speed, the number of waypoints and how many mission items the autopilot receives out of its limit. Problems with the plan are listed here too."
+    },
+    {
+      "id": "help",
+      "anchor": "missions.help",
+      "spotlight": { "shape": "circle" },
+      "title": "That's all",
+      "text": "Open this tour again any time with this button.",
+      "advance": "button",
+      "buttons": { "next": true, "nextLabel": "Finish" }
+    }
+  ]
+}

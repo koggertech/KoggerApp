@@ -231,6 +231,13 @@ ApplicationWindow {
                        profilesPopup.expandedWidth, profilesPopup.expandedHeight)
     }
 
+    readonly property rect autopilotPopupEffectiveBounds: {
+        if (!autopilotPopup.visible || !autopilotPopup.popupVisible)
+            return Qt.rect(-1, -1, 0, 0)
+        return Qt.rect(autopilotPopup.panelX, autopilotPopup.panelY,
+                       autopilotPopup.expandedWidth, autopilotPopup.expandedHeight)
+    }
+
     function isValidUuidText(uuidValue) {
         if (uuidValue === undefined || uuidValue === null)
             return false
@@ -292,6 +299,11 @@ ApplicationWindow {
     // ESC priority — one layer per call, innermost first. Reorder to repriortize.
     // Layers 1–3 are gated by _activeLeafMode() so the focused pane's UI always wins.
     readonly property var _transientUiLayers: [
+        function() {
+            if (root._transientSweep)
+                return false
+            return tutorialOverlay.handleEscape()
+        },
         function() {  // HotkeysDialog (and other registered modal dialogs) — always wins.
             if (workspaceStore.activeHotkeysDialog
                     && typeof workspaceStore.activeHotkeysDialog.close === "function") {
@@ -331,6 +343,10 @@ ApplicationWindow {
             workspaceStore.closeModeSettingsPanel()
             return true
         },
+        function() {  // mission planner scenario owns Esc while active
+            if (typeof core === "undefined" || !core || !core.missionEditorActive) return false
+            return missionEditorOverlay.handleEscape(root._transientSweep)
+        },
         function() {  // armed "set contact" mode — Esc disarms it
             if (typeof core === "undefined" || !core || !core.contactPlacementArmed) return false
             core.setContactPlacementArmed(false)
@@ -347,6 +363,11 @@ ApplicationWindow {
         function() {  // settings-profile palette — Esc closes it
             if (!workspaceStore.profilesPopupOpen) return false
             workspaceStore.profilesPopupOpen = false
+            return true
+        },
+        function() {  // autopilot card — Esc closes it
+            if (!workspaceStore.autopilotPopupOpen || root._transientSweep) return false
+            workspaceStore.autopilotPopupOpen = false
             return true
         },
         function() {  // console drawer — Esc closes it
@@ -409,10 +430,13 @@ ApplicationWindow {
         return handled
     }
 
+    property bool _transientSweep: false
+
     function closeAllTransientUi() {
         if (_closingTransientUi)
             return
         _closingTransientUi = true
+        _transientSweep = true
 
         for (var pass = 0; pass < _transientUiLayers.length; ++pass) {
             var handled = false
@@ -424,6 +448,7 @@ ApplicationWindow {
                 break
         }
 
+        _transientSweep = false
         _closingTransientUi = false
     }
 
@@ -935,12 +960,13 @@ ApplicationWindow {
         HotActionsPanel {
             id: hotActions
 
-            visible: !workspaceStore.settingsPanelOpen
-                     && !workspaceStore.modeSettingsPanelOpen
-                     || hotkeysPreviewMode
-                     || hotkeysPreviewPinned
-                     || hotkeysPreviewSticky
-                     || workspaceStore.inputLocked
+            visible: (!workspaceStore.settingsPanelOpen
+                      && !workspaceStore.modeSettingsPanelOpen
+                      || hotkeysPreviewMode
+                      || hotkeysPreviewPinned
+                      || hotkeysPreviewSticky
+                      || workspaceStore.inputLocked)
+                     && !(typeof core !== "undefined" && core && core.missionEditorActive)
 
             anchors.left: parent.left
             anchors.top: parent.top
@@ -962,6 +988,8 @@ ApplicationWindow {
             layoutEditing: root.hotkeysPreviewSticky
             bottomTrackEditorEnabled: workspaceStore.quickActionBottomTrackEnabled
             contactEnabled: workspaceStore.quickActionContactEnabled
+            missionEnabled: workspaceStore.quickActionMissionEnabled
+            autopilotEnabled: workspaceStore.quickActionAutopilotEnabled
             profilesEnabled: workspaceStore.quickActionProfilesEnabled
             widgetsEnabled: workspaceStore.quickActionWidgetsEnabled
             consoleButtonEnabled: workspaceStore.quickActionConsoleEnabled
@@ -1139,6 +1167,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "console"      ? qsTr("Console")
                      : workspaceStore.settingsSubPageKind === "about"        ? qsTr("About")
                      : workspaceStore.settingsSubPageKind === "controls"     ? qsTr("Controls")
+                     : workspaceStore.settingsSubPageKind === "tutorials"    ? qsTr("Tutorials")
                      : workspaceStore.settingsSubPageKind === "developer"    ? qsTr("Developer mode")
                      : workspaceStore.settingsSubPageKind === "license"      ? workspaceStore.licenseViewTitle
                      : workspaceStore.settingsSubPageKind === "createLayout" ? qsTr("Create layout")
@@ -1173,6 +1202,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "console"    ? consoleSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "about"      ? aboutPageComponent
                      : workspaceStore.settingsSubPageKind === "controls"   ? controlsHelpPageComponent
+                     : workspaceStore.settingsSubPageKind === "tutorials"  ? tutorialsPageComponent
                      : workspaceStore.settingsSubPageKind === "developer"  ? developerSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "license"    ? licensePageComponent
                      : workspaceStore.settingsSubPageKind === "createLayout" ? layoutCreateTabComponent
@@ -1253,8 +1283,8 @@ ApplicationWindow {
             z: ZOrder.bottomTrackEditPopup   // поверх глобал/фуллскрин попапов
             store: workspaceStore
             popupId: "btEdit"
-            siblingBoundsList: [root.profilesPopupEffectiveBounds]
-            siblingIdList: ["profiles"]
+            siblingBoundsList: [root.profilesPopupEffectiveBounds, root.autopilotPopupEffectiveBounds]
+            siblingIdList: ["profiles", "autopilot"]
         }
 
         ProfilesPopup {
@@ -1263,8 +1293,18 @@ ApplicationWindow {
             z: ZOrder.profilesPopup
             store: workspaceStore
             popupId: "profiles"
-            siblingBoundsList: [root.btEditPopupEffectiveBounds]
-            siblingIdList: ["btEdit"]
+            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.autopilotPopupEffectiveBounds]
+            siblingIdList: ["btEdit", "autopilot"]
+        }
+
+        AutopilotPopup {
+            id: autopilotPopup
+            anchors.fill: parent
+            z: ZOrder.autopilotPopup
+            store: workspaceStore
+            popupId: "autopilot"
+            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
+            siblingIdList: ["btEdit", "profiles"]
         }
 
         // One delegate per panel, of whichever KIND the def names. The Loader is the branch: a
@@ -1304,8 +1344,8 @@ ApplicationWindow {
                         def: _wdef
                         popupVisible: !!_wdef && !_beingEdited && workspaceStore.widgetShown(_wdef.id)
                         popupId: _wdef ? "widget:" + _wdef.id : ""
-                        siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
-                        siblingIdList: ["btEdit", "profiles"]
+                        siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds, root.autopilotPopupEffectiveBounds]
+                        siblingIdList: ["btEdit", "profiles", "autopilot"]
                     }
                 }
 
@@ -1321,8 +1361,8 @@ ApplicationWindow {
             dev: workspaceStore.standDevice
             popupVisible: workspaceStore.standPanelShown
             popupId: "widget:" + workspaceStore.standPanelId
-            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
-            siblingIdList: ["btEdit", "profiles"]
+            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds, root.autopilotPopupEffectiveBounds]
+            siblingIdList: ["btEdit", "profiles", "autopilot"]
         }
 
         UsblNodesPopup {
@@ -1334,8 +1374,8 @@ ApplicationWindow {
             def: workspaceStore.usblPanelDef
             popupVisible: workspaceStore.usblPanelShown
             popupId: "widget:" + workspaceStore.usblPanelId
-            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
-            siblingIdList: ["btEdit", "profiles"]
+            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds, root.autopilotPopupEffectiveBounds]
+            siblingIdList: ["btEdit", "profiles", "autopilot"]
         }
 
         ServoPanelPopup {
@@ -1346,8 +1386,8 @@ ApplicationWindow {
             def: workspaceStore.servoPanelDef
             popupVisible: workspaceStore.servoPanelShown
             popupId: "widget:" + workspaceStore.servoPanelId
-            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
-            siblingIdList: ["btEdit", "profiles"]
+            siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds, root.autopilotPopupEffectiveBounds]
+            siblingIdList: ["btEdit", "profiles", "autopilot"]
         }
 
         Connections {
@@ -1357,6 +1397,7 @@ ApplicationWindow {
                 fullscreenPanePopup.syncFromStore()
                 btEditPopup.syncFromStore()
                 profilesPopup.syncFromStore()
+                autopilotPopup.syncFromStore()
                 servoPanel.syncFromStore()
                 usblNodesPanel.syncFromStore()
                 standPanel.syncFromStore()
@@ -1465,6 +1506,14 @@ ApplicationWindow {
         }
 
         Component {
+            id: tutorialsPageComponent
+
+            TutorialsSettingsPage {
+                store: workspaceStore
+            }
+        }
+
+        Component {
             id: developerSettingsTabComponent
 
             DeveloperSettingsTab {
@@ -1529,6 +1578,7 @@ ApplicationWindow {
 
         WorkspaceView {
             id: workspaceView
+            visible: !(typeof core !== "undefined" && core && core.missionEditorActive)
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
@@ -1559,6 +1609,13 @@ ApplicationWindow {
 
         NotificationsOverlay {
             hideImportant: workspaceStore.hideImportantNotifications
+            suppressed: tutorialOverlay.active
+        }
+
+        TutorialOverlay {
+            id: tutorialOverlay
+            store: workspaceStore
+            onCloseTransientUiRequested: root.closeAllTransientUi()
         }
 
         FileOpeningOverlay { }
@@ -1568,6 +1625,13 @@ ApplicationWindow {
         PowerOffConfirmOverlay {
             id: powerOffOverlay
             onConfirmed: if (typeof core !== "undefined" && core) core.powerOffSystem()
+        }
+
+        MissionEditorOverlay {
+            id: missionEditorOverlay
+            anchors.fill: parent
+            z: ZOrder.missionEditor
+            workspaceRoot: workspaceView
         }
 
         MouseArea {
