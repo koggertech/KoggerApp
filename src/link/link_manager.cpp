@@ -771,7 +771,7 @@ void LinkManager::onLinkOpenFailed(QUuid uuid, QString reason)
         name = QStringLiteral("%1:%2").arg(linkPtr->getAddress().trimmed()).arg(linkPtr->getDestinationPort());
     }
 
-    notifications.warning(tr("Link \"%1\" not opened: %2").arg(name).arg(reason),
+    notifications.warning(tr("Link \"%1\" not opened: %2").arg(name, reason),
                           QStringLiteral("link-open-failed:") + uuid.toString());
 }
 

@@ -150,7 +150,7 @@ ExpandResult expandPlan(const MissionPlan& plan)
                     if (g.spacingClamped) {
                         res.issues.append(PlanIssue{it.id, QCoreApplication::translate("MissionPlan", "Line spacing raised to %1 m to stay within %2 lines").arg(g.effectiveSpacing, 0, 'f', 1).arg(kMaxCorridorLines), IssueLevel::Warning});
                     }
-                    for (const auto& w : g.warnings) {
+                    for (const auto& w : std::as_const(g.warnings)) {
                         res.issues.append(PlanIssue{it.id, w, IssueLevel::Warning});
                     }
                     withShapeSpeed(it.speed, it.id, [&]() { pushGenerated(g, it.id); });
@@ -222,7 +222,7 @@ ExpandResult expandPlan(const MissionPlan& plan)
             exclusionPlanes.append(plane);
         }
     }
-    for (const auto& f : m.items) {
+    for (const auto& f : std::as_const(m.items)) {
         if (!f.isNavigation()) {
             continue;
         }

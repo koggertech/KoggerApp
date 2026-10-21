@@ -1869,17 +1869,17 @@ QString usblConsoleLine(const char* kind, const IDBinUsblSolution::UsblSolution&
 {
     return QString("USBL %1: addr %2, dist %3 m, az %4, el %5, snr %6"
                    ", head %7 %8, yaw %9, beacon %10 %11")
-        .arg(QString::fromLatin1(kind))
-        .arg(static_cast<int>(s.id))
-        .arg(usblNum(s.distance_m, 2))
-        .arg(usblNum(s.azimuth_deg, 1))
-        .arg(usblNum(s.elevation_deg, 1))
-        .arg(usblNum(s.snr, 1))
-        .arg(usblNum(s.usbl_latitude, 7))
-        .arg(usblNum(s.usbl_longitude, 7))
-        .arg(usblNum(s.usbl_yaw, 1))
-        .arg(usblNum(s.beacon_latitude, 7))
-        .arg(usblNum(s.beacon_longitude, 7));
+        .arg(QString::fromLatin1(kind),
+             QString::number(static_cast<int>(s.id)),
+             usblNum(s.distance_m, 2),
+             usblNum(s.azimuth_deg, 1),
+             usblNum(s.elevation_deg, 1),
+             usblNum(s.snr, 1),
+             usblNum(s.usbl_latitude, 7),
+             usblNum(s.usbl_longitude, 7),
+             usblNum(s.usbl_yaw, 1),
+             usblNum(s.beacon_latitude, 7),
+             usblNum(s.beacon_longitude, 7));
 }
 
 } // namespace

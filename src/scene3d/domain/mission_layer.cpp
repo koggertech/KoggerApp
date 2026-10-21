@@ -270,7 +270,7 @@ void MissionLayer::MissionLayerRenderImplementation::setRenderData(RenderData da
     data_ = std::move(data);
     fillTris_.clear();
     fillTris_.reserve(data_.fills.size());
-    for (const auto& fill : data_.fills) {
+    for (const auto& fill : std::as_const(data_.fills)) {
         fillTris_.append(fill.ring.size() >= 3 ? DrawUtils::triangulatePolygonXY(fill.ring) : QVector<QVector3D>());
     }
     strokeCache_ = std::make_shared<StrokeCache>();
@@ -385,7 +385,7 @@ void MissionLayer::MissionLayerRenderImplementation::render(
         ctx->glDepthMask(GL_TRUE);
 
         drawTriangles3(ctx, sp, colorLoc, cache.halo, data_.lineHaloColor);
-        for (const auto& b : cache.colors) {
+        for (const auto& b : std::as_const(cache.colors)) {
             drawTriangles3(ctx, sp, colorLoc, b.verts, b.color);
         }
 
