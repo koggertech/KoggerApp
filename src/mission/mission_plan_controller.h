@@ -159,7 +159,7 @@ signals:
     void vehicleMissionReceived(bool empty, bool matches, int routePoints, int fenceCount, int rallyCount, int skipped);
 
 private:
-    enum class VertexOwner { None, Waypoint, Survey, Corridor, Rally };
+    enum class VertexOwner : uint8_t { None, Waypoint, Survey, Corridor, Rally };
 
     QString     nowIso() const;
     QString     newId();

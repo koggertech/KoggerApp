@@ -65,7 +65,7 @@ class MissionTransfer : public QObject
 
 public:
     /** Local results; positive values are MAV_MISSION_RESULT codes from the vehicle. */
-    enum Result : int {
+    enum Result : int8_t {
         ResultOk = 0,
         ResultNoLink = -1,
         ResultNoResponse = -2,
@@ -102,7 +102,7 @@ signals:
     void downloadFinished(bool ok, int result, int missionType, const autopilot::MissionBatches& batches);
 
 private:
-    enum class State { Idle, UploadCount, UploadItems, UploadParams, DownloadList, DownloadItems };
+    enum class State : uint8_t { Idle, UploadCount, UploadItems, UploadParams, DownloadList, DownloadItems };
 
     bool busy() const { return state_ != State::Idle; }
     bool downloading() const { return state_ == State::DownloadList || state_ == State::DownloadItems; }

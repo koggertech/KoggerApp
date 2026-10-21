@@ -469,7 +469,7 @@ QString MissionPlanController::defaultFileName() const
 
 QString MissionPlanController::directoryUrl() const
 {
-    const QString dir = directory();
+    QString dir = directory();
     if (dir.isEmpty()) {
         return QString();
     }
@@ -1191,7 +1191,7 @@ QVector<GeoPoint>* MissionPlanController::vertexListById(const QString& id, int*
 
 bool MissionPlanController::idTaken(const QString& id) const
 {
-    if (id == kHomeItemId || indexOfItem(id) >= 0 || indexOfFence(id) >= 0) {
+    if (id == homeItemId() || indexOfItem(id) >= 0 || indexOfFence(id) >= 0) {
         return true;
     }
     for (const auto& r : plan_.rally) {

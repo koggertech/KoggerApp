@@ -20,7 +20,7 @@
 
 namespace {
 
-enum class Kind { Bool, Number, String, Object, Array, Any };
+enum class Kind : uint8_t { Bool, Number, String, Object, Array, Any };
 
 struct FieldSpec {
     const char* name;
@@ -259,7 +259,7 @@ void validateStepLike(const QJsonObject& object, std::span<const FieldSpec> fiel
     const QJsonValue spotlight = object.value(QLatin1String("spotlight"));
     if (spotlight.isObject()) {
         const QJsonArray extra = spotlight.toObject().value(QLatin1String("anchors")).toArray();
-        for (const QJsonValue& v : extra) {
+        for (const auto& v : extra) {
             if (!v.isString() || v.toString().isEmpty())
                 errors << QStringLiteral("%1.spotlight.anchors: expected non-empty strings").arg(where);
         }
@@ -639,7 +639,8 @@ void Tutorial::rebuildStep()
     const QString primary = merged.value(QLatin1String("anchor")).toString();
     if (!primary.isEmpty())
         targets.append(primary);
-    for (const QJsonValue& v : merged.value(QLatin1String("spotlight")).toObject().value(QLatin1String("anchors")).toArray()) {
+    const QJsonArray extraAnchors = merged.value(QLatin1String("spotlight")).toObject().value(QLatin1String("anchors")).toArray();
+    for (const auto& v : extraAnchors) {
         if (!targets.contains(v))
             targets.append(v);
     }

@@ -6,20 +6,20 @@
 
 namespace mission {
 
-enum class MavCmd : int {
+enum class MavCmd : uint8_t {
     NavWaypoint       = 16,
     NavLoiterUnlim    = 17,
     NavReturnToLaunch = 20,
     DoChangeSpeed     = 178
 };
 
-enum class MavFrame : int {
+enum class MavFrame : uint8_t {
     Global               = 0,
     GlobalRelativeAlt    = 3,
     GlobalRelativeAltInt = 6
 };
 
-enum class EndAction : int {
+enum class EndAction : uint8_t {
     Rtl           = 0,
     Hold          = 1,
     ReturnToStart = 2,
@@ -54,6 +54,6 @@ constexpr int    kMaxPlanItems          = 2000;
 constexpr int    kMaxRallyPoints        = 500;
 constexpr int    kMaxFencePolygons      = 100;
 constexpr int    kMaxShapeVertices      = 10000;
-constexpr qint64 kMaxMissionFileBytes   = 16 * 1024 * 1024;
+constexpr qint64 kMaxMissionFileBytes   = qint64{16} * 1024 * 1024;
 
 } // namespace mission

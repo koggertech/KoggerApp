@@ -35,7 +35,7 @@ struct RunTelemetry {
 
 /** One item of the vehicle's route list (index = MAVLink seq) as the run shows it. */
 struct RunItem {
-    enum class Kind { Command, Other, Start, Waypoint, Survey, Corridor, ReturnToLaunch, Hold };
+    enum class Kind : uint8_t { Command, Other, Start, Waypoint, Survey, Corridor, ReturnToLaunch, Hold };
 
     int seq = 0;
     int command = 0;

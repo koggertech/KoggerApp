@@ -340,13 +340,13 @@ QVector<RunItem> MissionRunTracker::buildItems(const autopilot::MissionBatches& 
         if (r.navigation) {
             ++navOrdinal;
             const auto origin = f ? origins.constFind(f->sourceId) : origins.constEnd();
-            if (f && f->sourceId == kHomeItemId) {
+            if (f && f->sourceId == homeItemId()) {
                 r.kind = RunItem::Kind::Start;
             } else if (!f && !startSeen && m.command == int(MavCmd::NavWaypoint)) {
                 r.kind = RunItem::Kind::Start;
                 startSeen = true;
                 --navOrdinal;
-            } else if (origin != origins.constEnd()) {
+            } else if (f && origin != origins.constEnd()) {
                 r.kind = origin->kind;
                 r.ordinal = origin->ordinal;
                 r.segment = f->segment;

@@ -18,7 +18,6 @@
 
 namespace {
 
-const QString kHomeId = QStringLiteral("home");
 constexpr qint64 kFlashMs = 1200;
 constexpr int kFlashPulses = 2;
 constexpr double kGeodesicStepMeters = 2000.0;
@@ -198,7 +197,7 @@ void MissionController::setPlan(mission::MissionPlanController* plan)
     plan_ = plan;
     if (plan_) {
         connect(plan_, &mission::MissionPlanController::planChanged, this, [this]() {
-            if (!selectedId_.isEmpty() && selectedId_ != kHomeId && plan_->indexOfItem(selectedId_) < 0 && plan_->indexOfFence(selectedId_) < 0 && !plan_->rallyIds().contains(selectedId_)) {
+            if (!selectedId_.isEmpty() && selectedId_ != mission::homeItemId() && plan_->indexOfItem(selectedId_) < 0 && plan_->indexOfFence(selectedId_) < 0 && !plan_->rallyIds().contains(selectedId_)) {
                 selectedId_.clear();
                 selectedVertex_ = -1;
                 emit selectionChanged();
@@ -341,7 +340,7 @@ void MissionController::onDrag(const QVector3D& scenePoint)
         return;
     }
     const mission::GeoPoint g = toGeo(dragStartVertices_.first() + delta);
-    if (dragHit_.id == kHomeId) {
+    if (dragHit_.id == mission::homeItemId()) {
         plan_->setHome(g.lat, g.lon);
     } else {
         plan_->moveVertex(dragHit_.id, dragHit_.index, g.lat, g.lon);
@@ -366,7 +365,7 @@ void MissionController::onRelease(const QVector3D& scenePoint, bool hasPoint, bo
     switch (tool_) {
     case ToolHome:
         plan_->setHome(g.lat, g.lon);
-        select(kHomeId, -1);
+        select(mission::homeItemId(), -1);
         setTool(ToolNone);
         break;
     case ToolWaypoint: {
@@ -607,7 +606,7 @@ bool MissionController::itemBounds(const QString& id, QVector3D& minOut, QVector
         }
     };
     const auto& plan = plan_->plan();
-    if (id == kHomeId) {
+    if (id == mission::homeItemId()) {
         if (plan.home) {
             consider(*plan.home);
         }
@@ -710,7 +709,7 @@ void MissionController::deleteSelected()
     if (!plan_ || selectedId_.isEmpty()) {
         return;
     }
-    if (selectedId_ == kHomeId) {
+    if (selectedId_ == mission::homeItemId()) {
         plan_->clearHome();
         clearSelection();
         return;
@@ -879,7 +878,7 @@ void MissionController::setVehicleHome(double lat, double lon)
 {
     const mission::GeoPoint p(lat, lon);
     std::optional<mission::GeoPoint> next;
-    if (p.isValid() && !(lat == 0.0 && lon == 0.0)) {
+    if (p.isValid() && (lat != 0.0 || lon != 0.0)) {
         next = p;
     }
     const bool same = next.has_value() == vehicleHome_.has_value()
@@ -956,7 +955,7 @@ MissionController::Hit MissionController::hitTest(qreal x, qreal y) const
 
     const auto& plan = plan_->plan();
     if (plan.home && plan.home->isValid()) {
-        consider(HitKind::Vertex, kHomeId, 0, -1, toScene(*plan.home), radius);
+        consider(HitKind::Vertex, mission::homeItemId(), 0, -1, toScene(*plan.home), radius);
     }
     for (const auto& item : plan.items) {
         if (const auto* w = std::get_if<mission::WaypointItem>(&item)) {
@@ -1081,7 +1080,7 @@ std::optional<QVector3D> MissionController::selectedPointWorld() const
         return std::nullopt;
     }
     const auto& plan = plan_->plan();
-    if (selectedId_ == kHomeId) {
+    if (selectedId_ == mission::homeItemId()) {
         if (plan.home && plan.home->isValid()) {
             return toScene(*plan.home);
         }
@@ -1146,9 +1145,9 @@ void MissionController::updateHomeScreen()
 {
     bool offscreen = false;
     QPointF screen = homeScreen_;
-    const bool hasHome = plan_ && plan_->plan().home && plan_->plan().home->isValid();
-    if (editing_ && hasHome && view_->width() > 0 && view_->height() > 0) {
-        screen = toScreen(toScene(*plan_->plan().home));
+    const std::optional<mission::GeoPoint> home = plan_ ? plan_->plan().home : std::nullopt;
+    if (editing_ && home && home->isValid() && view_->width() > 0 && view_->height() > 0) {
+        screen = toScreen(toScene(*home));
         offscreen = !std::isfinite(screen.x()) || !std::isfinite(screen.y())
                     || screen.x() < 0.0 || screen.y() < 0.0 || screen.x() > view_->width() || screen.y() > view_->height();
     }
@@ -1250,7 +1249,7 @@ void MissionController::beginDrag(const Hit& hit, const QVector3D& scenePoint, b
         for (const auto& v : itemVertices(hit.id)) {
             dragStartVertices_.append(toScene(v));
         }
-    } else if (hit.id == kHomeId) {
+    } else if (hit.id == mission::homeItemId()) {
         if (plan_->plan().home) {
             dragStartVertices_.append(toScene(*plan_->plan().home));
         }
@@ -1339,7 +1338,7 @@ void MissionController::rebuild()
     }
 
     const float handlePx = kVertexHandlePx;
-    const bool selectedIsHome = selectedId_ == kHomeId;
+    const bool selectedIsHome = selectedId_ == mission::homeItemId();
 
     QVector<mission::GeoPoint> routeGeo;
     for (const auto& f : expanded.mission.items) {
@@ -1440,7 +1439,7 @@ void MissionController::rebuild()
     if (plan.home && plan.home->isValid()) {
         const int markersFrom = rd.markers.size();
         appendHandle(rd, toScene(*plan.home), kHomeColor, kHandleSizePx + 1.0f, QStringLiteral("S"), selectedIsHome);
-        dimFrom(kHomeId, rd.fills.size(), rd.lines.size(), rd.arrows.size(), markersFrom);
+        dimFrom(mission::homeItemId(), rd.fills.size(), rd.lines.size(), rd.arrows.size(), markersFrom);
     }
 
     for (const auto& r : plan.rally) {
@@ -1546,7 +1545,7 @@ void MissionController::rebuild()
             maxLon = std::max(maxLon, g.lon);
         }
         const bool compact = (maxLat - minLat) < kDraftCompactDeg && (maxLon - minLon) < kDraftCompactDeg;
-        if (closed && draftScene.size() >= 3 && compact && !(tool_ == ToolFenceTrace && draftFenceInclusion_)) {
+        if (closed && draftScene.size() >= 3 && compact && (tool_ != ToolFenceTrace || !draftFenceInclusion_)) {
             MissionLayer::Fill f;
             f.ring = draftScene;
             f.color = tool_ == ToolFenceTrace ? kFenceExclusionFill : kSurveyFill;

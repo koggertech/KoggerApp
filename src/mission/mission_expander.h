@@ -7,7 +7,7 @@
 
 namespace mission {
 
-enum class IssueLevel : int {
+enum class IssueLevel : uint8_t {
     Warning = 1,
     Error = 2
 };

@@ -113,7 +113,7 @@ ExpandResult expandPlan(const MissionPlan& plan)
     };
 
     if (homeValid && !plan.items.isEmpty()) {
-        pushNav(waypointAt(*plan.home, kHomeItemId));
+        pushNav(waypointAt(*plan.home, homeItemId()));
     }
 
     for (const auto& item : plan.items) {
@@ -160,12 +160,12 @@ ExpandResult expandPlan(const MissionPlan& plan)
         }, item);
     }
 
-    const bool hasNav = std::any_of(m.items.cbegin(), m.items.cend(), [](const FlatItem& f) { return f.isNavigation() && f.sourceId != kHomeItemId; });
+    const bool hasNav = std::any_of(m.items.cbegin(), m.items.cend(), [](const FlatItem& f) { return f.isNavigation() && f.sourceId != homeItemId(); });
     if (!hasNav) {
         m.items.clear();
     } else if (plan.settings.endAction == EndAction::ReturnToStart) {
         if (homeValid) {
-            pushNav(waypointAt(*plan.home, kHomeItemId));
+            pushNav(waypointAt(*plan.home, homeItemId()));
             m.items.append(holdAt(plan.home));
         }
     } else if (plan.settings.endAction != EndAction::None) {

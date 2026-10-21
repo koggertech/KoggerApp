@@ -22,7 +22,7 @@ enum MavCommandId : uint16_t {
     MavCmdRequestMessage = 512
 };
 
-enum MavResult : int {
+enum MavResult : int8_t {
     MavResultNotSent = -1,
     MavResultAccepted = 0,
     MavResultTemporarilyRejected = 1,
@@ -59,7 +59,7 @@ enum MavMissionState : uint8_t {
     MavMissionStateComplete = 5
 };
 
-enum MavMissionResult : int {
+enum MavMissionResult : uint8_t {
     MavMissionAccepted = 0,
     MavMissionError = 1,
     MavMissionUnsupportedFrame = 2,

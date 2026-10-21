@@ -79,7 +79,11 @@ struct MissionPlan {
 };
 
 constexpr int kFenceMinVertices = 3;
-inline const QString kHomeItemId = QStringLiteral("home");
+inline const QString& homeItemId()
+{
+    static const QString id = QStringLiteral("home");
+    return id;
+}
 
 inline const QString& itemId(const MissionItem& item)
 {
