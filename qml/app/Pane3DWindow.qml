@@ -116,6 +116,12 @@ Item {
             }
         }
 
+        MissionRunPointCard {
+            anchors.fill: parent
+            view: root.scene3dView
+            hostsView: !!root.scene3dView && root.scene3dView.parent === hostSurface
+        }
+
         Scene3DDepthLegend {
             id: depthLegend
             readonly property var v: root.scene3dView

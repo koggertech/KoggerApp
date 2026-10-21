@@ -28,6 +28,7 @@ QtObject {
     readonly property int widgetEditorDrag: 2500    // widget editor: floating drag layer (above settings)
 
     readonly property int notificationsOverlay: 4000 // toast notifications (top-center stack)
+    readonly property int tutorialOverlay:  4500
     readonly property int fileOpeningOverlay: 5000  // modal "file is opening" banner
     readonly property int splashOverlay:    6000    // startup launch banner (fades out)
     readonly property int welcomeOverlay:   6500    // first-launch welcome / toolset picker (modal)

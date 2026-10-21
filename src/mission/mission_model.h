@@ -79,7 +79,11 @@ struct MissionPlan {
 };
 
 constexpr int kFenceMinVertices = 3;
-inline const QString kHomeItemId = QStringLiteral("home");
+inline const QString& homeItemId()
+{
+    static const QString id = QStringLiteral("home");
+    return id;
+}
 
 inline const QString& itemId(const MissionItem& item)
 {
@@ -121,6 +125,7 @@ struct FlatItem {
     double   lon = 0.0;
     double   alt = 0.0;
     QString  sourceId;
+    int      segment = -1;
 
     bool isNavigation() const { return command == MavCmd::NavWaypoint; }
 };

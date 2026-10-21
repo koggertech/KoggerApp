@@ -1962,6 +1962,8 @@ Item {
         borderHoverColor: root.buttonHoverBorderColor
         toolTipText: qsTr("Open settings")
 
+        KTutorialAnchor { key: "hotActions.settings" }
+
         onClicked: {
             if (!root.showToggleButton)
                 return
@@ -1989,6 +1991,8 @@ Item {
         borderColor: root.buttonBorderColor
         borderHoverColor: root.buttonHoverBorderColor
         toolTipText: root.expanded ? qsTr("Collapse hotkeys") : qsTr("Open hotkeys")
+
+        KTutorialAnchor { key: "hotActions.expand" }
 
         onClicked: {
             if (!root.showToggleButton)

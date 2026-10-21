@@ -62,10 +62,19 @@ Rectangle {
         z: 5
     }
 
-    visible: active
+    property real progress: active ? 1.0 : 0.0
+    Behavior on progress {
+        NumberAnimation {
+            duration: Anim.sidebarMs
+            easing.type: Easing.OutCubic
+        }
+    }
+
+    visible: progress > 0.01
     enabled: active
     color: AppPalette.bg
     focus: active
+    transform: Translate { x: -root.width * (1.0 - root.progress) }
 
     function refreshFromPlan() {
         if (!plan) return
@@ -276,7 +285,17 @@ Rectangle {
 
     readonly property var _dmw: (typeof deviceManagerWrapper !== "undefined") ? deviceManagerWrapper : null
     readonly property bool _vehicleOnline: _dmw ? _dmw.autopilotOnline : false
-    readonly property bool _uploading: _dmw ? _dmw.missionTransferActive : false
+    readonly property bool _uploading: _dmw ? (_dmw.missionTransferActive && !_dmw.missionTransferSilent) : false
+    readonly property var _run: (typeof missionRun !== "undefined") ? missionRun : null
+    readonly property int _vehicleBadgeState: {
+        if (!_vehicleOnline || !_run) return 0
+        if (_run.reading) return 1
+        if (!_run.known) return 0
+        if (_run.stale) return 5
+        if (_run.vehicleEmpty) return 2
+        if (_run.matchesPlan) return 3
+        return 4
+    }
     readonly property string _uploadTag: "mission-upload"
     readonly property string _downloadTag: "mission-download"
 
@@ -293,6 +312,7 @@ Rectangle {
     property bool _downloadDiscardAccepted: false
     property int _downloadPartialType: 0
     property string _downloadPartialReason: ""
+    property bool _uploadFenceOn: false
 
     function _anyDialogOpen() {
         return closePrompt.visible || uploadPrompt.visible || !!pendingAfterSave
@@ -321,6 +341,13 @@ Rectangle {
         })
     }
 
+    function openVehicleSnapshot() {
+        if (!_run || _uploading) return
+        _downloadDiscardAccepted = false
+        _downloadPartialType = 0
+        _run.openInEditor()
+    }
+
     function openVehicleMission(routePoints, fenceCount, rallyCount, skipped) {
         if (!plan || !plan.openVehicleMission()) return
         if (ctl && active) ctl.fitToPlan()
@@ -334,6 +361,8 @@ Rectangle {
         var w = []
         if (_dmw && _dmw.pilotArmState > 0)
             w.push(qsTr("The boat is armed. The uploaded mission replaces the one on the vehicle; in Auto the boat switches to the new route at once."))
+        if (_dmw && _dmw.pilotArmState > 0 && plan && plan.fenceCount > 0)
+            w.push(qsTr("The geofence is switched on right after the upload. If the boat is outside it now, the autopilot at once returns it along its track or holds it."))
         if (_dmw && _dmw.proxyLinkActive)
             w.push(qsTr("A ground station is connected through the proxy link. Two stations must not upload missions at the same time."))
         return w
@@ -357,7 +386,9 @@ Rectangle {
 
     function startUpload() {
         uploadPrompt.visible = false
-        if (plan) plan.uploadToVehicle()
+        if (!plan) return
+        _uploadFenceOn = plan.fenceCount > 0
+        plan.uploadToVehicle()
     }
 
     function uploadResultText(r) {
@@ -369,6 +400,8 @@ Rectangle {
         case -5: return qsTr("another upload is in progress")
         case -6: return qsTr("the vehicle ended the transfer before receiving all items")
         case -7: return qsTr("the link uses MAVLink 1; geofence and rally points need MAVLink 2")
+        case -8: return qsTr("cancelled")
+        case -9: return qsTr("the vehicle did not confirm the geofence parameters")
         case 1:  return qsTr("error on the vehicle")
         case 2:  return qsTr("unsupported coordinate frame")
         case 3:  return qsTr("unsupported command")
@@ -387,7 +420,7 @@ Rectangle {
         ignoreUnknownSignals: true
         function onVruChanged() { root.pushVehicleHome() }
         function onMissionTransferChanged() {
-            if (!root._dmw.missionTransferActive || typeof notifications === "undefined" || !notifications) return
+            if (!root._dmw.missionTransferActive || root._dmw.missionTransferSilent || typeof notifications === "undefined" || !notifications) return
             var percent = Math.round(root._dmw.missionTransferProgress * 100)
             if (root._dmw.missionDownloading) notifications.progress(qsTr("Reading the mission from the vehicle"), root._downloadTag, percent)
             else notifications.progress(qsTr("Uploading mission to the vehicle"), root._uploadTag, percent)
@@ -410,7 +443,10 @@ Rectangle {
             if (typeof notifications === "undefined" || !notifications) return
             notifications.dismiss(root._uploadTag)
             var reason = root.uploadResultText(result)
-            if (ok) notifications.info(qsTr("Mission uploaded to the vehicle"))
+            if (ok) notifications.info(root._uploadFenceOn ? qsTr("Mission uploaded to the vehicle, geofence on") : qsTr("Mission uploaded to the vehicle"))
+            else if (missionType === 1 && result === -9) notifications.warning(root._uploadFenceOn
+                ? qsTr("The route and geofence are on the vehicle, but the geofence was not switched on: %1. Rally points were not uploaded.").arg(reason)
+                : qsTr("The route is on the vehicle, but the geofence was not switched off: %1. Rally points were not uploaded.").arg(reason))
             else if (missionType === 1) notifications.warning(qsTr("The route is on the vehicle, but the geofence upload failed: %1").arg(reason))
             else if (missionType === 2) notifications.warning(qsTr("The route and geofence are on the vehicle, but the rally points upload failed: %1").arg(reason))
             else notifications.warning(qsTr("Mission upload failed: %1").arg(reason))
@@ -681,6 +717,7 @@ Rectangle {
                         text: root.plan ? root.plan.name : ""
                         onEditingFinished: if (root.plan && root.plan.name !== text) root.plan.name = text
                     }
+                    KTutorialAnchor { key: "missions.name" }
                 }
 
                 Text {
@@ -693,14 +730,81 @@ Rectangle {
                     font.pixelSize: Tokens.fontSm
                     elide: Text.ElideMiddle
                     Layout.fillWidth: true
+                    KTutorialAnchor { key: "missions.fileStatus" }
                 }
 
+                Rectangle {
+                    id: vehicleBadge
+                    KTutorialAnchor { key: "missions.vehicleBadge" }
+                    readonly property int badgeState: root._vehicleBadgeState
+                    readonly property bool actionable: (badgeState === 4 || badgeState === 5) && !root._uploading
+                    visible: badgeState > 0
+                    Layout.preferredHeight: Tokens.controlHMd
+                    Layout.preferredWidth: badgeRow.width + Tokens.spaceLg * 2
+                    radius: height / 2
+                    color: badgeState === 3 ? AppPalette.linkOkBg
+                         : (actionable && badgeTap.pressed ? AppPalette.cardHover : AppPalette.card)
+                    border.width: 1
+                    border.color: badgeState === 3 ? AppPalette.linkOkBorder
+                                : (actionable ? AppPalette.accentBorder : AppPalette.border)
+
+                    Row {
+                        id: badgeRow
+                        anchors.centerIn: parent
+                        spacing: Tokens.spaceSm
+
+                        Rectangle {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Math.round(8 * root._s)
+                            height: width
+                            radius: width / 2
+                            color: vehicleBadge.badgeState === 3 ? AppPalette.linkOkBorder
+                                 : (vehicleBadge.actionable ? AppPalette.accent : AppPalette.textMuted)
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Math.min(implicitWidth, Math.round(240 * root._s))
+                            text: vehicleBadge.badgeState === 1 ? qsTr("Reading the vehicle mission…")
+                                : vehicleBadge.badgeState === 2 ? qsTr("No mission on the vehicle")
+                                : vehicleBadge.badgeState === 3 ? qsTr("This plan is on the vehicle")
+                                : vehicleBadge.badgeState === 5 ? qsTr("The vehicle mission changed · Read again")
+                                : qsTr("The vehicle has another mission · Open")
+                            color: vehicleBadge.badgeState === 3 ? AppPalette.linkOkText
+                                 : (vehicleBadge.actionable ? AppPalette.textStrong : AppPalette.textMuted)
+                            font.pixelSize: Tokens.fontSm
+                            elide: Text.ElideRight
+                        }
+                    }
+
+                    MouseArea {
+                        id: badgeTap
+                        anchors.fill: parent
+                        enabled: vehicleBadge.actionable
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (vehicleBadge.badgeState === 5) { if (root._run) root._run.refresh() }
+                            else root.openVehicleSnapshot()
+                        }
+                    }
+                }
+
+                KCircleIconButton {
+                    Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
+                    iconSource: "qrc:/icons/ui/question-mark.svg"; iconTintColor: AppPalette.text
+                    fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
+                    toolTipText: qsTr("Help")
+                    onClicked: if (typeof tutorial !== "undefined" && tutorial) tutorial.start("missions")
+                    KTutorialAnchor { key: "missions.help" }
+                }
+                Item { Layout.preferredWidth: Tokens.spaceXs; Layout.preferredHeight: 1 }
                 KCircleIconButton {
                     Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
                     iconSource: "qrc:/icons/ui/file_plus.svg"; iconTintColor: AppPalette.text
                     fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: qsTr("New mission")
                     onClicked: root.guardUnsaved(function() { if (root.plan) root.plan.newPlan() })
+                    KTutorialAnchor { key: "missions.new" }
                 }
                 KCircleIconButton {
                     Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
@@ -708,6 +812,7 @@ Rectangle {
                     fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: qsTr("Open mission")
                     onClicked: root.guardUnsaved(function() { root._prepareDialog(openDialog); openDialog.open() })
+                    KTutorialAnchor { key: "missions.open" }
                 }
                 KCircleIconButton {
                     Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
@@ -718,7 +823,9 @@ Rectangle {
                     borderColor: root.plan && root.plan.dirty ? AppPalette.accentBorder : AppPalette.border
                     toolTipText: qsTr("Save mission")
                     onClicked: root.saveAction()
+                    KTutorialAnchor { key: "missions.save" }
                 }
+                Item { Layout.preferredWidth: Tokens.spaceXs; Layout.preferredHeight: 1 }
                 KCircleIconButton {
                     Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
                     iconSource: "qrc:/icons/ui/upload.svg"; iconTintColor: AppPalette.text
@@ -727,6 +834,7 @@ Rectangle {
                     fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: root._uploading ? qsTr("Uploading mission to the vehicle") : qsTr("Upload to vehicle")
                     onClicked: root.requestUpload()
+                    KTutorialAnchor { key: "missions.upload" }
                 }
                 KCircleIconButton {
                     Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
@@ -736,7 +844,9 @@ Rectangle {
                     fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: qsTr("Read mission from vehicle")
                     onClicked: root.requestDownload()
+                    KTutorialAnchor { key: "missions.download" }
                 }
+                Item { Layout.preferredWidth: Tokens.spaceXs; Layout.preferredHeight: 1 }
                 KCircleIconButton {
                     id: moreBtn
                     Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
@@ -744,6 +854,7 @@ Rectangle {
                     fillColor: moreMenu.visible ? AppPalette.accentBgStrong : AppPalette.card
                     fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: qsTr("Save as, export")
+                    KTutorialAnchor { key: "missions.more" }
                     onClicked: {
                         if (!moreMenu.visible) {
                             var p = moreBtn.mapToItem(root, 0, 0)
@@ -753,6 +864,7 @@ Rectangle {
                     }
                 }
 
+                Item { Layout.preferredWidth: Tokens.spaceXs; Layout.preferredHeight: 1 }
                 KCircleIconButton {
                     Layout.preferredWidth: root.headerBtn; Layout.minimumWidth: root.headerBtn
                     Layout.preferredHeight: root.headerBtn; Layout.minimumHeight: root.headerBtn
@@ -761,6 +873,7 @@ Rectangle {
                     fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: qsTr("Close editor")
                     onClicked: root.requestClose()
+                    KTutorialAnchor { key: "missions.close" }
                 }
             }
         }
@@ -772,6 +885,7 @@ Rectangle {
 
             Rectangle {
                 id: toolsColumn
+                KTutorialAnchor { key: "missions.tools" }
                 Layout.preferredWidth: root.toolSize + Tokens.spaceMd * 2
                 Layout.fillHeight: true
                 color: AppPalette.bgDeep
@@ -864,6 +978,7 @@ Rectangle {
                                     armed: root.ctl && (root.ctl.tool === toolSlot.modelData.tool || (shapeTool && root.ctl.tool === traceTool))
                                     iconSource: toolSlot.modelData.icon
                                     toolTipText: toolSlot.modelData.tip
+                                    KTutorialAnchor { key: "missions.tool." + toolSlot.modelData.tool }
                                     borderColor: armed ? AppPalette.accentBorder : (attention ? AppPalette.linkIdleBorder : AppPalette.border)
                                     borderWidth: attention ? 2 : 1
                                     onClicked: {
@@ -929,12 +1044,14 @@ Rectangle {
                         ToolButton {
                             iconSource: "qrc:/icons/ui/arrow-back-up.svg"
                             toolTipText: qsTr("Undo")
+                            KTutorialAnchor { key: "missions.undo" }
                             enabled: root.plan && root.plan.canUndo
                             onClicked: if (root.plan) root.plan.undo()
                         }
                         ToolButton {
                             iconSource: "qrc:/icons/ui/arrow-forward-up.svg"
                             toolTipText: qsTr("Redo")
+                            KTutorialAnchor { key: "missions.redo" }
                             enabled: root.plan && root.plan.canRedo
                             onClicked: if (root.plan) root.plan.redo()
                         }
@@ -943,16 +1060,19 @@ Rectangle {
                         ToolButton {
                             iconSource: "qrc:/icons/ui/fit-in-view.svg"
                             toolTipText: qsTr("Fit mission in view")
+                            KTutorialAnchor { key: "missions.fit" }
                             onClicked: if (root.ctl) root.ctl.fitToPlan()
                         }
                         ToolButton {
                             iconSource: "qrc:/icons/ui/plus.svg"
                             toolTipText: qsTr("Zoom in")
+                            KTutorialAnchor { key: "missions.zoomIn" }
                             onClicked: if (root.view && root.view.zoomButtonAnimated) root.view.zoomButtonAnimated(4)
                         }
                         ToolButton {
                             iconSource: "qrc:/icons/ui/minus.svg"
                             toolTipText: qsTr("Zoom out")
+                            KTutorialAnchor { key: "missions.zoomOut" }
                             onClicked: if (root.view && root.view.zoomButtonAnimated) root.view.zoomButtonAnimated(-4)
                         }
 
@@ -960,6 +1080,7 @@ Rectangle {
 
                         ToolButton {
                             id: layerBtn
+                            KTutorialAnchor { key: "missions.layers" }
                             iconSource: "qrc:/icons/ui/layers-selected.svg"
                             toolTipText: (typeof core !== "undefined" && core) ? core.mapTileProviderName : ""
                             toolTipSuppressed: layerSwitch.listShown || layerSwitch.listPinned
@@ -1001,6 +1122,7 @@ Rectangle {
 
             Item {
                 id: sceneArea
+                KTutorialAnchor { key: "missions.map" }
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
@@ -1069,6 +1191,7 @@ Rectangle {
                     border.color: AppPalette.border
                     border.width: 1
                     visible: hintText.text.length > 0
+                    KTutorialAnchor { key: "missions.hint" }
 
                     Text {
                         id: hintText
@@ -1271,6 +1394,7 @@ Rectangle {
             Rectangle {
                 id: panel
                 Layout.preferredWidth: root.panelWidth
+                KTutorialAnchor { key: "missions.panel" }
                 Layout.fillHeight: true
                 color: AppPalette.bgDeep
 
@@ -1297,6 +1421,9 @@ Rectangle {
 
                         KIsland {
                             title: qsTr("Plan")
+                            id: planIsland
+                            KTutorialAnchor { key: "missions.plan"; target: planIsland }
+                            KTutorialAnchor { key: "missions.startPoint"; target: homeRow }
                             width: parent.width
 
                             KIslandRow {
@@ -1331,13 +1458,13 @@ Rectangle {
                             }
                             KIslandRow {
                                 visible: root.plan && root.plan.endAction === 0
-                                caption: qsTr("RTL goes to the autopilot's arming position, which may differ from the start point")
+                                caption: qsTr("RTL goes to the autopilot's arming position, which may differ from the start point; the boat then holds position there")
                                 captionColor: AppPalette.linkIdleText
                                 stacked: true
                             }
                             KIslandRow {
                                 visible: root.plan && root.plan.endAction === 3
-                                caption: qsTr("No end command is added: after the last point the autopilot does what its MIS_DONE_BEHAVE parameter says (Hold by default)")
+                                caption: qsTr("No end command is added: after the last point the autopilot follows its MIS_DONE_BEHAVE parameter. By default (0) the boat cuts the throttle and drifts; 1 makes it hold position (Loiter)")
                                 captionColor: AppPalette.linkIdleText
                                 stacked: true
                             }
@@ -1399,6 +1526,7 @@ Rectangle {
 
                         KIsland {
                             id: routeIsland
+                            KTutorialAnchor { key: "missions.route"; target: routeIsland }
                             title: qsTr("Route")
                             width: parent.width
                             footer: root.itemIds.length === 0 ? qsTr("No items yet. Use the tools on the left.") : ""
@@ -1502,6 +1630,8 @@ Rectangle {
 
                         KIsland {
                             title: qsTr("Summary")
+                            id: summaryIsland
+                            KTutorialAnchor { key: "missions.summary"; target: summaryIsland }
                             width: parent.width
 
                             KIslandRow { label: qsTr("Length");    caption: root.formatLength(root.estimates.lengthMeters) }

@@ -43,6 +43,18 @@ bool pointInLocalPolygon(const QPointF& p, const QVector<QPointF>& poly)
     return inside;
 }
 
+FlatItem holdAt(const std::optional<GeoPoint>& p)
+{
+    FlatItem f;
+    f.command = MavCmd::NavLoiterUnlim;
+    f.frame = MavFrame::GlobalRelativeAltInt;
+    if (p) {
+        f.lat = p->lat;
+        f.lon = p->lon;
+    }
+    return f;
+}
+
 FlatItem changeSpeed(double speed, const QString& sourceId)
 {
     FlatItem f;
@@ -81,8 +93,12 @@ ExpandResult expandPlan(const MissionPlan& plan)
             res.issues.append(PlanIssue{id, QCoreApplication::translate("MissionPlan", "Generated points leave the valid coordinate range"), IssueLevel::Error});
             return;
         }
-        for (const auto& p : g.points) {
-            pushNav(waypointAt(p, id));
+        for (int line = 0; line < g.lines.size(); ++line) {
+            for (const auto& p : g.lines.at(line)) {
+                FlatItem f = waypointAt(p, id);
+                f.segment = line;
+                pushNav(f);
+            }
         }
     };
 
@@ -97,7 +113,7 @@ ExpandResult expandPlan(const MissionPlan& plan)
     };
 
     if (homeValid && !plan.items.isEmpty()) {
-        pushNav(waypointAt(*plan.home, kHomeItemId));
+        pushNav(waypointAt(*plan.home, homeItemId()));
     }
 
     for (const auto& item : plan.items) {
@@ -134,7 +150,7 @@ ExpandResult expandPlan(const MissionPlan& plan)
                     if (g.spacingClamped) {
                         res.issues.append(PlanIssue{it.id, QCoreApplication::translate("MissionPlan", "Line spacing raised to %1 m to stay within %2 lines").arg(g.effectiveSpacing, 0, 'f', 1).arg(kMaxCorridorLines), IssueLevel::Warning});
                     }
-                    for (const auto& w : g.warnings) {
+                    for (const auto& w : std::as_const(g.warnings)) {
                         res.issues.append(PlanIssue{it.id, w, IssueLevel::Warning});
                     }
                     withShapeSpeed(it.speed, it.id, [&]() { pushGenerated(g, it.id); });
@@ -144,12 +160,13 @@ ExpandResult expandPlan(const MissionPlan& plan)
         }, item);
     }
 
-    const bool hasNav = std::any_of(m.items.cbegin(), m.items.cend(), [](const FlatItem& f) { return f.isNavigation() && f.sourceId != kHomeItemId; });
+    const bool hasNav = std::any_of(m.items.cbegin(), m.items.cend(), [](const FlatItem& f) { return f.isNavigation() && f.sourceId != homeItemId(); });
     if (!hasNav) {
         m.items.clear();
     } else if (plan.settings.endAction == EndAction::ReturnToStart) {
         if (homeValid) {
-            pushNav(waypointAt(*plan.home, kHomeItemId));
+            pushNav(waypointAt(*plan.home, homeItemId()));
+            m.items.append(holdAt(plan.home));
         }
     } else if (plan.settings.endAction != EndAction::None) {
         FlatItem end;
@@ -162,6 +179,9 @@ ExpandResult expandPlan(const MissionPlan& plan)
             end.lon = previous ? previous->lon : 0.0;
         }
         m.items.append(end);
+        if (plan.settings.endAction == EndAction::Rtl) {
+            m.items.append(holdAt(std::nullopt));
+        }
     }
 
     for (const auto& r : plan.rally) {
@@ -202,7 +222,7 @@ ExpandResult expandPlan(const MissionPlan& plan)
             exclusionPlanes.append(plane);
         }
     }
-    for (const auto& f : m.items) {
+    for (const auto& f : std::as_const(m.items)) {
         if (!f.isNavigation()) {
             continue;
         }

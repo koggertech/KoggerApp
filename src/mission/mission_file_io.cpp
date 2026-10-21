@@ -14,38 +14,66 @@ namespace mission {
 
 namespace {
 
-const QString kFileType = QStringLiteral("KoggerMission");
+const QString& fileType()
+{
+    static const QString type = QStringLiteral("KoggerMission");
+    return type;
+}
 
-const QSet<QString> kPlanKeys = {
-    QStringLiteral("fileType"), QStringLiteral("formatVersion"), QStringLiteral("appVersion"),
-    QStringLiteral("name"), QStringLiteral("created"), QStringLiteral("modified"),
-    QStringLiteral("settings"), QStringLiteral("home"), QStringLiteral("items"), QStringLiteral("rally"),
-    QStringLiteral("fence")
-};
+const QSet<QString>& planKeys()
+{
+    static const QSet<QString> keys = {
+        QStringLiteral("fileType"), QStringLiteral("formatVersion"), QStringLiteral("appVersion"),
+        QStringLiteral("name"), QStringLiteral("created"), QStringLiteral("modified"),
+        QStringLiteral("settings"), QStringLiteral("home"), QStringLiteral("items"), QStringLiteral("rally"),
+        QStringLiteral("fence")
+    };
+    return keys;
+}
 
-const QSet<QString> kWaypointKeys = {
-    QStringLiteral("id"), QStringLiteral("type"), QStringLiteral("lat"), QStringLiteral("lon"),
-    QStringLiteral("holdTime"), QStringLiteral("acceptRadius"), QStringLiteral("speed")
-};
+const QSet<QString>& waypointKeys()
+{
+    static const QSet<QString> keys = {
+        QStringLiteral("id"), QStringLiteral("type"), QStringLiteral("lat"), QStringLiteral("lon"),
+        QStringLiteral("holdTime"), QStringLiteral("acceptRadius"), QStringLiteral("speed")
+    };
+    return keys;
+}
 
-const QSet<QString> kSurveyKeys = {
-    QStringLiteral("id"), QStringLiteral("type"), QStringLiteral("polygon"), QStringLiteral("lineSpacing"),
-    QStringLiteral("angleDeg"), QStringLiteral("turnaround"), QStringLiteral("entryCorner"),
-    QStringLiteral("crosshatch"), QStringLiteral("crosshatchSpacing"), QStringLiteral("speed")
-};
+const QSet<QString>& surveyKeys()
+{
+    static const QSet<QString> keys = {
+        QStringLiteral("id"), QStringLiteral("type"), QStringLiteral("polygon"), QStringLiteral("lineSpacing"),
+        QStringLiteral("angleDeg"), QStringLiteral("turnaround"), QStringLiteral("entryCorner"),
+        QStringLiteral("crosshatch"), QStringLiteral("crosshatchSpacing"), QStringLiteral("speed")
+    };
+    return keys;
+}
 
-const QSet<QString> kCorridorKeys = {
-    QStringLiteral("id"), QStringLiteral("type"), QStringLiteral("axis"), QStringLiteral("width"),
-    QStringLiteral("lineSpacing"), QStringLiteral("turnaround"), QStringLiteral("entryEnd"), QStringLiteral("speed")
-};
+const QSet<QString>& corridorKeys()
+{
+    static const QSet<QString> keys = {
+        QStringLiteral("id"), QStringLiteral("type"), QStringLiteral("axis"), QStringLiteral("width"),
+        QStringLiteral("lineSpacing"), QStringLiteral("turnaround"), QStringLiteral("entryEnd"), QStringLiteral("speed")
+    };
+    return keys;
+}
 
-const QSet<QString> kRallyKeys = {
-    QStringLiteral("id"), QStringLiteral("type"), QStringLiteral("lat"), QStringLiteral("lon")
-};
+const QSet<QString>& rallyKeys()
+{
+    static const QSet<QString> keys = {
+        QStringLiteral("id"), QStringLiteral("type"), QStringLiteral("lat"), QStringLiteral("lon")
+    };
+    return keys;
+}
 
-const QSet<QString> kFenceKeys = {
-    QStringLiteral("id"), QStringLiteral("type"), QStringLiteral("polygon"), QStringLiteral("inclusion")
-};
+const QSet<QString>& fenceKeys()
+{
+    static const QSet<QString> keys = {
+        QStringLiteral("id"), QStringLiteral("type"), QStringLiteral("polygon"), QStringLiteral("inclusion")
+    };
+    return keys;
+}
 
 QJsonObject unknownKeys(const QJsonObject& obj, const QSet<QString>& known)
 {
@@ -260,7 +288,7 @@ bool fenceFromJson(const QJsonObject& obj, FencePolygon* out, QString* outError)
         return false;
     }
     f.inclusion = inclusion.toBool(true);
-    f.extra = unknownKeys(obj, kFenceKeys);
+    f.extra = unknownKeys(obj, fenceKeys());
     *out = f;
     return true;
 }
@@ -293,14 +321,14 @@ bool itemFromJson(const QJsonObject& obj, MissionItem* outItem, QString* outErro
         w.holdTime = std::max(0.0, readDouble(obj, QStringLiteral("holdTime"), 0.0));
         w.acceptRadius = std::max(0.0, readDouble(obj, QStringLiteral("acceptRadius"), 0.0));
         w.speed = readOptionalDouble(obj, QStringLiteral("speed"));
-        if (w.speed && !(*w.speed > 0.0 && std::isfinite(*w.speed))) {
+        if (w.speed && (*w.speed <= 0.0 || !std::isfinite(*w.speed))) {
             w.speed.reset();
         }
         if (!checkMagnitude(w.holdTime, 86400.0, what, QStringLiteral("holdTime"), outError)
             || !checkMagnitude(w.acceptRadius, kMaxShapeExtentMeters, what, QStringLiteral("acceptRadius"), outError)) {
             return false;
         }
-        w.extra = unknownKeys(obj, kWaypointKeys);
+        w.extra = unknownKeys(obj, waypointKeys());
         *outItem = w;
         return true;
     }
@@ -329,11 +357,11 @@ bool itemFromJson(const QJsonObject& obj, MissionItem* outItem, QString* outErro
         }
         s.crosshatch = obj.value(QStringLiteral("crosshatch")).toBool(false);
         s.crosshatchSpacing = readOptionalDouble(obj, QStringLiteral("crosshatchSpacing"));
-        if (s.crosshatchSpacing && !(*s.crosshatchSpacing >= kMinLineSpacing && *s.crosshatchSpacing <= kMaxShapeExtentMeters)) {
+        if (s.crosshatchSpacing && (std::isnan(*s.crosshatchSpacing) || *s.crosshatchSpacing < kMinLineSpacing || *s.crosshatchSpacing > kMaxShapeExtentMeters)) {
             s.crosshatchSpacing.reset();
         }
         s.speed = readSpeed(obj);
-        s.extra = unknownKeys(obj, kSurveyKeys);
+        s.extra = unknownKeys(obj, surveyKeys());
         *outItem = s;
         return true;
     }
@@ -362,7 +390,7 @@ bool itemFromJson(const QJsonObject& obj, MissionItem* outItem, QString* outErro
             c.entryEnd.reset();
         }
         c.speed = readSpeed(obj);
-        c.extra = unknownKeys(obj, kCorridorKeys);
+        c.extra = unknownKeys(obj, corridorKeys());
         *outItem = c;
         return true;
     }
@@ -374,19 +402,19 @@ bool itemFromJson(const QJsonObject& obj, MissionItem* outItem, QString* outErro
 bool knownItemKey(const QString& type, const QString& key)
 {
     if (type == QStringLiteral("waypoint")) {
-        return kWaypointKeys.contains(key);
+        return waypointKeys().contains(key);
     }
     if (type == QStringLiteral("survey")) {
-        return kSurveyKeys.contains(key);
+        return surveyKeys().contains(key);
     }
     if (type == QStringLiteral("corridor")) {
-        return kCorridorKeys.contains(key);
+        return corridorKeys().contains(key);
     }
     if (type == QStringLiteral("rally")) {
-        return kRallyKeys.contains(key);
+        return rallyKeys().contains(key);
     }
     if (type == QStringLiteral("fence")) {
-        return kFenceKeys.contains(key);
+        return fenceKeys().contains(key);
     }
     return false;
 }
@@ -400,7 +428,7 @@ bool isOpaqueUri(const QString& pathOrUri)
 QJsonObject toJson(const MissionPlan& plan, const QString& appVersion)
 {
     QJsonObject root = plan.extra;
-    root.insert(QStringLiteral("fileType"), kFileType);
+    root.insert(QStringLiteral("fileType"), fileType());
     root.insert(QStringLiteral("formatVersion"), kFormatVersion);
     root.insert(QStringLiteral("appVersion"), appVersion);
     root.insert(QStringLiteral("name"), plan.name);
@@ -447,9 +475,9 @@ bool fromJson(const QJsonObject& input, MissionPlan* outPlan, QString* outError)
         if (outError) *outError = QStringLiteral("parse: output plan is null");
         return false;
     }
-    QJsonObject root = input;
-    if (root.value(QStringLiteral("fileType")).toString() != kFileType) {
-        if (outError) *outError = QStringLiteral("parse: fileType must be '%1'").arg(kFileType);
+    const QJsonObject& root = input;
+    if (root.value(QStringLiteral("fileType")).toString() != fileType()) {
+        if (outError) *outError = QStringLiteral("parse: fileType must be '%1'").arg(fileType());
         return false;
     }
     const int version = root.value(QStringLiteral("formatVersion")).toInt(0);
@@ -489,7 +517,7 @@ bool fromJson(const QJsonObject& input, MissionPlan* outPlan, QString* outError)
         if (outError) *outError = QStringLiteral("parse: more than %1 items").arg(kMaxPlanItems);
         return false;
     }
-    QSet<QString> ids{kHomeItemId};
+    QSet<QString> ids{homeItemId()};
     for (const auto& v : itemsArr) {
         if (!v.isObject()) {
             if (outError) *outError = QStringLiteral("parse: item must be an object");
@@ -525,7 +553,7 @@ bool fromJson(const QJsonObject& input, MissionPlan* outPlan, QString* outError)
             if (!readGeo(o, &r.pos, QStringLiteral("rally ") + r.id, outError)) {
                 return false;
             }
-            r.extra = unknownKeys(o, kRallyKeys);
+            r.extra = unknownKeys(o, rallyKeys());
             ids.insert(r.id);
             plan.rally.append(r);
         }
@@ -552,7 +580,7 @@ bool fromJson(const QJsonObject& input, MissionPlan* outPlan, QString* outError)
         }
     }
 
-    plan.extra = unknownKeys(root, kPlanKeys);
+    plan.extra = unknownKeys(root, planKeys());
     *outPlan = plan;
     return true;
 }
@@ -566,7 +594,7 @@ LoadResult loadFromFile(const QString& path)
         return r;
     }
     if (f.size() > kMaxMissionFileBytes) {
-        r.error = QCoreApplication::translate("MissionPlan", "load: file larger than %1 MB").arg(kMaxMissionFileBytes / (1024 * 1024));
+        r.error = QCoreApplication::translate("MissionPlan", "load: file larger than %1 MB").arg(kMaxMissionFileBytes / (qint64{1024} * 1024));
         return r;
     }
     QJsonParseError pe;

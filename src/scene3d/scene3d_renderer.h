@@ -76,6 +76,7 @@ private:
     UsblLayer::UsblLayerRenderImplementation usblLayerRenderImpl_;
     GeoJsonLayer::GeoJsonLayerRenderImplementation geoJsonLayerRenderImpl_;
     MissionLayer::MissionLayerRenderImplementation missionLayerRenderImpl_;
+    MissionLayer::MissionLayerRenderImplementation missionRunLayerRenderImpl_;
     RulerTool::RulerToolRenderImplementation rulerToolRenderImpl_;
     BottomTrack::BottomTrackRenderImplementation m_bottomTrackRenderImpl;
     PolygonGroup::PolygonGroupRenderImplementation m_polygonGroupRenderImpl;

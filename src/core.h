@@ -42,6 +42,7 @@
 #include "mosaic_index_provider.h"
 #include "ui_keepalive.h"
 #include "mission_plan_controller.h"
+#include "mission_run.h"
 
 
 class Core : public QObject
@@ -102,6 +103,7 @@ public:
     LinkManagerWrapper* getLinkManagerWrapperPtr() const;
     DeviceTopologyModel* getDeviceTopologyModelPtr() const;
     mission::MissionPlanController* getMissionPlanControllerPtr() const;
+    mission::MissionRunTracker* getMissionRunTrackerPtr() const;
 #ifdef SEPARATE_READING
     QString getTryOpenedfilePath() const;
     void stopDeviceManagerThread() const;
@@ -326,6 +328,7 @@ private slots:
     void onProcessingIdleChanged(bool idle);
     void onProcessingActivityChanged(const QVariantMap& activity);
     void onSendFrameInputToLogger(QUuid uuid, Link* link, const Parsers::FrameParser& frame);
+    void pushMissionRunTelemetry();
 
 private:
     /*methods*/
@@ -400,6 +403,7 @@ private:
     std::unique_ptr<LinkManagerWrapper> linkManagerWrapperPtr_;
     std::unique_ptr<DeviceTopologyModel> deviceTopologyModelPtr_;
     std::unique_ptr<mission::MissionPlanController> missionPlanControllerPtr_;
+    std::unique_ptr<mission::MissionRunTracker> missionRunTrackerPtr_;
     InternetManager* internetManager_;
     QThread* internetThread_;
     std::unique_ptr<map::TileManager> tileManager_;

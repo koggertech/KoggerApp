@@ -1280,6 +1280,7 @@ property Settings scene3dLayerVisibility: Settings {
     property bool usblHeadTrackDots: false
     property bool usblSignalDetails: true
     property bool usblMessageBytes: true
+    property bool missionRunCheckButton: true
 }
 property alias boatTrackVisible:   scene3dLayerVisibility.boatTrackCheckButton
 property alias bottomTrackVisible: scene3dLayerVisibility.bottomTrackCheckButton
@@ -1330,6 +1331,71 @@ function resetUsblDiagThresholds() {
     usblDiagPhaseMax   = t.phase
     usblDiagAltMinDb   = t.altDb
     usblDiagLevelMinDb = t.levelDb
+}
+
+property alias missionRunVisible:  scene3dLayerVisibility.missionRunCheckButton
+
+property Settings missionRunPrefs: Settings {
+    id: missionRunPrefs
+    category: "scene3d/missionRun"
+    property bool showFence: true
+    property bool showRally: true
+    property bool showHome: true
+    property bool showVehicleLine: true
+    property bool showLabels: true
+    property string aheadColor: "#3B82F6"
+    property string currentColor: "#FACC15"
+    property string doneColor: "#94A3B8"
+    property real routeWidth: 2.5
+    property real currentWidth: 3.5
+}
+property alias missionRunShowFence:       missionRunPrefs.showFence
+property alias missionRunShowRally:       missionRunPrefs.showRally
+property alias missionRunShowHome:        missionRunPrefs.showHome
+property alias missionRunShowVehicleLine: missionRunPrefs.showVehicleLine
+property alias missionRunShowLabels:      missionRunPrefs.showLabels
+property alias missionRunAheadColor:      missionRunPrefs.aheadColor
+property alias missionRunCurrentColor:    missionRunPrefs.currentColor
+property alias missionRunDoneColor:       missionRunPrefs.doneColor
+property alias missionRunRouteWidth:      missionRunPrefs.routeWidth
+property alias missionRunCurrentWidth:    missionRunPrefs.currentWidth
+readonly property var missionRunViewDefaults: ({
+    showFence: true, showRally: true, showHome: true, showVehicleLine: true, showLabels: true,
+    aheadColor: "#3B82F6", currentColor: "#FACC15", doneColor: "#94A3B8",
+    routeWidth: 2.5, currentWidth: 3.5
+})
+readonly property bool missionRunViewIsDefault: {
+    const defaults = missionRunViewDefaults
+    for (const key in defaults) {
+        if (missionRunPrefs[key] !== defaults[key])
+            return false
+    }
+    return true
+}
+function resetMissionRunView() {
+    const defaults = missionRunViewDefaults
+    for (const key in defaults)
+        missionRunPrefs[key] = defaults[key]
+}
+
+property Settings missionRunBehaviour: Settings {
+    id: missionRunBehaviour
+    category: "main/missionRun"
+    property bool readAutomatically: true
+    property bool restartAfterUpload: true
+}
+property alias missionRunReadAutomatically:  missionRunBehaviour.readAutomatically
+property alias missionRunRestartAfterUpload: missionRunBehaviour.restartAfterUpload
+
+property Binding _missionRunReadBinding: Binding {
+    target: (typeof missionRun !== "undefined") ? missionRun : null
+    property: "readAutomatically"
+    value: store.missionRunReadAutomatically
+}
+property Binding _missionRestartBinding: Binding {
+    target: (typeof deviceManagerWrapper !== "undefined") ? deviceManagerWrapper : null
+    property: "restartMissionAfterUpload"
+    value: store.missionRunRestartAfterUpload
 }
 
 property Settings videoStore: Settings {
@@ -2303,6 +2369,7 @@ function openCsvExportSettings()    { _openSettingsSubPage("csvExport") }
 function openConsoleSettings()      { _openSettingsSubPage("console") }
 function openAboutSettings()        { _openSettingsSubPage("about") }
 function openControlsHelp()         { _openSettingsSubPage("controls") }
+function openTutorialsSettings()    { _openSettingsSubPage("tutorials") }
 function openDeveloperSettings()    { _openSettingsSubPage("developer") }
 function openLicenseView(title, file) {
     licenseViewTitle = title

@@ -299,6 +299,11 @@ ApplicationWindow {
     // ESC priority — one layer per call, innermost first. Reorder to repriortize.
     // Layers 1–3 are gated by _activeLeafMode() so the focused pane's UI always wins.
     readonly property var _transientUiLayers: [
+        function() {
+            if (root._transientSweep)
+                return false
+            return tutorialOverlay.handleEscape()
+        },
         function() {  // HotkeysDialog (and other registered modal dialogs) — always wins.
             if (workspaceStore.activeHotkeysDialog
                     && typeof workspaceStore.activeHotkeysDialog.close === "function") {
@@ -1162,6 +1167,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "console"      ? qsTr("Console")
                      : workspaceStore.settingsSubPageKind === "about"        ? qsTr("About")
                      : workspaceStore.settingsSubPageKind === "controls"     ? qsTr("Controls")
+                     : workspaceStore.settingsSubPageKind === "tutorials"    ? qsTr("Tutorials")
                      : workspaceStore.settingsSubPageKind === "developer"    ? qsTr("Developer mode")
                      : workspaceStore.settingsSubPageKind === "license"      ? workspaceStore.licenseViewTitle
                      : workspaceStore.settingsSubPageKind === "createLayout" ? qsTr("Create layout")
@@ -1196,6 +1202,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "console"    ? consoleSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "about"      ? aboutPageComponent
                      : workspaceStore.settingsSubPageKind === "controls"   ? controlsHelpPageComponent
+                     : workspaceStore.settingsSubPageKind === "tutorials"  ? tutorialsPageComponent
                      : workspaceStore.settingsSubPageKind === "developer"  ? developerSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "license"    ? licensePageComponent
                      : workspaceStore.settingsSubPageKind === "createLayout" ? layoutCreateTabComponent
@@ -1505,6 +1512,14 @@ ApplicationWindow {
         }
 
         Component {
+            id: tutorialsPageComponent
+
+            TutorialsSettingsPage {
+                store: workspaceStore
+            }
+        }
+
+        Component {
             id: developerSettingsTabComponent
 
             DeveloperSettingsTab {
@@ -1601,6 +1616,13 @@ ApplicationWindow {
 
         NotificationsOverlay {
             hideImportant: workspaceStore.hideImportantNotifications
+            suppressed: tutorialOverlay.active
+        }
+
+        TutorialOverlay {
+            id: tutorialOverlay
+            store: workspaceStore
+            onCloseTransientUiRequested: root.closeAllTransientUi()
         }
 
         FileOpeningOverlay { }

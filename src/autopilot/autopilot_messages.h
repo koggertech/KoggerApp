@@ -9,15 +9,20 @@ constexpr uint8_t kMavGcsSystemId = 255;
 constexpr uint8_t kMavGcsComponentId = 190;
 constexpr uint8_t kMavModeFlagCustomModeEnabled = 1;
 constexpr float kMavArmForceMagic = 21196.0f;
+constexpr uint8_t kMavDataStreamExtendedStatus = 2;
+constexpr uint8_t kMavParamTypeInt8 = 2;
+constexpr int kMavParamIdLength = 16;
 
 enum MavCommandId : uint16_t {
     MavCmdDoSetMode = 176,
+    MavCmdDoSetMissionCurrent = 224,
     MavCmdMissionStart = 300,
     MavCmdComponentArmDisarm = 400,
+    MavCmdSetMessageInterval = 511,
     MavCmdRequestMessage = 512
 };
 
-enum MavResult : int {
+enum MavResult : int8_t {
     MavResultNotSent = -1,
     MavResultAccepted = 0,
     MavResultTemporarilyRejected = 1,
@@ -34,7 +39,27 @@ enum MavMissionType : uint8_t {
     MavMissionTypeRally = 2
 };
 
-enum MavMissionResult : int {
+enum MavSeverity : uint8_t {
+    MavSeverityEmergency = 0,
+    MavSeverityAlert = 1,
+    MavSeverityCritical = 2,
+    MavSeverityError = 3,
+    MavSeverityWarning = 4,
+    MavSeverityNotice = 5,
+    MavSeverityInfo = 6,
+    MavSeverityDebug = 7
+};
+
+enum MavMissionState : uint8_t {
+    MavMissionStateUnknown = 0,
+    MavMissionStateNoMission = 1,
+    MavMissionStateNotStarted = 2,
+    MavMissionStateActive = 3,
+    MavMissionStatePaused = 4,
+    MavMissionStateComplete = 5
+};
+
+enum MavMissionResult : uint8_t {
     MavMissionAccepted = 0,
     MavMissionError = 1,
     MavMissionUnsupportedFrame = 2,
@@ -86,6 +111,72 @@ struct __attribute__((packed)) MAVLink_MSG_MISSION_REQUEST
     uint8_t mission_type = 0;
 
     static uint32_t getID() { return 40; }
+};
+
+struct __attribute__((packed)) MAVLink_MSG_REQUEST_DATA_STREAM
+{
+    uint16_t req_message_rate = 0;
+    uint8_t target_system = 0;
+    uint8_t target_component = 0;
+    uint8_t req_stream_id = 0;
+    uint8_t start_stop = 0;
+
+    static uint32_t getID() { return 66; }
+    static int v1Length() { return 6; }
+};
+
+struct __attribute__((packed)) MAVLink_MSG_MISSION_SET_CURRENT
+{
+    uint16_t seq = 0;
+    uint8_t target_system = 0;
+    uint8_t target_component = 0;
+
+    static uint32_t getID() { return 41; }
+    static int v1Length() { return 4; }
+};
+
+struct __attribute__((packed)) MAVLink_MSG_MISSION_CURRENT
+{
+    uint16_t seq = 0;
+    uint16_t total = 0;
+    uint8_t mission_state = 0;
+    uint8_t mission_mode = 0;
+    uint32_t mission_id = 0;
+    uint32_t fence_id = 0;
+    uint32_t rally_points_id = 0;
+
+    static uint32_t getID() { return 42; }
+};
+
+struct __attribute__((packed)) MAVLink_MSG_MISSION_ITEM_REACHED
+{
+    uint16_t seq = 0;
+
+    static uint32_t getID() { return 46; }
+};
+
+struct __attribute__((packed)) MAVLink_MSG_NAV_CONTROLLER_OUTPUT
+{
+    float nav_roll = 0.0f;
+    float nav_pitch = 0.0f;
+    float alt_error = 0.0f;
+    float aspd_error = 0.0f;
+    float xtrack_error = 0.0f;
+    int16_t nav_bearing = 0;
+    int16_t target_bearing = 0;
+    uint16_t wp_dist = 0;
+
+    static uint32_t getID() { return 62; }
+};
+
+struct __attribute__((packed)) MAVLink_MSG_STATUSTEXT
+{
+    uint8_t severity = 0;
+    char text[50] = {};
+    uint16_t id = 0;
+    uint8_t chunk_seq = 0;
+
+    static uint32_t getID() { return 253; }
 };
 
 struct __attribute__((packed)) MAVLink_MSG_RADIO_STATUS
@@ -184,7 +275,38 @@ struct __attribute__((packed)) MAVLink_MSG_MISSION_ITEM_INT
     static int v1Length() { return 37; }
 };
 
+struct __attribute__((packed)) MAVLink_MSG_PARAM_VALUE
+{
+    float param_value = 0.0f;
+    uint16_t param_count = 0;
+    uint16_t param_index = 0;
+    char param_id[kMavParamIdLength] = {};
+    uint8_t param_type = 0;
+
+    static uint32_t getID() { return 22; }
+};
+
+struct __attribute__((packed)) MAVLink_MSG_PARAM_SET
+{
+    float param_value = 0.0f;
+    uint8_t target_system = 0;
+    uint8_t target_component = 0;
+    char param_id[kMavParamIdLength] = {};
+    uint8_t param_type = 0;
+
+    static uint32_t getID() { return 23; }
+    static int v1Length() { return 23; }
+};
+
 static_assert(sizeof(MAVLink_MSG_COMMAND_LONG) == 33);
+static_assert(sizeof(MAVLink_MSG_PARAM_VALUE) == 25);
+static_assert(sizeof(MAVLink_MSG_PARAM_SET) == 23);
+static_assert(sizeof(MAVLink_MSG_REQUEST_DATA_STREAM) == 6);
+static_assert(sizeof(MAVLink_MSG_MISSION_SET_CURRENT) == 4);
+static_assert(sizeof(MAVLink_MSG_MISSION_CURRENT) == 18);
+static_assert(sizeof(MAVLink_MSG_MISSION_ITEM_REACHED) == 2);
+static_assert(sizeof(MAVLink_MSG_NAV_CONTROLLER_OUTPUT) == 26);
+static_assert(sizeof(MAVLink_MSG_STATUSTEXT) == 54);
 static_assert(sizeof(MAVLink_MSG_RADIO_STATUS) == 9);
 static_assert(sizeof(MAVLink_MSG_MISSION_REQUEST_LIST) == 3);
 static_assert(sizeof(MAVLink_MSG_MISSION_COUNT) == 5);

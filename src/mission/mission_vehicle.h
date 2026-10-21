@@ -22,6 +22,13 @@ autopilot::MissionItems toVehicleFence(const FlatMission& mission);
 /** Rally points as MAV_MISSION_TYPE_RALLY items: NAV_RALLY_POINT, frame GLOBAL_RELATIVE_ALT, altitude 0. */
 autopilot::MissionItems toVehicleRally(const FlatMission& mission);
 
+/**
+ * Parameters written after the fence list is accepted, so the fence is enforced exactly when the
+ * vehicle holds zones: with zones FENCE_TYPE = polygons only (no circle around home),
+ * FENCE_ACTION = SmartRTL or Hold, then FENCE_ENABLE = 1; without zones FENCE_ENABLE = 0.
+ */
+autopilot::ParamWrites fenceParams(bool hasZones);
+
 /** Route, fence and rally in upload order; empty fence / rally batches clear those lists on the vehicle. */
 autopilot::MissionBatches toVehicleUpload(const FlatMission& mission);
 
@@ -37,7 +44,10 @@ struct VehicleImport {
  * is dropped, the first NAV_WAYPOINT becomes the start point, the others waypoints with hold,
  * accept radius and the speed of a DO_CHANGE_SPEED right before them (the one before the first
  * waypoint is the cruise speed). A final RTL / LOITER_UNLIM / waypoint back at the start becomes
- * the end action; without one the end action is None (the autopilot's own end behaviour).
+ * the end action, also when followed by a position-less LOITER_UNLIM (the "hold where reached"
+ * tail the expander adds after RTL; alone after a waypoint it reads as Hold) or, for the return to
+ * start, by a LOITER_UNLIM at the start point; without one the end action is None (the autopilot's
+ * own end behaviour).
  * Fence vertex runs become polygons, rally points rally items. Commands the editor has no item
  * for are counted, not kept.
  */
@@ -51,5 +61,14 @@ VehicleImport fromVehicle(const autopilot::MissionBatches& batches, double fallb
  * A list missing on either side counts as different.
  */
 bool sameOnVehicle(const autopilot::MissionBatches& vehicle, const autopilot::MissionBatches& planned);
+
+/** sameOnVehicle for the route list alone. */
+bool sameRouteOnVehicle(const autopilot::MissionBatches& vehicle, const autopilot::MissionBatches& planned);
+
+/**
+ * sameOnVehicle over the lists present in @p vehicle: the route must be there and match; a fence
+ * or rally list that was not read (absent from @p vehicle) is not compared.
+ */
+bool sameReadOnVehicle(const autopilot::MissionBatches& vehicle, const autopilot::MissionBatches& planned);
 
 } // namespace mission

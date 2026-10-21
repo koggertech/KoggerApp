@@ -44,6 +44,7 @@ qt_add_qml_module(kogger_app
         MissionCoordFields.qml
         MissionEditorOverlay.qml
         MissionItemCard.qml
+        MissionRunPointCard.qml
         MissionSliderRow.qml
         ModeSettingsPanel.qml
         MosaicPipelineStatus.qml
@@ -76,6 +77,8 @@ qt_add_qml_module(kogger_app
         SettingsSidebarBase.qml
         SplashOverlay.qml
         TgcSettingsTab.qml
+        TutorialOverlay.qml
+        TutorialsSettingsPage.qml
         UiSavingSettingsTab.qml
         StandBadgeRow.qml
         StandPanelPopup.qml
@@ -112,5 +115,6 @@ qt_add_qml_module(kogger_app
         LayoutTree.js
         RecorderStatus.js
         StandLogic.js
+        TutorialLayout.js
         UsblNodeLogic.js
         UsblPlanLogic.js)

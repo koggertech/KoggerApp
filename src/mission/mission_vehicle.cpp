@@ -14,6 +14,8 @@ namespace {
 constexpr uint16_t kCmdFenceVertexInclusion = 5001;
 constexpr uint16_t kCmdFenceVertexExclusion = 5002;
 constexpr uint16_t kCmdRallyPoint = 5100;
+constexpr float kFenceTypePolygon = 4.0f;
+constexpr float kFenceActionSmartRtlOrHold = 4.0f;
 
 int32_t toDegE7(double degrees)
 {
@@ -95,12 +97,26 @@ autopilot::MissionItems toVehicleRally(const FlatMission& mission)
     return out;
 }
 
+autopilot::ParamWrites fenceParams(bool hasZones)
+{
+    if (!hasZones) {
+        return { { QByteArrayLiteral("FENCE_ENABLE"), 0.0f, kMavParamTypeInt8 } };
+    }
+    return {
+        { QByteArrayLiteral("FENCE_TYPE"), kFenceTypePolygon, kMavParamTypeInt8 },
+        { QByteArrayLiteral("FENCE_ACTION"), kFenceActionSmartRtlOrHold, kMavParamTypeInt8 },
+        { QByteArrayLiteral("FENCE_ENABLE"), 1.0f, kMavParamTypeInt8 }
+    };
+}
+
 autopilot::MissionBatches toVehicleUpload(const FlatMission& mission)
 {
+    autopilot::MissionItems fence = toVehicleFence(mission);
+    autopilot::ParamWrites params = fenceParams(!fence.isEmpty());
     return {
-        { MavMissionTypeMission, toVehicleMission(mission) },
-        { MavMissionTypeFence, toVehicleFence(mission) },
-        { MavMissionTypeRally, toVehicleRally(mission) }
+        { MavMissionTypeMission, toVehicleMission(mission), {} },
+        { MavMissionTypeFence, std::move(fence), std::move(params) },
+        { MavMissionTypeRally, toVehicleRally(mission), {} }
     };
 }
 
@@ -159,10 +175,19 @@ void importRoute(const autopilot::MissionItems& items, VehicleImport& out)
     std::optional<double> pendingSpeed;
     bool endSeen = false;
     bool navSeen = false;
+    std::optional<GeoPoint> endLoiter;
 
     int lastCommand = int(items.size()) - 1;
     while (lastCommand > 0 && MavCmd(items.at(lastCommand).command) == MavCmd::DoChangeSpeed) {
         --lastCommand;
+    }
+    int holdTail = -1;
+    if (lastCommand > 0 && MavCmd(items.at(lastCommand).command) == MavCmd::NavLoiterUnlim && !hasPosition(items.at(lastCommand))) {
+        holdTail = lastCommand;
+        --lastCommand;
+        while (lastCommand > 0 && MavCmd(items.at(lastCommand).command) == MavCmd::DoChangeSpeed) {
+            --lastCommand;
+        }
     }
 
     for (int i = 1; i < items.size(); ++i) {
@@ -200,29 +225,43 @@ void importRoute(const autopilot::MissionItems& items, VehicleImport& out)
         }
         case MavCmd::NavReturnToLaunch:
         case MavCmd::NavLoiterUnlim:
+            if (i == holdTail) {
+                continue;
+            }
             if (i != lastCommand) {
                 ++out.skippedRouteCommands;
                 continue;
             }
             plan.settings.endAction = MavCmd(m.command) == MavCmd::NavReturnToLaunch ? EndAction::Rtl : EndAction::Hold;
+            if (MavCmd(m.command) == MavCmd::NavLoiterUnlim && hasPosition(m)) {
+                endLoiter = geoOf(m);
+            }
             endSeen = true;
             continue;
         }
         ++out.skippedRouteCommands;
     }
 
-    if (endSeen) {
-        return;
-    }
-    if (plan.home && !plan.items.isEmpty()) {
+    const auto lastIsStart = [&plan]() {
+        if (!plan.home || plan.items.isEmpty()) {
+            return false;
+        }
         const auto* last = std::get_if<WaypointItem>(&plan.items.last());
-        if (last && last->holdTime <= 0.0 && !last->speed && geoDistance(last->pos, *plan.home) <= kReturnToStartToleranceM) {
+        return last && last->holdTime <= 0.0 && !last->speed && geoDistance(last->pos, *plan.home) <= kReturnToStartToleranceM;
+    };
+    if (endSeen) {
+        if (endLoiter && plan.home && geoDistance(*endLoiter, *plan.home) <= kReturnToStartToleranceM && lastIsStart()) {
             plan.items.removeLast();
             plan.settings.endAction = EndAction::ReturnToStart;
-            return;
         }
+        return;
     }
-    plan.settings.endAction = EndAction::None;
+    if (lastIsStart()) {
+        plan.items.removeLast();
+        plan.settings.endAction = EndAction::ReturnToStart;
+        return;
+    }
+    plan.settings.endAction = holdTail >= 0 ? EndAction::Hold : EndAction::None;
 }
 
 void importFence(const autopilot::MissionItems& items, VehicleImport& out)
@@ -311,6 +350,24 @@ bool sameOnVehicle(const autopilot::MissionBatches& vehicle, const autopilot::Mi
     return sameList(vehicle, planned, MavMissionTypeMission)
         && sameList(vehicle, planned, MavMissionTypeFence)
         && sameList(vehicle, planned, MavMissionTypeRally);
+}
+
+bool sameRouteOnVehicle(const autopilot::MissionBatches& vehicle, const autopilot::MissionBatches& planned)
+{
+    return sameList(vehicle, planned, MavMissionTypeMission);
+}
+
+bool sameReadOnVehicle(const autopilot::MissionBatches& vehicle, const autopilot::MissionBatches& planned)
+{
+    if (!sameList(vehicle, planned, MavMissionTypeMission)) {
+        return false;
+    }
+    for (int type : { int(MavMissionTypeFence), int(MavMissionTypeRally) }) {
+        if (batchOf(vehicle, type) && !sameList(vehicle, planned, type)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 } // namespace mission

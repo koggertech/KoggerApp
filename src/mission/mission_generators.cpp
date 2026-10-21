@@ -333,7 +333,7 @@ GeneratedPath generateCorridor(const CorridorItem& item, const std::optional<Geo
     if (!pinched.isEmpty()) {
         std::sort(pinched.begin(), pinched.end());
         QStringList spans;
-        for (int s : pinched) {
+        for (int s : std::as_const(pinched)) {
             spans.append(QStringLiteral("%1–%2").arg(s + 1).arg(s + 2));
         }
         out.warnings.append(QCoreApplication::translate("MissionPlan", "Width %1 m is too large for the bends at vertices %2, lines trimmed there").arg(item.width, 0, 'f', 0).arg(spans.join(QStringLiteral(", "))));

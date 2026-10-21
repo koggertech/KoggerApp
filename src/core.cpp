@@ -11,6 +11,7 @@
 #include <QUrl>
 #include <QStandardPaths>
 #include <QDateTime>
+#include <QTimeZone>
 #include <QProcess>
 #include <QDesktopServices>
 #include <QClipboard>
@@ -48,6 +49,7 @@ Core::Core() :
     linkManagerWrapperPtr_(std::make_unique<LinkManagerWrapper>(this)),
     deviceTopologyModelPtr_(std::make_unique<DeviceTopologyModel>(deviceManagerWrapperPtr_.get(), linkManagerWrapperPtr_.get(), this)),
     missionPlanControllerPtr_(std::make_unique<mission::MissionPlanController>(this)),
+    missionRunTrackerPtr_(std::make_unique<mission::MissionRunTracker>(missionPlanControllerPtr_.get(), this)),
     internetManager_(nullptr),
     internetThread_(nullptr),
     dataProcessor_(nullptr),
@@ -274,10 +276,43 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     qmlAppEnginePtr_->rootContext()->setContextProperty("hotkeysController", nullptr);
 #endif
     connect(this, &Core::languageChanged, missionPlanControllerPtr_.get(), &mission::MissionPlanController::retranslate);
+    connect(this, &Core::languageChanged, missionRunTrackerPtr_.get(), &mission::MissionRunTracker::retranslate);
+    connect(missionPlanControllerPtr_.get(), &mission::MissionPlanController::uploadRequested,
+            missionRunTrackerPtr_.get(), &mission::MissionRunTracker::onUploadRequested);
     connect(missionPlanControllerPtr_.get(), &mission::MissionPlanController::uploadRequested,
             deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::uploadMission);
     connect(deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::missionDownloaded,
             missionPlanControllerPtr_.get(), &mission::MissionPlanController::receiveVehicleMission);
+    connect(deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::missionUploadFinished,
+            missionRunTrackerPtr_.get(), &mission::MissionRunTracker::onUploadFinished);
+    connect(deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::vehicleMissionRead,
+            missionRunTrackerPtr_.get(), &mission::MissionRunTracker::onVehicleMissionRead);
+    connect(missionRunTrackerPtr_.get(), &mission::MissionRunTracker::readRequested,
+            deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::readMissionSilently);
+    connect(deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::vruChanged, this, &Core::pushMissionRunTelemetry);
+    connect(deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::missionTransferChanged, this, &Core::pushMissionRunTelemetry);
+}
+
+void Core::pushMissionRunTelemetry()
+{
+    const DeviceManagerWrapper* dmw = deviceManagerWrapperPtr_.get();
+    const AutopilotState& state = dmw->autopilotState();
+    mission::RunTelemetry t;
+    t.online = state.online;
+    t.transferActive = dmw->missionTransferActive();
+    t.transferSilent = dmw->missionTransferSilent();
+    t.flightMode = state.flightMode;
+    t.currentSeq = state.mission.seq;
+    t.total = state.mission.total;
+    t.state = state.mission.state;
+    t.missionId = state.mission.missionId;
+    t.missionReports = state.mission.reports;
+    t.latitude = state.latitude;
+    t.longitude = state.longitude;
+    t.groundSpeed = state.velocityH;
+    t.homeLat = state.homeLat;
+    t.homeLon = state.homeLon;
+    missionRunTrackerPtr_->setTelemetry(t);
 }
 
 Console* Core::getConsolePtr()
@@ -313,6 +348,11 @@ DeviceTopologyModel* Core::getDeviceTopologyModelPtr() const
 mission::MissionPlanController* Core::getMissionPlanControllerPtr() const
 {
     return missionPlanControllerPtr_.get();
+}
+
+mission::MissionRunTracker* Core::getMissionRunTrackerPtr() const
+{
+    return missionRunTrackerPtr_.get();
 }
 
 void Core::setConsoleOutputEnabled(bool enabled)
@@ -1621,6 +1661,10 @@ bool Core::exportUSBLToCSV(QString filePath)
 
     logger_.dataExport("epoch,yaw,pitch,roll,north,east,ping_counter,carrier_counter,snr,azimuth_deg,elevation_deg,distance_m\n");
 
+    const auto finiteOrEmpty = [](double value) {
+        return std::isfinite(value) ? QString("%1").arg(value) : QString();
+    };
+
     for (int i = 0; i < datasetPtr_->size(); i += 1) {
         Epoch* epoch = datasetPtr_->fromIndex(i);
 
@@ -1631,16 +1675,15 @@ bool Core::exportUSBLToCSV(QString filePath)
 
         // pos.ned.isCoordinatesValid() && epoch->isAttAvail() &&
         if( epoch->isUsblSolutionAvailable()) {
-            QString row_data;
+            const auto usbl = epoch->usblSolution();
+            QStringList cells;
+            cells << QString::number(i)
+                  << finiteOrEmpty(epoch->yaw()) << finiteOrEmpty(epoch->pitch()) << finiteOrEmpty(epoch->roll())
+                  << finiteOrEmpty(boatPosNed.n) << finiteOrEmpty(boatPosNed.e)
+                  << QString::number(usbl.ping_counter) << QString::number(usbl.carrier_counter) << finiteOrEmpty(usbl.snr)
+                  << finiteOrEmpty(usbl.azimuth_deg) << finiteOrEmpty(usbl.elevation_deg) << finiteOrEmpty(usbl.distance_m);
 
-            row_data.append(QString("%1").arg(i));
-            row_data.append(QString(",%1,%2,%3").arg(epoch->yaw()).arg(epoch->pitch()).arg(epoch->roll()));
-            row_data.append(QString(",%1,%2").arg(boatPosNed.n).arg(boatPosNed.e));
-            row_data.append(QString(",%1,%2,%3").arg(epoch->usblSolution().ping_counter).arg(epoch->usblSolution().carrier_counter).arg(epoch->usblSolution().snr));
-            row_data.append(QString(",%1,%2,%3").arg(epoch->usblSolution().azimuth_deg).arg(epoch->usblSolution().elevation_deg).arg(epoch->usblSolution().distance_m));
-
-            row_data.append("\n");
-            logger_.dataExport(row_data);
+            logger_.dataExport(cells.join(QLatin1Char(',')) + QLatin1Char('\n'));
         }
     }
 
@@ -1667,6 +1710,9 @@ static const CsvFieldDef kCsvFieldDefs[] = {
     {"sonar_height",     true},
     {"bottom_height",    true},
     {"contact_info",     true},
+    {"gnss_altitude_msl", true},
+    {"gnss_utc_datetime", true},
+    {"gnss_altitude_ellipsoid", true},
 };
 }
 
@@ -1753,24 +1799,16 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
     bool sonar_height     = csvExportFieldEnabled("sonar_height");
     bool bottom_height    = csvExportFieldEnabled("bottom_height");
 
-    bool ext_pos_lla_find = false;
-    bool ext_pos_ned_find = false;
-
     bool contactInfo     = csvExportFieldEnabled("contact_info");
+    bool gnssAltitudeMsl = csvExportFieldEnabled("gnss_altitude_msl");
+    bool gnssUtc         = csvExportFieldEnabled("gnss_utc_datetime");
+    bool gnssAltitudeEll = csvExportFieldEnabled("gnss_altitude_ellipsoid");
 
     int row_cnt = datasetPtr_->size();
 
     auto btP = datasetPtr_->getBottomTrackParam();
     datasetPtr_->setChannelOffset(channelId, btP.offset.x, btP.offset.y, btP.offset.z);
     datasetPtr_->spatialProcessing();
-
-    for (int i = 0; i < row_cnt; i++) {
-        Epoch* epoch = datasetPtr_->fromIndex(i);
-
-        Position position = epoch->getExternalPosition();
-        ext_pos_lla_find |= position.lla.isValid();
-        ext_pos_ned_find |= position.ned.isValid();
-    }
 
     if (meas_nbr)
         logger_.dataExport("Number,");
@@ -1794,13 +1832,13 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
         }
     }
 
-    if (external_pos_lla && ext_pos_lla_find) {
+    if (external_pos_lla) {
         logger_.dataExport("ExtLatitude,");
         logger_.dataExport("ExtLongitude,");
         logger_.dataExport("ExtAltitude,");
     }
 
-    if (external_pos_neu && ext_pos_ned_find) {
+    if (external_pos_neu) {
         logger_.dataExport("ExtNorth,");
         logger_.dataExport("ExtEast,");
         logger_.dataExport("ExtHeight,");
@@ -1821,17 +1859,29 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
     if (rangefinder) {
         tailHeader << QStringLiteral("Rangefinder");
     }
-    if (!tailHeader.isEmpty()) {
-        logger_.dataExport(tailHeader.join(QLatin1Char(',')));
+    if (gnssAltitudeMsl) {
+        tailHeader << QStringLiteral("GNSS Altitude MSL");
+    }
+    if (gnssUtc) {
+        tailHeader << QStringLiteral("GNSS UTC DateTime");
+    }
+    if (gnssAltitudeEll) {
+        tailHeader << QStringLiteral("GNSS Altitude Ellipsoid");
     }
 
+    logger_.dataExport(tailHeader.join(QLatin1Char(',')));
     logger_.dataExport("\n");
+
+    const auto finiteOrEmpty = [](double value, int precision) {
+        return std::isfinite(value) ? QString::number(value, 'f', precision) : QString();
+    };
 
     int prev_timestamp = 0;
     int prev_unix = 0;
     int prev_event_id = 0;
+    bool eventSeen = false;
     float prev_dist_proc = 0;
-    double prev_lat = 0, prev_lon = 0;
+    double prev_lat = NAN, prev_lon = NAN;
 
     float decimation_m = decimation;
     float decimation_path = 0;
@@ -1881,13 +1931,14 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
                 prev_timestamp = epoch->eventTimestamp();
                 prev_event_id = epoch->eventID();
                 prev_unix = epoch->eventUnix();
+                eventSeen = true;
             }
-            row_data.append(QString("%1,%2,%3,").arg(prev_unix).arg(prev_timestamp).arg(prev_event_id));
+            row_data.append(eventSeen ? QString("%1,%2,%3,").arg(prev_unix).arg(prev_timestamp).arg(prev_event_id) : QStringLiteral(",,,"));
         }
 
         if (bottom_depth) {
             prev_dist_proc = epoch->distProccesing(channelId);
-            row_data.append(QString("%1,").arg((float)(prev_dist_proc)));
+            row_data.append(std::isfinite(prev_dist_proc) ? QString("%1,").arg((float)(prev_dist_proc)) : QStringLiteral(","));
         }
 
         if (pos_lat_lon) {
@@ -1896,13 +1947,13 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
                 prev_lon = epoch->lon();
             }
 
-            row_data.append(QString::number(prev_lat, 'f', 8));
+            row_data.append(finiteOrEmpty(prev_lat, 8));
             row_data.append(",");
-            row_data.append(QString::number(prev_lon, 'f', 8));
+            row_data.append(finiteOrEmpty(prev_lon, 8));
             row_data.append(",");
 
             if (pos_time) {
-                if (epoch->isPosAvail() && epoch->positionTimeUnix() != 0) {
+                if (epoch->isPosAvail() && epoch->positionTimeUnix() != 0 && epoch->time()->sec > 0) {
                     DateTime time_epoch = *epoch->time();
 
                     DateTime* dt = epoch->time();
@@ -1929,21 +1980,21 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
 
         Position position = epoch->getExternalPosition();
 
-        if (external_pos_lla && ext_pos_lla_find) {
-            row_data.append(QString::number(position.lla.latitude, 'f', 10));
+        if (external_pos_lla) {
+            row_data.append(finiteOrEmpty(position.lla.latitude, 10));
             row_data.append(",");
-            row_data.append(QString::number(position.lla.longitude, 'f', 10));
+            row_data.append(finiteOrEmpty(position.lla.longitude, 10));
             row_data.append(",");
-            row_data.append(QString::number(position.lla.altitude, 'f', 3));
+            row_data.append(finiteOrEmpty(position.lla.altitude, 3));
             row_data.append(",");
         }
 
-        if (external_pos_neu && ext_pos_ned_find) {
-            row_data.append(QString::number(position.ned.n, 'f', 10));
+        if (external_pos_neu) {
+            row_data.append(finiteOrEmpty(position.ned.n, 10));
             row_data.append(",");
-            row_data.append(QString::number(position.ned.e, 'f', 10));
+            row_data.append(finiteOrEmpty(position.ned.e, 10));
             row_data.append(",");
-            row_data.append(QString::number(-position.ned.d, 'f', 3));
+            row_data.append(finiteOrEmpty(-position.ned.d, 3));
             row_data.append(",");
         }
 
@@ -1975,20 +2026,29 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
         if (contactInfo) {
             if (hasContact) {
                 tailRow << contact.info
-                        << QString::number(contact.lat, 'f', 8)
-                        << QString::number(contact.lon, 'f', 8)
-                        << QString::number(contact.depth, 'f', 3)
+                        << finiteOrEmpty(contact.lat, 8)
+                        << finiteOrEmpty(contact.lon, 8)
+                        << finiteOrEmpty(contact.depth, 3)
                         << (contact.source == Epoch::Contact::Source::Scene3D ? QStringLiteral("3D") : QStringLiteral("2D"));
             } else {
                 tailRow << QString() << QString() << QString() << QString() << QString();
             }
         }
         if (rangefinder) {
-            tailRow << (epoch->distAvail() ? QString::number((float)epoch->rangeFinder()) : QStringLiteral("0"));
+            tailRow << (epoch->distAvail() && std::isfinite(epoch->rangeFinder()) ? QString::number((float)epoch->rangeFinder()) : QString());
         }
-        if (!tailRow.isEmpty()) {
-            row_data.append(tailRow.join(QLatin1Char(',')));
+        if (gnssAltitudeMsl) {
+            tailRow << finiteOrEmpty(epoch->gnssAltitudeMsl(), 3);
         }
+        if (gnssUtc) {
+            tailRow << (epoch->gnssUtcUs() != 0
+                            ? QDateTime::fromMSecsSinceEpoch(epoch->gnssUtcUs() / 1000, QTimeZone::utc()).toString(QStringLiteral("yyyy-MM-dd'T'HH:mm:ss.zzz'Z'"))
+                            : QString());
+        }
+        if (gnssAltitudeEll) {
+            tailRow << finiteOrEmpty(epoch->gnssAltitudeEllipsoid(), 3);
+        }
+        row_data.append(tailRow.join(QLatin1Char(',')));
 
         row_data.append("\n");
         logger_.dataExport(row_data);
@@ -2391,6 +2451,7 @@ void Core::UILoad(QObject* object, const QUrl& url)
     scene3dViewPtr_->setDataset(datasetPtr_);
     scene3dViewPtr_->setDataProcessorPtr(dataProcessor_);
     scene3dViewPtr_->setMissionPlan(missionPlanControllerPtr_.get());
+    scene3dViewPtr_->setMissionRun(missionRunTrackerPtr_.get());
 
     if (syncLoupePlot3dPtr_) {
         syncLoupePlot3dPtr_->setPlot(datasetPtr_);
@@ -3220,6 +3281,10 @@ void Core::createDeviceManagerConnections()
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::eventComplete,          datasetPtr_, &Dataset::addEvent,        deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::rangefinderComplete,    datasetPtr_, &Dataset::addRangefinder,  deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::positionComplete,       datasetPtr_, &Dataset::addPosition,     deviceManagerConnection));
+    deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::positionCompleteRTK,    datasetPtr_, &Dataset::addPositionRTK,  deviceManagerConnection));
+    deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssAltitudeMslComplete, datasetPtr_, &Dataset::addGnssAltitudeMsl, deviceManagerConnection));
+    deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssUtcComplete,     datasetPtr_, &Dataset::addGnssUtc,   deviceManagerConnection));
+    deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssAltitudeEllipsoidComplete, datasetPtr_, &Dataset::addGnssAltitudeEllipsoid, deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssVelocityComplete,   datasetPtr_, &Dataset::addGnssVelocity, deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::simpleNavV2Complete,   datasetPtr_, &Dataset::addSimpleNavV2,  deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::boatStatusComplete,     datasetPtr_, &Dataset::addBoatStatus,   deviceManagerConnection));
@@ -3269,6 +3334,9 @@ void Core::createDeviceManagerConnections()
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::rangefinderComplete,    datasetPtr_, &Dataset::addRangefinder,  deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::positionComplete,       datasetPtr_, &Dataset::addPosition,     deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::positionCompleteRTK,    datasetPtr_, &Dataset::addPositionRTK,  deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssAltitudeMslComplete, datasetPtr_, &Dataset::addGnssAltitudeMsl, deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssUtcComplete,     datasetPtr_, &Dataset::addGnssUtc,   deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssAltitudeEllipsoidComplete, datasetPtr_, &Dataset::addGnssAltitudeEllipsoid, deviceManagerConnection);
 
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::depthComplete,          datasetPtr_, &Dataset::addDepth,        deviceManagerConnection);
 

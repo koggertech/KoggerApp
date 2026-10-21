@@ -31,3 +31,5 @@ AGENTS.md
 docs/KoggerApp-Docs/
 tests/KoggerApp-Tests/
 *.py
+!scripts/tutorial_tool.py
+src/tutorial/generated/

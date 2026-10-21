@@ -581,6 +581,62 @@ Item {
                     setSyncLoupeUiAllowed(workspace.store.threeDLoupeAllowed)
             }
 
+            Binding {
+                target: scene3dView.missionRunController
+                property: "layerVisible"
+                value: workspace.store ? workspace.store.missionRunVisible : true
+            }
+            Binding {
+                target: scene3dView.missionRunController
+                property: "showFence"
+                value: workspace.store ? workspace.store.missionRunShowFence : true
+            }
+            Binding {
+                target: scene3dView.missionRunController
+                property: "showRally"
+                value: workspace.store ? workspace.store.missionRunShowRally : true
+            }
+            Binding {
+                target: scene3dView.missionRunController
+                property: "showHome"
+                value: workspace.store ? workspace.store.missionRunShowHome : true
+            }
+            Binding {
+                target: scene3dView.missionRunController
+                property: "showVehicleLine"
+                value: workspace.store ? workspace.store.missionRunShowVehicleLine : true
+            }
+            Binding {
+                target: scene3dView.missionRunController
+                property: "showLabels"
+                value: workspace.store ? workspace.store.missionRunShowLabels : true
+            }
+            Binding {
+                target: scene3dView.missionRunController
+                property: "aheadColor"
+                value: workspace.store ? workspace.store.missionRunAheadColor : "#3B82F6"
+            }
+            Binding {
+                target: scene3dView.missionRunController
+                property: "currentColor"
+                value: workspace.store ? workspace.store.missionRunCurrentColor : "#FACC15"
+            }
+            Binding {
+                target: scene3dView.missionRunController
+                property: "doneColor"
+                value: workspace.store ? workspace.store.missionRunDoneColor : "#94A3B8"
+            }
+            Binding {
+                target: scene3dView.missionRunController
+                property: "routeWidth"
+                value: workspace.store ? workspace.store.missionRunRouteWidth : 2.5
+            }
+            Binding {
+                target: scene3dView.missionRunController
+                property: "currentWidth"
+                value: workspace.store ? workspace.store.missionRunCurrentWidth : 3.5
+            }
+
             Connections {
                 target: workspace.store
                 function onThreeDLoupeAllowedChanged() { scene3dView._applyLoupeGate() }

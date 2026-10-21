@@ -364,6 +364,7 @@ void GraphicsScene3dRenderer::drawObjects()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     geoJsonLayerRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
+    missionRunLayerRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
     missionLayerRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
     rulerToolRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
     glDisable(GL_BLEND);

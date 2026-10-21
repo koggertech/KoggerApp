@@ -40,7 +40,7 @@ class MissionController : public QObject
     Q_PROPERTY(QPointF homeScreen     READ homeScreen                       NOTIFY homeScreenChanged)
 
 public:
-    enum Tool : int
+    enum Tool : uint8_t
     {
         ToolNone = 0,
         ToolHome = 1,
@@ -107,7 +107,7 @@ signals:
     void homeScreenChanged();
 
 private:
-    enum class HitKind : int
+    enum class HitKind : uint8_t
     {
         None,
         Vertex,
