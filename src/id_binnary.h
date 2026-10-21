@@ -1635,6 +1635,99 @@ protected:
 };
 static_assert(sizeof(IDBinUsblSolution::UsblSolution) == 152);
 
+class IDBinUsblDiag : public IDBin
+{
+    Q_OBJECT
+public:
+    explicit IDBinUsblDiag() : IDBin() {
+    }
+
+    ID id() override { return ID_USBL_DIAG; }
+    Resp parsePayload(FrameParser& proto) override;
+
+    struct UsblChannelDiag {
+        enum Flag : uint8_t {
+            ChUsedForDirection = 1u << 0,
+        };
+        static constexpr int16_t PhaseNone = -32768;
+        static constexpr int8_t  OffsetNone = -128;
+
+        float   peak_amp = NAN;
+        float   mf_noise_rms = NAN;
+        float   in_rms = NAN;
+        int16_t phase_cdeg = PhaseNone;
+        int16_t phase_resid_cdeg = PhaseNone;
+        int8_t  peak_offset = OffsetNone;
+        uint8_t flags = 0;
+    } __attribute__((packed));
+
+    struct UsblSignalDiag {
+        static constexpr ID getId() { return ID_USBL_DIAG; }
+        static constexpr Version getVer() { return v0; }
+        static constexpr int ChannelCapacity = 5;
+
+        enum DirFlag : uint16_t {
+            DirChannelsValid = 1u << 0,
+            DirValid         = 1u << 1,
+            DirSolverFailed  = 1u << 2,
+        };
+
+        enum Geometry : uint8_t {
+            GeometryUnknown = 0,
+            GeometryTetra4  = 1,
+            GeometryCrossA  = 2,
+            GeometryCrossB  = 3,
+        };
+
+        uint8_t  id = 0xFF;
+        uint8_t  role = 0;
+        uint8_t  cmd_id = 0xFF;
+        uint8_t  ch_count = 0;
+        int64_t  timestamp_us = 0;
+        uint32_t ping_counter = 0;
+        int64_t  carrier_counter = 0;
+
+        float    distance_m = NAN;
+        float    azimuth_deg = NAN;
+        float    elevation_deg = NAN;
+        float    sync_val = NAN;
+        float    sync_snr = NAN;
+        float    sync_first_val = NAN;
+        float    sync_first_snr = NAN;
+        float    sync_rms = NAN;
+        float    sync_first_main_max_msec = NAN;
+
+        float    dir_az_array_deg = NAN;
+        float    dir_el_array_deg = NAN;
+        uint16_t dir_flags = 0;
+        uint8_t  geometry_id = GeometryUnknown;
+        int8_t   peak_frac_offset = UsblChannelDiag::OffsetNone;
+
+        float    fit_misfit = NAN;
+        float    amp_nonuniformity = NAN;
+        float    phase_nonplanarity = NAN;
+        float    dir_width_az_deg = NAN;
+        float    dir_width_el_deg = NAN;
+        float    alt_margin_db = NAN;
+        float    mirror_margin_db = NAN;
+        float    array_coherence = NAN;
+
+        UsblChannelDiag ch[ChannelCapacity];
+
+        int channelCount() const { return ch_count < ChannelCapacity ? ch_count : ChannelCapacity; }
+    } __attribute__((packed));
+
+    bool isValid() const { return valid_; }
+    void invalidate() { valid_ = false; }
+    const UsblSignalDiag& diag() const { return data_; }
+
+protected:
+    UsblSignalDiag data_{};
+    bool valid_ = false;
+};
+static_assert(sizeof(IDBinUsblDiag::UsblChannelDiag) == 18);
+static_assert(sizeof(IDBinUsblDiag::UsblSignalDiag) == 194);
+
 class IDBinUsblControl : public IDBin
 {
     Q_OBJECT

@@ -1369,6 +1369,12 @@ ApplicationWindow {
             popupId: "widget:" + workspaceStore.usblPanelId
             siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds, root.autopilotPopupEffectiveBounds]
             siblingIdList: ["btEdit", "profiles", "autopilot"]
+            onAntennaDiagRequested: function(address) { usblAntennaDiagPopup.openFor(address) }
+        }
+
+        UsblAntennaDiagPopup {
+            id: usblAntennaDiagPopup
+            store: workspaceStore
         }
 
         ServoPanelPopup {

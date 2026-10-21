@@ -31,8 +31,65 @@ var FIELDS = [
     { key: "usblAge",          addressable: true,  digits: 1 },
     { key: "usblState",        addressable: true,  digits: 0 },
     { key: "usblAddress",      addressable: false, digits: 0 },
-    { key: "usblPresent",      addressable: false, digits: 0 }
+    { key: "usblPresent",      addressable: false, digits: 0 },
+    { key: "usblAntenna",      addressable: true,  digits: 0, source: "diag" },
+    { key: "usblFit",          addressable: true,  digits: 3, source: "diag" },
+    { key: "usblDirWidth",     addressable: true,  digits: 0, source: "diag" },
+    { key: "usblWeakCh",       addressable: true,  digits: 1, source: "diag" },
+    { key: "usblAltMargin",    addressable: true,  digits: 1, source: "diag" }
 ];
+
+var DIAG_DEFAULTS = { misfit: 0.065, amp: 0.051, phase: 0.019, altDb: 1.4, levelDb: -6.0 };
+var DEAD_BELOW_DB = 10;
+
+function diagThresholds(thr) {
+    var t = thr || {}, out = {};
+    for (var k in DIAG_DEFAULTS) {
+        var v = t[k];
+        out[k] = (typeof v === "number" && isFinite(v)) ? v : DIAG_DEFAULTS[k];
+    }
+    return out;
+}
+
+function _finite(v) { return typeof v === "number" && isFinite(v); }
+
+function levelSeverity(db, thr) {
+    if (!_finite(db)) return -1;
+    var t = diagThresholds(thr);
+    if (db < t.levelDb - DEAD_BELOW_DB) return 2;
+    if (db < t.levelDb) return 1;
+    return 0;
+}
+
+function metricSeverity(name, v, thr) {
+    if (!_finite(v)) return -1;
+    var t = diagThresholds(thr);
+    switch (name) {
+    case "misfit": return v > t.misfit ? 1 : 0;
+    case "amp":    return v > t.amp ? 1 : 0;
+    case "phase":  return v > t.phase ? 1 : 0;
+    case "altDb":  return v < t.altDb ? 1 : 0;
+    }
+    return 0;
+}
+
+function antennaCode(diag, thr) {
+    if (!diag) return "none";
+    if (diag.solverFailed) return "fault";
+    var lvl = levelSeverity(diag.minLevelDb, thr);
+    if (lvl === 2) return "fault";
+    if (lvl === 1) return "check";
+    if (!diag.dirValid) return "none";
+    if (metricSeverity("misfit", diag.misfit, thr) > 0 || metricSeverity("amp", diag.amp, thr) > 0
+            || metricSeverity("phase", diag.phase, thr) > 0 || metricSeverity("altDb", diag.altDb, thr) > 0)
+        return "check";
+    return "ok";
+}
+
+function isDiagField(key) {
+    var m = meta(key);
+    return !!m && m.source === "diag";
+}
 
 // ── a colour per address ─────────────────────────────────────────────────────
 //
@@ -150,10 +207,15 @@ function _dms(deg, isLat) {
 
 // A field is valid when the number behind it exists. A beacon that has never answered is
 // invalid for every field, which is what puts an em dash on screen rather than a zero.
-function isValid(key, entry, nowMs) {
+function isValid(key, entry, nowMs, thr) {
     if (key === "usblPresent") return true;
     if (!entry) return false;
     switch (key) {
+    case "usblAntenna":     return true;
+    case "usblFit":         return _num(entry.misfit, 3) !== null;
+    case "usblDirWidth":    return _num(entry.widthAz, 0) !== null && _num(entry.widthEl, 0) !== null;
+    case "usblWeakCh":      return entry.weakChannel >= 0 && _num(entry.minLevelDb, 1) !== null;
+    case "usblAltMargin":   return _num(entry.altDb, 1) !== null;
     case "usblRange":       return _num(entry.distance, 1) !== null;
     case "usblAzimuth":     return _num(entry.azimuth, 1) !== null;
     case "usblElevation":   return _num(entry.elevation, 1) !== null;
@@ -172,11 +234,19 @@ function isValid(key, entry, nowMs) {
 //
 // usblState and usblAge return codes/numbers for the same reason: "3.4 s ago" and
 // "TRACKING" are sentences, and sentences belong where qsTr is.
-function rawValue(key, entry, nowMs) {
+function rawValue(key, entry, nowMs, thr) {
     if (key === "usblPresent")
         return entry ? "yes" : "no";
+    if (key === "usblAntenna")
+        return antennaCode(entry, thr);
     if (!entry) return null;
     switch (key) {
+    case "usblFit":         return _num(entry.misfit, 3);
+    case "usblDirWidth":
+        var wa = _num(entry.widthAz, 0), we = _num(entry.widthEl, 0);
+        return (wa !== null && we !== null) ? (wa + "°×" + we + "°") : null;
+    case "usblWeakCh":      return entry.weakChannel >= 0 ? _num(entry.minLevelDb, 1) : null;
+    case "usblAltMargin":   return _num(entry.altDb, 1);
     case "usblRange":       return _num(entry.distance, 1);
     case "usblAzimuth":     return _num(entry.azimuth, 1);
     case "usblElevation":   return _num(entry.elevation, 1);
@@ -200,6 +270,9 @@ if (typeof module !== "undefined" && module.exports) {
         ADDRESS_COLORS: ADDRESS_COLORS, addressColor: addressColor,
         meta: meta, isUsblField: isUsblField, isAddressable: isAddressable,
         normAddr: normAddr, knownAddresses: knownAddresses, pick: pick,
-        ageMs: ageMs, stateCode: stateCode, isValid: isValid, rawValue: rawValue
+        ageMs: ageMs, stateCode: stateCode, isValid: isValid, rawValue: rawValue,
+        DIAG_DEFAULTS: DIAG_DEFAULTS, DEAD_BELOW_DB: DEAD_BELOW_DB, diagThresholds: diagThresholds,
+        levelSeverity: levelSeverity, metricSeverity: metricSeverity, antennaCode: antennaCode,
+        isDiagField: isDiagField
     };
 }

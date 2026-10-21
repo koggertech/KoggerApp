@@ -1295,6 +1295,43 @@ property alias usblMessageBytes:    scene3dLayerVisibility.usblMessageBytes
 // the scene actually draws, so leaving developer mode hides the layer without forgetting it.
 readonly property bool usblLayerActive: developerMode && usblVisible
 
+property Settings usblDiagSettings: Settings {
+    id: usblDiagSettings
+    category: "usbl/diag"
+    property bool antennaLine: true
+    property real misfitMax: 0.065
+    property real ampMax: 0.051
+    property real phaseMax: 0.019
+    property real altMinDb: 1.4
+    property real levelMinDb: -6.0
+    property bool levelAbsolute: false
+}
+property alias usblAntennaDiag:     usblDiagSettings.antennaLine
+property alias usblDiagMisfitMax:   usblDiagSettings.misfitMax
+property alias usblDiagAmpMax:      usblDiagSettings.ampMax
+property alias usblDiagPhaseMax:    usblDiagSettings.phaseMax
+property alias usblDiagAltMinDb:    usblDiagSettings.altMinDb
+property alias usblDiagLevelMinDb:  usblDiagSettings.levelMinDb
+property alias usblDiagLevelAbsolute: usblDiagSettings.levelAbsolute
+
+readonly property bool usblAntennaDiagActive: developerMode && usblAntennaDiag
+readonly property var usblDiagThresholds: ({
+    misfit:  usblDiagMisfitMax,
+    amp:     usblDiagAmpMax,
+    phase:   usblDiagPhaseMax,
+    altDb:   usblDiagAltMinDb,
+    levelDb: usblDiagLevelMinDb
+})
+
+function resetUsblDiagThresholds() {
+    var t = DataFieldCatalog.usblDiagDefaults()
+    usblDiagMisfitMax  = t.misfit
+    usblDiagAmpMax     = t.amp
+    usblDiagPhaseMax   = t.phase
+    usblDiagAltMinDb   = t.altDb
+    usblDiagLevelMinDb = t.levelDb
+}
+
 property Settings videoStore: Settings {
     id: videoStore
     category: "main/video"

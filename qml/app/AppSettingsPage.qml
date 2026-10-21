@@ -296,6 +296,14 @@ Column {
                 interactive: true
                 onClicked: core.exportUSBLToCSV(exportGroup.currentExportPath())
             }
+
+            KIslandRow {
+                visible: !!(root.store && root.store.developerMode)
+                label: qsTr("USBL diagnostics to CSV")
+                toolTipText: qsTr("Only the antenna diagnostics reports, one row per report")
+                interactive: true
+                onClicked: core.exportUsblDiagToCSV(exportGroup.currentExportPath())
+            }
         }
 
         // Cutting a stretch of epochs out of the opened .klf into a .klf of its own. A log is a
@@ -2263,6 +2271,128 @@ Column {
                     flat: true
                     checked: root.store ? root.store.usblMessageBytes : true
                     onToggled: if (root.store) root.store.usblMessageBytes = checked
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Antenna diagnostics")
+                toolTipText: qsTr("Show the array fit and the channel levels under each node in the USBL panel; click the line for the per-channel view")
+                interactive: true
+                onClicked: usblAntennaDiagSwitch.click()
+
+                KSwitch {
+                    id: usblAntennaDiagSwitch
+                    flat: true
+                    checked: root.store ? root.store.usblAntennaDiag : true
+                    onToggled: if (root.store) root.store.usblAntennaDiag = checked
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Fit misfit above")
+                toolTipText: qsTr("Antenna diagnostics: a misfit above this marks the antenna for a check")
+                slotWidth: Math.round(130 * AppPalette.scale)
+
+                KSpinBox {
+                    id: usblDiagMisfitSpin
+                    width: Math.round(130 * AppPalette.scale)
+                    height: Tokens.controlHMd
+                    from: 1; to: 500; stepSize: 1; divisor: 1000; decimals: 3
+                    onValueModified: function(v) { if (root.store) root.store.usblDiagMisfitMax = v / 1000 }
+                    Binding {
+                        target: usblDiagMisfitSpin
+                        property: "value"
+                        value: Math.round((root.store ? root.store.usblDiagMisfitMax : 0.065) * 1000)
+                    }
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Amplitude part above")
+                toolTipText: qsTr("Antenna diagnostics: the share of the misfit from unequal channel amplitudes")
+                slotWidth: Math.round(130 * AppPalette.scale)
+
+                KSpinBox {
+                    id: usblDiagAmpSpin
+                    width: Math.round(130 * AppPalette.scale)
+                    height: Tokens.controlHMd
+                    from: 1; to: 500; stepSize: 1; divisor: 1000; decimals: 3
+                    onValueModified: function(v) { if (root.store) root.store.usblDiagAmpMax = v / 1000 }
+                    Binding {
+                        target: usblDiagAmpSpin
+                        property: "value"
+                        value: Math.round((root.store ? root.store.usblDiagAmpMax : 0.051) * 1000)
+                    }
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Phase part above")
+                toolTipText: qsTr("Antenna diagnostics: the share of the misfit from channel phases off a plane wave")
+                slotWidth: Math.round(130 * AppPalette.scale)
+
+                KSpinBox {
+                    id: usblDiagPhaseSpin
+                    width: Math.round(130 * AppPalette.scale)
+                    height: Tokens.controlHMd
+                    from: 1; to: 500; stepSize: 1; divisor: 1000; decimals: 3
+                    onValueModified: function(v) { if (root.store) root.store.usblDiagPhaseMax = v / 1000 }
+                    Binding {
+                        target: usblDiagPhaseSpin
+                        property: "value"
+                        value: Math.round((root.store ? root.store.usblDiagPhaseMax : 0.019) * 1000)
+                    }
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Alt. margin below, dB")
+                toolTipText: qsTr("Antenna diagnostics: how much worse the best other direction must fit than the reported one")
+                slotWidth: Math.round(130 * AppPalette.scale)
+
+                KSpinBox {
+                    id: usblDiagAltSpin
+                    width: Math.round(130 * AppPalette.scale)
+                    height: Tokens.controlHMd
+                    from: 0; to: 200; stepSize: 1; divisor: 10; decimals: 1
+                    onValueModified: function(v) { if (root.store) root.store.usblDiagAltMinDb = v / 10 }
+                    Binding {
+                        target: usblDiagAltSpin
+                        property: "value"
+                        value: Math.round((root.store ? root.store.usblDiagAltMinDb : 1.4) * 10)
+                    }
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Channel level below, dB")
+                toolTipText: qsTr("Antenna diagnostics: a channel this far below the strongest is marked low, and 10 dB further down, dead")
+                slotWidth: Math.round(130 * AppPalette.scale)
+
+                KSpinBox {
+                    id: usblDiagLevelSpin
+                    width: Math.round(130 * AppPalette.scale)
+                    height: Tokens.controlHMd
+                    from: -300; to: 0; stepSize: 5; divisor: 10; decimals: 1
+                    onValueModified: function(v) { if (root.store) root.store.usblDiagLevelMinDb = v / 10 }
+                    Binding {
+                        target: usblDiagLevelSpin
+                        property: "value"
+                        value: Math.round((root.store ? root.store.usblDiagLevelMinDb : -6.0) * 10)
+                    }
+                }
+            }
+
+            KIslandRow {
+                label: qsTr("Antenna thresholds")
+                toolTipText: qsTr("Restore the default antenna diagnostics thresholds")
+                slotWidth: Math.round(130 * AppPalette.scale)
+
+                KButton {
+                    width: Math.round(130 * AppPalette.scale)
+                    height: Tokens.controlHMd
+                    text: qsTr("Defaults")
+                    onClicked: if (root.store) root.store.resetUsblDiagThresholds()
                 }
             }
         }

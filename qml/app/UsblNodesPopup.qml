@@ -31,6 +31,8 @@ BasePanePopup {
 
     property real widgetScale: 1.0
 
+    signal antennaDiagRequested(int address)
+
     readonly property real _bgAlpha: {
         var t = store ? store.usblPanelTransparency : 0
         return Math.max(0.15, Math.min(1, 1 - t / 100))
@@ -90,10 +92,16 @@ BasePanePopup {
     // The number the panel is READ for. The status bar took the top line, so this one carries
     // only the range, the azimuth and the RSRQ and can afford the size.
     readonly property real _rangeFont: Math.max(10, Math.round(22 * _k))
-    readonly property real _diagFont: Math.max(7, Math.round(10 * _k))
+    readonly property real _uLabelFont: Tokens.fontLg / Math.max(0.01, AppPalette.scale)
+    readonly property real _labelFont: Math.max(9, Math.round(_uLabelFont * _k))
+    readonly property real _diagFont: _labelFont
     readonly property bool _details: !!(store && store.usblSignalDetails)
     readonly property bool _bytes: !!(store && store.usblMessageBytes)
-    readonly property real _readSmallFont: Math.max(7, Math.round(11 * _k))
+    readonly property bool _antenna: !!(store && store.usblAntennaDiagActive)
+    readonly property var _diags: (_antenna && typeof dataset !== "undefined" && dataset && dataset.usblDiagnostics)
+                                  ? dataset.usblDiagnostics : ({})
+    readonly property real _readSmallFont: _labelFont
+    readonly property real _bytesFont: Math.max(7, Math.round(11 * _k))
     readonly property real _pairGap: Math.round(10 * _k)
     // Two lines plus the gutters between and around them. The status bar is a chip tall; the
     // readings line is as tall as the range number RENDERS, which at 22 px is taller than a
@@ -103,8 +111,9 @@ BasePanePopup {
     readonly property real _readH: Math.max(_chipH, Math.ceil(_protoRead.implicitHeight))
     readonly property real _diagH: _details ? Math.ceil(_protoDiag.implicitHeight) + Math.round(3 * _k) : 0
     readonly property real _bytesH: _bytes ? Math.ceil(_protoBytes.implicitHeight) + Math.round(3 * _k) : 0
+    readonly property real _antH: _antenna ? Math.ceil(_protoAnt.implicitHeight) + Math.round(3 * _k) : 0
     readonly property real _baseRowH: _chipH + _readH + Math.round(12 * _k)
-    readonly property real _rowH: _baseRowH + _bytesH + _diagH
+    readonly property real _rowH: _baseRowH + _bytesH + _diagH + _antH
     readonly property real _noteH: Math.round(18 * _k)
     readonly property real _gap: Math.round(4 * _k)
     readonly property real _pad: Math.round(8 * _k)
@@ -112,7 +121,8 @@ BasePanePopup {
     // Same scale space as the prototype, so nothing is converted and nothing accumulates.
     readonly property real _contentW: Math.ceil(Math.max(_protoStatus.implicitWidth,
                                                          _protoRead.implicitWidth,
-                                                         _details ? _protoDiag.implicitWidth : 0)
+                                                         _details ? _protoDiag.implicitWidth : 0,
+                                                         _antenna ? _protoAnt.implicitWidth : 0)
                                                 + _rowPadH * 2)
     readonly property real _contentH: {
         var n = Math.max(1, _shown)          // an empty plan still occupies one line, which says so
@@ -450,6 +460,136 @@ BasePanePopup {
         }
     }
 
+    component AntennaLine: Row {
+        id: antLine
+        property var diag: null
+        property var store: null
+        property bool current: true
+        property bool sampled: false
+        property real fontPixelSize: Tokens.fontXs
+        readonly property real _pairGap: Math.round(antLine.fontPixelSize * 0.7)
+        readonly property var _levels: {
+            if (antLine.sampled)
+                return [{ db: 0, used: true }, { db: 0, used: true }, { db: 0, used: true },
+                        { db: 0, used: true }, { db: 0, used: true }]
+            var ch = (antLine.diag && antLine.diag.channels) ? antLine.diag.channels : []
+            var out = []
+            for (var i = 0; i < ch.length; ++i)
+                out.push({ db: ch[i].levelDb, used: !!ch[i].used })
+            return out
+        }
+        readonly property string _code: antLine.sampled ? "check"
+                                                        : DataFieldCatalog.usblAntennaCode(antLine.diag, antLine.store)
+        spacing: Math.round(antLine.fontPixelSize * 0.3)
+        opacity: antLine.current ? 1.0 : 0.5
+
+        function _fmt(v, digits, suffix, sample) {
+            if (antLine.sampled) return sample
+            if (v === undefined || v === null || !isFinite(v)) return "—"
+            return v.toFixed(digits) + (suffix ? suffix : "")
+        }
+        function _ink(sev) {
+            if (sev === 2) return AppPalette.linkDownText
+            if (sev === 1) return AppPalette.linkIdleText
+            return AppPalette.text
+        }
+        function _metric(name) {
+            return antLine.sampled || !antLine.diag ? -1
+                                                    : DataFieldCatalog.usblMetricSeverity(name, antLine.diag[name], antLine.store)
+        }
+
+        TextMetrics { id: _mOk;    font.pixelSize: antLine.fontPixelSize; font.bold: true; text: DataFieldCatalog.usblAntennaText("ok") }
+        TextMetrics { id: _mCheck; font.pixelSize: antLine.fontPixelSize; font.bold: true; text: DataFieldCatalog.usblAntennaText("check") }
+        TextMetrics { id: _mFault; font.pixelSize: antLine.fontPixelSize; font.bold: true; text: DataFieldCatalog.usblAntennaText("fault") }
+
+        Text {
+            text: qsTr("Antenna")
+            color: AppPalette.textMuted
+            font.pixelSize: antLine.fontPixelSize
+        }
+        Text {
+            width: Math.ceil(Math.max(_mOk.width, _mCheck.width, _mFault.width))
+            text: DataFieldCatalog.usblAntennaText(antLine._code)
+            color: antLine._code === "fault" ? AppPalette.linkDownText
+                 : antLine._code === "check" ? AppPalette.linkIdleText
+                 : antLine._code === "ok" ? AppPalette.text : AppPalette.textMuted
+            font.pixelSize: antLine.fontPixelSize
+            font.bold: true
+        }
+        Text {
+            leftPadding: antLine._pairGap
+            text: qsTr("Fit")
+            color: AppPalette.textMuted
+            font.pixelSize: antLine.fontPixelSize
+        }
+        Text {
+            text: antLine._fmt(antLine.diag ? antLine.diag.misfit : NaN, 3, "", "0.888")
+            color: antLine._ink(antLine._metric("misfit"))
+            font.pixelSize: antLine.fontPixelSize
+            font.bold: true
+        }
+        Text {
+            leftPadding: antLine._pairGap
+            text: qsTr("Width")
+            color: AppPalette.textMuted
+            font.pixelSize: antLine.fontPixelSize
+        }
+        Text {
+            text: {
+                if (antLine.sampled) return "888°×888°"
+                var d = antLine.diag
+                if (!d || !isFinite(d.widthAz) || !isFinite(d.widthEl)) return "—"
+                return d.widthAz.toFixed(0) + "°×" + d.widthEl.toFixed(0) + "°"
+            }
+            color: AppPalette.text
+            font.pixelSize: antLine.fontPixelSize
+            font.bold: true
+        }
+        Text {
+            leftPadding: antLine._pairGap
+            text: qsTr("Alt")
+            color: AppPalette.textMuted
+            font.pixelSize: antLine.fontPixelSize
+        }
+        Text {
+            text: antLine._fmt(antLine.diag ? antLine.diag.altDb : NaN, 1, " " + qsTr("dB"), "-88.8 " + qsTr("dB"))
+            color: antLine._ink(antLine._metric("altDb"))
+            font.pixelSize: antLine.fontPixelSize
+            font.bold: true
+        }
+        Item {
+            id: _bars
+            readonly property real _h: Math.round(antLine.fontPixelSize * 0.9)
+            readonly property real _w: Math.max(2, Math.round(antLine.fontPixelSize * 0.4))
+            readonly property real _gap: Math.max(1, Math.round(antLine.fontPixelSize * 0.2))
+            readonly property int _slots: 5
+            width: antLine._pairGap + _slots * _w + (_slots - 1) * _gap
+            height: _h
+            anchors.verticalCenter: parent.verticalCenter
+
+            Repeater {
+                model: _bars._slots
+                delegate: Rectangle {
+                    required property int index
+                    readonly property var _l: index < antLine._levels.length ? antLine._levels[index] : null
+                    readonly property real _db: _l ? _l.db : NaN
+                    readonly property int _sev: antLine.sampled ? 0 : DataFieldCatalog.usblLevelSeverity(_db, antLine.store)
+                    readonly property color _c: _sev === 2 ? AppPalette.linkDownText
+                                              : _sev === 1 ? AppPalette.linkIdleText
+                                              : _sev === 0 ? AppPalette.textMuted : AppPalette.separator
+                    x: antLine._pairGap + index * (_bars._w + _bars._gap)
+                    width: _bars._w
+                    height: isFinite(_db) ? Math.max(2, Math.round(_bars._h * Math.max(0.15, 1 + _db / 30))) : 2
+                    y: _bars._h - height
+                    radius: Math.max(1, Math.round(_bars._w / 4))
+                    color: (_l && _l.used) || _sev < 0 ? _c : "transparent"
+                    border.width: (_l && !_l.used) ? 1 : 0
+                    border.color: _c
+                }
+            }
+        }
+    }
+
     // ── what the card has to be wide enough for ───────────────────────────
     // Laid out but never drawn, at exactly the sizes the real rows use, out of exactly the
     // components the real rows use -- a prototype that drifts from the row measures the wrong
@@ -508,7 +648,7 @@ BasePanePopup {
         Text {
             id: _protoBytes
             text: "0A"
-            font.pixelSize: root._readSmallFont
+            font.pixelSize: root._bytesFont
             font.family: "monospace"
         }
         SyncLine {
@@ -520,6 +660,11 @@ BasePanePopup {
             firstSnr: root._dbSample
             rms: root._ampDbSample
             lead: root._msSample
+        }
+        AntennaLine {
+            id: _protoAnt
+            fontPixelSize: root._diagFont
+            sampled: true
         }
     }
 
@@ -664,8 +809,9 @@ BasePanePopup {
                         anchors.left: parent.left
                         anchors.leftMargin: Math.round(6 * root._k)
                         anchors.bottom: root._bytes ? _lineBytes.top
-                                                    : (root._details ? _line3.top : parent.bottom)
-                        anchors.bottomMargin: Math.round((root._bytes || root._details ? 3 : 4) * root._k)
+                                                    : (root._details ? _line3.top
+                                                                     : (root._antenna ? _line4.top : parent.bottom))
+                        anchors.bottomMargin: Math.round((root._bytes || root._details || root._antenna ? 3 : 4) * root._k)
                         spacing: Math.round(6 * root._k)
 
                         RangeMark {
@@ -734,10 +880,10 @@ BasePanePopup {
                         anchors.leftMargin: Math.round(6 * root._k)
                         anchors.right: parent.right
                         anchors.rightMargin: Math.round(6 * root._k)
-                        anchors.bottom: root._details ? _line3.top : parent.bottom
-                        anchors.bottomMargin: Math.round((root._details ? 3 : 4) * root._k)
+                        anchors.bottom: root._details ? _line3.top : (root._antenna ? _line4.top : parent.bottom)
+                        anchors.bottomMargin: Math.round((root._details || root._antenna ? 3 : 4) * root._k)
                         elide: Text.ElideMiddle
-                        font.pixelSize: root._readSmallFont
+                        font.pixelSize: root._bytesFont
                         font.family: "monospace"
                         readonly property string _txt: {
                             var _t = root.engine ? root.engine.clockTick : ""
@@ -752,8 +898,8 @@ BasePanePopup {
                         visible: root._details
                         anchors.left: parent.left
                         anchors.leftMargin: Math.round(6 * root._k)
-                        anchors.bottom: parent.bottom
-                        anchors.bottomMargin: Math.round(4 * root._k)
+                        anchors.bottom: root._antenna ? _line4.top : parent.bottom
+                        anchors.bottomMargin: Math.round((root._antenna ? 3 : 4) * root._k)
                         fontPixelSize: root._diagFont
                         peak: root._ampDb(nodeRow._e ? nodeRow._e.syncVal : NaN)
                         peakSnr: root._num(nodeRow._e ? nodeRow._e.syncSnr : NaN, 0) + " " + qsTr("dB")
@@ -761,6 +907,27 @@ BasePanePopup {
                         firstSnr: root._num(nodeRow._e ? nodeRow._e.syncFirstSnr : NaN, 0) + " " + qsTr("dB")
                         rms: root._ampDb(nodeRow._e ? nodeRow._e.syncRms : NaN)
                         lead: root._num(nodeRow._e ? nodeRow._e.syncFirstMainMaxMs : NaN, 2) + " " + qsTr("ms")
+                    }
+
+                    AntennaLine {
+                        id: _line4
+                        visible: root._antenna
+                        anchors.left: parent.left
+                        anchors.leftMargin: Math.round(6 * root._k)
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: Math.round(4 * root._k)
+                        fontPixelSize: root._diagFont
+                        store: root.store
+                        diag: nodeRow._r ? (root._diags[String(nodeRow._r.addr)] || null) : null
+                        current: !diag || !nodeRow._e || diag.pingCounter === nodeRow._e.pingCounter
+
+                        TapHandler {
+                            enabled: !!nodeRow._r
+                            onTapped: root.antennaDiagRequested(nodeRow._r.addr)
+                        }
+                        HoverHandler {
+                            cursorShape: Qt.PointingHandCursor
+                        }
                     }
                 }
             }

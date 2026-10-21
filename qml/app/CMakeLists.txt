@@ -80,6 +80,7 @@ qt_add_qml_module(kogger_app
         StandBadgeRow.qml
         StandPanelPopup.qml
         UsblAddressBadge.qml
+        UsblAntennaDiagPopup.qml
         UsblButton.qml
         UsblCmdMark.qml
         UsblEngine.qml

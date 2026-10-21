@@ -1500,6 +1500,115 @@ bool Core::exportComplexToCSV(QString file_path) {
     return true;
 }
 
+namespace {
+
+using UsblDiagCsv = IDBinUsblDiag::UsblSignalDiag;
+using UsblChannelCsv = IDBinUsblDiag::UsblChannelDiag;
+
+const QString kUsblDiagCsvNan = QStringLiteral("nan");
+
+QString usblDiagCsvNum(double v)
+{
+    return std::isfinite(v) ? QString::number(v, 'g', 7) : kUsblDiagCsvNan;
+}
+
+QStringList usblDiagCsvHeader()
+{
+    QStringList header = {
+        "epoch", "id", "role", "cmd_id", "ch_count", "timestamp_us", "ping_counter", "carrier_counter",
+        "distance_m", "azimuth_deg", "elevation_deg",
+        "sync_val", "sync_snr", "sync_first_val", "sync_first_snr", "sync_rms", "sync_first_main_max_msec",
+        "dir_az_array_deg", "dir_el_array_deg", "dir_flags", "geometry_id", "peak_frac_offset_smp",
+        "fit_misfit", "amp_nonuniformity", "phase_nonplanarity", "dir_width_az_deg", "dir_width_el_deg",
+        "alt_margin_db", "mirror_margin_db", "array_coherence"
+    };
+    for (int i = 0; i < UsblDiagCsv::ChannelCapacity; ++i) {
+        const QString prefix = QStringLiteral("ch%1_").arg(i);
+        header << prefix + "peak_amp" << prefix + "mf_noise_rms" << prefix + "in_rms" << prefix + "phase_deg"
+               << prefix + "phase_resid_deg" << prefix + "peak_offset_smp" << prefix + "flags";
+    }
+    return header;
+}
+
+QStringList usblDiagCsvRow(int epoch, const UsblDiagCsv& d)
+{
+    QStringList row;
+    row << QString::number(epoch)
+        << QString::number(static_cast<int>(d.id))
+        << QString::number(static_cast<int>(d.role))
+        << QString::number(static_cast<int>(d.cmd_id))
+        << QString::number(static_cast<int>(d.ch_count))
+        << QString::number(static_cast<qlonglong>(d.timestamp_us))
+        << QString::number(static_cast<qulonglong>(d.ping_counter))
+        << QString::number(static_cast<qlonglong>(d.carrier_counter))
+        << usblDiagCsvNum(d.distance_m) << usblDiagCsvNum(d.azimuth_deg) << usblDiagCsvNum(d.elevation_deg)
+        << usblDiagCsvNum(d.sync_val) << usblDiagCsvNum(d.sync_snr)
+        << usblDiagCsvNum(d.sync_first_val) << usblDiagCsvNum(d.sync_first_snr)
+        << usblDiagCsvNum(d.sync_rms) << usblDiagCsvNum(d.sync_first_main_max_msec)
+        << usblDiagCsvNum(d.dir_az_array_deg) << usblDiagCsvNum(d.dir_el_array_deg)
+        << QString::number(static_cast<int>(d.dir_flags))
+        << QString::number(static_cast<int>(d.geometry_id))
+        << (d.peak_frac_offset == UsblChannelCsv::OffsetNone ? kUsblDiagCsvNan : usblDiagCsvNum(d.peak_frac_offset / 8.0))
+        << usblDiagCsvNum(d.fit_misfit) << usblDiagCsvNum(d.amp_nonuniformity) << usblDiagCsvNum(d.phase_nonplanarity)
+        << usblDiagCsvNum(d.dir_width_az_deg) << usblDiagCsvNum(d.dir_width_el_deg)
+        << usblDiagCsvNum(d.alt_margin_db) << usblDiagCsvNum(d.mirror_margin_db) << usblDiagCsvNum(d.array_coherence);
+
+    const bool channelsValid = d.dir_flags & UsblDiagCsv::DirChannelsValid;
+    const int channels = d.channelCount();
+    for (int i = 0; i < UsblDiagCsv::ChannelCapacity; ++i) {
+        if (!channelsValid || i >= channels) {
+            for (int k = 0; k < 7; ++k) {
+                row << kUsblDiagCsvNan;
+            }
+            continue;
+        }
+        const UsblChannelCsv& c = d.ch[i];
+        row << usblDiagCsvNum(c.peak_amp) << usblDiagCsvNum(c.mf_noise_rms) << usblDiagCsvNum(c.in_rms)
+            << (c.phase_cdeg == UsblChannelCsv::PhaseNone ? kUsblDiagCsvNan : usblDiagCsvNum(c.phase_cdeg / 100.0))
+            << (c.phase_resid_cdeg == UsblChannelCsv::PhaseNone ? kUsblDiagCsvNan : usblDiagCsvNum(c.phase_resid_cdeg / 100.0))
+            << (c.peak_offset == UsblChannelCsv::OffsetNone ? kUsblDiagCsvNan : usblDiagCsvNum(c.peak_offset / 8.0))
+            << QString::number(static_cast<int>(c.flags));
+    }
+    return row;
+}
+
+} // namespace
+
+bool Core::exportUsblDiagToCSV(QString filePath)
+{
+    const QString resolvedBasePath = this->resolveExportBasePath(filePath);
+    const QString export_file_name = buildExportFileStem(openedfilePath_);
+    const QString exportPath = resolvedBasePath + "/" + export_file_name + "_export_usbl_diag_csv.csv";
+    if (!logger_.creatExportStream(exportPath)) {
+        notifications.warning(tr("Export failed: %1").arg(exportPath));
+        return false;
+    }
+
+    logger_.dataExport(usblDiagCsvHeader().join(',') + QStringLiteral("\n"));
+
+    int reports = 0;
+    for (int i = 0; i < datasetPtr_->size(); ++i) {
+        Epoch* epoch = datasetPtr_->fromIndex(i);
+        if (epoch == nullptr) {
+            continue;
+        }
+        const auto diag = epoch->usblDiag();
+        if (!diag) {
+            continue;
+        }
+        logger_.dataExport(usblDiagCsvRow(i, *diag).join(',') + QStringLiteral("\n"));
+        ++reports;
+    }
+
+    if (!logger_.endExportStream()) {
+        notifications.warning(tr("Export failed: %1").arg(exportPath));
+        return false;
+    }
+    notifications.info(tr("USBL diagnostics exported to CSV (%1 reports): %2").arg(reports).arg(exportPath), exportPath);
+
+    return true;
+}
+
 bool Core::exportUSBLToCSV(QString filePath)
 {
     const QString resolvedBasePath = this->resolveExportBasePath(filePath);
@@ -3104,6 +3213,7 @@ void Core::createDeviceManagerConnections()
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::rawDataRecieved,        datasetPtr_, &Dataset::rawDataRecieved, deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::distComplete,           datasetPtr_, &Dataset::addDist,         deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::usblSolutionComplete,   datasetPtr_, &Dataset::addUsblSolution, deviceManagerConnection));
+    deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::usblDiagComplete,       datasetPtr_, &Dataset::addUsblDiag,     deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::dopplerBeamComlete,     datasetPtr_, &Dataset::addDopplerBeam,  deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::dvlSolutionComplete,    datasetPtr_, &Dataset::addDVLSolution,  deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::upgradeProgressChanged, this,        &Core::upgradeChanged,     deviceManagerConnection));
@@ -3151,6 +3261,7 @@ void Core::createDeviceManagerConnections()
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::rawDataRecieved,        datasetPtr_, &Dataset::rawDataRecieved, deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::distComplete,           datasetPtr_, &Dataset::addDist,         deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::usblSolutionComplete,   datasetPtr_, &Dataset::addUsblSolution, deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::usblDiagComplete,       datasetPtr_, &Dataset::addUsblDiag,     deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::dopplerBeamComlete,     datasetPtr_, &Dataset::addDopplerBeam,  deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::dvlSolutionComplete,    datasetPtr_, &Dataset::addDVLSolution,  deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::upgradeProgressChanged, this,        &Core::upgradeChanged,     deviceManagerConnection);

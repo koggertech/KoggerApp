@@ -266,6 +266,7 @@ signals:
     void encoderComplete(float e1, float e2, float e3);
 
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
+    void usblDiagComplete(IDBinUsblDiag::UsblSignalDiag data);
     void acousticNavSolutionComplete(IDBinUsblSolution::AcousticNavSolution data);
     void baseToBeaconComplete(IDBinUsblSolution::BaseToBeacon data);
     void beaconActivationComplete(uint8_t id);
@@ -438,6 +439,7 @@ protected:
     IDBinDVLMode* idDVLMode = nullptr;
 
     IDBinUsblSolution* idUSBL = nullptr;
+    IDBinUsblDiag* idUsblDiag = nullptr;
     IDBinUsblControl* idUSBLControl = nullptr;
     IDBinModemSolution* idModemSolution = nullptr;
 
@@ -580,6 +582,7 @@ protected slots:
     void receivedDVLMode    (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
     void receivedUSBL       (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedUsblDiag   (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedUSBLControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedModemSolution(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 

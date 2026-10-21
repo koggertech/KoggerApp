@@ -61,6 +61,7 @@ DevDriver::DevDriver(QObject *parent)
     regID(idDVLMode = new IDBinDVLMode(), &DevDriver::receivedDVLMode);
 
     regID(idUSBL = new IDBinUsblSolution(), &DevDriver::receivedUSBL);
+    regID(idUsblDiag = new IDBinUsblDiag(), &DevDriver::receivedUsblDiag);
 
     regID(idUSBLControl = new IDBinUsblControl(), &DevDriver::receivedUSBLControl);
 
@@ -2046,6 +2047,17 @@ void DevDriver::receivedUSBL(Parsers::Type type, Parsers::Version ver, Parsers::
     case IDBinUsblSolution::PayloadKind::None:
         break;
     }
+}
+
+void DevDriver::receivedUsblDiag(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
+{
+    Q_UNUSED(type);
+
+    if (resp != respNone || ver != v0 || !idUsblDiag->isValid()) {
+        return;
+    }
+
+    emit usblDiagComplete(idUsblDiag->diag());
 }
 
 void DevDriver::receivedUSBLControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)

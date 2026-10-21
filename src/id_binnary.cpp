@@ -1394,6 +1394,21 @@ void IDBinUsblSolution::enableBeaconOnce(float timeout) {
     emit binFrameOut(req_out);
 }
 
+Resp IDBinUsblDiag::parsePayload(FrameParser& proto)
+{
+    if (proto.ver() != UsblSignalDiag::getVer()) {
+        return respErrorVersion;
+    }
+
+    if (proto.readAvailable() < static_cast<int16_t>(sizeof(UsblSignalDiag))) {
+        return respErrorPayload;
+    }
+
+    data_ = proto.read<UsblSignalDiag>();
+    valid_ = true;
+    return respOk;
+}
+
 
 
 Resp IDBinUsblControl::parsePayload(FrameParser& proto)
