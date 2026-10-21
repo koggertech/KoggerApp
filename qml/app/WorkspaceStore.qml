@@ -1274,8 +1274,6 @@ property Settings scene3dLayerVisibility: Settings {
     property bool isobathsCheckButton: false
     property bool mosaicViewCheckButton: false
     property bool usblCheckButton: false
-    // false = a continuous line, true = a dot at every fix. Kept apart for the beacons and for
-    // the acoustic head: one is a beacon that mostly sits still, the other is the boat.
     property bool usblBeaconTrackDots: false
     property bool usblHeadTrackDots: false
     property bool usblSignalDetails: true
@@ -1292,13 +1290,11 @@ property alias usblHeadTrackDots:   scene3dLayerVisibility.usblHeadTrackDots
 property alias usblSignalDetails:   scene3dLayerVisibility.usblSignalDetails
 property alias usblMessageBytes:    scene3dLayerVisibility.usblMessageBytes
 
-// The USBL layer is developer-only. The toggle above keeps what the user chose; this decides what
-// the scene actually draws, so leaving developer mode hides the layer without forgetting it.
 readonly property bool usblLayerActive: developerMode && usblVisible
 
 property Settings usblDiagSettings: Settings {
     id: usblDiagSettings
-    category: "usbl/diag"
+    category: "main/usblDiag"
     property bool antennaLine: true
     property real misfitMax: 0.065
     property real ampMax: 0.051
@@ -1646,6 +1642,7 @@ property Settings consolePersist: Settings {
     property bool protoBinConsoled: false
     property bool nmeaConsoled: true
     property bool mavlinkConsoled: false
+    property bool usblConsoled: false
 }
 
 property alias consoleColorize: consolePersist.consColorize
@@ -1660,6 +1657,7 @@ readonly property int consoleMaxRowsDefault: 1500
 property alias consoleProtoBin: consolePersist.protoBinConsoled
 property alias consoleNmea: consolePersist.nmeaConsoled
 property alias consoleMavlink: consolePersist.mavlinkConsoled
+property alias consoleUsbl: consolePersist.usblConsoled
 
 function applyConsoleMaxRows() {
     if (typeof core !== "undefined" && core)
@@ -1672,12 +1670,14 @@ function applyConsoleProtoToggles() {
     deviceManagerWrapper.setProtoBinConsoled(consoleProtoBin)
     deviceManagerWrapper.setNmeaConsoled(consoleNmea)
     deviceManagerWrapper.setMavlinkConsoled(consoleMavlink)
+    deviceManagerWrapper.setUsblConsoled(consoleUsbl)
 }
 
 onConsoleMaxRowsChanged: applyConsoleMaxRows()
 onConsoleProtoBinChanged: applyConsoleProtoToggles()
 onConsoleNmeaChanged: applyConsoleProtoToggles()
 onConsoleMavlinkChanged: applyConsoleProtoToggles()
+onConsoleUsblChanged: applyConsoleProtoToggles()
 
 property Settings exportPersist: Settings {
     id: exportPersist

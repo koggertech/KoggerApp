@@ -35,7 +35,6 @@ extern Notifications notifications;
 namespace {
 QString channelDisplayName(const DatasetChannel& channel)
 {
-
     return channel.portName_.isEmpty() ? channel.channelId_.toShortName() : channel.portName_;
 }
 
@@ -842,8 +841,6 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
 
         openedfilePath_ = fileOpenedOk ? localfilePath : "";
         emit openedFilePathChanged();
-        // The byte index was built while the file was read; the fragment export appears only
-        // once there is something to cut.
         emit klfEpochIndexSizeChanged();
         if (fileOpenedOk) {
             if (!isAppend) appendedFiles_.clear();
@@ -1545,11 +1542,27 @@ namespace {
 using UsblDiagCsv = IDBinUsblDiag::UsblSignalDiag;
 using UsblChannelCsv = IDBinUsblDiag::UsblChannelDiag;
 
-const QString kUsblDiagCsvNan = QStringLiteral("nan");
-
 QString usblDiagCsvNum(double v)
 {
-    return std::isfinite(v) ? QString::number(v, 'g', 7) : kUsblDiagCsvNan;
+    return std::isfinite(v) ? QString("%1").arg(v) : QString();
+}
+
+const char* const kUsblChannelCsvFields[] = {
+    "peak_amp", "mf_noise_rms", "in_rms", "phase_deg", "phase_resid_deg", "peak_offset_smp", "flags"
+};
+constexpr int kUsblChannelCsvFieldCount = sizeof(kUsblChannelCsvFields) / sizeof(kUsblChannelCsvFields[0]);
+
+QString usblChannelCsvCell(const UsblChannelCsv& c, int field)
+{
+    switch (field) {
+    case 0: return usblDiagCsvNum(c.peak_amp);
+    case 1: return usblDiagCsvNum(c.mf_noise_rms);
+    case 2: return usblDiagCsvNum(c.in_rms);
+    case 3: return c.phase_cdeg == UsblChannelCsv::PhaseNone ? QString() : usblDiagCsvNum(c.phase_cdeg / 100.0);
+    case 4: return c.phase_resid_cdeg == UsblChannelCsv::PhaseNone ? QString() : usblDiagCsvNum(c.phase_resid_cdeg / 100.0);
+    case 5: return c.peak_offset == UsblChannelCsv::OffsetNone ? QString() : usblDiagCsvNum(c.peak_offset / 8.0);
+    default: return QString::number(static_cast<int>(c.flags));
+    }
 }
 
 QStringList usblDiagCsvHeader()
@@ -1562,10 +1575,10 @@ QStringList usblDiagCsvHeader()
         "fit_misfit", "amp_nonuniformity", "phase_nonplanarity", "dir_width_az_deg", "dir_width_el_deg",
         "alt_margin_db", "mirror_margin_db", "array_coherence"
     };
-    for (int i = 0; i < UsblDiagCsv::ChannelCapacity; ++i) {
-        const QString prefix = QStringLiteral("ch%1_").arg(i);
-        header << prefix + "peak_amp" << prefix + "mf_noise_rms" << prefix + "in_rms" << prefix + "phase_deg"
-               << prefix + "phase_resid_deg" << prefix + "peak_offset_smp" << prefix + "flags";
+    for (int field = 0; field < kUsblChannelCsvFieldCount; ++field) {
+        for (int i = 0; i < UsblDiagCsv::ChannelCapacity; ++i) {
+            header << QStringLiteral("ch%1_%2").arg(i).arg(QLatin1String(kUsblChannelCsvFields[field]));
+        }
     }
     return header;
 }
@@ -1588,31 +1601,22 @@ QStringList usblDiagCsvRow(int epoch, const UsblDiagCsv& d)
         << usblDiagCsvNum(d.dir_az_array_deg) << usblDiagCsvNum(d.dir_el_array_deg)
         << QString::number(static_cast<int>(d.dir_flags))
         << QString::number(static_cast<int>(d.geometry_id))
-        << (d.peak_frac_offset == UsblChannelCsv::OffsetNone ? kUsblDiagCsvNan : usblDiagCsvNum(d.peak_frac_offset / 8.0))
+        << (d.peak_frac_offset == UsblChannelCsv::OffsetNone ? QString() : usblDiagCsvNum(d.peak_frac_offset / 8.0))
         << usblDiagCsvNum(d.fit_misfit) << usblDiagCsvNum(d.amp_nonuniformity) << usblDiagCsvNum(d.phase_nonplanarity)
         << usblDiagCsvNum(d.dir_width_az_deg) << usblDiagCsvNum(d.dir_width_el_deg)
         << usblDiagCsvNum(d.alt_margin_db) << usblDiagCsvNum(d.mirror_margin_db) << usblDiagCsvNum(d.array_coherence);
 
     const bool channelsValid = d.dir_flags & UsblDiagCsv::DirChannelsValid;
     const int channels = d.channelCount();
-    for (int i = 0; i < UsblDiagCsv::ChannelCapacity; ++i) {
-        if (!channelsValid || i >= channels) {
-            for (int k = 0; k < 7; ++k) {
-                row << kUsblDiagCsvNan;
-            }
-            continue;
+    for (int field = 0; field < kUsblChannelCsvFieldCount; ++field) {
+        for (int i = 0; i < UsblDiagCsv::ChannelCapacity; ++i) {
+            row << ((channelsValid && i < channels) ? usblChannelCsvCell(d.ch[i], field) : QString());
         }
-        const UsblChannelCsv& c = d.ch[i];
-        row << usblDiagCsvNum(c.peak_amp) << usblDiagCsvNum(c.mf_noise_rms) << usblDiagCsvNum(c.in_rms)
-            << (c.phase_cdeg == UsblChannelCsv::PhaseNone ? kUsblDiagCsvNan : usblDiagCsvNum(c.phase_cdeg / 100.0))
-            << (c.phase_resid_cdeg == UsblChannelCsv::PhaseNone ? kUsblDiagCsvNan : usblDiagCsvNum(c.phase_resid_cdeg / 100.0))
-            << (c.peak_offset == UsblChannelCsv::OffsetNone ? kUsblDiagCsvNan : usblDiagCsvNum(c.peak_offset / 8.0))
-            << QString::number(static_cast<int>(c.flags));
     }
     return row;
 }
 
-} // namespace
+}
 
 bool Core::exportUsblDiagToCSV(QString filePath)
 {
@@ -1624,7 +1628,7 @@ bool Core::exportUsblDiagToCSV(QString filePath)
         return false;
     }
 
-    logger_.dataExport(usblDiagCsvHeader().join(',') + QStringLiteral("\n"));
+    logger_.dataExport(usblDiagCsvHeader().join(QLatin1Char(',')) + QLatin1Char('\n'));
 
     int reports = 0;
     for (int i = 0; i < datasetPtr_->size(); ++i) {
@@ -1636,7 +1640,7 @@ bool Core::exportUsblDiagToCSV(QString filePath)
         if (!diag) {
             continue;
         }
-        logger_.dataExport(usblDiagCsvRow(i, *diag).join(',') + QStringLiteral("\n"));
+        logger_.dataExport(usblDiagCsvRow(i, *diag).join(QLatin1Char(',')) + QLatin1Char('\n'));
         ++reports;
     }
 
@@ -2065,9 +2069,6 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
 
 namespace {
 
-// What a fragment has to carry from before its first byte: the frames that say how everything
-// after them is to be read. Only the LAST of each is kept, because these are state rather than
-// events -- an older copy is not history, it is a wrong answer.
 bool isKlfPrologueId(int id)
 {
     switch (id) {
@@ -2086,12 +2087,6 @@ bool isKlfPrologueId(int id)
     }
 }
 
-// The newest setup frame of each kind in `head`, in the order the device first sent them.
-//
-// Walked with the app's OWN parser, so a frame here is a frame exactly as it will be when the
-// fragment is opened -- checksum included, which is why the bytes can simply be copied out
-// rather than rebuilt. Proxy wrappers are skipped: their id field belongs to the frame nested
-// inside them and decodes to nonsense.
 QByteArray klfPrologue(QFile& src, qint64 limit)
 {
     constexpr qint64 kBlock = static_cast<qint64>(1) << 20;
@@ -2101,9 +2096,6 @@ QByteArray klfPrologue(QFile& src, qint64 limit)
 
     Parsers::FrameParser parser;
 
-    // Block by block, never the whole head at once: a survey log runs to gigabytes and the
-    // fragment cut out of it is usually a small part. The parser carries a frame across a block
-    // boundary itself, which is what lets this be read in pieces at all.
     for (qint64 left = limit; left > 0; ) {
         QByteArray block = src.read(qMin(left, kBlock));
         if (block.isEmpty()) {
@@ -2127,22 +2119,11 @@ QByteArray klfPrologue(QFile& src, qint64 limit)
                 continue;
             }
 
-            // ONLY what the app would actually learn a value from. IDBin::parse reads a payload
-            // when the frame is CONTENT without the resp bit, or a SETTING; everything else is a
-            // request for a value or an acknowledgement that one was set, and carries nothing.
-            //
-            // Keeping those was worse than useless. A log is full of them -- in a measured hour
-            // of survey, five sixths of the setup-id frames before the cut were requests and
-            // acks -- and since the newest frame per id wins, an empty GETTING sent later
-            // REPLACED the answer that actually held the setting.
             if (!((parser.type() == Parsers::CONTENT && !parser.resp())
                   || parser.type() == Parsers::SETTING)) {
                 continue;
             }
 
-            // Per device, per version, per protocol: two boards on one link are two devices to
-            // set up, a v1 setup frame does not replace the v0 one the reader may also be
-            // waiting for, and the same board reached over KP1 and over KP2 answers on both.
             const quint32 key = (static_cast<quint32>(parser.completeAsKBP2() ? 1 : 0) << 24)
                               | (static_cast<quint32>(parser.route()) << 16)
                               | (static_cast<quint32>(parser.id()) << 3)
@@ -2164,7 +2145,7 @@ QByteArray klfPrologue(QFile& src, qint64 limit)
     return out;
 }
 
-} // namespace
+}
 
 int Core::klfEpochIndexSize() const
 {
@@ -2187,7 +2168,6 @@ bool Core::exportKlfFragment(int firstEpoch, int lastEpoch, QString filePath)
         return false;
     }
 
-    // By reference: this is one entry per epoch, and a property read is not worth a copy of it.
     const QVector<qint64>& offsets = worker->epochFileOffsets();
     if (offsets.isEmpty()) {
         notifications.warning(tr("Export failed: this file has no epoch index"));
@@ -2210,12 +2190,9 @@ bool Core::exportKlfFragment(int firstEpoch, int lastEpoch, QString filePath)
 
     const qint64 total = src.size();
     const qint64 fromByte = qBound<qint64>(0, offsets.at(from), total);
-    // Up to the first byte of the epoch AFTER the range -- or the end of the file, when the range
-    // runs to the last one.
     const qint64 toByte = (to + 1 <= lastIndex) ? qBound<qint64>(fromByte, offsets.at(to + 1), total)
                                                 : total;
 
-    // Leaves the file positioned at the fragment's first byte, which is where the copy starts.
     const QByteArray prologue = klfPrologue(src, fromByte);
     if (src.pos() != fromByte && !src.seek(fromByte)) {
         notifications.warning(tr("Export failed: cannot read %1").arg(openedfilePath_));

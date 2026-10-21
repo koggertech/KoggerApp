@@ -61,11 +61,6 @@ Item {
             store: root.workspaceRoot ? root.workspaceRoot.store : null
         }
 
-        // The scene is showing a MOMENT, not now. Nothing else on screen says so, and while data
-        // is still arriving that is the difference between "the beacon stopped moving" and "you
-        // are looking at where it was". Visible only while pinned, so it costs nothing the rest
-        // of the time -- and it is the way out as well as the notice, because a notice you cannot
-        // act on is just a nag.
         Rectangle {
             id: livePill
 
@@ -90,6 +85,7 @@ Item {
             HoverHandler { id: pillHover; cursorShape: Qt.PointingHandCursor }
 
             TapHandler {
+                gesturePolicy: TapHandler.WithinBounds
                 onTapped: if (livePill.v) livePill.v.clearEpochSync()
             }
 

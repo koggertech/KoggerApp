@@ -102,6 +102,28 @@ QtObject {
     function usblAntennaText(code) { return _usblAntennaText[code] || "—" }
     function usblLevelSeverity(db, store) { return UsblLogic.levelSeverity(db, _usblDiagThr(store)) }
     function usblMetricSeverity(name, v, store) { return UsblLogic.metricSeverity(name, v, _usblDiagThr(store)) }
+    function usblSeverityInk(sev, okInk, noneInk) {
+        if (sev === 2) return AppPalette.linkDownText
+        if (sev === 1) return AppPalette.linkIdleText
+        var ok = okInk !== undefined ? okInk : AppPalette.text
+        if (sev === 0) return ok
+        return noneInk !== undefined ? noneInk : ok
+    }
+    function usblAntennaInk(code) {
+        if (code === "fault") return AppPalette.linkDownText
+        if (code === "check") return AppPalette.linkIdleText
+        if (code === "ok") return AppPalette.text
+        return AppPalette.textMuted
+    }
+    function formatAgeMs(ms) {
+        if (!(ms >= 0)) return ""
+        var s = ms / 1000
+        if (s < 10)  return s.toFixed(1) + qsTr(" s")
+        if (s < 100) return Math.round(s) + qsTr(" s")
+        var m = s / 60
+        if (m < 100) return Math.round(m) + qsTr(" m")
+        return Math.round(m / 60) + qsTr(" h")
+    }
     // `store.nowMs` is WorkspaceStore's 1 s clock, and it has to exist: Date.now() inside a
     // binding is evaluated once and then frozen, so without a ticking property `usblAge` and
     // the tracking/stale flip in `usblState` would only advance when some OTHER dependency

@@ -15,7 +15,6 @@ Column {
     required property var store
     property var targetPlot: null
     property var echograms: []
-    // The USBL plan, for the layer's node list. Owned in MainWindow for the session.
     property var usblPlan: null
 
     readonly property int instruments: theme ? theme.instrumentsGrade : 0
@@ -214,17 +213,13 @@ Column {
             return root.store ? root.store.exportFolderSource : ""
         }
 
-        // How many epochs of the opened .klf can be cut on. 0 hides the fragment block entirely:
-        // with no file open there is nothing to cut, and a permanently disabled row would only be
-        // something to wonder about.
         readonly property int klfEpochCount: (typeof core !== "undefined" && core) ? core.klfEpochIndexSize : 0
         readonly property real klfSpinWidth: Math.round(104 * AppPalette.scale)
         readonly property real klfSlotWidth: Math.round(120 * AppPalette.scale)
 
-        // Deferred, because `to` on both spin boxes is bound to the same count: setting a value
-        // in the same pass that grows the range can be clamped by a bound that has not updated
-        // yet, which would silently reset the bounds to 0.
         onKlfEpochCountChanged: Qt.callLater(exportGroup.resetKlfFragmentBounds)
+        Component.onCompleted: if (klfEpochCount > 0) Qt.callLater(exportGroup.resetKlfFragmentBounds)
+        readonly property bool klfRangeValid: klfFragmentFrom.value <= klfFragmentTo.value
         function resetKlfFragmentBounds() {
             klfFragmentFrom.value = 0
             klfFragmentTo.value = Math.max(0, exportGroup.klfEpochCount - 1)
@@ -334,10 +329,6 @@ Column {
             }
         }
 
-        // Cutting a stretch of epochs out of the opened .klf into a .klf of its own. A log is a
-        // plain run of frames, so the fragment is the byte range those epochs occupy, preceded by
-        // the last setup frame of each kind from before it -- the frames themselves are the
-        // device's originals, nothing is re-encoded and no checksum is recomputed.
         KIsland {
             visible: exportGroup.klfEpochCount > 0
 
@@ -388,12 +379,17 @@ Column {
 
             KIslandRow {
                 label: qsTr("Save KLF fragment")
-                caption: qsTr("%1 of %2 epochs")
-                            .arg(Math.max(0, klfFragmentTo.value - klfFragmentFrom.value + 1))
+                caption: exportGroup.klfRangeValid
+                         ? qsTr("%1 of %2 epochs")
+                            .arg(klfFragmentTo.value - klfFragmentFrom.value + 1)
                             .arg(exportGroup.klfEpochCount)
-                interactive: true
-                onClicked: core.exportKlfFragment(klfFragmentFrom.value, klfFragmentTo.value,
-                                                  exportGroup.currentExportPath())
+                         : qsTr("The first epoch is after the last one")
+                captionColor: exportGroup.klfRangeValid ? AppPalette.textSecond : AppPalette.linkIdleText
+                interactive: exportGroup.klfRangeValid
+                enabled: exportGroup.klfRangeValid
+                onClicked: if (exportGroup.klfRangeValid)
+                               core.exportKlfFragment(klfFragmentFrom.value, klfFragmentTo.value,
+                                                      exportGroup.currentExportPath())
             }
         }
     }
@@ -2226,8 +2222,6 @@ Column {
     }
 
 
-    // USBL — developer-only. One layer draws both the acoustic head track and the beacons; this
-    // is where the gear on its toolbar control lands.
     SettingsGroup {
         id: usblLayerGroup
         visible: !!(root.store && root.store.developerMode)
@@ -2243,8 +2237,6 @@ Column {
         }
         collapsedByDefault: true
 
-        // Two choices about the SAME tracks, kept apart because the two things they describe move
-        // differently: a beacon that mostly sits still reads better as dots, a boat as a line.
         Column {
             width: parent.width
             spacing: Tokens.spaceSm
@@ -2341,7 +2333,7 @@ Column {
                     Binding {
                         target: usblDiagMisfitSpin
                         property: "value"
-                        value: Math.round((root.store ? root.store.usblDiagMisfitMax : 0.065) * 1000)
+                        value: Math.round((root.store ? root.store.usblDiagMisfitMax : DataFieldCatalog.usblDiagDefaults().misfit) * 1000)
                     }
                 }
             }
@@ -2360,7 +2352,7 @@ Column {
                     Binding {
                         target: usblDiagAmpSpin
                         property: "value"
-                        value: Math.round((root.store ? root.store.usblDiagAmpMax : 0.051) * 1000)
+                        value: Math.round((root.store ? root.store.usblDiagAmpMax : DataFieldCatalog.usblDiagDefaults().amp) * 1000)
                     }
                 }
             }
@@ -2379,7 +2371,7 @@ Column {
                     Binding {
                         target: usblDiagPhaseSpin
                         property: "value"
-                        value: Math.round((root.store ? root.store.usblDiagPhaseMax : 0.019) * 1000)
+                        value: Math.round((root.store ? root.store.usblDiagPhaseMax : DataFieldCatalog.usblDiagDefaults().phase) * 1000)
                     }
                 }
             }
@@ -2398,7 +2390,7 @@ Column {
                     Binding {
                         target: usblDiagAltSpin
                         property: "value"
-                        value: Math.round((root.store ? root.store.usblDiagAltMinDb : 1.4) * 10)
+                        value: Math.round((root.store ? root.store.usblDiagAltMinDb : DataFieldCatalog.usblDiagDefaults().altDb) * 10)
                     }
                 }
             }
@@ -2417,7 +2409,7 @@ Column {
                     Binding {
                         target: usblDiagLevelSpin
                         property: "value"
-                        value: Math.round((root.store ? root.store.usblDiagLevelMinDb : -6.0) * 10)
+                        value: Math.round((root.store ? root.store.usblDiagLevelMinDb : DataFieldCatalog.usblDiagDefaults().levelDb) * 10)
                     }
                 }
             }
@@ -2436,9 +2428,6 @@ Column {
             }
         }
 
-        // One row per node the layer could draw: the plan's own, plus the addresses adopted from
-        // an opened file. The switch is the node's `active`, which is what mapSpec() already
-        // filters on -- so this list IS what the map shows, not a second opinion about it.
         Column {
             width: parent.width
             spacing: Tokens.spaceSm
@@ -2446,9 +2435,6 @@ Column {
             Text {
                 width: parent.width
                 visible: usblNodeRows.count === 0
-                // Not "they appear when a beacon answers": a live session's plan is deliberately
-                // never grown by an answer, and saying otherwise sends the operator away to wait
-                // for something that will not happen.
                 text: qsTr("No acoustic nodes yet. Open a file containing beacon fixes, or add an address below.")
                 color: AppPalette.textMuted
                 font.pixelSize: Tokens.fontSm
@@ -2462,7 +2448,6 @@ Column {
                 KIslandRow {
                     required property var modelData
                     label: qsTr("Address %1").arg(modelData.addr)
-                    // The identity colour, the same one the beacon is drawn with on the map.
                     labelColor: DataFieldCatalog.usblAddressColor(modelData.addr)
                     caption: modelData.fromFile ? qsTr("detected in the opened file")
                                                 : qsTr("from the interrogation plan")
@@ -2482,15 +2467,6 @@ Column {
                 }
             }
 
-            // Addresses no node carries yet. Beacon 0 is the case that forced this: a file's
-            // addresses are adopted on open, but a live session's plan is the operator's own and
-            // is deliberately never grown by a beacon answering -- so with a device connected the
-            // only node at 0 is one somebody put there, and until now the only way to put it there
-            // was the USBL panel's add-then-retype.
-            //
-            // This adds a plan node and nothing else. No byte reaches the device until Apply, and
-            // no address is interrogated until the schedule is started; both live in the USBL
-            // panel. What changes here is what the map is allowed to draw.
             Column {
                 width: parent.width
                 spacing: Tokens.spaceXs
@@ -2512,37 +2488,16 @@ Column {
                         id: usblAddableChips
                         model: root.usblPlan ? root.usblPlan.addableAddresses : []
 
-                        Rectangle {
-                            id: usblAddChip
+                        KButton {
                             required property var modelData
 
-                            implicitWidth: Math.round(44 * AppPalette.scale)
-                            implicitHeight: Tokens.controlHSm
-                            radius: Tokens.radiusSm
-                            color: usblAddChipArea.containsMouse ? AppPalette.cardHover : "transparent"
-                            border.width: Math.max(1, Math.round(1 * AppPalette.scale))
-                            border.color: AppPalette.border
-
-                            Text {
-                                anchors.centerIn: parent
-                                // The identity colour the beacon will be drawn in, so the chip
-                                // already looks like the thing it creates.
-                                text: "+ " + usblAddChip.modelData
-                                color: DataFieldCatalog.usblAddressColor(usblAddChip.modelData)
-                                font.pixelSize: Tokens.fontSm
-                                font.bold: true
-                            }
-
-                            MouseArea {
-                                id: usblAddChipArea
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    if (root.usblPlan)
-                                        root.usblPlan.addNodeAt(usblAddChip.modelData)
-                                }
-                            }
+                            width: Math.max(Tokens.controlHMd, implicitWidth)
+                            height: Tokens.controlHMd
+                            text: "+ " + modelData
+                            textColor: DataFieldCatalog.usblAddressColor(modelData)
+                            fontPixelSize: Tokens.fontSm
+                            toolTipText: qsTr("Add a node at address %1").arg(modelData)
+                            onClicked: if (root.usblPlan) root.usblPlan.addNodeAt(modelData)
                         }
                     }
                 }

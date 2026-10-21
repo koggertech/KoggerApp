@@ -50,8 +50,6 @@ DeviceSettingsGroup {
         suppressResponseUs = mon ? dev.usblRespSuppressResponseUs : fwSuppressUs
         suppressRequestUs = mon ? dev.usblRespSuppressRequestUs : fwSuppressUs
         receiveInIdle = mon ? dev.usblRespReceiveInIdle : false
-        if (respondSwitch) respondSwitch.checked = respond
-        if (idleSwitch) idleSwitch.checked = receiveInIdle
         _edited = false
     }
 
@@ -91,7 +89,11 @@ DeviceSettingsGroup {
         width: parent.width
         text: qsTr("Respond to interrogation")
         checked: respGroup.respond
-        onToggled: { respGroup.respond = checked; respGroup._edited = true }
+        onToggled: {
+            respGroup.respond = checked
+            respGroup._edited = true
+            checked = Qt.binding(function() { return respGroup.respond })
+        }
     }
 
     Text {
@@ -190,7 +192,11 @@ DeviceSettingsGroup {
         width: parent.width
         text: qsTr("Receive while idle")
         checked: respGroup.receiveInIdle
-        onToggled: { respGroup.receiveInIdle = checked; respGroup._edited = true }
+        onToggled: {
+            respGroup.receiveInIdle = checked
+            respGroup._edited = true
+            checked = Qt.binding(function() { return respGroup.receiveInIdle })
+        }
     }
 
     Rectangle { width: parent.width; height: 1; color: AppPalette.border }

@@ -342,11 +342,7 @@ public:
         return LLA(lastUsblSolution_.beacon_latitude, lastUsblSolution_.beacon_longitude).isCoordinatesValid();
     }
     QVariantMap getUsblSolutions() const;
-    // Every USBL solution from `firstEpoch` on, paired with the epoch that holds it, collected
-    // under ONE read lock. Callers used to walk the pool with fromIndex(), which takes no lock at
-    // all and hands back a raw pointer into a vector that addUsblSolution() may resize -- a long
-    // walk of it while a device is streaming is a read of memory that can move underneath.
-    QVector<QPair<int, IDBinUsblSolution::UsblSolution>> usblSolutionsFromEpoch(int firstEpoch) const;
+    QVector<QPair<int, IDBinUsblSolution::UsblSolution>> usblSolutionsFromEpoch(int firstEpoch, int* resumeEpoch = nullptr) const;
     QVariantMap getUsblDiagnostics() const;
     Q_INVOKABLE QVariantList usblDiagHistory(int address, int count) const;
 

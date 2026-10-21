@@ -96,16 +96,6 @@ public:
     QList<DevQProperty*> getDevList(BoardVersion ver);
     int calcAverageChartLosses();
 
-    // Byte offset, in the .klf now open, of the frame that opened each epoch: index N is epoch N.
-    // Built while the file is read, so it costs one comparison per frame and nothing afterwards --
-    // and it is what lets "export epochs N..M" be a byte range instead of a second, divergent
-    // implementation of what an epoch is. A .klf is a plain run of frames, so a range of them IS
-    // a valid file.
-    //
-    // EMPTY IN THE SEPARATE_READING BUILD. There the dataset is filled through queued
-    // connections, so the pool has not grown yet when a frame is handed over and every offset
-    // would land on the wrong epoch. Absent beats wrong: the export then says it has no index
-    // rather than cutting in the wrong place.
     const QVector<qint64>& epochFileOffsets() const { return epochFileOffsets_; }
 
 public slots:
@@ -130,6 +120,7 @@ public slots:
     void setProtoBinConsoled(bool isConsoled);
     void setNmeaConsoled(bool isConsoled);
     void setMavlinkConsoled(bool isConsoled);
+    void setUsblConsoled(bool isConsoled);
     void upgradeLastDev(QByteArray data);
 
     void beaconActivationReceive(uint8_t id);

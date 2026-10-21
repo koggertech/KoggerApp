@@ -66,9 +66,6 @@ QtObject {
     // A property, not a function: the add chip's `visible` is a binding, and a function
     // call in a binding is not a tracked dependency.
     readonly property bool canAddGroup: Logic.canAddGroup(st)
-    // The addresses an "add" can still offer. A PROPERTY, not a function, for the same reason
-    // canAddGroup is one: the chip row is a binding, and a function call in a binding is not a
-    // tracked dependency -- it would render once and then lie.
     readonly property var addableAddresses: Logic.addableAddresses(st)
 
     // Per-role apply state as a PROPERTY, not a function. A function call in a binding is
@@ -159,9 +156,6 @@ QtObject {
         return true
     }
 
-    // Same as _commit minus the write. Adopted nodes are session-scoped by definition, so saving
-    // them would be the one thing this feature must not do -- and a save here would also
-    // materialise the defaults into planJson for a user who never edited the plan at all.
     function _commitTransient(next) {
         if (next === st) return false
         st = next
@@ -170,30 +164,22 @@ QtObject {
         return true
     }
 
-    // ── addresses adopted from a replayed file ────────────────────────────
-    //
-    // A recorded log carries beacon fixes but cannot carry an interrogation plan, and the map
-    // layer presents only what the plan names -- so a file full of fixes drew nothing at all.
-    // Every address that actually answered is adopted as a node, which is what makes it drawable
-    // and togglable by the same machinery as a planned one.
-    //
-    // MARKED, because the two kinds must stay distinguishable: _save() drops these, the settings
-    // row says where the node came from, and dropAdopted() can take them all back when the file
-    // that justified them goes away.
     function adoptAddresses(addrs) {
         if (!addrs || !addrs.length) return
-        var next = Logic.clone(st)
         var have = {}
-        for (var i = 0; i < next.nodes.length; ++i) have[next.nodes[i].addr] = true
-        var added = false
+        for (var i = 0; i < st.nodes.length; ++i) have[st.nodes[i].addr] = true
+        var fresh = []
         for (var k = 0; k < addrs.length; ++k) {
             var a = addrs[k]
             if (typeof a !== "number" || a < 0 || have[a]) continue
             have[a] = true
-            next.nodes.push({ id: Logic._next(next), addr: a, active: true, refs: [], fromFile: true })
-            added = true
+            fresh.push(a)
         }
-        if (added) _commitTransient(next)
+        if (!fresh.length) return
+        var next = Logic.clone(st)
+        for (var f = 0; f < fresh.length; ++f)
+            next.nodes.push({ id: Logic._next(next), addr: fresh[f], active: true, refs: [], fromFile: true })
+        _commitTransient(next)
     }
 
     function dropAdopted() {
@@ -215,8 +201,6 @@ QtObject {
     // The plan check's fix for duplicate groups. Writes nothing new to the device.
     function joinGroups(ids)            { _commit(Logic.joinGroups(st, ids)) }
     function addNode()                  { _commit(Logic.addNode(st)) }
-    // At a named address, for the layer settings: the map draws what the plan names, so
-    // "show beacon 0" and "put a node at 0 in the plan" are the same act.
     function addNodeAt(addr)            { _commit(Logic.addNodeAt(st, addr)) }
     function removeNode(id)             { _commit(Logic.removeNode(st, id)) }
     function setNodeAddr(id, addr)      { _commit(Logic.setNodeAddr(st, id, addr)) }
@@ -326,8 +310,6 @@ QtObject {
     }
     property alias planJson: usblPersisted.planJson
 
-    // Adopted nodes are stripped here, never written. The plan is a real device's interrogation
-    // configuration; opening a log to look at it must not rewrite that configuration.
     function _save() {
         var persisted = Logic.clone(st)
         persisted.nodes = persisted.nodes.filter(function (n) { return !n.fromFile })

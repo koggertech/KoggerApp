@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <QObject>
 #include <QHash>
 #include <QMap>
@@ -140,6 +141,8 @@ public:
     int  recorderFreeSpace1m()           { return idRecorderStatus ? idRecorderStatus->freeSpace1m() : 0; }
     int  recorderDurationSeconds()       { return idRecorderStatus ? idRecorderStatus->recordingDurationSeconds() : 0; }
     int  recorderSecondsSinceLastWrite() { return idRecorderStatus ? idRecorderStatus->secondsSinceLastWrite() : 0; }
+
+    static inline std::atomic<bool> usblConsoled_{ false };
 
     bool navSensorStatusValid() { return idNavSensorStatus && idNavSensorStatus->isValid(); }
     bool navSensorStatusStale() { return navSensorStatusStale_; }
@@ -395,6 +398,7 @@ public slots:
                           int cmdIdAction = 0, int cmdIdReplacement = 0,
                           int addressAction = 0, int addressReplacement = 0);
     QString modemLastPayload() const;
+    QVariantMap modemPayloads() const { return modemByAddr_; }
 
 #ifdef SEPARATE_READING
     Q_INVOKABLE void initProcessTimerConnects();
@@ -647,6 +651,7 @@ private:
     };
     static constexpr int64_t usblAckTimeoutMsec = 2000;
     UsblControlMemory usblMem_;
+    QVariantMap modemByAddr_;
     std::array<uint8_t, 8> usblAck_{};
     std::array<int64_t, 8> usblAckSentMs_{};
 

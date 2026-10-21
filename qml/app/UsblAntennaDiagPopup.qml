@@ -10,7 +10,7 @@ Popup {
     property var history: []
     readonly property int historyLength: 120
 
-    readonly property var _diags: (typeof dataset !== "undefined" && dataset && dataset.usblDiagnostics)
+    readonly property var _diags: (visible && typeof dataset !== "undefined" && dataset && dataset.usblDiagnostics)
                                   ? dataset.usblDiagnostics : ({})
     readonly property var diag: address >= 0 ? (_diags[String(address)] || null) : null
     readonly property var _channels: (diag && diag.channels) ? diag.channels : []
@@ -42,6 +42,8 @@ Popup {
         return w
     }
     readonly property real _contentW: Math.max(_tableW, metricsRow.implicitWidth)
+    readonly property real _maxBodyW: Math.max(Math.round(320 * _s),
+                                               (parent ? parent.width : 1200) - 2 * padding - 2 * Tokens.spaceLg)
     readonly property real _maxBodyH: Math.max(Math.round(240 * _s),
                                                (parent ? parent.height : 900) - 2 * padding - 2 * Tokens.spaceLg)
 
@@ -68,16 +70,11 @@ Popup {
     }
 
     function _ink(sev) {
-        if (sev === 2) return AppPalette.linkDownText
-        if (sev === 1) return AppPalette.linkIdleText
-        return AppPalette.text
+        return DataFieldCatalog.usblSeverityInk(sev)
     }
 
     function _codeInk(code) {
-        if (code === "fault") return AppPalette.linkDownText
-        if (code === "check") return AppPalette.linkIdleText
-        if (code === "ok") return AppPalette.text
-        return AppPalette.textMuted
+        return DataFieldCatalog.usblAntennaInk(code)
     }
 
     function _geometryText(g) {
@@ -98,23 +95,13 @@ Popup {
         return qsTr("no analysis")
     }
 
-    function _fmtAge(ms) {
-        if (!(ms >= 0)) return ""
-        var s = ms / 1000
-        if (s < 10)  return s.toFixed(1) + qsTr(" s")
-        if (s < 100) return Math.round(s) + qsTr(" s")
-        var m = s / 60
-        if (m < 100) return Math.round(m) + qsTr(" m")
-        return Math.round(m / 60) + qsTr(" h")
-    }
-
     function _facts() {
         if (!diag)
             return qsTr("No diagnostics from this node yet")
         var parts = [_geometryText(diag.geometry), _stateText(diag.state),
                      qsTr("ping %1").arg(diag.pingCounter)]
         if (store && store.nowMs && diag.epochMs > 0)
-            parts.push(_fmtAge(Math.max(0, store.nowMs - diag.epochMs)))
+            parts.push(DataFieldCatalog.formatAgeMs(Math.max(0, store.nowMs - diag.epochMs)))
         if (!diag.joined)
             parts.push(qsTr("no matching solution"))
         return parts.join(" · ")
@@ -286,7 +273,7 @@ Popup {
             width: spark.compact ? spark.valueWidth : implicitWidth
             horizontalAlignment: Text.AlignRight
             text: isFinite(spark._last) ? spark._last.toFixed(spark.digits) + spark.suffix : "—"
-            color: spark._dead ? AppPalette.linkDownText : (spark._bad ? AppPalette.linkIdleText : AppPalette.text)
+            color: DataFieldCatalog.usblSeverityInk(spark._dead ? 2 : (spark._bad ? 1 : 0))
             font.pixelSize: spark.fontPixelSize
             font.bold: true
         }
@@ -399,18 +386,28 @@ Popup {
     }
 
     contentItem: Item {
-        implicitWidth: body.implicitWidth + (bodyScroll.visible ? bodyScroll.width + Tokens.spaceSm : 0)
-        implicitHeight: Math.min(body.implicitHeight, root._maxBodyH)
+        id: bodyBox
+        readonly property bool needV: body.implicitHeight > root._maxBodyH
+        readonly property real vReserve: needV ? bodyScroll.width + Tokens.spaceSm : 0
+        readonly property bool needH: body.implicitWidth + vReserve > root._maxBodyW
+        implicitWidth: Math.min(body.implicitWidth + vReserve, root._maxBodyW)
+        implicitHeight: Math.min(body.implicitHeight + (needH ? hScroll.implicitHeight : 0), root._maxBodyH)
 
         Flickable {
             id: bodyFlick
             anchors.fill: parent
-            anchors.rightMargin: bodyScroll.visible ? bodyScroll.width + Tokens.spaceSm : 0
+            anchors.rightMargin: bodyBox.vReserve
             contentWidth: body.implicitWidth
             contentHeight: body.implicitHeight
+            bottomMargin: bodyBox.needH ? hScroll.implicitHeight : 0
             clip: true
             boundsBehavior: Flickable.StopAtBounds
-            interactive: contentHeight > height + 1
+            interactive: bodyBox.needV || bodyBox.needH
+
+            ScrollBar.horizontal: ScrollBar {
+                id: hScroll
+                policy: bodyBox.needH ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+            }
 
             Column {
                 id: body
@@ -479,8 +476,6 @@ Popup {
                         property color ink: AppPalette.text
                         property color muted: AppPalette.textMuted
                         property color sep: AppPalette.separator
-                        property color low: AppPalette.linkIdleText
-                        property color dead: AppPalette.linkDownText
                         property color arrow: AppPalette.accent
                         property color face: AppPalette.bg
                         onDChanged: requestPaint()
@@ -554,7 +549,7 @@ Popup {
                             for (var i = 0; i < ch.length && i < pos.length; ++i) {
                                 var px = cx + pos[i][0] * unit, py = cy - pos[i][1] * unit
                                 var sev = DataFieldCatalog.usblLevelSeverity(ch[i].levelDb, root.store)
-                                var c = sev === 2 ? sketch.dead : (sev === 1 ? sketch.low : (sev === 0 ? sketch.ink : sketch.muted))
+                                var c = DataFieldCatalog.usblSeverityInk(sev, sketch.ink, sketch.muted)
                                 ctx.beginPath()
                                 ctx.arc(px, py, r, 0, 2 * Math.PI)
                                 ctx.fillStyle = sketch.face
@@ -821,7 +816,7 @@ Popup {
         KScrollBar {
             id: bodyScroll
             flickable: bodyFlick
-            visible: bodyFlick.contentHeight > bodyFlick.height + 1
+            visible: bodyBox.needV
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             anchors.right: parent.right

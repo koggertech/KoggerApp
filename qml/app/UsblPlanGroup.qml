@@ -816,12 +816,21 @@ DeviceSettingsGroup {
                     }
                     Text {
                         readonly property var _addrs: planGroup._transponderAddresses()
+                        readonly property var _onDevice: (planGroup.dev && planGroup.dev.usblRespFilterKnown)
+                                                         ? planGroup.dev.usblRespAcceptedAddresses : null
+                        readonly property bool _differs: !!_onDevice
+                                                         && _onDevice.slice().sort().join(",") !== _addrs.slice().sort().join(",")
                         visible: applyCard.modelData.role === "transponder" && !!planGroup.plan
-                        text: _addrs.length
-                              ? qsTr("answers addresses %1").arg(_addrs.join(", "))
-                              : qsTr("no active node: will answer nothing")
-                        color: _addrs.length ? AppPalette.textMuted : AppPalette.linkDownText
-                        font.pixelSize: Tokens.fontXs; font.bold: _addrs.length === 0
+                        text: _differs
+                              ? qsTr("device answers %1 (set in USBL response); plan: %2")
+                                .arg(_onDevice.length ? _onDevice.join(", ") : qsTr("none"))
+                                .arg(_addrs.length ? _addrs.join(", ") : qsTr("none"))
+                              : (_addrs.length
+                                 ? qsTr("answers addresses %1").arg(_addrs.join(", "))
+                                 : qsTr("no active node: will answer nothing"))
+                        color: _differs ? AppPalette.linkIdleText
+                                        : (_addrs.length ? AppPalette.textMuted : AppPalette.linkDownText)
+                        font.pixelSize: Tokens.fontXs; font.bold: _differs || _addrs.length === 0
                         width: parent.width; elide: Text.ElideRight
                     }
                     Text {

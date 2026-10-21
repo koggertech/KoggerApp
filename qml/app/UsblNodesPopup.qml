@@ -95,8 +95,8 @@ BasePanePopup {
     readonly property real _uLabelFont: Tokens.fontLg / Math.max(0.01, AppPalette.scale)
     readonly property real _labelFont: Math.max(9, Math.round(_uLabelFont * _k))
     readonly property real _diagFont: _labelFont
-    readonly property bool _details: !!(store && store.usblSignalDetails)
-    readonly property bool _bytes: !!(store && store.usblMessageBytes)
+    readonly property bool _details: !!(store && store.developerMode && store.usblSignalDetails)
+    readonly property bool _bytes: !!(store && store.developerMode && store.usblMessageBytes)
     readonly property bool _antenna: !!(store && store.usblAntennaDiagActive)
     readonly property var _diags: (_antenna && typeof dataset !== "undefined" && dataset && dataset.usblDiagnostics)
                                   ? dataset.usblDiagnostics : ({})
@@ -209,31 +209,21 @@ BasePanePopup {
     // night on the bench -- a string that grows without bound cannot share a column with
     // anything, and the slot it sits in would have to resize to hold it.
     function _fmtAge(ms) {
-        if (ms < 0) return ""
-        var s = ms / 1000
-        if (s < 10)  return s.toFixed(1) + qsTr(" s")
-        if (s < 100) return Math.round(s) + qsTr(" s")
-        var m = s / 60
-        if (m < 100) return Math.round(m) + qsTr(" m")
-        return Math.round(m / 60) + qsTr(" h")
+        return DataFieldCatalog.formatAgeMs(ms)
     }
     function _num(v, digits, suffix) {
         if (v === undefined || v === null || isNaN(v)) return "—"
         return v.toFixed(digits) + (suffix ? suffix : "")
     }
     readonly property var _dev: engine ? engine.dev : null
-    property real _modemAtMs: 0
-    Connections {
-        target: root._dev
-        enabled: !!root._dev
-        function onModemPayloadChanged() { root._modemAtMs = Date.now() }
-    }
     function _modemText(addr) {
-        if (!_dev || _dev.modemLastBitLength <= 0 || _dev.modemLastAddressFrom !== addr)
+        var m = _dev ? _dev.modemPayloads : null
+        var e = m ? m[String(addr)] : null
+        if (!e || !(e.bits > 0))
             return "—"
-        var age = _modemAtMs > 0 ? _fmtAge(Math.max(0, Date.now() - _modemAtMs)) : ""
-        return _dev.modemLastPayload
-               + qsTr(" · %1 bit").arg(_dev.modemLastBitLength)
+        var age = e.atMs > 0 ? _fmtAge(Math.max(0, Date.now() - e.atMs)) : ""
+        return e.payload
+               + qsTr(" · %1 bit").arg(e.bits)
                + (age.length ? " · " + age : "")
     }
 
@@ -489,9 +479,7 @@ BasePanePopup {
             return v.toFixed(digits) + (suffix ? suffix : "")
         }
         function _ink(sev) {
-            if (sev === 2) return AppPalette.linkDownText
-            if (sev === 1) return AppPalette.linkIdleText
-            return AppPalette.text
+            return DataFieldCatalog.usblSeverityInk(sev)
         }
         function _metric(name) {
             return antLine.sampled || !antLine.diag ? -1
@@ -510,9 +498,7 @@ BasePanePopup {
         Text {
             width: Math.ceil(Math.max(_mOk.width, _mCheck.width, _mFault.width))
             text: DataFieldCatalog.usblAntennaText(antLine._code)
-            color: antLine._code === "fault" ? AppPalette.linkDownText
-                 : antLine._code === "check" ? AppPalette.linkIdleText
-                 : antLine._code === "ok" ? AppPalette.text : AppPalette.textMuted
+            color: DataFieldCatalog.usblAntennaInk(antLine._code)
             font.pixelSize: antLine.fontPixelSize
             font.bold: true
         }
@@ -574,9 +560,7 @@ BasePanePopup {
                     readonly property var _l: index < antLine._levels.length ? antLine._levels[index] : null
                     readonly property real _db: _l ? _l.db : NaN
                     readonly property int _sev: antLine.sampled ? 0 : DataFieldCatalog.usblLevelSeverity(_db, antLine.store)
-                    readonly property color _c: _sev === 2 ? AppPalette.linkDownText
-                                              : _sev === 1 ? AppPalette.linkIdleText
-                                              : _sev === 0 ? AppPalette.textMuted : AppPalette.separator
+                    readonly property color _c: DataFieldCatalog.usblSeverityInk(_sev, AppPalette.textMuted, AppPalette.separator)
                     x: antLine._pairGap + index * (_bars._w + _bars._gap)
                     width: _bars._w
                     height: isFinite(_db) ? Math.max(2, Math.round(_bars._h * Math.max(0.15, 1 + _db / 30))) : 2
@@ -587,6 +571,13 @@ BasePanePopup {
                     border.color: _c
                 }
             }
+        }
+        Text {
+            leftPadding: antLine._pairGap
+            text: "›"
+            color: AppPalette.textMuted
+            font.pixelSize: antLine.fontPixelSize
+            font.bold: true
         }
     }
 

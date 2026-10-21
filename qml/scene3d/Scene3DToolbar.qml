@@ -215,9 +215,6 @@ Item  {
             onMenuOpenChanged: if (menuOpen) { boatTrackCtl.menuOpen = false; bottomTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false; usblCtl.menuOpen = false; missionCtl.menuOpen = false }
         }
 
-        // USBL — developer-only. The layer itself already draws the acoustic head track and the
-        // beacons; this gives it the same control the other layers have. Hidden outside developer
-        // mode, and the scene stops drawing it too (store.usblLayerActive).
         Scene3DLayerControl {
             id: usblCtl
             visible: !!(toolbarRoot.store && toolbarRoot.store.developerMode)

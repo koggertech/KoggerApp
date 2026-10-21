@@ -1135,14 +1135,8 @@ void DeviceManager::openFile(QString filePath)
     epochFileOffsets_.clear();
 
 #ifndef SEPARATE_READING
-    // Where the frame currently being parsed starts in the FILE, carried across chunks because a
-    // frame may straddle two of them: captured before process(), cleared only by a frame that
-    // completes. -1 means "no frame in progress".
     qint64 pendingFrameStart = -1;
     qint64 lastFrameStart = -1;
-    // True for the single iteration between a proxy wrapper completing and its inner frame being
-    // parsed. In that window the parser's context is already the wrapper's buffer while
-    // isNested() is still false, so the offset arithmetic would be nonsense.
     bool justWrapped = false;
 #endif
 
@@ -1208,11 +1202,6 @@ void DeviceManager::openFile(QString filePath)
             ++sleepCnt;
 #endif
 #ifndef SEPARATE_READING
-            // availContext() counts down through the chunk, so "chunk start + (chunk size - what
-            // is left)" is the next byte to be consumed -- the start of the frame about to be
-            // parsed. Skipped while the parser is inside a proxy wrapper, because there the
-            // context is the wrapper's own buffer; anything the inner frame adds is dated by the
-            // wrapper's offset instead, which is where it actually sits on disk.
             if (!justWrapped && !frameParser.isNested() && pendingFrameStart < 0) {
                 pendingFrameStart = bytesRead - frameParser.availContext();
             }
@@ -1234,8 +1223,6 @@ void DeviceManager::openFile(QString filePath)
                 frameInput(someUuid, nullptr, frameParser);
 
 #ifndef SEPARATE_READING
-                // Epochs this frame opened: usually none, sometimes one, occasionally more. The
-                // connections are direct in this build, so the pool has already grown by now.
                 if (Dataset* datasetPtr = core.getDatasetPtr(); datasetPtr && lastFrameStart >= 0) {
                     const int epochs = datasetPtr->size();
                     while (epochFileOffsets_.size() < epochs) {
@@ -1377,6 +1364,11 @@ void DeviceManager::setNmeaConsoled(bool isConsoled)
 void DeviceManager::setMavlinkConsoled(bool isConsoled)
 {
     mavlinkConsoled_ = isConsoled;
+}
+
+void DeviceManager::setUsblConsoled(bool isConsoled)
+{
+    DevDriver::usblConsoled_ = isConsoled;
 }
 
 void DeviceManager::upgradeLastDev(QByteArray data)

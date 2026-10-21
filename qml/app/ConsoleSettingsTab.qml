@@ -105,6 +105,24 @@ Column {
                 }
             }
         }
+
+        KIslandRow {
+            label: qsTr("USBL solutions")
+            toolTipText: qsTr("Log one line per USBL solution received from the device")
+            interactive: true
+            onClicked: usblSwitch.click()
+
+            KSwitch {
+                id: usblSwitch
+                flat: true
+                checked: page.store ? page.store.consoleUsbl : false
+                onToggled: {
+                    if (page.store)
+                        page.store.consoleUsbl = checked
+                    checked = Qt.binding(function() { return page.store ? page.store.consoleUsbl : false })
+                }
+            }
+        }
     }
 
     Column {

@@ -534,14 +534,10 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
     }
 
     if (data.role != IDBinUsblSolution::UsblSolution::RoleRequest) {
-        // Host arrival time: the device clock in data.timestamp_us is not comparable with
-        // the host's, and fix age is what tells the operator whether a range is live.
         const double nowMs = (double)QDateTime::currentMSecsSinceEpoch();
         lastUsblSolution_ = data;
         lastUsblFixEpochMs_ = nowMs;
 
-        // Keep it per address as well. 0xFF is the "no address" marker in the payload, and
-        // the protocol only ever uses 0..8, so anything else is not a beacon we can name.
         if (data.id <= 8) {
             QWriteLocker wl(&usblAddrLock_);
             usblByAddr_[(int)data.id] = data;
@@ -555,19 +551,28 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
     emit dataUpdate();
 }
 
-QVector<QPair<int, IDBinUsblSolution::UsblSolution>> Dataset::usblSolutionsFromEpoch(int firstEpoch) const
+QVector<QPair<int, IDBinUsblSolution::UsblSolution>> Dataset::usblSolutionsFromEpoch(int firstEpoch, int* resumeEpoch) const
 {
     QVector<QPair<int, IDBinUsblSolution::UsblSolution>> out;
 
     QReadLocker rl(&poolMtx_);
 
+    const int first = std::max(0, firstEpoch);
     const int total = pool_.size();
-    for (int i = std::max(0, firstEpoch); i < total; ++i) {
+    for (int i = first; i < total; ++i) {
         Epoch& epoch = const_cast<Epoch&>(pool_.at(i));
         if (!epoch.isUsblSolutionAvailable()) {
             continue;
         }
         out.append(qMakePair(i, epoch.usblSolution()));
+    }
+
+    if (resumeEpoch) {
+        int resume = std::max(first, total);
+        if (total > first && !const_cast<Epoch&>(pool_.at(total - 1)).isUsblSolutionAvailable()) {
+            resume = total - 1;
+        }
+        *resumeEpoch = resume;
     }
 
     return out;
@@ -773,7 +778,7 @@ QVariantMap usblDiagEntry(const UsblDiag& d)
     return e;
 }
 
-} // namespace
+}
 
 void Dataset::addUsblDiag(IDBinUsblDiag::UsblSignalDiag data)
 {
@@ -1355,6 +1360,19 @@ void Dataset::resetDataset()
     resetDistProcessing();
 
     setState(DatasetState::kUndefined);
+
+    {
+        QWriteLocker wl(&usblAddrLock_);
+        usblByAddr_.clear();
+        usblEpochMsByAddr_.clear();
+        usblDiagByAddr_.clear();
+        usblDiagEpochMsByAddr_.clear();
+        usblDiagJoinedByAddr_.clear();
+    }
+    lastUsblSolution_ = IDBinUsblSolution::UsblSolution();
+    lastUsblFixEpochMs_ = 0.0;
+    emit lastUsblSolutionChanged();
+    emit usblDiagChanged();
 
     testTime_ = 1740466541;
     usingRecordParameters_.clear();

@@ -36,9 +36,6 @@ public:
         bool hasYaw{false};
     };
 
-    // A track is either the path travelled or the places a fix actually landed. The line reads
-    // as motion and hides how sparse the fixes are; the dots read as measurements and hide the
-    // order they came in. Neither is a superset, so both are offered.
     enum class TrackStyle
     {
         Line = 0,
@@ -56,8 +53,6 @@ public:
     public:
         void setRenderData(RenderData data);
 
-        // The four-matrix overload, not the mvp one: the address labels are 2D text placed at the
-        // screen projection of a 3D point, which needs view and projection apart.
         void render(QOpenGLFunctions* ctx, const QMatrix4x4& model, const QMatrix4x4& view,
                     const QMatrix4x4& projection,
                     const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const final;

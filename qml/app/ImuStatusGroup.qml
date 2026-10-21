@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import kqml_types 1.0
+import "StatusSeverity.js" as Sev
 
 DeviceSettingsGroup {
     id: imuGroup
@@ -19,24 +20,6 @@ DeviceSettingsGroup {
     readonly property int _samples: dev ? dev.imuSamplesPerS : 0
     readonly property int _fed: dev ? dev.imuEkfFedPerS : 0
     readonly property string sev: !_valid ? "idle" : _stale ? "stale" : _state === 0 ? "good" : "crit"
-
-    function _sevColor(s) {
-        if (s === "good")  return AppPalette.linkOkBorder
-        if (s === "crit")  return AppPalette.linkDownBorder
-        if (s === "stale") return AppPalette.textMuted
-        return AppPalette.accentBar
-    }
-    function _sevText(s) {
-        if (s === "good")  return AppPalette.linkOkText
-        if (s === "crit")  return AppPalette.linkDownText
-        if (s === "stale") return AppPalette.textMuted
-        return AppPalette.accentBar
-    }
-    function _sevBg(s) {
-        if (s === "idle") return "transparent"
-        var c = _sevColor(s)
-        return Qt.rgba(c.r, c.g, c.b, 0.12)
-    }
 
     function _hex(v) {
         var h = (v & 0xFF).toString(16).toUpperCase()
@@ -126,7 +109,7 @@ DeviceSettingsGroup {
         visible: imuGroup._valid
         Rectangle {
             id: chipFrame
-            readonly property color accent: imuGroup._sevColor(imuGroup.sev)
+            readonly property color accent: Sev.color(AppPalette, imuGroup.sev)
             implicitWidth: chipRow.implicitWidth + Tokens.spaceLg * 2
             width: implicitWidth
             height: imuGroup.headerActionSize - headerChip.gap * 2
@@ -154,119 +137,49 @@ DeviceSettingsGroup {
         }
     }
 
-    component StatBox: Rectangle {
-        property string blabel: ""
-        property string bvalue: ""
-        property bool alertBox: false
-        height: Math.round(42 * AppPalette.scale); radius: Tokens.radiusMd
-        implicitWidth: sbCol.implicitWidth + Tokens.spaceMd * 2; width: implicitWidth
-        color: AppPalette.card
-        border.width: 1
-        border.color: alertBox ? AppPalette.linkDownBorder : AppPalette.border
-        Column {
-            id: sbCol
-            anchors.centerIn: parent; spacing: Math.round(1 * AppPalette.scale)
-            Text { text: blabel; color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs }
-            Text { text: bvalue; font.pixelSize: Tokens.fontSm; font.bold: true
-                   color: alertBox ? AppPalette.linkDownText : AppPalette.text }
-        }
-    }
+    StatusBanner {
+        width: parent.width
+        sev: imuGroup.sev
+        word: imuGroup.hero.word
+        sub: imuGroup.hero.sub
+        alert: imuGroup._valid && !imuGroup._stale && imuGroup._fed === 0
+               ? qsTr("Navigation is not using the IMU.") : ""
+        dimmed: imuGroup._stale
 
-    Rectangle {
-        width: parent.width; radius: Tokens.radiusMd
-        color: imuGroup._sevBg(imuGroup.sev)
-        implicitHeight: bannerCol.implicitHeight + Tokens.spaceMd * 2; height: implicitHeight
-        opacity: imuGroup._stale ? 0.6 : 1.0
+        Flow {
+            width: parent.width
+            spacing: Tokens.spaceSm
 
-        Rectangle {
-            anchors.left: parent.left; anchors.leftMargin: Math.round(2 * AppPalette.scale)
-            anchors.top: parent.top; anchors.bottom: parent.bottom
-            anchors.topMargin: parent.radius; anchors.bottomMargin: parent.radius
-            width: Math.round(3 * AppPalette.scale); radius: width / 2
-            color: imuGroup._sevColor(imuGroup.sev)
-            visible: imuGroup.sev !== "idle"
+            StatusStatBox { blabel: "WHO_AM_I"; bvalue: imuGroup.dev ? imuGroup._hex(imuGroup.dev.imuWhoAmI) : "—"
+                            alertBox: !!(imuGroup._flags & 0x0001) }
+            StatusStatBox { blabel: qsTr("Samples/s"); bvalue: String(imuGroup._samples)
+                            alertBox: !!(imuGroup._flags & 0x0008) }
+            StatusStatBox { blabel: qsTr("Navigation/s"); bvalue: String(imuGroup._fed)
+                            alertBox: imuGroup._valid && imuGroup._fed === 0 }
+            StatusStatBox { blabel: "|a|"; bvalue: imuGroup._accG() + " g"
+                            alertBox: !!(imuGroup._flags & 0x0040) }
+            StatusStatBox { blabel: "|ω|"; bvalue: imuGroup._gyrDps() + " °/s" }
+            StatusStatBox { blabel: qsTr("Temperature"); bvalue: imuGroup._tempC() + " °C"
+                            alertBox: !!(imuGroup._flags & 0x0080) }
+            StatusStatBox { blabel: qsTr("Restarts"); bvalue: imuGroup.dev ? String(imuGroup.dev.imuReinitCnt) : "0" }
         }
 
-        Column {
-            id: bannerCol
-            anchors.left: parent.left; anchors.right: parent.right
-            anchors.leftMargin: Tokens.spaceMd + Math.round(4 * AppPalette.scale)
-            anchors.rightMargin: Tokens.spaceMd
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Tokens.spaceMd
+        Text {
+            width: parent.width
+            visible: imuGroup._flags !== 0
+            text: qsTr("Faults: %1").arg(imuGroup._faultList(imuGroup._flags))
+            color: AppPalette.textSecond; font.pixelSize: Tokens.fontXs
+            wrapMode: Text.WordWrap
+        }
 
-            Column {
-                width: parent.width
-                spacing: Math.round(2 * AppPalette.scale)
-
-                Row {
-                    width: parent.width; spacing: Tokens.spaceMd
-                    Rectangle {
-                        id: heroDisc
-                        width: Math.round(16 * AppPalette.scale); height: width; radius: width / 2
-                        anchors.verticalCenter: parent.verticalCenter
-                        color: imuGroup._sevColor(imuGroup.sev)
-                    }
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width - heroDisc.width - parent.spacing
-                        text: imuGroup.hero.word; color: imuGroup._sevText(imuGroup.sev)
-                        font.pixelSize: Tokens.fontXxl; font.bold: true
-                        elide: Text.ElideRight
-                    }
-                }
-
-                Text {
-                    width: parent.width
-                    visible: imuGroup.hero.sub.length > 0
-                    text: imuGroup.hero.sub; color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm
-                    wrapMode: Text.WordWrap
-                }
-
-                Text {
-                    width: parent.width
-                    visible: imuGroup._valid && !imuGroup._stale && imuGroup._fed === 0
-                    text: qsTr("Navigation is not using the IMU.")
-                    color: AppPalette.linkDownText; font.pixelSize: Tokens.fontSm; font.bold: true
-                    wrapMode: Text.WordWrap
-                }
-            }
-
-            Flow {
-                width: parent.width
-                spacing: Tokens.spaceSm
-
-                StatBox { blabel: "WHO_AM_I"; bvalue: imuGroup.dev ? imuGroup._hex(imuGroup.dev.imuWhoAmI) : "—"
-                          alertBox: !!(imuGroup._flags & 0x0001) }
-                StatBox { blabel: qsTr("Samples/s"); bvalue: String(imuGroup._samples)
-                          alertBox: !!(imuGroup._flags & 0x0008) }
-                StatBox { blabel: qsTr("Navigation/s"); bvalue: String(imuGroup._fed)
-                          alertBox: imuGroup._valid && imuGroup._fed === 0 }
-                StatBox { blabel: "|a|"; bvalue: imuGroup._accG() + " g"
-                          alertBox: !!(imuGroup._flags & 0x0040) }
-                StatBox { blabel: "|ω|"; bvalue: imuGroup._gyrDps() + " °/s" }
-                StatBox { blabel: qsTr("Temperature"); bvalue: imuGroup._tempC() + " °C"
-                          alertBox: !!(imuGroup._flags & 0x0080) }
-                StatBox { blabel: qsTr("Restarts"); bvalue: imuGroup.dev ? String(imuGroup.dev.imuReinitCnt) : "0" }
-            }
-
-            Text {
-                width: parent.width
-                visible: imuGroup._flags !== 0
-                text: qsTr("Faults: %1").arg(imuGroup._faultList(imuGroup._flags))
-                color: AppPalette.textSecond; font.pixelSize: Tokens.fontXs
-                wrapMode: Text.WordWrap
-            }
-
-            Text {
-                width: parent.width
-                text: imuGroup.dev ? qsTr("Bus errors %1 · no-data reads %2 · longest identical run %3 · report #%4")
-                                .arg(imuGroup.dev.imuBusErrCnt).arg(imuGroup.dev.imuInvalidCnt)
-                                .arg(imuGroup.dev.imuStuckRunMax).arg(imuGroup.dev.navSensorSeq)
-                          : ""
-                color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
-                wrapMode: Text.WordWrap
-            }
+        Text {
+            width: parent.width
+            text: imuGroup.dev ? qsTr("Bus errors %1 · no-data reads %2 · longest identical run %3 · report #%4")
+                            .arg(imuGroup.dev.imuBusErrCnt).arg(imuGroup.dev.imuInvalidCnt)
+                            .arg(imuGroup.dev.imuStuckRunMax).arg(imuGroup.dev.navSensorSeq)
+                      : ""
+            color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
+            wrapMode: Text.WordWrap
         }
     }
 }

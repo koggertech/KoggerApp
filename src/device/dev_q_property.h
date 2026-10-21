@@ -158,6 +158,7 @@ public:
     Q_PROPERTY(int modemLastCmdId           READ modemLastCmdId       NOTIFY modemPayloadChanged)
     Q_PROPERTY(int modemLastBitLength       READ modemLastBitLength   NOTIFY modemPayloadChanged)
     Q_PROPERTY(int modemLastEvent           READ modemLastEvent       NOTIFY modemPayloadChanged)
+    Q_PROPERTY(QVariantMap modemPayloads    READ modemPayloads        NOTIFY modemPayloadChanged)
 
     int modemLastAddressFrom() const { return idModemSolution ? idModemSolution->header().address_from : 0; }
     int modemLastAddressTo() const   { return idModemSolution ? idModemSolution->header().address_to : 0; }

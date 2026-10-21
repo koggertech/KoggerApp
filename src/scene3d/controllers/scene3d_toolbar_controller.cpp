@@ -20,8 +20,6 @@ Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
       compassSize_(1),
       scaleBar_(true),
       shadowsEnabled_(true),
-      // Developer-gated layer: WorkspaceStore.usblLayerActive owns the truth and pushes it at
-      // start-up. False here keeps it dark if the view is built before that push lands.
       usblLayerVisible_(false),
       usblBeaconTrackDots_(false),
       usblHeadTrackDots_(false),

@@ -309,14 +309,6 @@ function addNode(st) {
     n.nodes = n.nodes.concat([{ id: _next(n), addr: a, active: true, refs: [] }]);
     return n;
 }
-// A node at a NAMED address, rather than the next free one addNode() hands out. Address 0 is a
-// real beacon address that addNode() can never land on -- it starts its search at 1, because a
-// plan being built from nothing wants 1, 2, 3 -- so reaching 0 meant adding a node and retyping
-// its address. A beacon at 0 that answers is drawn only if the plan names it, so that retype was
-// the whole difference between a visible track and none.
-//
-// Already-taken addresses return the state unchanged: duplicates are legal in the plan, but
-// nothing is gained by letting an ADD produce one, and _commit treats identity as a no-op.
 function addNodeAt(st, addr) {
     if (typeof addr !== "number" || !isFinite(addr)) return st;
     var a = Math.max(0, Math.min(SLOT_COUNT, Math.round(addr)));
@@ -326,8 +318,6 @@ function addNodeAt(st, addr) {
     n.nodes = n.nodes.concat([{ id: _next(n), addr: a, active: true, refs: [] }]);
     return n;
 }
-// Every protocol address (0..SLOT_COUNT) no node carries yet, ascending -- what an "add" can
-// offer. Includes addresses adopted from an opened file, because those are nodes too.
 function addableAddresses(st) {
     var have = {}, out = [];
     for (var i = 0; i < st.nodes.length; ++i) have[st.nodes[i].addr] = true;

@@ -51,9 +51,6 @@ public:
     Q_INVOKABLE void setNodes(const QVariantList& nodes);
     Q_INVOKABLE void clear();
 
-    // The moment the 2D and 3D views are synced to, as an epoch index, or -1 for no selection.
-    // Moves the MARKS only: a node's track is its whole history either way, and what the sync
-    // changes is where the pointer sits on it.
     void setSyncEpochIndex(int epochIndex);
 
     void rebuildIfNeeded();
@@ -78,8 +75,6 @@ private:
         bool active{true};
     };
 
-    // A fix as the DATASET dates it, which is the only dating that can be matched to a click on
-    // the boat track or a cursor on the echogram.
     struct EpochFix
     {
         int epoch{-1};
@@ -92,19 +87,8 @@ private:
     // Full re-projection of every remembered fix. Only for the events that invalidate the whole
     // frame -- a camera rebase, a projection switch, a new plan. A new fix appends instead.
     void rebuild();
-    // Walks the dataset's epoch pool, from wherever it was left, collecting which epoch each
-    // solution belongs to.
-    //
-    // WHY NOT COUNT THEM AS THEY ARRIVE. usblSolutionAdded reaches this object through a QUEUED
-    // connection, so by the time onUsblSolution runs the pool has already moved on and the epoch
-    // the fix belongs to can no longer be asked for. Dataset::addUsblSolution is what puts a
-    // solution in an epoch, so the pool is the only thing that knows, and reading it back is
-    // exact where counting would drift.
     void indexEpochs();
-    // Places the marks: at the synced epoch when there is one, at the end of the track when
-    // there is not. Never touches a track.
     void applyMarks();
-    // Last mark at or before `epoch`, or -1. The pool is walked in order, so marks are sorted.
     static int lastAtOrBefore(const QVector<EpochFix>& marks, int epoch);
     void push();
     // The surface point (z pinned to 0) for one geo position.

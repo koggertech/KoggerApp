@@ -82,6 +82,8 @@ qt_add_qml_module(kogger_app
         UiSavingSettingsTab.qml
         StandBadgeRow.qml
         StandPanelPopup.qml
+        StatusBanner.qml
+        StatusStatBox.qml
         UsblAddressBadge.qml
         UsblAntennaDiagPopup.qml
         UsblButton.qml
@@ -115,6 +117,7 @@ qt_add_qml_module(kogger_app
         LayoutTree.js
         RecorderStatus.js
         StandLogic.js
+        StatusSeverity.js
         TutorialLayout.js
         UsblNodeLogic.js
         UsblPlanLogic.js)

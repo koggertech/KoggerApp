@@ -2020,27 +2020,27 @@ void DevDriver::receivedUSBL(Parsers::Type type, Parsers::Version ver, Parsers::
     switch(idUSBL->lastPayloadKind()) {
     case IDBinUsblSolution::PayloadKind::Solution:
 #ifndef SEPARATE_READING
-        core.consoleInfo(usblConsoleLine("solution", idUSBL->usblSolution()));
+        if (usblConsoled_) core.consoleInfo(usblConsoleLine("solution", idUSBL->usblSolution()));
 #endif
         emit usblSolutionComplete(idUSBL->usblSolution());
         break;
     case IDBinUsblSolution::PayloadKind::AcousticNav:
 #ifndef SEPARATE_READING
-        core.consoleInfo(usblConsoleLine("acoustic-nav", idUSBL->usblSolution()));
+        if (usblConsoled_) core.consoleInfo(usblConsoleLine("acoustic-nav", idUSBL->usblSolution()));
 #endif
         emit acousticNavSolutionComplete(idUSBL->acousticNavSolution());
         emit usblSolutionComplete(idUSBL->usblSolution());
         break;
     case IDBinUsblSolution::PayloadKind::BaseToBeacon:
 #ifndef SEPARATE_READING
-        core.consoleInfo(usblConsoleLine("base-to-beacon", idUSBL->usblSolution()));
+        if (usblConsoled_) core.consoleInfo(usblConsoleLine("base-to-beacon", idUSBL->usblSolution()));
 #endif
         emit baseToBeaconComplete(idUSBL->baseToBeacon());
         emit usblSolutionComplete(idUSBL->usblSolution());
         break;
     case IDBinUsblSolution::PayloadKind::BeaconActivation:
 #ifndef SEPARATE_READING
-        core.consoleInfo(QStringLiteral("USBL beacon-activation"));
+        if (usblConsoled_) core.consoleInfo(QStringLiteral("USBL beacon-activation"));
 #endif
         emit beaconActivationComplete(0);
         break;
@@ -2078,7 +2078,17 @@ void DevDriver::receivedModemSolution(Parsers::Type type, Parsers::Version ver, 
         return;
     }
 
-    emit modemSolutionComplete(idModemSolution->header(), idModemSolution->payload());
+    const auto header = idModemSolution->header();
+    QVariantMap entry;
+    entry["payload"]   = modemLastPayload();
+    entry["bits"]      = static_cast<int>(header.bit_length);
+    entry["cmdId"]     = static_cast<int>(header.cmd_id_from);
+    entry["addressTo"] = static_cast<int>(header.address_to);
+    entry["event"]     = static_cast<int>(header.event);
+    entry["atMs"]      = static_cast<double>(QDateTime::currentMSecsSinceEpoch());
+    modemByAddr_[QString::number(static_cast<int>(header.address_from))] = entry;
+
+    emit modemSolutionComplete(header, idModemSolution->payload());
     emit modemPayloadChanged();
 }
 

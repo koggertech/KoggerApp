@@ -120,23 +120,13 @@ DeviceSettingsGroup {
         _expanded = next
     }
 
-    // The one received payload the app retains. Dataset keeps a solution per address, but the
-    // modem payload is not cached at all -- modemLastPayload and friends read straight through to
-    // the CURRENT frame's header -- so exactly one command row can show data, the one the newest
-    // frame names. Rows say "—" rather than nothing so the answer does not jump between rows of
-    // different heights, and the pane says once that only the latest frame is kept.
-    //
-    // The arrival time is stamped here because the frame carries none; it is one scalar for the
-    // one retained payload, not a cache.
-    property real _modemAtMs: 0
-    Connections {
-        target: dev
-        enabled: !!dev
-        function onModemPayloadChanged() { usblGroup._modemAtMs = Date.now() }
+    function _modemEntry(addr) {
+        var m = dev ? dev.modemPayloads : null
+        return m ? (m[String(addr)] || null) : null
     }
     function _modemMatches(addr, cmd) {
-        return !!dev && dev.modemLastBitLength > 0
-               && dev.modemLastAddressFrom === addr && dev.modemLastCmdId === cmd
+        var e = _modemEntry(addr)
+        return !!e && e.bits > 0 && e.cmdId === cmd
     }
 
     // KSwitch is a full-width labelled row; a node needs a compact inline toggle, so this
@@ -811,7 +801,6 @@ DeviceSettingsGroup {
                                 readonly property bool _bad: _state === "stale"
                                 readonly property bool _queued: Node.isQueued(
                                         usblGroup._manual, nodeCard._n.id, modelData.cmd)
-                                // The one retained payload, and only if it names THIS command.
                                 readonly property bool _hasData: usblGroup._modemMatches(
                                         nodeCard._n.addr, modelData.cmd)
                                 readonly property color _cmdInk:
@@ -919,10 +908,6 @@ DeviceSettingsGroup {
                                     }
                                 }
 
-                                // What came back. See usblGroup._modemMatches: the app keeps ONE
-                                // modem payload, so at most one row in the pane can fill this in.
-                                // The line is reserved on every row so the answer does not move
-                                // rows of different heights around as frames arrive.
                                 Text {
                                     anchors.left: _cmdLeft.right
                                     anchors.leftMargin: Tokens.spaceMd
@@ -938,11 +923,12 @@ DeviceSettingsGroup {
                                     text: {
                                         var _t = usblGroup.clockTick
                                         if (!_cmdRow._hasData) return "—"
-                                        var age = usblGroup._modemAtMs > 0
-                                                  ? usblGroup._fmtAge(Math.max(0, Date.now() - usblGroup._modemAtMs))
+                                        var e = usblGroup._modemEntry(nodeCard._n.addr)
+                                        var age = e.atMs > 0
+                                                  ? usblGroup._fmtAge(Math.max(0, Date.now() - e.atMs))
                                                   : ""
-                                        return dev.modemLastPayload
-                                               + qsTr(" · %1 bit").arg(dev.modemLastBitLength)
+                                        return e.payload
+                                               + qsTr(" · %1 bit").arg(e.bits)
                                                + (age.length ? " · " + age : "")
                                     }
                                 }

@@ -4,6 +4,7 @@ import QtQuick.Dialogs
 import QtCore
 import kqml_types 1.0
 import "RecorderStatus.js" as RecorderStatus
+import "StatusSeverity.js" as Sev
 
 Column {
     id: root
@@ -563,20 +564,7 @@ Column {
         }
 
         // Semantic severity accent (from the app palette; distinct from the blue accent).
-        function _sevColor(s) {
-            if (s === "good")  return AppPalette.linkOkBorder
-            if (s === "warn")  return AppPalette.linkIdleBorder
-            if (s === "crit")  return AppPalette.linkDownBorder
-            if (s === "stale") return AppPalette.textMuted
-            return AppPalette.accentBar
-        }
-        function _sevText(s) {
-            if (s === "good")  return AppPalette.linkOkText
-            if (s === "warn")  return AppPalette.linkIdleText
-            if (s === "crit")  return AppPalette.linkDownText
-            if (s === "stale") return AppPalette.textMuted
-            return AppPalette.accentBar
-        }
+        function _sevColor(s) { return Sev.color(AppPalette, s) }
 
         // Worst-state-wins hero: { sev, word, sub, pulse }. Mirrors the UX concept: the one
         // line that answers "is my data being saved right now, and if not, what broke?".
@@ -659,53 +647,11 @@ Column {
             return out
         }
 
-        // Severity tint for the banner background (low-alpha sev colour; idle = none).
-        function _sevBg(s) {
-            if (s === "idle") return "transparent"
-            var c = _sevColor(s)
-            return Qt.rgba(c.r, c.g, c.b, 0.12)
-        }
         // Free-space "error" (blink): storage fault, or free space critically low (<2 GB).
         function _freeError() {
             if (!dev || !dev.recorderStatusValid) return false
             if (dev.recorderCriticalFlags) return true
             return recorderGroup.freeBytes > 0 && recorderGroup.freeBytes < 2000000000
-        }
-
-        // A vital-number tile for the banner: label + value. keyBox = green (good), errorBox
-        // = red border + blink, alertBox = red static (e.g. dropping frames).
-        component StatBox: Rectangle {
-            property string blabel: ""
-            property string bvalue: ""
-            property bool keyBox: false
-            property bool errorBox: false
-            property bool alertBox: false
-            height: Math.round(42 * AppPalette.scale); radius: Tokens.radiusMd
-            implicitWidth: sbCol.implicitWidth + Tokens.spaceMd * 2; width: implicitWidth
-            color: AppPalette.card
-            border.width: 1
-            border.color: (errorBox || alertBox) ? AppPalette.linkDownBorder
-                        : keyBox ? Qt.rgba(AppPalette.linkOkBorder.r, AppPalette.linkOkBorder.g, AppPalette.linkOkBorder.b, 0.45)
-                        : AppPalette.border
-            Column {
-                id: sbCol
-                anchors.centerIn: parent; spacing: Math.round(1 * AppPalette.scale)
-                Text { visible: blabel.length > 0; text: blabel; color: AppPalette.textMuted
-                       font.pixelSize: Tokens.fontXs }
-                Text { text: bvalue; font.pixelSize: Tokens.fontSm; font.bold: true
-                       color: (errorBox || alertBox) ? AppPalette.linkDownText
-                            : keyBox ? AppPalette.linkOkText : AppPalette.text }
-            }
-            Rectangle {   // blink glow when errorBox
-                anchors.fill: parent; radius: parent.radius; color: "transparent"
-                border.width: Math.round(2 * AppPalette.scale); border.color: AppPalette.linkDownBorder
-                visible: errorBox
-                SequentialAnimation on opacity {
-                    running: errorBox; loops: Animation.Infinite
-                    NumberAnimation { from: 1.0; to: 0.12; duration: 560; easing.type: Easing.InOutSine }
-                    NumberAnimation { from: 0.12; to: 1.0; duration: 560; easing.type: Easing.InOutSine }
-                }
-            }
         }
 
         // Freshness: recorderStatusChanged fires every poll (~3s). If it stops (e.g. the
@@ -725,133 +671,62 @@ Column {
         }
 
         // ── Banner: severity-tinted; hero + vital boxes. Ports are in the header. ──
-        Rectangle {
+        StatusBanner {
             id: banner
-            width: parent.width; radius: Tokens.radiusMd
-            color: recorderGroup._sevBg(recorderGroup.hero.sev)
-            border.width: recorderGroup.hero.sev === "idle" ? 1 : 0
-            border.color: AppPalette.border
-            implicitHeight: bannerCol.implicitHeight + Tokens.spaceMd * 2; height: implicitHeight
-            opacity: recorderGroup.stale ? 0.6 : 1.0
-
-            Rectangle {   // left severity stripe
-                anchors.left: parent.left; anchors.leftMargin: Math.round(2 * AppPalette.scale)
-                anchors.top: parent.top; anchors.bottom: parent.bottom
-                anchors.topMargin: parent.radius; anchors.bottomMargin: parent.radius
-                width: Math.round(3 * AppPalette.scale); radius: width / 2
-                color: recorderGroup._sevColor(recorderGroup.hero.sev)
-                visible: recorderGroup.hero.sev !== "idle"
-            }
-
-            Column {
-                id: bannerCol
-                anchors.left: parent.left; anchors.right: parent.right
-                anchors.leftMargin: Tokens.spaceMd + Math.round(4 * AppPalette.scale)
-                anchors.rightMargin: Tokens.spaceMd
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: Tokens.spaceMd
-
-                Row {
-                    id: heroRow
-                    width: parent.width; spacing: Tokens.spaceMd
-
+            width: parent.width
+            sev: recorderGroup.hero.sev
+            word: recorderGroup.hero.word
+            sub: recorderGroup.hero.sub
+            pulse: recorderGroup.hero.pulse
+            dimmed: recorderGroup.stale
+            aside: Component {
+                Rectangle {
+                    id: freeBadge
+                    visible: !!(dev && dev.recorderStatusValid)
+                    radius: Tokens.radiusMd
+                    implicitWidth: freeBadgeCol.implicitWidth + Tokens.spaceMd * 2; width: implicitWidth
+                    color: AppPalette.card
+                    border.width: 1
+                    border.color: recorderGroup._freeError() ? AppPalette.linkDownBorder
+                                : (recorderGroup.hero.sev === "good" || recorderGroup.hero.sev === "idle")
+                                  ? Qt.rgba(AppPalette.linkOkBorder.r, AppPalette.linkOkBorder.g, AppPalette.linkOkBorder.b, 0.45)
+                                  : AppPalette.border
                     Column {
-                        id: heroTextBlock
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: heroRow.width - (freeBadge.visible ? freeBadge.width + heroRow.spacing : 0)
-                        spacing: Math.round(2 * AppPalette.scale)
-
-                        Row {
-                            width: parent.width; spacing: Tokens.spaceMd
-                            Item {
-                                id: heroDisc
-                                width: Math.round(16 * AppPalette.scale); height: width
-                                anchors.verticalCenter: parent.verticalCenter
-                                Rectangle {   // pulse ring while actively writing
-                                    id: pulseRing
-                                    anchors.centerIn: parent; width: parent.width; height: parent.height; radius: width / 2
-                                    color: "transparent"; border.width: Math.max(1, Math.round(1.5 * AppPalette.scale))
-                                    border.color: recorderGroup._sevColor(recorderGroup.hero.sev)
-                                    visible: recorderGroup.hero.pulse
-                                    ParallelAnimation {
-                                        running: recorderGroup.hero.pulse; loops: Animation.Infinite
-                                        NumberAnimation { target: pulseRing; property: "scale"; from: 1.0; to: 2.4; duration: 1500; easing.type: Easing.OutQuad }
-                                        NumberAnimation { target: pulseRing; property: "opacity"; from: 0.5; to: 0.0; duration: 1500; easing.type: Easing.OutQuad }
-                                    }
-                                }
-                                Rectangle {   // the severity disc
-                                    anchors.centerIn: parent; width: parent.width; height: parent.height; radius: width / 2
-                                    color: recorderGroup._sevColor(recorderGroup.hero.sev)
-                                }
-                            }
-                            Text {
-                                id: heroWord
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: parent.width - heroDisc.width - parent.spacing
-                                text: recorderGroup.hero.word; color: recorderGroup._sevText(recorderGroup.hero.sev)
-                                font.pixelSize: Tokens.fontXxl; font.bold: true
-                                elide: Text.ElideRight
-                            }
-                        }
-
+                        id: freeBadgeCol
+                        anchors.centerIn: parent; spacing: Math.round(2 * AppPalette.scale)
                         Text {
-                            width: parent.width
-                            visible: recorderGroup.hero.sub.length > 0
-                            text: recorderGroup.hero.sub; color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm
-                            wrapMode: Text.WordWrap
+                            text: qsTr("Free space"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                        Text {
+                            text: (dev && (dev.recorderCriticalFlags & 1)) ? "—" : recorderGroup._fmtSize(recorderGroup.freeBytes)
+                            color: recorderGroup._freeError() ? AppPalette.linkDownText
+                                 : (recorderGroup.hero.sev === "good" || recorderGroup.hero.sev === "idle") ? AppPalette.linkOkText
+                                 : AppPalette.text
+                            font.pixelSize: Tokens.fontSm; font.bold: true
+                            anchors.horizontalCenter: parent.horizontalCenter
                         }
                     }
-
                     Rectangle {
-                        id: freeBadge
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: !!(dev && dev.recorderStatusValid)
-                        radius: Tokens.radiusMd
-                        implicitWidth: freeBadgeCol.implicitWidth + Tokens.spaceMd * 2; width: implicitWidth
-                        height: heroTextBlock.implicitHeight
-                        color: AppPalette.card
-                        border.width: 1
-                        border.color: recorderGroup._freeError() ? AppPalette.linkDownBorder
-                                    : (recorderGroup.hero.sev === "good" || recorderGroup.hero.sev === "idle")
-                                      ? Qt.rgba(AppPalette.linkOkBorder.r, AppPalette.linkOkBorder.g, AppPalette.linkOkBorder.b, 0.45)
-                                      : AppPalette.border
-                        Column {
-                            id: freeBadgeCol
-                            anchors.centerIn: parent; spacing: Math.round(2 * AppPalette.scale)
-                            Text {
-                                text: qsTr("Free space"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
-                                anchors.horizontalCenter: parent.horizontalCenter
-                            }
-                            Text {
-                                text: (dev && (dev.recorderCriticalFlags & 1)) ? "—" : recorderGroup._fmtSize(recorderGroup.freeBytes)
-                                color: recorderGroup._freeError() ? AppPalette.linkDownText
-                                     : (recorderGroup.hero.sev === "good" || recorderGroup.hero.sev === "idle") ? AppPalette.linkOkText
-                                     : AppPalette.text
-                                font.pixelSize: Tokens.fontSm; font.bold: true
-                                anchors.horizontalCenter: parent.horizontalCenter
-                            }
-                        }
-                        Rectangle {   // blink glow when free space is critical
-                            anchors.fill: parent; radius: parent.radius; color: "transparent"
-                            border.width: Math.round(2 * AppPalette.scale); border.color: AppPalette.linkDownBorder
-                            visible: recorderGroup._freeError()
-                            SequentialAnimation on opacity {
-                                running: recorderGroup._freeError(); loops: Animation.Infinite
-                                NumberAnimation { from: 1.0; to: 0.12; duration: 560; easing.type: Easing.InOutSine }
-                                NumberAnimation { from: 0.12; to: 1.0; duration: 560; easing.type: Easing.InOutSine }
-                            }
+                        anchors.fill: parent; radius: parent.radius; color: "transparent"
+                        border.width: Math.round(2 * AppPalette.scale); border.color: AppPalette.linkDownBorder
+                        visible: recorderGroup._freeError()
+                        SequentialAnimation on opacity {
+                            running: recorderGroup._freeError(); loops: Animation.Infinite
+                            NumberAnimation { from: 1.0; to: 0.12; duration: 560; easing.type: Easing.InOutSine }
+                            NumberAnimation { from: 0.12; to: 1.0; duration: 560; easing.type: Easing.InOutSine }
                         }
                     }
                 }
+            }
 
-                Flow {
-                    width: parent.width; spacing: Tokens.spaceSm
+            Flow {
+                width: parent.width; spacing: Tokens.spaceSm
+                visible: !!(dev && dev.recorderStatusValid && (dev.recorderDegradedFlags & 0x8))
+                StatusStatBox {
                     visible: !!(dev && dev.recorderStatusValid && (dev.recorderDegradedFlags & 0x8))
-                    StatBox {
-                        visible: !!(dev && dev.recorderStatusValid && (dev.recorderDegradedFlags & 0x8))
-                        alertBox: true
-                        bvalue: qsTr("⚠ Dropping frames")
-                    }
+                    alertBox: true
+                    bvalue: qsTr("⚠ Dropping frames")
                 }
             }
         }

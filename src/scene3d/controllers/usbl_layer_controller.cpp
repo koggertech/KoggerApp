@@ -94,24 +94,19 @@ void UsblLayerController::indexEpochs()
     }
 
     const int total = dataset->size();
-    // A shorter pool than last time is a new file, not a rewind: start the index over rather
-    // than binary-searching epochs that now mean something else.
     if (total < indexedEpochs_) {
         beaconMarks_.clear();
         headMarks_.clear();
         indexedEpochs_ = 0;
     }
 
-    // One locked pass, not a walk of raw pointers: the pool is a QVector the device thread
-    // resizes, and a reallocation mid-walk is a read of memory that has moved.
-    const auto fresh = dataset->usblSolutionsFromEpoch(indexedEpochs_);
+    int resume = indexedEpochs_;
+    const auto fresh = dataset->usblSolutionsFromEpoch(indexedEpochs_, &resume);
 
     for (const auto& entry : fresh) {
         const int i = entry.first;
         const IDBinUsblSolution::UsblSolution& solution = entry.second;
 
-        // Same two independent presences as onUsblSolution: a payload can carry one position
-        // without the other, and a mark must not be invented for the one that is missing.
         const int addr = static_cast<int>(solution.id);
         if (addr >= 0 && addr <= 8 &&
             LLA(solution.beacon_latitude, solution.beacon_longitude).isCoordinatesValid()) {
@@ -126,7 +121,7 @@ void UsblLayerController::indexEpochs()
         }
     }
 
-    indexedEpochs_ = total;
+    indexedEpochs_ = resume;
 }
 
 int UsblLayerController::lastAtOrBefore(const QVector<EpochFix>& marks, int epoch)
@@ -155,8 +150,6 @@ void UsblLayerController::applyMarks()
         return;
     }
 
-    // No selection: the end of the track, which is where a file that was just opened and a live
-    // run both belong.
     if (syncEpoch_ < 0) {
         for (auto& beacon : scene_.beacons) {
             const auto it = beacons_.constFind(beacon.addr);
@@ -180,9 +173,6 @@ void UsblLayerController::applyMarks()
         return;
     }
 
-    // A node with nothing measured by this moment is not drawn -- an absent mark is the honest
-    // drawing of "not located yet", and a mark left at a later estimate would be a lie about
-    // what was known when the boat was here.
     for (auto& beacon : scene_.beacons) {
         const auto it = beaconMarks_.constFind(beacon.addr);
         const int at = (it == beaconMarks_.constEnd()) ? -1
@@ -261,8 +251,6 @@ void UsblLayerController::onUsblSolution(const IDBinUsblSolution::UsblSolution& 
     // Appending one projected point, rather than re-projecting the history behind it. The frame
     // this point is projected into is the same one every earlier point used -- rebuildIfNeeded
     // is what notices when that stops being true.
-    // The track grows either way; the MARK only follows the newest fix while nothing is pinned.
-    // A selection is a question about one moment, and new data arriving is not an answer to it.
     const bool pinned = (syncEpoch_ >= 0);
 
     if (gotBeacon) {
@@ -359,8 +347,6 @@ void UsblLayerController::rebuild()
     }
 
     scene_ = std::move(out);
-    // The tracks are rebuilt; where the marks sit is a separate question, and the answer is the
-    // same one whether we got here from a camera rebase or from a new plan.
     applyMarks();
 }
 

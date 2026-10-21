@@ -675,8 +675,6 @@ Item {
                 function onNodesChanged() { scene3dView._pushUsblNodes() }
             }
 
-            // Only while a FILE is open. A live session's plan is the operator's own and must not
-            // grow a node because some beacon answered once; a log has no plan to respect.
             function _adoptUsblFileAddresses() {
                 if (!workspace.usblPlan) return
                 if (typeof core === "undefined" || !core || !core.fileOpened) return
@@ -689,8 +687,6 @@ Item {
                 function onLastUsblSolutionChanged() { scene3dView._adoptUsblFileAddresses() }
             }
 
-            // Both directions: closing a file takes its addresses back, opening one clears the
-            // previous file's before the new fixes start arriving.
             Connections {
                 target: (typeof core !== "undefined") ? core : null
                 function onFileOpenedChanged() {

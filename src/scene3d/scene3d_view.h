@@ -56,8 +56,6 @@ class GraphicsScene3dView : public QQuickFramebufferObject
     Q_PROPERTY(bool sceneContentVisible READ sceneContentVisible NOTIFY sceneContentVisibleChanged)
     Q_PROPERTY(bool followReturnPending READ followReturnPending NOTIFY followReturnStateChanged)
     Q_PROPERTY(int followReturnSeconds READ followReturnSeconds NOTIFY followReturnStateChanged)
-    // The epoch the scene is pinned to, or -1 for live. QML shows the way back out of a pin,
-    // which is the only thing that makes pinning safe while data is still arriving.
     Q_PROPERTY(int syncEpochIndex READ syncEpochIndex NOTIFY syncEpochIndexChanged)
     Q_PROPERTY(bool syncLoupeOverlayVisible READ syncLoupeOverlayVisible NOTIFY syncLoupeStateChanged)
     Q_PROPERTY(int syncLoupeEpochIndex READ syncLoupeEpochIndex NOTIFY syncLoupeStateChanged)
@@ -344,7 +342,6 @@ public:
     void setSyncLoupeZoomAdjusting(bool adjusting);
     void setSyncEpochIndex(int epochIndex);
     int syncEpochIndex() const;
-    // Back to live: drops the scene's pin and every echogram's, in one gesture.
     Q_INVOKABLE void clearEpochSync();
     void setEpochSyncEnabled(bool state);
     bool isEpochSyncEnabled() const { return epochSyncEnabled_; }
