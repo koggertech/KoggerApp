@@ -57,7 +57,6 @@ private:
 private:
     bool emitChanges_;
     bool isFileOpening_;
-    bool isSeparateReading_;
     bool isAttitudeExpected_;
     bool pendingBottomTrack3DManual_;
 

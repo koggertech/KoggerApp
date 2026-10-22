@@ -8,7 +8,6 @@ DataHorizon::DataHorizon() :
     QObject(),
     emitChanges_(true),
     isFileOpening_(false),
-    isSeparateReading_(false),
     isAttitudeExpected_(false),
     pendingBottomTrack3DManual_(false),
     epochIndx_(0),
@@ -21,10 +20,6 @@ DataHorizon::DataHorizon() :
     sonarPosIndx_(0),
     dimRectIndx_(0)
 {
-#ifdef SEPARATE_READING
-    isSeparateReading_ = true;
-#endif
-
     qRegisterMetaType<uint64_t>("uint64_t");
 }
 
@@ -59,7 +54,7 @@ void DataHorizon::setIsFileOpening(bool state)
 
     isFileOpening_ = state;
 
-    if (!isFileOpening_ && !isSeparateReading_ && emitChanges_) { // emit all
+    if (!isFileOpening_ && emitChanges_) { // emit all
         emit epochAdded(epochIndx_);
         emit positionAdded(positionIndx_);
         emit chartAdded(chartIndx_);
@@ -210,7 +205,7 @@ void DataHorizon::onAddedBottomTrack3D(const QVector<int>& epIndxs, const QVecto
         return;
     }
 
-    if (!isSeparateReading_ && isFileOpening_) {
+    if (isFileOpening_) {
         const int pairCount = qMin(epIndxs.size(), vertIndx.size());
         for (int i = 0; i < pairCount; ++i) {
             pendingBottomTrack3DPairs_.insert(epIndxs[i], vertIndx[i]);
@@ -234,15 +229,8 @@ bool DataHorizon::canEmitHorizon(bool beenChanged) const
         return retVal;
     }
 
-    if (isSeparateReading_) {
-        if (beenChanged) {
-            retVal = true;
-        }
-    }
-    else {
-        if (!isFileOpening_ && beenChanged) {
-            retVal = true;
-        }
+    if (!isFileOpening_ && beenChanged) {
+        retVal = true;
     }
 
     return retVal;

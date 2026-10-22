@@ -678,11 +678,9 @@ void DataProcessor::tryScheduleAutoBottomTrack(uint64_t indx)
         return;
     }
 
-#ifndef SEPARATE_READING
     if (isOpeningFile_) {
         return;
     }
-#endif
 
     if (!(updateMosaic_ || updateSurface_ || updateBottomTrack_)) {
         return;
@@ -2576,14 +2574,7 @@ void DataProcessor::onSendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKe
 {
     //qDebug() << "DataProcessor::onSendDimRects" << epochIndx;
 
-    bool optimizeForNonSeparateFileMode = true;
-#ifdef SEPARATE_READING
-    optimizeForNonSeparateFileMode = false;
-#else
-    optimizeForNonSeparateFileMode = (datasetState_ != 2); // 2 == connection
-#endif
-
-    const bool skipSchedulingForDisabledLayers = optimizeForNonSeparateFileMode && !updateMosaic_ && !updateSurface_;
+    const bool skipSchedulingForDisabledLayers = datasetState_ != 2 && !updateMosaic_ && !updateSurface_;
 
     const int minZoom = 7;
     if (tileEpochIndxsByZoom_.size() < minZoom) {
@@ -2699,18 +2690,11 @@ void DataProcessor::updateDatasetSpatialIndexingState()
         return;
     }
 
-    bool optimizeForNonSeparateFileMode = true;
-#ifdef SEPARATE_READING
-    optimizeForNonSeparateFileMode = false;
-#else
-    optimizeForNonSeparateFileMode = (datasetState_ != 2); // 2 == connection
-#endif
-
     bool sonarEnabled = true;
     bool dimRectEnabled = true;
     bool chunkedCatchup = false;
 
-    if (optimizeForNonSeparateFileMode) {
+    if (datasetState_ != 2) {
         sonarEnabled = updateBottomTrack_ || updateSurface_ || updateIsobaths_ || updateMosaic_;
         dimRectEnabled = updateSurface_ || updateIsobaths_ || updateMosaic_;
         chunkedCatchup = true;
@@ -2916,16 +2900,12 @@ QSet<int> DataProcessor::collectVisibleSurfaceEpochsSet(int zoom) const
 
 void DataProcessor::updateDataProcType()
 {
-#ifdef SEPARATE_READING
-    defProcType_ = isOpeningFile_ ? false : true;
-#else
     if (datasetState_ == 0 || datasetState_ == 1) {
         defProcType_ = true;
     }
     if (datasetState_ == 2) {
         defProcType_ = false;
     }
-#endif
 
     pendingWorkTimer_.setInterval(defProcType_ ? 333 : 10);
 }

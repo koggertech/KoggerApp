@@ -694,9 +694,6 @@ int main(int argc, char *argv[])
     core.shutdownBackgroundWorkers();
     core.saveLLARefToSettings();
     core.removeLinkManagerConnections();
-#ifdef SEPARATE_READING
-    core.stopDeviceManagerThread();
-#endif
 
     AppLog::instance().stop();
 
