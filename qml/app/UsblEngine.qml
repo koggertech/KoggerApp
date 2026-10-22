@@ -134,9 +134,7 @@ QtObject {
     // slowly. Clamped on the way out so a value persisted before the floor existed cannot leave
     // the loop running faster than the control can express.
     readonly property int dwellMs: Math.max(dwellMinMs, schedSettings.dwellMs)
-    // 0.4 s is about 300 m of two-way travel plus turn-around, which is the shortest window that
-    // can contain a real answer. Below it every interrogation would time out by construction.
-    readonly property int dwellMinMs: 400
+    readonly property int dwellMinMs: Node.requiredDwellMs(plan ? plan.maxReplyMm : 0)
     function setDwellMs(v) { schedSettings.dwellMs = v }
 
     readonly property bool fireOnPps: schedSettings.fireOnPps
@@ -166,10 +164,10 @@ QtObject {
         // Only the schedule is per-node, so only the ping is sent per step.
         var g = s.implicit ? null : plan.groupById(s.groupId)
         var snd = g ? g.ini.send : null
-        if (!snd) { dev.acousticPingRequest(s.addr, _triggerTimeoutUs); return }
-        var fn = plan.findBy(plan.pingFunctions, snd.fn)
-        var payload = (fn.id === "bits") ? snd.payload : ""
-        dev.acousticPingRequestEx(s.addr, _triggerTimeoutUs, s.cmd, snd.reply, payload)
+        var fn = snd ? plan.findBy(plan.pingFunctions, snd.fn) : null
+        var payload = (fn && fn.id === "bits") ? snd.payload : ""
+        dev.acousticPingRequestEx(s.addr, _triggerTimeoutUs, s.cmd,
+                                  plan.replyMmForGroup(g ? g.id : -1), payload)
     }
 
     // Build the step a hand-asked interrogation stands for. A muted step is still sendable --

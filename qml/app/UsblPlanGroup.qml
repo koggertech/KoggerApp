@@ -542,19 +542,44 @@ DeviceSettingsGroup {
                                 }
                             }
                             FieldRow {
+                                id: _rangeRow
                                 label: qsTr("max range")
+                                readonly property int _mode: !_sendCol._snd ? 0
+                                    : (typeof _sendCol._snd.reply !== "number") ? 0
+                                    : (_sendCol._snd.reply === 0 ? 2 : 1)
+                                KCombo {
+                                    model: [qsTr("plan · %1 m").arg(plan ? Math.round(plan.maxRangeMm / 1000) : 0),
+                                            qsTr("own"),
+                                            qsTr("no reply")]
+                                    currentIndex: _rangeRow._mode
+                                    implicitWidth: Math.round(104 * AppPalette.scale)
+                                    fontPixelSize: Tokens.fontXs
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    toolTipText: qsTr("plan: the Max range next to Dwell; own: this group's "
+                                                    + "requests carry their own; no reply: a pinger, "
+                                                    + "nothing is ranged")
+                                    onActivated: function (i) {
+                                        if (!plan || !planGroup._g) return
+                                        plan.setSendRange(planGroup._g.id,
+                                                          i === 0 ? null : (i === 2 ? 0 : plan.maxRangeMm))
+                                    }
+                                }
                                 UsblSpin {
-                                    from: 0; to: 2000000; stepSize: 1000
-                                    devValue: _sendCol._snd ? _sendCol._snd.reply : 0
-                                    implicitWidth: Math.round(110 * AppPalette.scale)
+                                    visible: _rangeRow._mode === 1
+                                    from: plan ? plan.minRangeMm : 1000
+                                    to: plan ? plan.maxRangeLimitMm : 2000000
+                                    stepSize: 10000
+                                    divisor: 1000
+                                    devValue: (_sendCol._snd && _sendCol._snd.reply > 0) ? _sendCol._snd.reply : 0
+                                    implicitWidth: Math.round(90 * AppPalette.scale)
                                     anchors.verticalCenter: parent.verticalCenter
                                     writeBack: function (v) {
-                                        if (plan && planGroup._g) plan.setSendField(planGroup._g.id, "reply", v)
+                                        if (plan && planGroup._g) plan.setSendRange(planGroup._g.id, v)
                                     }
                                 }
                                 Text {
-                                    text: (_sendCol._snd && _sendCol._snd.reply === 0)
-                                          ? qsTr("mm · expect no reply") : qsTr("mm")
+                                    visible: _rangeRow._mode === 1
+                                    text: qsTr("m")
                                     color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
                                     anchors.verticalCenter: parent.verticalCenter
                                 }

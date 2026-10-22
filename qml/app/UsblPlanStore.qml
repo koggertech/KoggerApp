@@ -46,6 +46,11 @@ QtObject {
     readonly property var groups: st.groups
     readonly property var nodes: st.nodes
 
+    readonly property int maxRangeMm: st.maxRangeMm
+    readonly property int maxReplyMm: Logic.maxReplyMm(st)
+    readonly property int minRangeMm: Logic.MIN_RANGE_MM
+    readonly property int maxRangeLimitMm: Logic.MAX_RANGE_MM
+
     // ── derived (all re-evaluate when `st` is replaced) ────────────────────
     // Selection is READ-ONLY here and changed through selectGroup(). It used to be a writable
     // property mirrored into `st` by a handler, which meant two places could disagree about
@@ -119,6 +124,7 @@ QtObject {
     function schedulable(g)      { return Logic.schedulable(g) }
     function payloadBytes(hex)   { return Logic.payloadBytes(hex) }
     function trigger(gid, which) { return Logic.trigger(st, gid, which) }
+    function replyMmForGroup(gid) { return Logic.replyMmForGroup(st, gid) }
     function sectionCount(t)     { return Logic.sectionCount(t) }
     function hasRewrite(t)       { return Logic.hasRewrite(t) }
     // Every ID_USBL_CONTROL v6 write Apply will emit for `role`, already reduced to wire
@@ -220,6 +226,8 @@ QtObject {
     }
 
     function setSendField(gid, f, v)        { _commit(Logic.setSendField(st, gid, f, v)) }
+    function setMaxRange(mm)                { _commit(Logic.setMaxRange(st, mm)) }
+    function setSendRange(gid, mm)          { _commit(Logic.setSendRange(st, gid, mm)) }
     function attachSend(gid)                { _commit(Logic.attachSend(st, gid)) }
     function detachSend(gid)                { _commit(Logic.detachSend(st, gid)) }
     function attachTrigger(gid, which)      { _commit(Logic.attachTrigger(st, gid, which)) }
@@ -296,6 +304,8 @@ QtObject {
             return qsTr("pinger expects no reply, but the transponder half is configured to answer")
         case "replyHandlerWithoutRequest":
             return qsTr("has a reply handler but never sends a request")
+        case "rangeBelowOneMetre":
+            return qsTr("max range is %1 m — set it in metres").arg((e.mm / 1000).toFixed(3))
         }
         return e.code
     }

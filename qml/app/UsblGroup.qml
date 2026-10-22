@@ -300,6 +300,7 @@ DeviceSettingsGroup {
             id: _dwellLbl
             text: qsTr("Dwell"); color: AppPalette.textMuted
             font.pixelSize: Tokens.fontSm; font.bold: true
+            width: Math.max(implicitWidth, _rangeLbl.implicitWidth)
             anchors.verticalCenter: parent.verticalCenter
         }
         KSpinBox {
@@ -313,8 +314,11 @@ DeviceSettingsGroup {
             implicitWidth: Math.round(96 * AppPalette.scale)
             anchors.verticalCenter: parent.verticalCenter
             toolTipText: qsTr("Interval between steps, and the answer window each step is "
-                            + "allowed — a reply still counts for %1 s past it")
+                            + "allowed — a reply still counts for %1 s past it. "
+                            + "It cannot go below %2 s: the round trip of the max range "
+                            + "plus the beacon's turn-around and decoding")
                          .arg((Node.GRACE_MS / 1000).toFixed(2))
+                         .arg((usblGroup._dwellMinMs / 1000).toFixed(2))
             onValueModified: function (v) { if (usblGroup.engine) usblGroup.engine.setDwellMs(v) }
         }
         // Also the spacer: it takes whatever is left, which is what pins the buttons right.
@@ -344,6 +348,39 @@ DeviceSettingsGroup {
             anchors.verticalCenter: parent.verticalCenter
             enabled: !!(usblGroup.engine && usblGroup.engine.canRun)
             onClicked: if (usblGroup.engine) usblGroup.engine.toggleRun()
+        }
+    }
+
+    Row {
+        width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceSm
+        Text {
+            id: _rangeLbl
+            text: qsTr("Max range"); color: AppPalette.textMuted
+            font.pixelSize: Tokens.fontSm; font.bold: true
+            width: Math.max(implicitWidth, _dwellLbl.implicitWidth)
+            anchors.verticalCenter: parent.verticalCenter
+        }
+        KSpinBox {
+            id: _range
+            from: plan ? plan.minRangeMm : 1000
+            to: plan ? plan.maxRangeLimitMm : 2000000
+            stepSize: 10000
+            divisor: 1000; decimals: 0
+            value: plan ? plan.maxRangeMm : 0
+            enabled: !!plan
+            implicitWidth: Math.round(96 * AppPalette.scale)
+            anchors.verticalCenter: parent.verticalCenter
+            toolTipText: qsTr("The farthest beacon you expect, in metres. Every request carries "
+                            + "it as the answer window unless its command group sets its own, "
+                            + "and Dwell is kept long enough for it")
+            onValueModified: function (v) { if (plan) plan.setMaxRange(v) }
+        }
+        Text {
+            text: qsTr("m · Dwell ≥ %1 s").arg((usblGroup._dwellMinMs / 1000).toFixed(2))
+            color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
+            width: Math.max(0, parent.width - _rangeLbl.width - _range.width - parent.spacing * 2)
+            elide: Text.ElideRight
+            anchors.verticalCenter: parent.verticalCenter
         }
     }
 
@@ -779,7 +816,8 @@ DeviceSettingsGroup {
                         Text {
                             visible: !nodeCard._n.steps.length
                             width: parent.width
-                            text: qsTr("No commands. This node is interrogated once with cmd 0.")
+                            text: qsTr("No commands. This node is interrogated once with cmd 0, max range %1 m.")
+                                  .arg(plan ? Math.round(plan.maxRangeMm / 1000) : 0)
                             color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
                             wrapMode: Text.WordWrap
                         }
@@ -869,6 +907,15 @@ DeviceSettingsGroup {
                                         text: String(_cmdRow.modelData.cmd)
                                         color: _cmdRow._cmdInk
                                         font.pixelSize: Tokens.fontSm; font.bold: true
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    Text {
+                                        text: _cmdRow.modelData.replyMm > 0
+                                              ? qsTr("%1 m").arg(Math.round(_cmdRow.modelData.replyMm / 1000))
+                                              : qsTr("no reply")
+                                        color: _cmdRow.modelData.ownRange ? AppPalette.textStrong
+                                                                          : AppPalette.textMuted
+                                        font.pixelSize: Tokens.fontXs
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
                                 }

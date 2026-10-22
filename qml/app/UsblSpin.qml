@@ -11,6 +11,8 @@ Item {
     property int from: 0
     property int to: 100
     property int stepSize: 1
+    property real divisor: 1.0
+    property int decimals: 0
     property var writeBack: null
     property int fontPixelSize: Tokens.fontSm
 
@@ -28,6 +30,7 @@ Item {
         id: spin
         anchors.fill: parent
         from: root.from; to: root.to; stepSize: root.stepSize
+        divisor: root.divisor; decimals: root.decimals
         fontPixelSize: root.fontPixelSize
         onValueModified: function (v) { if (!root._in && root.writeBack) root.writeBack(v) }
     }

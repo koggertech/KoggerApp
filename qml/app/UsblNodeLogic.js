@@ -88,6 +88,16 @@ var AGE_WARN_MS = 10000;
 // not "long enough that somebody should have answered".
 var LOST_MISSES = 3;
 
+var SOUND_SPEED_MPS = 1450;
+var REPLY_MARGIN_MS = 450;
+var DWELL_FLOOR_MS = 400;
+
+function requiredDwellMs(replyMm) {
+    var mm = (typeof replyMm === "number" && replyMm > 0) ? replyMm : 0;
+    var travelMs = 2 * (mm / 1000) / SOUND_SPEED_MPS * 1000;
+    return Math.max(DWELL_FLOOR_MS, Math.ceil(travelMs + REPLY_MARGIN_MS));
+}
+
 function waitMs(dwellMs, graceMs) {
     var d = (typeof dwellMs === "number" && dwellMs > 0) ? dwellMs : 700;
     var g = (typeof graceMs === "number" && graceMs >= 0) ? graceMs : GRACE_MS;
@@ -480,6 +490,8 @@ if (typeof module !== "undefined" && module.exports) {
         OFF: OFF, IDLE: IDLE, WAITING: WAITING,
         REPLIED: REPLIED, STALE: STALE, NONE: NONE,
         GRACE_MS: GRACE_MS, AGE_WARN_MS: AGE_WARN_MS, LOST_MISSES: LOST_MISSES,
+        SOUND_SPEED_MPS: SOUND_SPEED_MPS, REPLY_MARGIN_MS: REPLY_MARGIN_MS,
+        DWELL_FLOOR_MS: DWELL_FLOOR_MS, requiredDwellMs: requiredDwellMs,
         missStreak: missStreak, isLost: isLost,
         waitMs: waitMs, stepKey: stepKey, initialPoll: initialPoll,
         queueEmit: queueEmit, dequeueEmit: dequeueEmit, isQueued: isQueued,
