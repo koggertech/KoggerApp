@@ -72,9 +72,7 @@ DevDriver::DevDriver(QObject *parent)
     regID(idPwmRoute = new IDBinPwmRoute(), &DevDriver::receivedPwmRoute, true);
     regID(idDevSync = new IDBinDevSync(), &DevDriver::receivedDevSync, true);
 
-#ifndef SEPARATE_READING
     connect(&m_processTimer, &QTimer::timeout, this, &DevDriver::process);
-#endif
 
     QObject::connect(idDataset, &IDBin::notifyDevDriver, this, &DevDriver::setDatasetState);
     QObject::connect(idDistSetup, &IDBin::notifyDevDriver, this, &DevDriver::setDistSetupState);
@@ -94,18 +92,6 @@ DevDriver::DevDriver(QObject *parent)
 
 DevDriver::~DevDriver()
 {
-#ifdef SEPARATE_READING
-    QList<QTimer*> timers = getChildTimers();
-    foreach (QTimer* timer, timers) {
-        if (timer->isActive()) {
-            timer->stop();
-        }
-    }
-
-    if (m_processTimer.isActive()) {
-        m_processTimer.stop();
-    }
-#endif
     m_processTimer.stop();
 }
 
@@ -113,109 +99,6 @@ ChannelId DevDriver::getChannelId() const
 {
     return ChannelId(linkUuid_, lastAddress_);
 }
-
-#ifdef SEPARATE_READING
-QTimer *DevDriver::getProcessTimer()
-{
-    return &m_processTimer;
-}
-
-QList<QTimer *> DevDriver::getChildTimers()
-{
-    QList<QTimer*> timers;
-
-    if (idTimestamp) {
-        timers.append(idTimestamp->getSetTimer());
-        timers.append(idTimestamp->getColdStartTimer());
-    }
-    if (idDist) {
-        timers.append(idDist->getSetTimer());
-        timers.append(idDist->getColdStartTimer());
-    }
-    if (idChart) {
-        timers.append(idChart->getSetTimer());
-        timers.append(idChart->getColdStartTimer());
-    }
-    if (idAtt) {
-        timers.append(idAtt->getSetTimer());
-        timers.append(idAtt->getColdStartTimer());
-    }
-    if (idTemp) {
-        timers.append(idTemp->getSetTimer());
-        timers.append(idTemp->getColdStartTimer());
-    }
-    if (idDataset) {
-        timers.append(idDataset->getSetTimer());
-        timers.append(idDataset->getColdStartTimer());
-    }
-    if (idDistSetup) {
-        timers.append(idDistSetup->getSetTimer());
-        timers.append(idDistSetup->getColdStartTimer());
-    }
-    if (idChartSetup) {
-        timers.append(idChartSetup->getSetTimer());
-        timers.append(idChartSetup->getColdStartTimer());
-    }
-    if (idDSPSetup) {
-        timers.append(idDSPSetup->getSetTimer());
-        timers.append(idDSPSetup->getColdStartTimer());
-    }
-    if (idTransc) {
-        timers.append(idTransc->getSetTimer());
-        timers.append(idTransc->getColdStartTimer());
-    }
-    if (idSoundSpeed) {
-        timers.append(idSoundSpeed->getSetTimer());
-        timers.append(idSoundSpeed->getColdStartTimer());
-    }
-    if (idUART) {
-        timers.append(idUART->getSetTimer());
-        timers.append(idUART->getColdStartTimer());
-    }
-    if (idVersion) {
-        timers.append(idVersion->getSetTimer());
-        timers.append(idVersion->getColdStartTimer());
-    }
-    if (idMark) {
-        timers.append(idMark->getSetTimer());
-        timers.append(idMark->getColdStartTimer());
-    }
-    if (idFlash) {
-        timers.append(idFlash->getSetTimer());
-        timers.append(idFlash->getColdStartTimer());
-    }
-    if (idBoot) {
-        timers.append(idBoot->getSetTimer());
-        timers.append(idBoot->getColdStartTimer());
-    }
-    if (idUpdate) {
-        timers.append(idUpdate->getSetTimer());
-        timers.append(idUpdate->getColdStartTimer());
-    }
-    if (idNav) {
-        timers.append(idNav->getSetTimer());
-        timers.append(idNav->getColdStartTimer());
-    }
-    if (idBoatStatus) {
-        timers.append(idBoatStatus->getSetTimer());
-        timers.append(idBoatStatus->getColdStartTimer());
-    }
-    if (idDVL) {
-        timers.append(idDVL->getSetTimer());
-        timers.append(idDVL->getColdStartTimer());
-    }
-    if (idDVLMode) {
-        timers.append(idDVLMode->getSetTimer());
-        timers.append(idDVLMode->getColdStartTimer());
-    }
-    if (idUSBL) {
-        timers.append(idUSBL->getSetTimer());
-        timers.append(idUSBL->getColdStartTimer());
-    }
-
-    return timers;
-}
-#endif
 
 void DevDriver::regID(IDBin* id_bin, ParseCallback method, bool is_setup) {
 //    hashIDParsing[id_bin->id()] = id_bin;
@@ -723,83 +606,6 @@ void DevDriver::doRequestAll()
     }
 }
 
-#ifdef SEPARATE_READING
-void DevDriver::initProcessTimerConnects()
-{
-    connect(&m_processTimer, &QTimer::timeout, this, &DevDriver::process, Qt::QueuedConnection);
-}
-
-void DevDriver::initChildsTimersConnects()
-{
-    if (idTimestamp) {
-        idTimestamp->initTimersConnects();
-    }
-    if (idDist) {
-        idDist->initTimersConnects();
-    }
-    if (idChart) {
-        idChart->initTimersConnects();
-    }
-    if (idAtt) {
-        idAtt->initTimersConnects();
-    }
-    if (idTemp) {
-        idTemp->initTimersConnects();
-    }
-    if (idDataset) {
-        idDataset->initTimersConnects();
-    }
-    if (idDistSetup) {
-        idDistSetup->initTimersConnects();
-    }
-    if (idChartSetup) {
-        idChartSetup->initTimersConnects();
-    }
-    if (idDSPSetup) {
-        idDSPSetup->initTimersConnects();
-    }
-    if (idTransc) {
-        idTransc->initTimersConnects();
-    }
-    if (idSoundSpeed) {
-        idSoundSpeed->initTimersConnects();
-    }
-    if (idUART) {
-        idUART->initTimersConnects();
-    }
-    if (idVersion) {
-        idVersion->initTimersConnects();
-    }
-    if (idMark) {
-        idMark->initTimersConnects();
-    }
-    if (idFlash) {
-        idFlash->initTimersConnects();
-    }
-    if (idBoot) {
-        idBoot->initTimersConnects();
-    }
-    if (idUpdate) {
-        idUpdate->initTimersConnects();
-    }
-    if (idNav) {
-        idNav->initTimersConnects();
-    }
-    if (idBoatStatus) {
-        idBoatStatus->initTimersConnects();
-    }
-    if (idDVL) {
-        idDVL->initTimersConnects();
-    }
-    if (idDVLMode) {
-        idDVLMode->initTimersConnects();
-    }
-    if (idUSBL) {
-        idUSBL->initTimersConnects();
-    }
-}
-#endif
-
 uint32_t DevDriver::devSerialNumber() {
     return idVersion->serialNumber();
 }
@@ -972,9 +778,7 @@ void DevDriver::receivedRecorderStatus(Parsers::Type type, Parsers::Version ver,
 //                           .arg(idRecorderStatus->degradedFlags(), 0, 16)
 //                           .arg(idRecorderStatus->criticalFlags(), 0, 16);
 //         qInfo("%s", qUtf8Printable(s));
-// #ifndef SEPARATE_READING
 //         core.consoleInfo(s);
-// #endif
         emit recorderStatusChanged();
     }
 }
@@ -1612,9 +1416,7 @@ void DevDriver::fwUpgradeProcess() {
         emit upgradingFirmwareDone();
         emit upgradingFirmwareDoneDM();
 
-#ifndef SEPARATE_READING
         core.consoleInfo("Upgrade: done");
-#endif
         restartState();
     }
 }
@@ -1645,20 +1447,14 @@ bool DevDriver::checkUpgradeTimeouts(int64_t curr_time) {
     ++upgradeResendCount_;
     _lastUpgradeAnswerTime = curr_time;
 
-#ifndef SEPARATE_READING
     core.consoleInfo(QString("Upgrade: timeout, resend %1/%2").arg(upgradeResendCount_).arg(upgradeResendLimit));
-#endif
 
     idUpdate->putUpdate(false);
     return false;
 }
 
 void DevDriver::abortUpgrade(const QString& reason) {
-#ifndef SEPARATE_READING
     core.consoleInfo(QString("Upgrade: aborted -- %1").arg(reason));
-#else
-    Q_UNUSED(reason);
-#endif
 
     m_upgrade_status = failUpgrade;
     m_state.in_boot = false;
@@ -1691,14 +1487,10 @@ void DevDriver::receivedUpdate(Parsers::Type type, Parsers::Version ver, Parsers
                 upgradeResendCount_ = 0;
 
                 if(prog.type == 1) {
-#ifndef SEPARATE_READING
                     core.consoleInfo(QString("Upgrade: back offset condition error with device msg/offset %1 %2, host msg/offset %3 %4").arg(prog.lastNumMsg).arg(prog.lastOffset).arg(idUpdate->currentNumPacket()).arg(idUpdate->currentFwOffset()));
-#endif
                 }
                 else if(prog.type == 2) {
-#ifndef SEPARATE_READING
                     core.consoleInfo(QString("Upgrade: forward offset condition error with device msg/offset %1 %2, host msg/offset %3 %4").arg(prog.lastNumMsg).arg(prog.lastOffset).arg(idUpdate->currentNumPacket()).arg(idUpdate->currentFwOffset()));
-#endif
                     idUpdate->setUpgradeNewPoint(prog.lastNumMsg, prog.lastOffset);
                 }
 
@@ -1749,7 +1541,6 @@ void DevDriver::receivedNav(Parsers::Type type, Parsers::Version ver, Parsers::R
         const float pitchDeg = idNav->pitchV2();
         const float rollDeg = idNav->rollV2();
 
-#ifndef SEPARATE_READING
         core.consoleInfo(QString("SimpleNavV2: fix %1 sats %2 lat %3 lon %4 course %5 speed %6 yaw %7 pitch %8 roll %9")
                              .arg(gnssFixType)
                              .arg(numSats)
@@ -1760,7 +1551,6 @@ void DevDriver::receivedNav(Parsers::Type type, Parsers::Version ver, Parsers::R
                              .arg(yawDeg, 0, 'f', 2)
                              .arg(pitchDeg, 0, 'f', 2)
                              .arg(rollDeg, 0, 'f', 2));
-#endif
 
         emit simpleNavV2Complete(gnssFixType, numSats, unixTime, unixOffsetMs,
                                  latitude, longitude, courseDeg, velocityMps,
@@ -1791,7 +1581,6 @@ void DevDriver::receivedNav(Parsers::Type type, Parsers::Version ver, Parsers::R
         const float rollDeg = idNav->roll();
         const float depthM = idNav->depth();
 
-#ifndef SEPARATE_READING
         core.consoleInfo(QString("ROV: yaw: %1, pitch: %2, roll: %3, lat: %4, lon: %5, depth: %6")
                              .arg(yawDeg)
                              .arg(pitchDeg)
@@ -1799,7 +1588,6 @@ void DevDriver::receivedNav(Parsers::Type type, Parsers::Version ver, Parsers::R
                              .arg(latitude)
                              .arg(longitude)
                              .arg(depthM));
-#endif
 
         emit positionComplete(latitude, longitude, 0, 0);
         emit attitudeComplete(yawDeg, pitchDeg, rollDeg);
@@ -1897,29 +1685,21 @@ void DevDriver::receivedUSBL(Parsers::Type type, Parsers::Version ver, Parsers::
     // a beacon activation response, so the version is not enough.
     switch(idUSBL->lastPayloadKind()) {
     case IDBinUsblSolution::PayloadKind::Solution:
-#ifndef SEPARATE_READING
         core.consoleInfo(usblConsoleLine("solution", idUSBL->usblSolution()));
-#endif
         emit usblSolutionComplete(idUSBL->usblSolution());
         break;
     case IDBinUsblSolution::PayloadKind::AcousticNav:
-#ifndef SEPARATE_READING
         core.consoleInfo(usblConsoleLine("acoustic-nav", idUSBL->usblSolution()));
-#endif
         emit acousticNavSolutionComplete(idUSBL->acousticNavSolution());
         emit usblSolutionComplete(idUSBL->usblSolution());
         break;
     case IDBinUsblSolution::PayloadKind::BaseToBeacon:
-#ifndef SEPARATE_READING
         core.consoleInfo(usblConsoleLine("base-to-beacon", idUSBL->usblSolution()));
-#endif
         emit baseToBeaconComplete(idUSBL->baseToBeacon());
         emit usblSolutionComplete(idUSBL->usblSolution());
         break;
     case IDBinUsblSolution::PayloadKind::BeaconActivation:
-#ifndef SEPARATE_READING
         core.consoleInfo(QStringLiteral("USBL beacon-activation"));
-#endif
         emit beaconActivationComplete(0);
         break;
     case IDBinUsblSolution::PayloadKind::None:

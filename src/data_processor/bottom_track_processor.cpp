@@ -61,10 +61,7 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
     }
 
     auto publishBatch = [&](auto&& distAt) {
-        bool flushEachEpoch = datasetPtr_->getState() == Dataset::DatasetState::kConnection;
-#ifdef SEPARATE_READING
-        flushEachEpoch = true;
-#endif
+        const bool flushEachEpoch = datasetPtr_->getState() == Dataset::DatasetState::kConnection;
         const int batchLimit = flushEachEpoch ? 0 : 512;
 
         QVector<BottomTrackUpdate> batch;

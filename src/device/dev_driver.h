@@ -30,11 +30,6 @@ public:
         successUpgrade = 101
     };
 
-#ifdef SEPARATE_READING
-    QTimer* getProcessTimer();
-    QList<QTimer*> getChildTimers();
-#endif
-
     ChannelId getChannelId() const;
 
     int distMax();
@@ -353,11 +348,6 @@ public slots:
                           int cmdIdAction = 0, int cmdIdReplacement = 0,
                           int addressAction = 0, int addressReplacement = 0);
     QString modemLastPayload() const;
-
-#ifdef SEPARATE_READING
-    Q_INVOKABLE void initProcessTimerConnects();
-    Q_INVOKABLE void initChildsTimersConnects();
-#endif
 
     void doRequestAll();
 

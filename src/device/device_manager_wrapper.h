@@ -117,7 +117,6 @@ public:
     /** Makes vehicle mission item @p seq current (skip ahead or back); see DeviceManager::autopilotSetMissionCurrent. */
     Q_INVOKABLE void autopilotSetMissionCurrent(int seq);
 
-    void startWorkerThread();
     void initStreamList();
 
     bool getProtoBinConsoled() const { return protoBinConsoledState_; };
@@ -189,11 +188,7 @@ public slots:
 
 signals:
     void sendOpenFile(QString path);
-#ifdef SEPARATE_READING
-    void sendCloseFile(bool);
-#else
     void sendCloseFile();
-#endif
 
     void devChanged();
     void standAvailableChanged();
@@ -238,10 +233,6 @@ private:
     bool restartMissionAfterUpload_ = true;
     int swallowSilentFinishes_ = 0;
     qreal missionTransferProgress_ = 0.0;
-#ifdef SEPARATE_READING
-    std::unique_ptr<QThread> workerThread_;
-    QList<QMetaObject::Connection> deviceManagerConnections_;
-#endif
 
     int averageChartLosses_;
     bool protoBinConsoledState_;

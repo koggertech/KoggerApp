@@ -71,7 +71,6 @@ public:
     Q_PROPERTY(bool              isAppendMode                 READ getIsAppendMode                 NOTIFY isAppendModeChanged)
     Q_PROPERTY(QString           fileTitle                    READ getFileTitle                    NOTIFY fileTitleChanged)
     Q_PROPERTY(bool              isFileOpening                READ getIsFileOpening                NOTIFY sendIsFileOpening)
-    Q_PROPERTY(bool              isSeparateReading            READ getIsSeparateReading            CONSTANT)
     Q_PROPERTY(QString           ch1Name                      READ getChannel1Name                 NOTIFY channelListUpdated FINAL)
     Q_PROPERTY(QString           ch2Name                      READ getChannel2Name                 NOTIFY channelListUpdated FINAL)
     Q_PROPERTY(int               dataProcessorState           READ getDataProcessorState           NOTIFY dataProcessorStateChanged)
@@ -100,10 +99,6 @@ public:
     DeviceTopologyModel* getDeviceTopologyModelPtr() const;
     mission::MissionPlanController* getMissionPlanControllerPtr() const;
     mission::MissionRunTracker* getMissionRunTrackerPtr() const;
-#ifdef SEPARATE_READING
-    QString getTryOpenedfilePath() const;
-    void stopDeviceManagerThread() const;
-#endif
     void setConsoleOutputEnabled(bool enabled);
     bool isConsoleOutputEnabled() const { return consoleOutputEnabled_; }
     Q_INVOKABLE void consoleInfo(QString msg);
@@ -116,9 +111,6 @@ public:
     void saveLLARefToSettings();
     Q_INVOKABLE void saveCameraViewToSettings();
     void removeLinkManagerConnections();
-#ifdef SEPARATE_READING
-    void removeDeviceManagerConnections();
-#endif
     QHash<QUuid, QString> getLinkNames() const;
     void shutdownBackgroundWorkers();
     bool getIsGPSAlive() const { return isGPSAlive_; };
@@ -151,16 +143,8 @@ public:
 public slots:
     void setIsGPSAlive(bool state) { qDebug() << "Core::setIsGPSAlive" << state; isGPSAlive_ = state; emit isGPSAliveChanged(); }
 
-#ifdef SEPARATE_READING
-    void openLogFile(const QString& filePath, bool isAppend = false, bool onCustomEvent = false);
-    bool closeLogFile(bool onOpen = false);
-    void onFileStartOpening();
-    void onFileReadEnough();
-    void onFileOpenBreaked(bool onOpen);
-#else
     void openLogFile(const QString& filePath, bool isAppend = false, bool onCustomEvent = false);
     bool closeLogFile();
-#endif
     void onRequestClearing();
 
     void onFileOpened();
@@ -224,7 +208,6 @@ public slots:
     Q_INVOKABLE bool getIsFileOpening() const;
     Q_INVOKABLE bool getIsAppendMode() const;
     Q_INVOKABLE QString getFileTitle() const;
-    Q_INVOKABLE bool getIsSeparateReading() const;
     Q_INVOKABLE int getDataProcessorState() const;
     bool getProcessingIdle() const { return processingIdle_.load(); }
     QVariantMap getProcessingActivity() const { return processingActivity_; }
@@ -299,10 +282,6 @@ signals:
     void contactPlacementArmedChanged();
     void missionEditorActiveChanged();
     void languageChanged();
-
-#ifdef SEPARATE_READING
-    void sendCloseLogFile(bool onOpen = false);
-#endif
 
 private slots:
     void onFileStopsOpening();
@@ -394,12 +373,6 @@ private:
     DataProcessor* dataProcessor_;
     QThread* dataProcThread_;
     std::unique_ptr<DataHorizon> dataHorizon_; // this thread
-
-#ifdef SEPARATE_READING
-    QString tryOpenedfilePath_;
-    bool fileIsCompleteOpened_ = false;
-    QList<QMetaObject::Connection> deviceManagerWrapperConnections_;
-#endif
 
     QQmlApplicationEngine* qmlAppEnginePtr_;
     Dataset* datasetPtr_;

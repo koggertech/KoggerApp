@@ -106,11 +106,7 @@ public slots:
     void initStreamList();
     void frameInput(QUuid uuid, Link* link, Parsers::FrameParser frame);
     void openFile(QString filePath);
-#ifdef SEPARATE_READING
-    void closeFile(bool onOpen = false);
-#else
     void closeFile();
-#endif
     void onLinkOpened(QUuid uuid, Link *link);
     void onLinkClosed(QUuid uuid, Link* link);
     void onLinkDeleted(QUuid uuid, Link* link);
@@ -222,11 +218,6 @@ signals:
     // logger
     void sendProtoFrame(Parsers::ProtoBinOut protoOut);
 
-#ifdef SEPARATE_READING
-    void fileStartOpening();
-    void fileBreaked(bool);
-    void onFileReadEnough();
-#endif
     void fileOpened();
 
 private:
@@ -331,10 +322,6 @@ private:
     bool isConsoled_;
     bool nmeaConsoled_;
     bool mavlinkConsoled_;
-    volatile bool break_;
-#ifdef SEPARATE_READING
-    bool onOpen_{ false };
-#endif
 
     bool isUSBLBeaconDirectAsk = false;
     bool proxyTraffic_ = false;

@@ -1998,11 +1998,7 @@ void GraphicsScene3dView::updateForceSingleZoomAutoState()
         }
         return;
     }
-#ifdef SEPARATE_READING
-    const bool active = isOpeningFile_;
-#else
     const bool active = datasetState_ == static_cast<int>(Dataset::DatasetState::kConnection);
-#endif
     if (forceSingleZoomAutoActive_ == active) {
         return;
     }
@@ -2821,9 +2817,6 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                          }
                      }, Qt::QueuedConnection);
 
-    // QUEUED, and not by preference: addUsblSolution runs on the link thread (the device
-    // connections are Direct unless SEPARATE_READING), while the controller re-projects against
-    // the camera and writes into a render impl the GUI thread owns.
     QObject::connect(datasetPtr_, &Dataset::usblSolutionAdded,
                      usblLayerController_, &UsblLayerController::onUsblSolution,
                      Qt::QueuedConnection);

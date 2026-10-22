@@ -9,7 +9,6 @@ Item {
     anchors.fill: parent
     visible: typeof core !== "undefined" && core
              && core.isFileOpening
-             && (typeof core.isSeparateReading === "undefined" || !core.isSeparateReading)
     z: ZOrder.fileOpeningOverlay
     enabled: visible
 

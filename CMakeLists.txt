@@ -74,7 +74,6 @@ qt_standard_project_setup(REQUIRES 6.8)
 set(CMAKE_AUTOUIC OFF)
 
 option(KOGGER_FLASHER          "Build device flasher"                OFF)
-option(KOGGER_SEPARATE_READING "Data reception in a separate thread" OFF)
 option(KOGGER_SCENE_TESTING    "3D scene testing"                    OFF)
 option(KOGGER_MANUAL_TESTING   "Manual testing hooks"                OFF)
 
@@ -154,9 +153,6 @@ if(KOGGER_FLASHER)
     target_sources(KoggerApp PRIVATE
         src/flasher/flasher.h        src/flasher/flasher.cpp
         src/flasher/deviceflasher.h  src/flasher/deviceflasher.cpp)
-endif()
-if(KOGGER_SEPARATE_READING)
-    target_compile_definitions(KoggerApp PRIVATE SEPARATE_READING)
 endif()
 if(KOGGER_SCENE_TESTING)
     target_compile_definitions(KoggerApp PRIVATE SCENE_TESTING)
