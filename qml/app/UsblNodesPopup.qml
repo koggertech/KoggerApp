@@ -28,10 +28,16 @@ BasePanePopup {
     required property var store
     required property var def
     property var engine: null
+    property var network: null
+    property var networkEngine: null
+    readonly property bool _fromNetwork: !!engine && engine === networkEngine
 
     property real widgetScale: 1.0
 
     signal antennaDiagRequested(int address)
+    signal configuratorRequested()
+
+    onPopupDoubleClicked: configuratorRequested()
 
     readonly property real _bgAlpha: {
         var t = store ? store.usblPanelTransparency : 0
@@ -680,8 +686,8 @@ BasePanePopup {
                 verticalAlignment: Text.AlignVCenter
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
-                text: root._noDevice ? qsTr("No acoustic device")
-                                     : qsTr("No nodes in the USBL plan")
+                text: root._noDevice ? (root._fromNetwork ? qsTr("No bound head connected") : qsTr("No acoustic device"))
+                                     : (root._fromNetwork ? qsTr("No beacons in the network") : qsTr("No nodes in the USBL plan"))
                 color: AppPalette.textMuted
                 font.pixelSize: Math.max(8, Math.round(12 * root._k))
             }
@@ -943,7 +949,7 @@ BasePanePopup {
                 elide: Text.ElideRight
                 // Not a button. Starting a schedule transmits, and a transmit control under a
                 // finger on a moving boat is a different feature from a readout.
-                text: qsTr("Schedule stopped")
+                text: root._fromNetwork ? qsTr("Cycle stopped · double-click for the configurator") : qsTr("Schedule stopped")
                 color: AppPalette.textMuted
                 font.pixelSize: Math.max(7, Math.round(10 * root._k))
             }

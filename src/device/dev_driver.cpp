@@ -2,6 +2,8 @@
 #include <time.h>
 #include <core.h>
 #include <QDateTime>
+#include <QDebug>
+#include <limits>
 #include <QFile>
 #include <QVariant>
 #include <QXmlStreamWriter>
@@ -615,12 +617,41 @@ void DevDriver::enableBeaconOnce(float timeout)
 
 void DevDriver::acousticPingRequest(uint8_t address, uint32_t timeout_us) {
     if(!m_state.connect) return;
-    idUSBLControl->pingRequest(timeout_us, address);
+    trackUsblFrame(v1, idUSBLControl->pingRequest(timeout_us, address));
 }
 
 void DevDriver::acousticPingRequestEx(uint8_t address, uint32_t timeout_us, uint8_t cmdId, uint32_t replyDistanceMm, const QByteArray& payload) {
     if(!m_state.connect) return;
-    idUSBLControl->pingRequest(timeout_us, address, cmdId, replyDistanceMm, payload);
+    trackUsblFrame(v1, idUSBLControl->pingRequest(timeout_us, address, cmdId, replyDistanceMm, payload));
+}
+
+void DevDriver::acousticPingRequestHex(int address, double timeoutUs, int cmdId, double replyDistanceMm,
+                                       const QString& hexPayload, int payloadBits) {
+    if(!m_state.connect) return;
+    const uint32_t timeout = (uint32_t)qBound(0.0, timeoutUs, 4294967295.0);
+    const uint32_t reply = (uint32_t)qBound(0.0, replyDistanceMm, 4294967295.0);
+    trackUsblFrame(v1, idUSBLControl->pingRequest(timeout, (uint8_t)qBound(0, address, 255),
+                                                  (uint8_t)qBound(0, cmdId, 255), reply,
+                                                  parseHexPayload(hexPayload), payloadBits));
+}
+
+void DevDriver::trackUsblFrame(int ver, uint16_t checksum) {
+    UsblPendingFrame f;
+    f.ver = ver;
+    f.sentMs = QDateTime::currentMSecsSinceEpoch();
+    f.relayed = (int)idUSBLControl->lastRelayedChecksum();
+    usblPending_[(int)checksum] = f;
+    logUsblControl(ver, QStringLiteral("sent ck %1").arg(checksum, 4, 16, QLatin1Char('0')));
+    emit usblControlFrameSent(ver, (int)checksum);
+}
+
+void DevDriver::logUsblControl(int ver, const QString& what) {
+    // Pings go out every step; only configuration frames are rare enough to log unconditionally.
+    if(ver == (int)v1 && !usblConsoled_) return;
+    qInfo().noquote() << QStringLiteral("USBL ctl v%1 %2 [%3 SN %4 route %5]")
+                             .arg(ver).arg(what).arg(m_devName)
+                             .arg(devSerialNumber())
+                             .arg(getBusAddress());
 }
 
 void DevDriver::acousticResponceFilter(uint8_t address) {
@@ -698,7 +729,7 @@ void DevDriver::markUsblSent(int ver) {
 
 void DevDriver::sendUsblTransponder() {
     if(m_state.connect) {
-        idUSBLControl->setTransponderEnable(usblMem_.transponderTimeoutUs);
+        trackUsblFrame(v3, idUSBLControl->setTransponderEnable(usblMem_.transponderTimeoutUs));
         markUsblSent(v3);
     } else {
         usblAck_[v3] = UsblApplyQueued;
@@ -708,7 +739,7 @@ void DevDriver::sendUsblTransponder() {
 
 void DevDriver::sendUsblFilter() {
     if(m_state.connect) {
-        idUSBLControl->setResponseAddressFilter(usblMem_.filter);
+        trackUsblFrame(v4, idUSBLControl->setResponseAddressFilter(usblMem_.filter));
         markUsblSent(v4);
     } else {
         usblAck_[v4] = UsblApplyQueued;
@@ -722,7 +753,7 @@ void DevDriver::sendUsblMonitor() {
         cfg.suppressSelfResponse_us = usblMem_.suppressSelfResponseUs;
         cfg.suppressSelfRequest_us = usblMem_.suppressSelfRequestUs;
         cfg.receiveResponseInIdle = usblMem_.receiveResponseInIdle;
-        idUSBLControl->setMonitorConfig(cfg);
+        trackUsblFrame(v7, idUSBLControl->setMonitorConfig(cfg));
         markUsblSent(v7);
     } else {
         usblAck_[v7] = UsblApplyQueued;
@@ -764,7 +795,8 @@ void DevDriver::setUsblCmdConfig(int cmdId, int event,
                                  int senderFunction, const QString& sendHexPayload,
                                  int eventAction,
                                  int cmdIdAction, int cmdIdReplacement,
-                                 int addressAction, int addressReplacement) {
+                                 int addressAction, int addressReplacement,
+                                 int sendBitLength) {
     UsblSlotArgs a;
     a.cmdId = cmdId;
     a.event = event;
@@ -777,6 +809,7 @@ void DevDriver::setUsblCmdConfig(int cmdId, int event,
     a.cmdIdReplacement = cmdIdReplacement;
     a.addressAction = addressAction;
     a.addressReplacement = addressReplacement;
+    a.sendBitLength = sendBitLength;
 
     typedef IDBinUsblControl::USBLCmdConfig Cfg;
     const int eventKey = event == Cfg::EventOnReceiveResponse ? 1 : 0;
@@ -816,7 +849,7 @@ void DevDriver::sendUsblSlot(const UsblSlotArgs& a) {
     // sending_bit_length is derived from the payload actually written, inside setCmdConfig.
 
     const QByteArray payload = parseHexPayload(a.sendHexPayload);
-    idUSBLControl->setCmdConfig(cfg, payload);
+    trackUsblFrame(v6, idUSBLControl->setCmdConfig(cfg, payload, a.sendBitLength));
 }
 
 QString DevDriver::modemLastPayload() const {
@@ -955,6 +988,9 @@ void DevDriver::protoComplete(Parsers::FrameParser& proto)
             IDBin* parse_instance = _hashID[proto.id()].instance;
             parse_instance->parse(proto);
             lastAddress_ = proto.route();
+            if(parse_instance == idUSBLControl) {
+                usblAckEcho_ = (proto.resp() && proto.readAvailable() >= 2) ? (int)proto.read<uint16_t>() : -1;
+            }
 
             if(_hashID[proto.id()].callback != nullptr) {
                 ParseCallback& callback = _hashID[proto.id()].callback;
@@ -2063,6 +2099,50 @@ void DevDriver::receivedUsblDiag(Parsers::Type type, Parsers::Version ver, Parse
 void DevDriver::receivedUSBLControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
 {
     Q_UNUSED(type)
+    if(resp != respNone) {
+        const int echo = usblAckEcho_;
+        int matched = -1;
+        QString how;
+        const int64_t now = QDateTime::currentMSecsSinceEpoch();
+        for(auto it = usblAnswered_.begin(); it != usblAnswered_.end();)
+            it = (now - it.value()) > 10000 ? usblAnswered_.erase(it) : std::next(it);
+        if(echo >= 0) {
+            for(auto it = usblPending_.cbegin(); it != usblPending_.cend() && matched < 0; ++it) {
+                if(it.key() == echo || it.value().relayed == echo) matched = it.key();
+            }
+        }
+        if(matched >= 0) {
+            how = matched == echo ? QStringLiteral("echo matched") : QStringLiteral("relayed echo matched");
+        } else if(echo >= 0 && usblAnswered_.contains(echo)) {
+            // A second RESP to a frame that was sent twice: answered already, and matching it by
+            // version would confirm the next frame before it was answered.
+            logUsblControl((int)ver, QStringLiteral("duplicate ack code %1 ck %2 ignored")
+                                         .arg((int)resp).arg(echo, 4, 16, QLatin1Char('0')));
+            return;
+        } else {
+            // The echo names neither a frame we sent nor its relayed form. The oldest frame still
+            // waiting on this version is the one a device answering in order answers.
+            int64_t oldest = std::numeric_limits<int64_t>::max();
+            for(auto it = usblPending_.cbegin(); it != usblPending_.cend(); ++it) {
+                if(it.value().ver == (int)ver && it.value().sentMs < oldest) {
+                    oldest = it.value().sentMs;
+                    matched = it.key();
+                }
+            }
+            how = matched >= 0 ? QStringLiteral("matched by version, echo %1").arg(echo, 4, 16, QLatin1Char('0'))
+                               : QStringLiteral("unmatched, echo %1").arg(echo, 4, 16, QLatin1Char('0'));
+        }
+        int ackVer = (int)ver;
+        if(matched >= 0) {
+            const UsblPendingFrame answered = usblPending_.take(matched);
+            ackVer = answered.ver;
+            usblAnswered_[matched] = now;
+            if(answered.relayed >= 0) usblAnswered_[answered.relayed] = now;
+        }
+        logUsblControl(ackVer, QStringLiteral("ack code %1 ck %2 %3")
+                                   .arg((int)resp).arg(matched >= 0 ? matched : echo, 4, 16, QLatin1Char('0')).arg(how));
+        emit usblControlAck(ackVer, matched >= 0 ? matched : echo, (int)resp);
+    }
     if(resp == respNone || (int)ver >= (int)usblAck_.size()) return;
     if(usblAck_[ver] != UsblApplyPending && usblAck_[ver] != UsblApplyNoAnswer) return;
     usblAck_[ver] = resp == respOk ? UsblApplyConfirmed : UsblApplyRejected;
@@ -2095,6 +2175,16 @@ void DevDriver::receivedModemSolution(Parsers::Type type, Parsers::Version ver, 
 void DevDriver::process() {
     int64_t curr_time = QDateTime::currentMSecsSinceEpoch();
 
+    const int64_t processGap = lastProcessAtMs_ != 0 ? curr_time - lastProcessAtMs_ : 0;
+    lastProcessAtMs_ = curr_time;
+#ifndef SEPARATE_READING
+    if((m_state.in_boot || m_state.in_update) && processGap > processStallLogMsec) {
+        core.consoleInfo(QString("Upgrade: event loop blocked for %1 ms").arg(processGap));
+    }
+#else
+    Q_UNUSED(processGap);
+#endif
+
     if(checkUpgradeTimeouts(curr_time)) {
         return;
     }
@@ -2108,6 +2198,18 @@ void DevDriver::process() {
     }
     if(usblAckExpired) {
         emit usblResponseConfigChanged();
+    }
+
+    for(auto it = usblPending_.begin(); it != usblPending_.end();) {
+        if((curr_time - it.value().sentMs) > usblAckTimeoutMsec) {
+            const int ver = it.value().ver;
+            const int checksum = it.key();
+            it = usblPending_.erase(it);
+            logUsblControl(ver, QStringLiteral("no answer ck %1").arg(checksum, 4, 16, QLatin1Char('0')));
+            emit usblControlAck(ver, checksum, 0);
+        } else {
+            ++it;
+        }
     }
 
     if(idNavSensorStatus && idNavSensorStatus->isValid() && !navSensorStatusStale_

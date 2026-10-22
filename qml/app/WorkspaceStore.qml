@@ -112,6 +112,7 @@ property bool quickActionContactEnabled: true
 property bool quickActionMissionEnabled: true
 property bool quickActionAutopilotEnabled: true
 property bool quickActionProfilesEnabled: true
+property bool quickActionNodesEnabled: true
 property bool quickActionWidgetsEnabled: true
 property bool quickActionConsoleEnabled: true
 property bool quickActionSecondWindowEnabled: true
@@ -131,7 +132,7 @@ function toggleInputLock() { setInputLocked(!inputLocked) }
 property string quickActionDraggingKey: ""
 
 readonly property var quickActionKeys: {
-    var base = ["connections", "logging", "layouts", "widgets", "console", "bottomTrack", "contact", "mission", "autopilot", "profiles", "inputLock"]
+    var base = ["connections", "logging", "layouts", "widgets", "console", "bottomTrack", "contact", "mission", "autopilot", "profiles", "nodes", "inputLock"]
     if (Qt.platform.os !== "android" && Qt.platform.os !== "ios")
         base.push("secondWindow")   // desktop-only; mobile drops it on normalize
     if (Qt.platform.os === "linux" || (typeof manualTesting !== "undefined" && manualTesting === true))
@@ -150,6 +151,7 @@ property var quickActionOrderModel: ListModel {
     ListElement { key: "mission" }
     ListElement { key: "autopilot" }
     ListElement { key: "profiles" }
+    ListElement { key: "nodes" }
     ListElement { key: "inputLock" }
     ListElement { key: "secondWindow" }
     ListElement { key: "powerOff" }
@@ -176,6 +178,8 @@ function normalizeQuickActionOrder(list) {
                 out.splice(out.indexOf("contact") + 1, 0, "mission")
             else if (quickActionKeys[j] === "autopilot" && out.indexOf("mission") !== -1)
                 out.splice(out.indexOf("mission") + 1, 0, "autopilot")
+            else if (quickActionKeys[j] === "nodes" && out.indexOf("profiles") !== -1)
+                out.splice(out.indexOf("profiles") + 1, 0, "nodes")
             else if (quickActionKeys[j] === "inputLock" && out.indexOf("secondWindow") !== -1)
                 out.splice(out.indexOf("secondWindow"), 0, "inputLock") // keep the lock right before the second window
             else
@@ -499,6 +503,7 @@ onAutopilotOnlineChanged: {
 }
 
 property bool profilesPopupOpen: false
+property bool nodesConfiguratorOpen: false
 property var settingsProfiles: []
 property var profilesPopupState: ({ x: -1, y: -1 })
 
@@ -1061,7 +1066,7 @@ function widgetStackIds() {
 }
 
 function widgetStackRank(id) {
-    return Math.max(0, Math.min(widgetStackSlots - 1, widgetInstance(id).z))
+    return Math.max(0, Math.min(Math.min(widgetStackSlots, ZOrder.widgetBandLevels) - 1, widgetInstance(id).z))
 }
 
 function widgetBringToFront(id) {
@@ -1240,6 +1245,7 @@ onAutopilotPopupOpenChanged: {
     layoutStore.autopilotPopupOpenStored = autopilotPopupOpen
 }
 onProfilesPopupOpenChanged: layoutStore.profilesPopupOpenStored = profilesPopupOpen
+onNodesConfiguratorOpenChanged: layoutStore.nodesConfiguratorOpenStored = nodesConfiguratorOpen
 
 readonly property real splitterThickness: 0
 readonly property real minPaneSize: 120
@@ -1853,6 +1859,7 @@ property Settings layoutStore: Settings {
     property bool quickActionMissionEnabledStored: true
     property bool quickActionAutopilotEnabledStored: true
     property bool quickActionProfilesEnabledStored: true
+    property bool quickActionNodesEnabledStored: true
     property string quickActionOrderStored: "connections,logging,layouts,bottomTrack,contact,widgets,console,profiles,inputLock,secondWindow,powerOff"
     property string rememberedLinksJson: "[]"
     property string selectedConnectionFilePathStored: ""
@@ -1870,6 +1877,7 @@ property Settings layoutStore: Settings {
     property string settingsProfilesJson: "[]"
     property string profilesPopupStateJson: "{\"x\":-1,\"y\":-1}"
     property bool profilesPopupOpenStored: false
+    property bool nodesConfiguratorOpenStored: false
     property bool bottomTrackEditorOpenStored: false
     property bool autopilotPopupOpenStored: false
     property string autopilotPopupStateJson: "{\"x\":-1,\"y\":-1}"
@@ -4155,6 +4163,7 @@ function saveLayoutState() {
     layoutStore.quickActionMissionEnabledStored = quickActionMissionEnabled
     layoutStore.quickActionAutopilotEnabledStored = quickActionAutopilotEnabled
     layoutStore.quickActionProfilesEnabledStored = quickActionProfilesEnabled
+    layoutStore.quickActionNodesEnabledStored = quickActionNodesEnabled
     layoutStore.quickActionWidgetsEnabledStored = quickActionWidgetsEnabled
     layoutStore.quickActionConsoleEnabledStored = quickActionConsoleEnabled
     layoutStore.quickActionSecondWindowEnabledStored = quickActionSecondWindowEnabled
@@ -4178,6 +4187,7 @@ function restoreLayoutState() {
     quickActionMissionEnabled = layoutStore.quickActionMissionEnabledStored
     quickActionAutopilotEnabled = layoutStore.quickActionAutopilotEnabledStored
     quickActionProfilesEnabled = layoutStore.quickActionProfilesEnabledStored
+    quickActionNodesEnabled = layoutStore.quickActionNodesEnabledStored
     quickActionWidgetsEnabled = layoutStore.quickActionWidgetsEnabledStored
     quickActionConsoleEnabled = layoutStore.quickActionConsoleEnabledStored
     quickActionSecondWindowEnabled = layoutStore.quickActionSecondWindowEnabledStored
@@ -5665,6 +5675,7 @@ function loadPersistedUiState() {
     loadUsblPanelPreferences()
     loadStandPanelPreferences()
     profilesPopupOpen = layoutStore.profilesPopupOpenStored
+    nodesConfiguratorOpen = layoutStore.nodesConfiguratorOpenStored
     autopilotPopupOpen = layoutStore.autopilotPopupOpenStored
     bottomTrackEditorOpen = layoutStore.bottomTrackEditorOpenStored
     loadPopupDocks()

@@ -82,6 +82,18 @@ qt_add_qml_module(kogger_app
         UiSavingSettingsTab.qml
         StandBadgeRow.qml
         StandPanelPopup.qml
+        NodesBottomPanel.qml
+        NodesConfigurator.qml
+        NodesDevicesPanel.qml
+        NodesEngine.qml
+        NodesFloatingWindow.qml
+        NodesInspector.qml
+        NodesMenu.qml
+        NodesPayloadEditor.qml
+        NodesSequenceCanvas.qml
+        NodesStore.qml
+        NodesTextField.qml
+        NodesWriter.qml
         StatusBanner.qml
         StatusStatBox.qml
         UsblAddressBadge.qml
@@ -91,6 +103,7 @@ qt_add_qml_module(kogger_app
         UsblEngine.qml
         UsblGroup.qml
         UsblHexField.qml
+        UsblNetworkCard.qml
         UsblNodesPopup.qml
         UsblOpBadge.qml
         UsblPanelSettingsPage.qml
@@ -113,6 +126,11 @@ qt_add_qml_module(kogger_app
         WorkspaceStore.qml
         WorkspaceView.qml
         LayoutResize.js
+        NodesCheck.js
+        NodesCompile.js
+        NodesModel.js
+        NodesPayload.js
+        NodesTiming.js
         LayoutRules.js
         LayoutTree.js
         RecorderStatus.js

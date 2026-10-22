@@ -31,6 +31,8 @@ QtObject {
     // The device the pane has selected, when there is a pane and it selected a USBL one.
     // Bound from WorkspaceStore.activeDevice, which is store state and outlives the page.
     property var preferredDev: null
+    // The other interrogation loop; one head must not run two cycles at once.
+    property var exclusiveWith: null
 
     // WHICH DEVICE THE LOOP TALKS TO. The selection if it is acoustic, otherwise the first
     // acoustic device on the bus -- because with the settings page closed there is no
@@ -166,8 +168,8 @@ QtObject {
         var snd = g ? g.ini.send : null
         var fn = snd ? plan.findBy(plan.pingFunctions, snd.fn) : null
         var payload = (fn && fn.id === "bits") ? snd.payload : ""
-        dev.acousticPingRequestEx(s.addr, _triggerTimeoutUs, s.cmd,
-                                  plan.replyMmForGroup(g ? g.id : -1), payload)
+        dev.acousticPingRequestHex(s.addr, _triggerTimeoutUs, s.cmd,
+                                   plan.replyMmForGroup(g ? g.id : -1), payload, -1)
     }
 
     // Build the step a hand-asked interrogation stands for. A muted step is still sendable --
@@ -221,7 +223,13 @@ QtObject {
     // Stop does NOT close an open window. A reply already in the water can still land, and
     // discarding it would report a miss that did not happen.
     function stop()  { _runTimer.stop() }
-    function start() { _runTimer.start(); advance() }
-    function step()  { stop(); advance() }
+    function start() {
+        if (exclusiveWith && exclusiveWith.running) exclusiveWith.stop()
+        _runTimer.start(); advance()
+    }
+    function step()  {
+        if (exclusiveWith && exclusiveWith.running) exclusiveWith.stop()
+        stop(); advance()
+    }
     function toggleRun() { running ? stop() : start() }
 }

@@ -25,6 +25,7 @@ Column {
              : key === "widgets"     ? qsTr("Widget panels")
              : key === "console"     ? qsTr("Console")
              : key === "profiles"    ? qsTr("Profiles")
+             : key === "nodes"       ? qsTr("Nodes-Configurator")
              : key === "inputLock"   ? qsTr("Lock input")
              : key === "secondWindow" ? qsTr("Second window")
              : key === "powerOff"    ? qsTr("Power off")
@@ -42,6 +43,7 @@ Column {
              : key === "widgets"     ? store.quickActionWidgetsEnabled
              : key === "console"     ? store.quickActionConsoleEnabled
              : key === "profiles"    ? store.quickActionProfilesEnabled
+             : key === "nodes"       ? store.quickActionNodesEnabled
              : key === "inputLock"   ? store.quickActionInputLockEnabled
              : key === "secondWindow" ? store.quickActionSecondWindowEnabled
              : key === "powerOff"    ? store.quickActionPowerOffEnabled
@@ -80,6 +82,9 @@ Column {
         } else if (key === "profiles") {
             store.quickActionProfilesEnabled = v
             store.requestHotkeysReveal("profiles")
+        } else if (key === "nodes") {
+            store.quickActionNodesEnabled = v
+            store.requestHotkeysReveal("nodes")
         } else if (key === "inputLock") {
             store.quickActionInputLockEnabled = v
             store.requestHotkeysReveal("inputLock")

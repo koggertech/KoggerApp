@@ -315,6 +315,10 @@ signals:
     void recorderStatusChanged();
     void navSensorStatusChanged();
     void usblResponseConfigChanged();
+    // One per ID_USBL_CONTROL frame: sent, then acknowledged. code is the RESP code (1 = OK),
+    // or 0 when no RESP arrived within the ACK timeout. checksum is CK1 | CK2 << 8 of the frame.
+    void usblControlFrameSent(int ver, int checksum);
+    void usblControlAck(int ver, int checksum, int code);
 
     void dopplerVeloComplete();
     void dopplerBeamComplete(IDBinDVL::BeamSolution *beams, uint16_t cnt);
@@ -378,6 +382,11 @@ public slots:
 
     void acousticPingRequest(uint8_t address, uint32_t timeout_us = 0xFFFFFFFF);
     void acousticPingRequestEx(uint8_t address, uint32_t timeout_us, uint8_t cmdId, uint32_t replyDistanceMm, const QByteArray& payload = {});
+    // QML form: the payload is hex text, payloadBits < 0 sends every byte of it. Times as double
+    // because 0xFFFFFFFF does not fit a QML int.
+    void acousticPingRequestHex(int address, double timeoutUs, int cmdId, double replyDistanceMm,
+                                const QString& hexPayload, int payloadBits);
+    bool usblControlReady() const { return m_state.connect; }
     void acousticResponceFilter(uint8_t address);
     void acousticResponceFilterSlots(const QVector<int>& addresses);
     void acousticResponceTimeout(uint32_t timeout_us = 0xFFFFFFFF);
@@ -396,7 +405,8 @@ public slots:
                           int senderFunction, const QString& sendHexPayload,
                           int eventAction = 0,
                           int cmdIdAction = 0, int cmdIdReplacement = 0,
-                          int addressAction = 0, int addressReplacement = 0);
+                          int addressAction = 0, int addressReplacement = 0,
+                          int sendBitLength = -1);
     QString modemLastPayload() const;
     QVariantMap modemPayloads() const { return modemByAddr_; }
 
@@ -527,8 +537,11 @@ protected:
     int64_t upgradeStartedTime_ = 0;
     int64_t rebootAtTime_ = 0;
     int upgradeResendCount_ = 0;
+    int64_t lastProcessAtMs_ = 0;
 
     static constexpr int64_t staleVersionGuardMsec = 400;
+    // process() ticks every 200 ms; a longer gap while flashing means the thread was busy elsewhere.
+    static constexpr int64_t processStallLogMsec = 600;
     static constexpr int64_t bootHandshakeTimeoutMsec = 8000;
     static constexpr int64_t packetAnswerTimeoutMsec = 2000;
     static constexpr int upgradeResendLimit = 5;
@@ -637,6 +650,7 @@ private:
         int cmdIdReplacement = 0;
         int addressAction = 0;
         int addressReplacement = 0;
+        int sendBitLength = -1;
     };
     struct UsblControlMemory {
         bool hasTransponder = false;
@@ -654,6 +668,16 @@ private:
     QVariantMap modemByAddr_;
     std::array<uint8_t, 8> usblAck_{};
     std::array<int64_t, 8> usblAckSentMs_{};
+    struct UsblPendingFrame {
+        int ver = 0;
+        int64_t sentMs = 0;
+        int relayed = -1;
+    };
+    QHash<int, UsblPendingFrame> usblPending_;
+    QHash<int, int64_t> usblAnswered_;
+    int usblAckEcho_ = -1;
+    void trackUsblFrame(int ver, uint16_t checksum);
+    void logUsblControl(int ver, const QString& what);
 
     void sendUsblTransponder();
     void sendUsblFilter();

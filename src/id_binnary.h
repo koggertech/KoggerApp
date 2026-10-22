@@ -1855,19 +1855,26 @@ public:
         uint16_t sending_bit_length = 0;
     } __attribute__((packed));
 
-    void pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id = 0);
-    void pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id, uint32_t reply_distance_mm, const QByteArray& payload = {});
-    void setTransponderEnable(uint32_t timeout_us);
-    void setResponseTimeout(uint32_t timeout_us);
-    void setMonitorConfig(const USBLMonitorConfig& cfg);
-    void setResponseAddressFilter(const std::array<uint8_t, 8>& addresses);
-    void setResponseAddressFilter(uint8_t address);
+    // Every setter returns the checksum of the frame it sent, which the device echoes in its RESP.
+    uint16_t pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id = 0);
+    // payload_bits < 0 means every byte of payload; otherwise at most that many bits of it.
+    uint16_t pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id, uint32_t reply_distance_mm, const QByteArray& payload = {}, int payload_bits = -1);
+    uint16_t setTransponderEnable(uint32_t timeout_us);
+    uint16_t setResponseTimeout(uint32_t timeout_us);
+    uint16_t setMonitorConfig(const USBLMonitorConfig& cfg);
+    uint16_t setResponseAddressFilter(const std::array<uint8_t, 8>& addresses);
+    uint16_t setResponseAddressFilter(uint8_t address);
     // sending_bit_length is derived from the payload actually written, so a truncated
-    // payload can never declare more bits than went on the wire.
-    void setCmdConfig(const USBLCmdConfig& cfg, const QByteArray& sendingPayload = {});
+    // payload can never declare more bits than went on the wire. sending_bits < 0 means all of it.
+    uint16_t setCmdConfig(const USBLCmdConfig& cfg, const QByteArray& sendingPayload = {}, int sending_bits = -1);
+
+    // A relay (a logger port) hands the frame to the board with route 0, and the board echoes
+    // the checksum of what it received: this is that checksum for the last frame sent.
+    uint16_t lastRelayedChecksum() const { return lastRelayedChecksum_; }
 
 protected:
-
+    uint16_t send(ProtoBinOut& frame);
+    uint16_t lastRelayedChecksum_ = 0;
 };
 
 // Receive-only: modem payloads carried back by an acoustic request/response.

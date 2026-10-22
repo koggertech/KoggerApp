@@ -18,7 +18,10 @@ QtObject {
     readonly property int bottomTrackEditPopup: 1500 // bottom-track tool palette (above window popups)
     readonly property int profilesPopup:        1510 // settings-profile palette (tool level, with bt-edit)
     readonly property int autopilotPopup:       1515 // autopilot control card (tool level, with bt-edit/profiles)
-    readonly property int widgetPopup:           1520 // panels — base of the reserved stack band 1520..1539; most-recently-moved on top. 20 slots for WorkspaceStore.widgetStackSlots (widgetLimit 10 + the 3 pinned domain panels), with room left so a fourth pinned panel does not need this file changed
+    readonly property int nodesConfigurator:    1518 // Nodes-Configurator floating window: under the panel band, so small panels stay on top of it
+    readonly property int widgetPopup:           1520 // panels — base of the reserved stack band 1520..1538; most-recently-moved on top. 19 slots for WorkspaceStore.widgetStackSlots (widgetLimit 10 + the 3 pinned domain panels), with room left so a fourth pinned panel does not need this file changed
+    readonly property int nodesConfiguratorMaximized: 1539 // Nodes-Configurator filling the window below the hot-action bar: above the panel band, under the hot actions so their menus open over it
+    readonly property int widgetBandLevels: nodesConfiguratorMaximized - widgetPopup // WorkspaceStore.widgetStackRank clamps to it, so no panel reaches the maximized configurator
     readonly property int hotActions:       1540    // HotActionsPanel — above the whole panel band + tool palettes so its buttons + hotkey dropdowns stay on top and clickable
     readonly property int widgetEditorOverlay:   1900 // widget editor: dim + real widget (below settings sidebar)
     readonly property int missionEditor:         1950 // mission planner scenario: opaque full-window overlay hosting the 3D view

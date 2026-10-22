@@ -17,6 +17,8 @@ Column {
     // as properties. See UsblEngine.qml.
     property var usblPlan: null
     property var usblEngine: null
+    property var nodesStore: null
+    property var nodesEngine: null
     property real scrollTopInset: 0
 
     property bool favEditMode: false
@@ -1259,6 +1261,14 @@ Column {
     // Three groups ordered by how often they are touched: operating (nodes + schedule)
     // stays open, the command plan and the response gating start collapsed. The plan model
     // is shared by the first two and persists independently of the device.
+    UsblNetworkCard {
+        width: root.groupWidth; preferredWidth: root.groupWidth
+        dev: root.dev
+        store: root.store
+        network: root.nodesStore
+        engine: root.nodesEngine
+    }
+
     UsblGroup {
         width: root.groupWidth; preferredWidth: root.groupWidth
         dev: root.dev
