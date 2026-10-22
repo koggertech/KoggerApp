@@ -22,6 +22,46 @@ namespace mission {
 
 namespace {
 
+QJsonValue finiteOrNull(double v)
+{
+    return std::isfinite(v) ? QJsonValue(v) : QJsonValue(QJsonValue::Null);
+}
+
+QJsonArray batchesJson(const autopilot::MissionBatches& batches)
+{
+    QJsonArray out;
+    for (const auto& b : batches) {
+        QJsonArray items;
+        for (const auto& m : b.items) {
+            QJsonObject o;
+            o.insert(QStringLiteral("command"), int(m.command));
+            o.insert(QStringLiteral("frame"), int(m.frame));
+            o.insert(QStringLiteral("current"), int(m.current));
+            o.insert(QStringLiteral("autocontinue"), int(m.autocontinue));
+            o.insert(QStringLiteral("params"), QJsonArray{finiteOrNull(m.param1), finiteOrNull(m.param2),
+                                                          finiteOrNull(m.param3), finiteOrNull(m.param4)});
+            o.insert(QStringLiteral("x"), int(m.x));
+            o.insert(QStringLiteral("y"), int(m.y));
+            o.insert(QStringLiteral("z"), finiteOrNull(m.z));
+            items.append(o);
+        }
+        QJsonArray params;
+        for (const auto& p : b.paramsAfter) {
+            QJsonObject o;
+            o.insert(QStringLiteral("name"), QString::fromLatin1(p.name));
+            o.insert(QStringLiteral("value"), double(p.value));
+            o.insert(QStringLiteral("type"), int(p.type));
+            params.append(o);
+        }
+        QJsonObject batch;
+        batch.insert(QStringLiteral("missionType"), b.missionType);
+        batch.insert(QStringLiteral("items"), items);
+        batch.insert(QStringLiteral("paramsAfter"), params);
+        out.append(batch);
+    }
+    return out;
+}
+
 QVector<int> unreadVehicleTypes(const autopilot::MissionBatches& batches, const VehicleImport& imported)
 {
     QVector<int> unread = { MavMissionTypeFence, MavMissionTypeRally };
@@ -329,12 +369,53 @@ bool MissionPlanController::uploadToVehicle()
         setLastError(tr("upload: %1").arg(blocker));
         return false;
     }
-    autopilot::MissionBatches batches = toVehicleUpload(expanded_.mission);
+    emit uploadRequested(uploadBatches());
+    return true;
+}
+
+autopilot::MissionBatches MissionPlanController::uploadBatches() const
+{
+    return withoutSkipped(toVehicleUpload(expanded_.mission));
+}
+
+autopilot::MissionBatches MissionPlanController::withoutSkipped(autopilot::MissionBatches batches) const
+{
     batches.removeIf([this](const autopilot::MissionBatch& b) {
         return b.items.isEmpty() && uploadSkipTypes_.contains(b.missionType);
     });
-    emit uploadRequested(batches);
-    return true;
+    return batches;
+}
+
+QVariantMap MissionPlanController::vehicleUpload() const
+{
+    QJsonObject root;
+    root.insert(QStringLiteral("batches"), batchesJson(uploadBatches()));
+    return root.toVariantMap();
+}
+
+QVariantMap MissionPlanController::vehicleRoundTrip() const
+{
+    const autopilot::MissionBatches uploaded = uploadBatches();
+    VehicleImport imported = fromVehicle(uploaded, plan_.settings.cruiseSpeed);
+    int counter = 0;
+    const auto nextId = [&counter]() { return QStringLiteral("v%1").arg(++counter); };
+    for (auto& item : imported.plan.items) {
+        std::visit([&nextId](auto& it) { it.id = nextId(); }, item);
+    }
+    for (auto& r : imported.plan.rally) {
+        r.id = nextId();
+    }
+    for (auto& f : imported.plan.fence) {
+        f.id = nextId();
+    }
+    const autopilot::MissionBatches again = withoutSkipped(toVehicleUpload(expandPlan(imported.plan).mission));
+    QJsonObject root;
+    root.insert(QStringLiteral("plan"), FileIo::toJson(imported.plan, appVersion_));
+    root.insert(QStringLiteral("empty"), imported.empty);
+    root.insert(QStringLiteral("skippedRouteCommands"), imported.skippedRouteCommands);
+    root.insert(QStringLiteral("skippedFenceItems"), imported.skippedFenceItems);
+    root.insert(QStringLiteral("sameOnVehicle"), sameOnVehicle(uploaded, again));
+    return root.toVariantMap();
 }
 
 void MissionPlanController::receiveVehicleMission(const autopilot::MissionBatches& batches)

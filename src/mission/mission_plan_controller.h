@@ -111,6 +111,8 @@ public:
     Q_INVOKABLE QString planJson() const;
     Q_INVOKABLE bool    loadPlanJson(const QString& json);
     Q_INVOKABLE QString flatJson() const;
+    Q_INVOKABLE QVariantMap vehicleUpload() const;
+    Q_INVOKABLE QVariantMap vehicleRoundTrip() const;
     Q_INVOKABLE QString itemJson(const QString& id) const;
     Q_INVOKABLE QVariantMap itemInfo(const QString& id) const;
     Q_INVOKABLE QVariantList generatedPoints(const QString& id) const;
@@ -179,6 +181,8 @@ private:
     bool        parsePoints(const QVariantList& list, QVector<GeoPoint>* out, int minCount);
     int         clampInsertIndex(int index) const;
     void        applyVehiclePlan(const MissionPlan& plan, const QVector<int>& unreadTypes, bool clean, const autopilot::MissionBatches& origin);
+    autopilot::MissionBatches uploadBatches() const;
+    autopilot::MissionBatches withoutSkipped(autopilot::MissionBatches batches) const;
 
     MissionPlan        plan_;
     ExpandResult     expanded_;
