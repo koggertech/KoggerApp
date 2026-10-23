@@ -2029,8 +2029,7 @@ bool Core::exportKlfFragment(int firstEpoch, int lastEpoch, QString filePath)
 
     const QString resolvedBasePath = this->resolveExportBasePath(filePath);
     const QString exportPath = QString("%1/%2_epochs_%3-%4.klf")
-                                   .arg(resolvedBasePath)
-                                   .arg(buildExportFileStem(openedfilePath_))
+                                   .arg(resolvedBasePath, buildExportFileStem(openedfilePath_))
                                    .arg(from)
                                    .arg(to);
 

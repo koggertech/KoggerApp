@@ -532,7 +532,7 @@ void DevDriver::logUsblControl(int ver, const QString& what) {
     // Pings go out every step; only configuration frames are rare enough to log unconditionally.
     if(ver == (int)v1 && !usblConsoled_) return;
     qInfo().noquote() << QStringLiteral("USBL ctl v%1 %2 [%3 SN %4 route %5]")
-                             .arg(ver).arg(what).arg(m_devName)
+                             .arg(ver).arg(what, m_devName)
                              .arg(devSerialNumber())
                              .arg(getBusAddress());
 }

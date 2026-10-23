@@ -850,7 +850,7 @@ QVariantList Dataset::usblDiagHistory(int address, int count) const
     QVariantList out;
     out.reserve(epochs.size());
     QReadLocker rl(&poolMtx_);
-    for (int i : epochs) {
+    for (int i : std::as_const(epochs)) {
         if (i < 0 || i >= pool_.size()) {
             continue;
         }
