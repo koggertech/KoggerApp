@@ -46,6 +46,11 @@ QtObject {
     readonly property var groups: st.groups
     readonly property var nodes: st.nodes
 
+    readonly property int maxRangeMm: st.maxRangeMm
+    readonly property int maxReplyMm: Logic.maxReplyMm(st)
+    readonly property int minRangeMm: Logic.MIN_RANGE_MM
+    readonly property int maxRangeLimitMm: Logic.MAX_RANGE_MM
+
     // ── derived (all re-evaluate when `st` is replaced) ────────────────────
     // Selection is READ-ONLY here and changed through selectGroup(). It used to be a writable
     // property mirrored into `st` by a handler, which meant two places could disagree about
@@ -66,6 +71,7 @@ QtObject {
     // A property, not a function: the add chip's `visible` is a binding, and a function
     // call in a binding is not a tracked dependency.
     readonly property bool canAddGroup: Logic.canAddGroup(st)
+    readonly property var addableAddresses: Logic.addableAddresses(st)
 
     // Per-role apply state as a PROPERTY, not a function. A function call in a binding is
     // not a tracked dependency, so `plan.applyFrames("initiator")` would render once and
@@ -118,6 +124,7 @@ QtObject {
     function schedulable(g)      { return Logic.schedulable(g) }
     function payloadBytes(hex)   { return Logic.payloadBytes(hex) }
     function trigger(gid, which) { return Logic.trigger(st, gid, which) }
+    function replyMmForGroup(gid) { return Logic.replyMmForGroup(st, gid) }
     function sectionCount(t)     { return Logic.sectionCount(t) }
     function hasRewrite(t)       { return Logic.hasRewrite(t) }
     // Every ID_USBL_CONTROL v6 write Apply will emit for `role`, already reduced to wire
@@ -155,6 +162,40 @@ QtObject {
         return true
     }
 
+    function _commitTransient(next) {
+        if (next === st) return false
+        st = next
+        rev = rev + 1
+        planChanged()
+        return true
+    }
+
+    function adoptAddresses(addrs) {
+        if (!addrs || !addrs.length) return
+        var have = {}
+        for (var i = 0; i < st.nodes.length; ++i) have[st.nodes[i].addr] = true
+        var fresh = []
+        for (var k = 0; k < addrs.length; ++k) {
+            var a = addrs[k]
+            if (typeof a !== "number" || a < 0 || have[a]) continue
+            have[a] = true
+            fresh.push(a)
+        }
+        if (!fresh.length) return
+        var next = Logic.clone(st)
+        for (var f = 0; f < fresh.length; ++f)
+            next.nodes.push({ id: Logic._next(next), addr: fresh[f], active: true, refs: [], fromFile: true })
+        _commitTransient(next)
+    }
+
+    function dropAdopted() {
+        var next = Logic.clone(st)
+        var keep = next.nodes.filter(function (n) { return !n.fromFile })
+        if (keep.length === next.nodes.length) return
+        next.nodes = keep
+        _commitTransient(next)
+    }
+
     // Selecting is an edit, not just a view change: an unfilled group dissolves when the
     // selection leaves it, and that has to be saved like anything else.
     function selectGroup(id)            { _commit(Logic.setActiveGroup(st, id)) }
@@ -166,6 +207,7 @@ QtObject {
     // The plan check's fix for duplicate groups. Writes nothing new to the device.
     function joinGroups(ids)            { _commit(Logic.joinGroups(st, ids)) }
     function addNode()                  { _commit(Logic.addNode(st)) }
+    function addNodeAt(addr)            { _commit(Logic.addNodeAt(st, addr)) }
     function removeNode(id)             { _commit(Logic.removeNode(st, id)) }
     function setNodeAddr(id, addr)      { _commit(Logic.setNodeAddr(st, id, addr)) }
     function toggleNode(id)             { _commit(Logic.toggleNode(st, id)) }
@@ -184,6 +226,8 @@ QtObject {
     }
 
     function setSendField(gid, f, v)        { _commit(Logic.setSendField(st, gid, f, v)) }
+    function setMaxRange(mm)                { _commit(Logic.setMaxRange(st, mm)) }
+    function setSendRange(gid, mm)          { _commit(Logic.setSendRange(st, gid, mm)) }
     function attachSend(gid)                { _commit(Logic.attachSend(st, gid)) }
     function detachSend(gid)                { _commit(Logic.detachSend(st, gid)) }
     function attachTrigger(gid, which)      { _commit(Logic.attachTrigger(st, gid, which)) }
@@ -260,6 +304,8 @@ QtObject {
             return qsTr("pinger expects no reply, but the transponder half is configured to answer")
         case "replyHandlerWithoutRequest":
             return qsTr("has a reply handler but never sends a request")
+        case "rangeBelowOneMetre":
+            return qsTr("max range is %1 m — set it in metres").arg((e.mm / 1000).toFixed(3))
         }
         return e.code
     }
@@ -274,7 +320,11 @@ QtObject {
     }
     property alias planJson: usblPersisted.planJson
 
-    function _save() { usblPersisted.planJson = Logic.serialize(st) }
+    function _save() {
+        var persisted = Logic.clone(st)
+        persisted.nodes = persisted.nodes.filter(function (n) { return !n.fromFile })
+        usblPersisted.planJson = Logic.serialize(persisted)
+    }
 
     function load() {
         var raw = usblPersisted.planJson

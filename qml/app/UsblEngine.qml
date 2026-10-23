@@ -31,6 +31,8 @@ QtObject {
     // The device the pane has selected, when there is a pane and it selected a USBL one.
     // Bound from WorkspaceStore.activeDevice, which is store state and outlives the page.
     property var preferredDev: null
+    // The other interrogation loop; one head must not run two cycles at once.
+    property var exclusiveWith: null
 
     // WHICH DEVICE THE LOOP TALKS TO. The selection if it is acoustic, otherwise the first
     // acoustic device on the bus -- because with the settings page closed there is no
@@ -127,16 +129,19 @@ QtObject {
         id: schedSettings
         category: "main/usblSchedule"
         property int dwellMs: 700
+        property bool fireOnPps: false
     }
     // Stored in MILLISECONDS and shown in seconds: the timers and the answer budget are integer
     // ms, and rounding a float seconds value back into them at every read is a way to be wrong
     // slowly. Clamped on the way out so a value persisted before the floor existed cannot leave
     // the loop running faster than the control can express.
     readonly property int dwellMs: Math.max(dwellMinMs, schedSettings.dwellMs)
-    // 0.4 s is about 300 m of two-way travel plus turn-around, which is the shortest window that
-    // can contain a real answer. Below it every interrogation would time out by construction.
-    readonly property int dwellMinMs: 400
+    readonly property int dwellMinMs: Node.requiredDwellMs(plan ? plan.maxReplyMm : 0)
     function setDwellMs(v) { schedSettings.dwellMs = v }
+
+    readonly property bool fireOnPps: schedSettings.fireOnPps
+    function setFireOnPps(v) { schedSettings.fireOnPps = v }
+    readonly property real _triggerTimeoutUs: fireOnPps ? 0xFFFFFFFF : 0
 
     property Timer _runTimer: Timer {
         interval: engine.dwellMs
@@ -161,10 +166,10 @@ QtObject {
         // Only the schedule is per-node, so only the ping is sent per step.
         var g = s.implicit ? null : plan.groupById(s.groupId)
         var snd = g ? g.ini.send : null
-        if (!snd) { dev.acousticPingRequest(s.addr, 0xFFFFFFFF); return }
-        var fn = plan.findBy(plan.pingFunctions, snd.fn)
-        var payload = (fn.id === "bits") ? snd.payload : ""
-        dev.acousticPingRequestEx(s.addr, 0xFFFFFFFF, s.cmd, snd.reply, payload)
+        var fn = snd ? plan.findBy(plan.pingFunctions, snd.fn) : null
+        var payload = (fn && fn.id === "bits") ? snd.payload : ""
+        dev.acousticPingRequestHex(s.addr, _triggerTimeoutUs, s.cmd,
+                                   plan.replyMmForGroup(g ? g.id : -1), payload, -1)
     }
 
     // Build the step a hand-asked interrogation stands for. A muted step is still sendable --
@@ -218,7 +223,13 @@ QtObject {
     // Stop does NOT close an open window. A reply already in the water can still land, and
     // discarding it would report a miss that did not happen.
     function stop()  { _runTimer.stop() }
-    function start() { _runTimer.start(); advance() }
-    function step()  { stop(); advance() }
+    function start() {
+        if (exclusiveWith && exclusiveWith.running) exclusiveWith.stop()
+        _runTimer.start(); advance()
+    }
+    function step()  {
+        if (exclusiveWith && exclusiveWith.running) exclusiveWith.stop()
+        stop(); advance()
+    }
     function toggleRun() { running ? stop() : start() }
 }

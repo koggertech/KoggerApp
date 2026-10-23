@@ -4,6 +4,8 @@
 #include "data_processor_defs.h"
 extern Core core;
 #include <algorithm>
+#include <cmath>
+#include <limits>
 #include <QDateTime>
 #include <QTimer>
 
@@ -24,6 +26,7 @@ Dataset::Dataset() :
     // usblSolutionAdded crosses from the link thread to the GUI thread queued, and a queued
     // connection cannot marshal a type the metatype system has not been told about.
     qRegisterMetaType<IDBinUsblSolution::UsblSolution>("IDBinUsblSolution::UsblSolution");
+    qRegisterMetaType<IDBinUsblDiag::UsblSignalDiag>("IDBinUsblDiag::UsblSignalDiag");
     resetDataset();
 }
 
@@ -530,24 +533,49 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
         pool_[poolIndex].set(data);
     }
 
-    // Host arrival time: the device clock in data.timestamp_us is not comparable with
-    // the host's, and fix age is what tells the operator whether a range is live.
-    const double nowMs = (double)QDateTime::currentMSecsSinceEpoch();
-    lastUsblSolution_ = data;
-    lastUsblFixEpochMs_ = nowMs;
+    if (data.role != IDBinUsblSolution::UsblSolution::RoleRequest) {
+        const double nowMs = (double)QDateTime::currentMSecsSinceEpoch();
+        lastUsblSolution_ = data;
+        lastUsblFixEpochMs_ = nowMs;
 
-    // Keep it per address as well. 0xFF is the "no address" marker in the payload, and
-    // the protocol only ever uses 0..8, so anything else is not a beacon we can name.
-    if (data.id <= 8) {
-        QWriteLocker wl(&usblAddrLock_);
-        usblByAddr_[(int)data.id] = data;
-        usblEpochMsByAddr_[(int)data.id] = nowMs;
+        if (data.id <= 8) {
+            QWriteLocker wl(&usblAddrLock_);
+            usblByAddr_[(int)data.id] = data;
+            usblEpochMsByAddr_[(int)data.id] = nowMs;
+        }
+        emit lastUsblSolutionChanged();
     }
-    emit lastUsblSolutionChanged();
     emit usblSolutionAdded(data);
 
     markDataAvailable(hasUsblData_);
     emit dataUpdate();
+}
+
+QVector<QPair<int, IDBinUsblSolution::UsblSolution>> Dataset::usblSolutionsFromEpoch(int firstEpoch, int* resumeEpoch) const
+{
+    QVector<QPair<int, IDBinUsblSolution::UsblSolution>> out;
+
+    QReadLocker rl(&poolMtx_);
+
+    const int first = std::max(0, firstEpoch);
+    const int total = pool_.size();
+    for (int i = first; i < total; ++i) {
+        Epoch& epoch = const_cast<Epoch&>(pool_.at(i));
+        if (!epoch.isUsblSolutionAvailable()) {
+            continue;
+        }
+        out.append(qMakePair(i, epoch.usblSolution()));
+    }
+
+    if (resumeEpoch) {
+        int resume = std::max(first, total);
+        if (total > first && !const_cast<Epoch&>(pool_.at(total - 1)).isUsblSolutionAvailable()) {
+            resume = total - 1;
+        }
+        *resumeEpoch = resume;
+    }
+
+    return out;
 }
 
 QVariantMap Dataset::getUsblSolutions() const {
@@ -565,10 +593,283 @@ QVariantMap Dataset::getUsblSolutions() const {
         e["beaconLat"]    = s.beacon_latitude;
         e["beaconLon"]    = s.beacon_longitude;
         e["beaconDepth"]  = s.beacon_depth;
+        e["syncVal"]      = s.sync_val;
+        e["syncSnr"]      = s.sync_snr;
+        e["syncFirstVal"] = s.sync_first_val;
+        e["syncFirstSnr"] = s.sync_first_snr;
+        e["syncRms"]      = s.sync_rms;
+        e["syncFirstMainMaxMs"] = s.sync_first_main_max_msec;
+        e["pingCounter"]  = static_cast<double>(s.ping_counter);
         e["epochMs"]      = usblEpochMsByAddr_.value(it.key(), 0.0);
         e["coordValid"]   = LLA(s.beacon_latitude, s.beacon_longitude).isCoordinatesValid();
         // String key: QVariantMap keys are QStrings, so QML indexes it as usblSolutions["2"].
         out[QString::number(it.key())] = e;
+    }
+    return out;
+}
+
+namespace {
+
+using UsblDiag = IDBinUsblDiag::UsblSignalDiag;
+using UsblChannelDiag = IDBinUsblDiag::UsblChannelDiag;
+
+constexpr int kUsblDiagJoinDepth = 256;
+constexpr double kUsblDiagNan = std::numeric_limits<double>::quiet_NaN();
+
+double usblDiagNum(float v)
+{
+    return std::isfinite(v) ? static_cast<double>(v) : kUsblDiagNan;
+}
+
+double usblDiagRatioDb(float num, float den)
+{
+    if (!std::isfinite(num) || !std::isfinite(den) || num <= 0.0f || den <= 0.0f) {
+        return kUsblDiagNan;
+    }
+    return 20.0 * std::log10(static_cast<double>(num) / static_cast<double>(den));
+}
+
+double usblDiagCdeg(int16_t v)
+{
+    return v == UsblChannelDiag::PhaseNone ? kUsblDiagNan : v / 100.0;
+}
+
+double usblDiagEighths(int8_t v)
+{
+    return v == UsblChannelDiag::OffsetNone ? kUsblDiagNan : v / 8.0;
+}
+
+QString usblDiagState(uint16_t flags)
+{
+    if (flags & UsblDiag::DirValid) {
+        return QStringLiteral("valid");
+    }
+    if (flags & UsblDiag::DirSolverFailed) {
+        return QStringLiteral("solverFailed");
+    }
+    if (flags & UsblDiag::DirChannelsValid) {
+        return QStringLiteral("channelsOnly");
+    }
+    return QStringLiteral("none");
+}
+
+QString usblDiagGeometry(uint8_t geometry)
+{
+    switch (geometry) {
+    case UsblDiag::GeometryTetra4: return QStringLiteral("tetra4");
+    case UsblDiag::GeometryCrossA: return QStringLiteral("crossA");
+    case UsblDiag::GeometryCrossB: return QStringLiteral("crossB");
+    default:                       return QStringLiteral("unknown");
+    }
+}
+
+struct UsblDiagSummary {
+    int channels = 0;
+    float ampRef = 0.0f;
+    float inRef = 0.0f;
+    double minLevelDb = kUsblDiagNan;
+    int weakChannel = -1;
+    double minSnrDb = kUsblDiagNan;
+    double residMaxDeg = kUsblDiagNan;
+    double centreSyncDb = kUsblDiagNan;
+};
+
+UsblDiagSummary usblDiagSummary(const UsblDiag& d)
+{
+    UsblDiagSummary s;
+    if (!(d.dir_flags & UsblDiag::DirChannelsValid)) {
+        return s;
+    }
+    s.channels = d.channelCount();
+    for (int i = 0; i < s.channels; ++i) {
+        if (std::isfinite(d.ch[i].peak_amp) && d.ch[i].peak_amp > s.ampRef) {
+            s.ampRef = d.ch[i].peak_amp;
+        }
+        if (std::isfinite(d.ch[i].in_rms) && d.ch[i].in_rms > s.inRef) {
+            s.inRef = d.ch[i].in_rms;
+        }
+    }
+    const bool dirValid = d.dir_flags & UsblDiag::DirValid;
+    for (int i = 0; i < s.channels; ++i) {
+        const UsblChannelDiag& c = d.ch[i];
+        const double levelDb = usblDiagRatioDb(c.peak_amp, s.ampRef);
+        if (std::isfinite(levelDb) && !(levelDb >= s.minLevelDb)) {
+            s.minLevelDb = levelDb;
+            s.weakChannel = i;
+        }
+        const double snrDb = usblDiagRatioDb(c.peak_amp, c.mf_noise_rms);
+        if (std::isfinite(snrDb) && !(snrDb >= s.minSnrDb)) {
+            s.minSnrDb = snrDb;
+        }
+        const double residDeg = std::fabs(usblDiagCdeg(c.phase_resid_cdeg));
+        if (dirValid && (c.flags & UsblChannelDiag::ChUsedForDirection)
+            && std::isfinite(residDeg) && !(residDeg <= s.residMaxDeg)) {
+            s.residMaxDeg = residDeg;
+        }
+    }
+    const bool cross = d.geometry_id == UsblDiag::GeometryCrossA || d.geometry_id == UsblDiag::GeometryCrossB;
+    if (cross && s.channels == UsblDiag::ChannelCapacity) {
+        s.centreSyncDb = usblDiagRatioDb(d.ch[UsblDiag::ChannelCapacity - 1].peak_amp, d.sync_first_val);
+    }
+    return s;
+}
+
+QVariantMap usblDiagPoint(const UsblDiag& d, const UsblDiagSummary& s)
+{
+    QVariantMap p;
+    p["state"]        = usblDiagState(d.dir_flags);
+    p["misfit"]       = usblDiagNum(d.fit_misfit);
+    p["amp"]          = usblDiagNum(d.amp_nonuniformity);
+    p["phase"]        = usblDiagNum(d.phase_nonplanarity);
+    p["widthAz"]      = usblDiagNum(d.dir_width_az_deg);
+    p["widthEl"]      = usblDiagNum(d.dir_width_el_deg);
+    p["altDb"]        = usblDiagNum(d.alt_margin_db);
+    p["mirrorDb"]     = usblDiagNum(d.mirror_margin_db);
+    p["coherence"]    = usblDiagNum(d.array_coherence);
+    p["minLevelDb"]   = s.minLevelDb;
+    p["weakChannel"]  = s.weakChannel;
+    p["minSnrDb"]     = s.minSnrDb;
+    p["residMaxDeg"]  = s.residMaxDeg;
+    p["pingCounter"]  = static_cast<double>(d.ping_counter);
+    return p;
+}
+
+QVariantMap usblDiagEntry(const UsblDiag& d)
+{
+    const UsblDiagSummary s = usblDiagSummary(d);
+    QVariantMap e = usblDiagPoint(d, s);
+    e["role"]          = static_cast<int>(d.role);
+    e["cmdId"]         = static_cast<int>(d.cmd_id);
+    e["channelsValid"] = static_cast<bool>(d.dir_flags & UsblDiag::DirChannelsValid);
+    e["dirValid"]      = static_cast<bool>(d.dir_flags & UsblDiag::DirValid);
+    e["solverFailed"]  = static_cast<bool>(d.dir_flags & UsblDiag::DirSolverFailed);
+    e["dirFlags"]      = static_cast<int>(d.dir_flags);
+    e["geometryId"]    = static_cast<int>(d.geometry_id);
+    e["geometry"]      = usblDiagGeometry(d.geometry_id);
+    e["channelCount"]  = d.channelCount();
+    e["distance"]      = usblDiagNum(d.distance_m);
+    e["azimuth"]       = usblDiagNum(d.azimuth_deg);
+    e["elevation"]     = usblDiagNum(d.elevation_deg);
+    e["dirAz"]         = usblDiagNum(d.dir_az_array_deg);
+    e["dirEl"]         = usblDiagNum(d.dir_el_array_deg);
+    e["peakFrac"]      = usblDiagEighths(d.peak_frac_offset);
+    e["syncSnr"]       = usblDiagNum(d.sync_snr);
+    e["centreSyncDb"]  = s.centreSyncDb;
+
+    const bool dirValid = d.dir_flags & UsblDiag::DirValid;
+    QVariantList channels;
+    for (int i = 0; i < s.channels; ++i) {
+        const UsblChannelDiag& c = d.ch[i];
+        QVariantMap ch;
+        ch["index"]      = i;
+        ch["used"]       = static_cast<bool>(c.flags & UsblChannelDiag::ChUsedForDirection);
+        ch["peakAmp"]    = usblDiagNum(c.peak_amp);
+        ch["noiseRms"]   = usblDiagNum(c.mf_noise_rms);
+        ch["inRms"]      = usblDiagNum(c.in_rms);
+        ch["levelDb"]    = usblDiagRatioDb(c.peak_amp, s.ampRef);
+        ch["inDb"]       = usblDiagRatioDb(c.in_rms, s.inRef);
+        ch["snrDb"]      = usblDiagRatioDb(c.peak_amp, c.mf_noise_rms);
+        ch["phaseDeg"]   = usblDiagCdeg(c.phase_cdeg);
+        ch["residDeg"]   = dirValid ? usblDiagCdeg(c.phase_resid_cdeg) : kUsblDiagNan;
+        ch["peakOffset"] = usblDiagEighths(c.peak_offset);
+        channels.append(ch);
+    }
+    e["channels"] = channels;
+    return e;
+}
+
+}
+
+void Dataset::addUsblDiag(IDBinUsblDiag::UsblSignalDiag data)
+{
+    int joinedEpoch = -1;
+    {
+        QWriteLocker wl(&poolMtx_);
+        const int last = pool_.size() - 1;
+        const int stop = std::max(0, last - kUsblDiagJoinDepth);
+        for (int i = last; i >= stop; --i) {
+            Epoch& epoch = pool_[i];
+            if (!epoch.isUsblSolutionAvailable()) {
+                continue;
+            }
+            const IDBinUsblSolution::UsblSolution s = epoch.usblSolution();
+            if (s.id == data.id && s.role == data.role
+                && s.ping_counter == data.ping_counter && s.timestamp_us == data.timestamp_us) {
+                epoch.setUsblDiag(data);
+                joinedEpoch = i;
+                break;
+            }
+        }
+    }
+
+    if (data.role == IDBinUsblSolution::UsblSolution::RoleRequest || data.id > 8) {
+        return;
+    }
+
+    {
+        QWriteLocker wl(&usblAddrLock_);
+        const int addr = static_cast<int>(data.id);
+        usblDiagByAddr_[addr] = data;
+        usblDiagEpochMsByAddr_[addr] = static_cast<double>(QDateTime::currentMSecsSinceEpoch());
+        usblDiagJoinedByAddr_[addr] = joinedEpoch >= 0;
+        if (joinedEpoch >= 0) {
+            usblDiagEpochsByAddr_[addr].append(joinedEpoch);
+        }
+    }
+    emit usblDiagChanged();
+}
+
+QVariantMap Dataset::getUsblDiagnostics() const
+{
+    QReadLocker rl(&usblAddrLock_);
+
+    QVariantMap out;
+    for (auto it = usblDiagByAddr_.constBegin(); it != usblDiagByAddr_.constEnd(); ++it) {
+        QVariantMap e = usblDiagEntry(it.value());
+        e["address"] = it.key();
+        e["epochMs"] = usblDiagEpochMsByAddr_.value(it.key(), 0.0);
+        e["joined"]  = usblDiagJoinedByAddr_.value(it.key(), false);
+        out[QString::number(it.key())] = e;
+    }
+    return out;
+}
+
+QVariantList Dataset::usblDiagHistory(int address, int count) const
+{
+    QVector<int> epochs;
+    {
+        QReadLocker rl(&usblAddrLock_);
+        const auto it = usblDiagEpochsByAddr_.constFind(address);
+        if (count <= 0 || it == usblDiagEpochsByAddr_.constEnd()) {
+            return {};
+        }
+        const QVector<int>& all = it.value();
+        epochs = all.mid(std::max(0, static_cast<int>(all.size()) - count));
+    }
+
+    QVariantList out;
+    out.reserve(epochs.size());
+    QReadLocker rl(&poolMtx_);
+    for (int i : epochs) {
+        if (i < 0 || i >= pool_.size()) {
+            continue;
+        }
+        const auto d = pool_.at(i).usblDiag();
+        if (!d || d->id != address) {
+            continue;
+        }
+        const UsblDiagSummary s = usblDiagSummary(*d);
+        QVariantMap p = usblDiagPoint(*d, s);
+        QVariantList levels;
+        QVariantList peaks;
+        for (int c = 0; c < s.channels; ++c) {
+            levels.append(usblDiagRatioDb(d->ch[c].peak_amp, s.ampRef));
+            peaks.append(usblDiagRatioDb(d->ch[c].peak_amp, 1.0f));
+        }
+        p["levels"] = levels;
+        p["peaksDb"] = peaks;
+        p["epoch"] = i;
+        out.append(p);
     }
     return out;
 }
@@ -1060,6 +1361,19 @@ void Dataset::resetDataset()
 
     setState(DatasetState::kUndefined);
 
+    {
+        QWriteLocker wl(&usblAddrLock_);
+        usblByAddr_.clear();
+        usblEpochMsByAddr_.clear();
+        usblDiagByAddr_.clear();
+        usblDiagEpochMsByAddr_.clear();
+        usblDiagJoinedByAddr_.clear();
+    }
+    lastUsblSolution_ = IDBinUsblSolution::UsblSolution();
+    lastUsblFixEpochMs_ = 0.0;
+    emit lastUsblSolutionChanged();
+    emit usblDiagChanged();
+
     testTime_ = 1740466541;
     usingRecordParameters_.clear();
     lastAddChartEpochIndx_.clear();
@@ -1169,6 +1483,10 @@ void Dataset::resetRenderBuffers()
     clearTileEpochIndex();
     pool_.clear();
     pool_.shrink_to_fit();//
+    {
+        QWriteLocker wl(&usblAddrLock_);
+        usblDiagEpochsByAddr_.clear();
+    }
     resetDataAvailability();
     lastAYaw_ = NAN;
     lastAPitch_ = NAN;

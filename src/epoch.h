@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <math.h>
+#include <memory>
 #include <stdint.h>
 #include <time.h>
 #include <QMap>
@@ -255,6 +256,7 @@ public:
     bool isComplexSignalAvail() { return !_complex.empty(); }
 
     void set(IDBinUsblSolution::UsblSolution data) { _usblSolution = data;  _isUsblSolutionAvailable = true; }
+    void setUsblDiag(const IDBinUsblDiag::UsblSignalDiag& data) { usblDiag_ = std::make_shared<const IDBinUsblDiag::UsblSignalDiag>(data); }
 
     void setGnssVelocity(double h_speed, double course);
 
@@ -502,6 +504,8 @@ public:
 
     bool isUsblSolutionAvailable() { return _isUsblSolutionAvailable; }
     IDBinUsblSolution::UsblSolution usblSolution() { return _usblSolution; }
+    bool isUsblDiagAvailable() const { return usblDiag_ != nullptr; }
+    std::shared_ptr<const IDBinUsblDiag::UsblSignalDiag> usblDiag() const { return usblDiag_; }
 
 
     double lat() { return _positionGNSS.lla.latitude; }
@@ -716,6 +720,7 @@ protected:
 
     IDBinUsblSolution::UsblSolution _usblSolution;
     bool _isUsblSolutionAvailable = false;
+    std::shared_ptr<const IDBinUsblDiag::UsblSignalDiag> usblDiag_;
 
     Position _positionGNSS;
     Position _positionExternal;

@@ -1,7 +1,9 @@
 #pragma once
 
+#include <atomic>
 #include <QObject>
 #include <QHash>
+#include <QMap>
 #include <QVector>
 #include <QTimer>
 #include <QUuid>
@@ -135,6 +137,46 @@ public:
     int  recorderDurationSeconds()       { return idRecorderStatus ? idRecorderStatus->recordingDurationSeconds() : 0; }
     int  recorderSecondsSinceLastWrite() { return idRecorderStatus ? idRecorderStatus->secondsSinceLastWrite() : 0; }
 
+    static inline std::atomic<bool> usblConsoled_{ false };
+
+    bool navSensorStatusValid() { return idNavSensorStatus && idNavSensorStatus->isValid(); }
+    bool navSensorStatusStale() { return navSensorStatusStale_; }
+    int  navSensorSeq()         { return idNavSensorStatus ? idNavSensorStatus->seq() : 0; }
+    int  imuState()             { return idNavSensorStatus ? idNavSensorStatus->imuState() : 0; }
+    int  imuWhoAmI()            { return idNavSensorStatus ? idNavSensorStatus->imuWhoAmI() : 0; }
+    int  imuFaultFlags()        { return idNavSensorStatus ? idNavSensorStatus->imuFaultFlags() : 0; }
+    int  imuSamplesPerS()       { return idNavSensorStatus ? idNavSensorStatus->imuSamplesPerS() : 0; }
+    int  imuEkfFedPerS()        { return idNavSensorStatus ? idNavSensorStatus->imuEkfFedPerS() : 0; }
+    int  imuBusErrCnt()         { return idNavSensorStatus ? idNavSensorStatus->imuBusErrCnt() : 0; }
+    int  imuInvalidCnt()        { return idNavSensorStatus ? idNavSensorStatus->imuInvalidCnt() : 0; }
+    int  imuStuckRunMax()       { return idNavSensorStatus ? idNavSensorStatus->imuStuckRunMax() : 0; }
+    int  imuAccNormMg()         { return idNavSensorStatus ? idNavSensorStatus->imuAccNormMg() : 0; }
+    int  imuGyrNormCdps()       { return idNavSensorStatus ? idNavSensorStatus->imuGyrNormCdps() : 0; }
+    int  imuTempCc()            { return idNavSensorStatus ? idNavSensorStatus->imuTempCc() : 0; }
+    int  imuClipMask()          { return idNavSensorStatus ? idNavSensorStatus->imuClipMask() : 0; }
+    int  imuReinitCnt()         { return idNavSensorStatus ? idNavSensorStatus->imuReinitCnt() : 0; }
+    int  imuBadSeconds()        { return idNavSensorStatus ? idNavSensorStatus->imuBadSeconds() : 0; }
+
+    enum UsblApplyState {
+        UsblApplyNone      = 0,
+        UsblApplyQueued    = 1,
+        UsblApplyPending   = 2,
+        UsblApplyConfirmed = 3,
+        UsblApplyRejected  = 4,
+        UsblApplyNoAnswer  = 5,
+    };
+
+    bool usblRespKnown() const { return usblMem_.hasTransponder || usblMem_.hasFilter || usblMem_.hasMonitor; }
+    bool usblRespTransponderKnown() const { return usblMem_.hasTransponder; }
+    bool usblRespEnabled() const { return usblMem_.hasTransponder && usblMem_.transponderTimeoutUs != 0; }
+    bool usblRespFilterKnown() const { return usblMem_.hasFilter; }
+    QVariantList usblRespAcceptedAddresses() const;
+    bool usblRespMonitorKnown() const { return usblMem_.hasMonitor; }
+    int  usblRespSuppressResponseUs() const { return (int)usblMem_.suppressSelfResponseUs; }
+    int  usblRespSuppressRequestUs() const { return (int)usblMem_.suppressSelfRequestUs; }
+    bool usblRespReceiveInIdle() const { return usblMem_.receiveResponseInIdle; }
+    int  usblRespApplyState() const;
+
     BoardVersion boardVersion() {
         return idVersion->boardVersion();
     }
@@ -222,6 +264,7 @@ signals:
     void encoderComplete(float e1, float e2, float e3);
 
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
+    void usblDiagComplete(IDBinUsblDiag::UsblSignalDiag data);
     void acousticNavSolutionComplete(IDBinUsblSolution::AcousticNavSolution data);
     void baseToBeaconComplete(IDBinUsblSolution::BaseToBeacon data);
     void beaconActivationComplete(uint8_t id);
@@ -265,6 +308,12 @@ signals:
     void deviceIDChanged(QByteArray uid);
     void onReboot();
     void recorderStatusChanged();
+    void navSensorStatusChanged();
+    void usblResponseConfigChanged();
+    // One per ID_USBL_CONTROL frame: sent, then acknowledged. code is the RESP code (1 = OK),
+    // or 0 when no RESP arrived within the ACK timeout. checksum is CK1 | CK2 << 8 of the frame.
+    void usblControlFrameSent(int ver, int checksum);
+    void usblControlAck(int ver, int checksum, int code);
 
     void dopplerVeloComplete();
     void dopplerBeamComplete(IDBinDVL::BeamSolution *beams, uint16_t cnt);
@@ -328,6 +377,11 @@ public slots:
 
     void acousticPingRequest(uint8_t address, uint32_t timeout_us = 0xFFFFFFFF);
     void acousticPingRequestEx(uint8_t address, uint32_t timeout_us, uint8_t cmdId, uint32_t replyDistanceMm, const QByteArray& payload = {});
+    // QML form: the payload is hex text, payloadBits < 0 sends every byte of it. Times as double
+    // because 0xFFFFFFFF does not fit a QML int.
+    void acousticPingRequestHex(int address, double timeoutUs, int cmdId, double replyDistanceMm,
+                                const QString& hexPayload, int payloadBits);
+    bool usblControlReady() const { return m_state.connect; }
     void acousticResponceFilter(uint8_t address);
     void acousticResponceFilterSlots(const QVector<int>& addresses);
     void acousticResponceTimeout(uint32_t timeout_us = 0xFFFFFFFF);
@@ -346,8 +400,10 @@ public slots:
                           int senderFunction, const QString& sendHexPayload,
                           int eventAction = 0,
                           int cmdIdAction = 0, int cmdIdReplacement = 0,
-                          int addressAction = 0, int addressReplacement = 0);
+                          int addressAction = 0, int addressReplacement = 0,
+                          int sendBitLength = -1);
     QString modemLastPayload() const;
+    QVariantMap modemPayloads() const { return modemByAddr_; }
 
     void doRequestAll();
 
@@ -382,10 +438,12 @@ protected:
     IDBinNav* idNav = nullptr;
     IDBinBoatStatus* idBoatStatus = nullptr;
     IDBinRecorderStatus* idRecorderStatus = nullptr;
+    IDBinNavSensorStatus* idNavSensorStatus = nullptr;
     IDBinDVL* idDVL = nullptr;
     IDBinDVLMode* idDVLMode = nullptr;
 
     IDBinUsblSolution* idUSBL = nullptr;
+    IDBinUsblDiag* idUsblDiag = nullptr;
     IDBinUsblControl* idUSBLControl = nullptr;
     IDBinModemSolution* idModemSolution = nullptr;
 
@@ -469,8 +527,11 @@ protected:
     int64_t upgradeStartedTime_ = 0;
     int64_t rebootAtTime_ = 0;
     int upgradeResendCount_ = 0;
+    int64_t lastProcessAtMs_ = 0;
 
     static constexpr int64_t staleVersionGuardMsec = 400;
+    // process() ticks every 200 ms; a longer gap while flashing means the thread was busy elsewhere.
+    static constexpr int64_t processStallLogMsec = 600;
     static constexpr int64_t bootHandshakeTimeoutMsec = 8000;
     static constexpr int64_t packetAnswerTimeoutMsec = 2000;
     static constexpr int upgradeResendLimit = 5;
@@ -523,10 +584,12 @@ protected slots:
     void receivedNav        (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedBoatStatus (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedRecorderStatus(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedNavSensorStatus(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedDVL        (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedDVLMode    (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
     void receivedUSBL       (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedUsblDiag   (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedUSBLControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedModemSolution(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
@@ -561,5 +624,56 @@ private:
     bool linkReceivesData_ = false;
     bool linkNotAvailable_ = false;
     int64_t lastRecorderStatusReq_ = 0;
+    static constexpr int64_t navSensorStatusStaleMsec = 5000;
+    int64_t lastNavSensorStatusMs_ = 0;
+    bool navSensorStatusStale_ = false;
+
+    struct UsblSlotArgs {
+        int cmdId = 0;
+        int event = 0;
+        int receiverFunction = 0;
+        int receiveBitLength = 0;
+        int senderFunction = 0;
+        QString sendHexPayload;
+        int eventAction = 0;
+        int cmdIdAction = 0;
+        int cmdIdReplacement = 0;
+        int addressAction = 0;
+        int addressReplacement = 0;
+        int sendBitLength = -1;
+    };
+    struct UsblControlMemory {
+        bool hasTransponder = false;
+        uint32_t transponderTimeoutUs = 0;
+        bool hasFilter = false;
+        std::array<uint8_t, 8> filter{};
+        bool hasMonitor = false;
+        uint32_t suppressSelfResponseUs = 0;
+        uint32_t suppressSelfRequestUs = 0;
+        bool receiveResponseInIdle = false;
+        QMap<int, UsblSlotArgs> cmdSlots;
+    };
+    static constexpr int64_t usblAckTimeoutMsec = 2000;
+    UsblControlMemory usblMem_;
+    QVariantMap modemByAddr_;
+    std::array<uint8_t, 8> usblAck_{};
+    std::array<int64_t, 8> usblAckSentMs_{};
+    struct UsblPendingFrame {
+        int ver = 0;
+        int64_t sentMs = 0;
+        int relayed = -1;
+    };
+    QHash<int, UsblPendingFrame> usblPending_;
+    QHash<int, int64_t> usblAnswered_;
+    int usblAckEcho_ = -1;
+    void trackUsblFrame(int ver, uint16_t checksum);
+    void logUsblControl(int ver, const QString& what);
+
+    void sendUsblTransponder();
+    void sendUsblFilter();
+    void sendUsblMonitor();
+    void sendUsblSlot(const UsblSlotArgs& a);
+    void markUsblSent(int ver);
+    void resendUsblControl();
     bool streamListRequested_ = false;
 };

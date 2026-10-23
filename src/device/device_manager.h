@@ -96,6 +96,8 @@ public:
     QList<DevQProperty*> getDevList(BoardVersion ver);
     int calcAverageChartLosses();
 
+    const QVector<qint64>& epochFileOffsets() const { return epochFileOffsets_; }
+
 public slots:
     Q_INVOKABLE bool isCreatedId(int id);
     Q_INVOKABLE StreamListModel* streamsList();
@@ -114,6 +116,7 @@ public slots:
     void setProtoBinConsoled(bool isConsoled);
     void setNmeaConsoled(bool isConsoled);
     void setMavlinkConsoled(bool isConsoled);
+    void setUsblConsoled(bool isConsoled);
     void upgradeLastDev(QByteArray data);
 
     void beaconActivationReceive(uint8_t id);
@@ -172,6 +175,7 @@ signals:
     void rawDataRecieved(const ChannelId& channelId, RawData rawData);
     void distComplete(const ChannelId& channelId, int dist);
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
+    void usblDiagComplete(IDBinUsblDiag::UsblSignalDiag data);
     void dopplerBeamComlete(IDBinDVL::BeamSolution* beams, uint16_t cnt);
     void dvlSolutionComplete(IDBinDVL::DVLSolution dvlSolution);
     void chartSetupChanged();
@@ -245,6 +249,8 @@ private:
     void resetAutopilot();
 
     /*data*/
+    QVector<qint64> epochFileOffsets_;
+
     struct VruData {
         VruData() :
             voltage(NAN),

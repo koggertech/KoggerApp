@@ -32,7 +32,7 @@ bool BottomTrack::eventFilter(QObject *watched, QEvent *event)
     }
     auto* epochEvent = dynamic_cast<EpochEvent*>(event);
     if (epochEvent && epochEvent->eventTypeId() == static_cast<int>(EpochSelected2d)) {
-        resetVertexSelection();
+        clearVertexHighlight();
         selectEpoch(epochEvent->epochIndex(), epochEvent->channel().channelId_);
     }
     return false;
@@ -214,10 +214,15 @@ void BottomTrack::clearData()
 
 void BottomTrack::resetVertexSelection()
 {
-    RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
+    clearVertexHighlight();
     if (m_view) {
         m_view->setSyncEpochIndex(-1);
     }
+}
+
+void BottomTrack::clearVertexHighlight()
+{
+    RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
 }
 
 //void BottomTrack::setVisibleChannel(const ChannelId& channelId)

@@ -1241,6 +1241,84 @@ protected:
     bool valid_ = false;
 };
 
+class IDBinNavSensorStatus : public IDBin
+{
+    Q_OBJECT
+public:
+    explicit IDBinNavSensorStatus() : IDBin() {
+    }
+
+    ID id() override { return ID_NAV_SENSOR_STATUS; }
+    Resp parsePayload(FrameParser& proto) override;
+
+    enum State : uint8_t {
+        StateOk          = 0,
+        StateNotFound    = 1,
+        StateBusError    = 2,
+        StateNoData      = 3,
+        StateStuck       = 4,
+        StateImplausible = 5,
+        StateRecovering  = 6,
+    };
+
+    enum Fault : uint16_t {
+        FaultIdMismatch = 1u << 0,
+        FaultBus        = 1u << 1,
+        FaultConfigLost = 1u << 2,
+        FaultLowRate    = 1u << 3,
+        FaultInvalid    = 1u << 4,
+        FaultStuck      = 1u << 5,
+        FaultNorm       = 1u << 6,
+        FaultTemp       = 1u << 7,
+        FaultClip       = 1u << 8,
+        FaultInjected   = 1u << 15,
+    };
+
+    struct NavSensorStatus {
+        static constexpr ID getId() { return ID_NAV_SENSOR_STATUS; }
+        static constexpr Version getVer() { return v0; }
+
+        uint16_t seq;
+        uint8_t  imu_state;
+        uint8_t  imu_whoami;
+        uint16_t imu_fault_flags;
+        uint16_t imu_samples_per_s;
+        uint16_t imu_ekf_fed_per_s;
+        uint16_t imu_bus_err_cnt;
+        uint16_t imu_invalid_cnt;
+        uint16_t imu_stuck_run_max;
+        uint16_t imu_acc_norm_mg;
+        uint16_t imu_gyr_norm_cdps;
+        int16_t  imu_temp_cc;
+        uint8_t  imu_clip_mask;
+        uint8_t  imu_reinit_cnt;
+        uint8_t  imu_bad_seconds;
+        uint8_t  mag_reserved[13];
+    } __attribute__((packed));
+
+    bool     isValid() const { return valid_; }
+    void     invalidate() { valid_ = false; }
+    uint16_t seq() const { return data_.seq; }
+    uint8_t  imuState() const { return data_.imu_state; }
+    uint8_t  imuWhoAmI() const { return data_.imu_whoami; }
+    uint16_t imuFaultFlags() const { return data_.imu_fault_flags; }
+    uint16_t imuSamplesPerS() const { return data_.imu_samples_per_s; }
+    uint16_t imuEkfFedPerS() const { return data_.imu_ekf_fed_per_s; }
+    uint16_t imuBusErrCnt() const { return data_.imu_bus_err_cnt; }
+    uint16_t imuInvalidCnt() const { return data_.imu_invalid_cnt; }
+    uint16_t imuStuckRunMax() const { return data_.imu_stuck_run_max; }
+    uint16_t imuAccNormMg() const { return data_.imu_acc_norm_mg; }
+    uint16_t imuGyrNormCdps() const { return data_.imu_gyr_norm_cdps; }
+    int16_t  imuTempCc() const { return data_.imu_temp_cc; }
+    uint8_t  imuClipMask() const { return data_.imu_clip_mask; }
+    uint8_t  imuReinitCnt() const { return data_.imu_reinit_cnt; }
+    uint8_t  imuBadSeconds() const { return data_.imu_bad_seconds; }
+
+protected:
+    NavSensorStatus data_{};
+    bool valid_ = false;
+};
+
 class IDBinDVL : public IDBin
 {
     Q_OBJECT
@@ -1387,6 +1465,8 @@ public:
     };
 
     struct UsblSolution {
+        enum Role : uint8_t { RoleNone = 0, RoleRequest = 1, RoleResponse = 2 };
+
         uint8_t id = 0xFF;
         uint8_t role = 0;
         uint8_t cmd_id = 0xFF;
@@ -1431,7 +1511,13 @@ public:
         float beacon_e_m = NAN;
         // Tail-appended: absent from older firmware payloads, left NAN by the
         // short-payload path in FrameParser::read<T>().
-        float code_snr[8] = {NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN};
+        float sync_val = NAN;
+        float sync_snr = NAN;
+        float sync_first_val = NAN;
+        float sync_first_snr = NAN;
+        float sync_rms = NAN;
+        float sync_first_main_max_msec = NAN;
+        float reserved_array[2] = {NAN, NAN};
     } __attribute__((packed));
 
     struct AcousticNavSolution {
@@ -1535,6 +1621,100 @@ protected:
     BeaconActivationResponce _beaconResponcel;
     PayloadKind _lastPayloadKind = PayloadKind::None;
 };
+static_assert(sizeof(IDBinUsblSolution::UsblSolution) == 152);
+
+class IDBinUsblDiag : public IDBin
+{
+    Q_OBJECT
+public:
+    explicit IDBinUsblDiag() : IDBin() {
+    }
+
+    ID id() override { return ID_USBL_DIAG; }
+    Resp parsePayload(FrameParser& proto) override;
+
+    struct UsblChannelDiag {
+        enum Flag : uint8_t {
+            ChUsedForDirection = 1u << 0,
+        };
+        static constexpr int16_t PhaseNone = -32768;
+        static constexpr int8_t  OffsetNone = -128;
+
+        float   peak_amp = NAN;
+        float   mf_noise_rms = NAN;
+        float   in_rms = NAN;
+        int16_t phase_cdeg = PhaseNone;
+        int16_t phase_resid_cdeg = PhaseNone;
+        int8_t  peak_offset = OffsetNone;
+        uint8_t flags = 0;
+    } __attribute__((packed));
+
+    struct UsblSignalDiag {
+        static constexpr ID getId() { return ID_USBL_DIAG; }
+        static constexpr Version getVer() { return v0; }
+        static constexpr int ChannelCapacity = 5;
+
+        enum DirFlag : uint16_t {
+            DirChannelsValid = 1u << 0,
+            DirValid         = 1u << 1,
+            DirSolverFailed  = 1u << 2,
+        };
+
+        enum Geometry : uint8_t {
+            GeometryUnknown = 0,
+            GeometryTetra4  = 1,
+            GeometryCrossA  = 2,
+            GeometryCrossB  = 3,
+        };
+
+        uint8_t  id = 0xFF;
+        uint8_t  role = 0;
+        uint8_t  cmd_id = 0xFF;
+        uint8_t  ch_count = 0;
+        int64_t  timestamp_us = 0;
+        uint32_t ping_counter = 0;
+        int64_t  carrier_counter = 0;
+
+        float    distance_m = NAN;
+        float    azimuth_deg = NAN;
+        float    elevation_deg = NAN;
+        float    sync_val = NAN;
+        float    sync_snr = NAN;
+        float    sync_first_val = NAN;
+        float    sync_first_snr = NAN;
+        float    sync_rms = NAN;
+        float    sync_first_main_max_msec = NAN;
+
+        float    dir_az_array_deg = NAN;
+        float    dir_el_array_deg = NAN;
+        uint16_t dir_flags = 0;
+        uint8_t  geometry_id = GeometryUnknown;
+        int8_t   peak_frac_offset = UsblChannelDiag::OffsetNone;
+
+        float    fit_misfit = NAN;
+        float    amp_nonuniformity = NAN;
+        float    phase_nonplanarity = NAN;
+        float    dir_width_az_deg = NAN;
+        float    dir_width_el_deg = NAN;
+        float    alt_margin_db = NAN;
+        float    mirror_margin_db = NAN;
+        float    array_coherence = NAN;
+
+        UsblChannelDiag ch[ChannelCapacity];
+
+        int channelCount() const { return ch_count < ChannelCapacity ? ch_count : ChannelCapacity; }
+    } __attribute__((packed));
+
+    bool isValid() const { return valid_; }
+    void invalidate() { valid_ = false; }
+    const UsblSignalDiag& diag() const { return data_; }
+
+protected:
+    UsblSignalDiag data_{};
+    bool valid_ = false;
+};
+static_assert(sizeof(IDBinUsblDiag::UsblChannelDiag) == 18);
+static_assert(sizeof(IDBinUsblDiag::UsblSignalDiag) == 194);
 
 class IDBinUsblControl : public IDBin
 {
@@ -1663,19 +1843,26 @@ public:
         uint16_t sending_bit_length = 0;
     } __attribute__((packed));
 
-    void pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id = 0);
-    void pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id, uint32_t reply_distance_mm, const QByteArray& payload = {});
-    void setTransponderEnable(uint32_t timeout_us);
-    void setResponseTimeout(uint32_t timeout_us);
-    void setMonitorConfig(const USBLMonitorConfig& cfg);
-    void setResponseAddressFilter(const std::array<uint8_t, 8>& addresses);
-    void setResponseAddressFilter(uint8_t address);
+    // Every setter returns the checksum of the frame it sent, which the device echoes in its RESP.
+    uint16_t pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id = 0);
+    // payload_bits < 0 means every byte of payload; otherwise at most that many bits of it.
+    uint16_t pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id, uint32_t reply_distance_mm, const QByteArray& payload = {}, int payload_bits = -1);
+    uint16_t setTransponderEnable(uint32_t timeout_us);
+    uint16_t setResponseTimeout(uint32_t timeout_us);
+    uint16_t setMonitorConfig(const USBLMonitorConfig& cfg);
+    uint16_t setResponseAddressFilter(const std::array<uint8_t, 8>& addresses);
+    uint16_t setResponseAddressFilter(uint8_t address);
     // sending_bit_length is derived from the payload actually written, so a truncated
-    // payload can never declare more bits than went on the wire.
-    void setCmdConfig(const USBLCmdConfig& cfg, const QByteArray& sendingPayload = {});
+    // payload can never declare more bits than went on the wire. sending_bits < 0 means all of it.
+    uint16_t setCmdConfig(const USBLCmdConfig& cfg, const QByteArray& sendingPayload = {}, int sending_bits = -1);
+
+    // A relay (a logger port) hands the frame to the board with route 0, and the board echoes
+    // the checksum of what it received: this is that checksum for the last frame sent.
+    uint16_t lastRelayedChecksum() const { return lastRelayedChecksum_; }
 
 protected:
-
+    uint16_t send(ProtoBinOut& frame);
+    uint16_t lastRelayedChecksum_ = 0;
 };
 
 // Receive-only: modem payloads carried back by an acoustic request/response.

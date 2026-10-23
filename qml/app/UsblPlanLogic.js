@@ -64,6 +64,11 @@ var SLOT_COUNT = 8;
 var MAX_GROUPS = SLOT_COUNT;
 var ROLES = ["initiator", "transponder"];
 
+var DEFAULT_MAX_RANGE_MM = 300000;
+var LEGACY_RANGE_MM = 20000;
+var MIN_RANGE_MM = 1000;
+var MAX_RANGE_MM = 2000000;
+
 // ── state ────────────────────────────────────────────────────────────────────
 // `applied` maps a role to the snapshot that was last written as that role. There is no
 // current role: a role is an argument to Apply, not a mode the plan sits in.
@@ -72,7 +77,8 @@ var ROLES = ["initiator", "transponder"];
 // reading of a device nobody has configured, and the smallest state the partition invariant
 // allows. `activeId` names the selected group by id; an index shifts when a group dissolves.
 function initialState() {
-    var st = { groups: [], nodes: [], activeId: 0, nextId: 1, applied: {} };
+    var st = { groups: [], nodes: [], activeId: 0, nextId: 1, applied: {},
+               maxRangeMm: DEFAULT_MAX_RANGE_MM };
     var all = [];
     for (var c = 0; c < SLOT_COUNT; ++c) all.push(c);
     st.groups = [newGroup(_next(st), all)];
@@ -86,7 +92,7 @@ function clone(st) { return JSON.parse(JSON.stringify(st)); }
 
 function _next(st) { st.nextId = st.nextId + 1; return st.nextId; }
 
-function newSend()    { return { fn: "default", payload: "", reply: 20000 }; }
+function newSend()    { return { fn: "default", payload: "", reply: null }; }
 function newTrigger() {
     return { recv: null, send: null, advOpen: false,
              adv: { eventAction: "Swap", cmdIdAction: "Incoming", cmdIdRepl: 0,
@@ -143,6 +149,25 @@ function ownerOf(st, cmd) {
     return null;
 }
 function schedulable(g) { return !!(g && g.ini.send && g.slots.length > 0); }
+
+function clampRangeMm(mm) {
+    return Math.max(MIN_RANGE_MM, Math.min(MAX_RANGE_MM, Math.round(mm)));
+}
+function hasOwnRange(g) {
+    return !!(g && g.ini && g.ini.send && typeof g.ini.send.reply === "number");
+}
+function replyMm(st, g) {
+    return hasOwnRange(g) ? g.ini.send.reply : st.maxRangeMm;
+}
+function replyMmForGroup(st, groupId) {
+    return replyMm(st, groupId >= 0 ? groupById(st, groupId) : null);
+}
+function maxReplyMm(st) {
+    var m = st.maxRangeMm;
+    for (var i = 0; i < st.groups.length; ++i)
+        if (st.groups[i].ini.send) m = Math.max(m, replyMm(st, st.groups[i]));
+    return m;
+}
 // Selection is a group ID. Falls back to the first group rather than returning null: the
 // partition guarantees one exists, and a pane with nothing selected is not a state the UI
 // should have to render.
@@ -309,6 +334,21 @@ function addNode(st) {
     n.nodes = n.nodes.concat([{ id: _next(n), addr: a, active: true, refs: [] }]);
     return n;
 }
+function addNodeAt(st, addr) {
+    if (typeof addr !== "number" || !isFinite(addr)) return st;
+    var a = Math.max(0, Math.min(SLOT_COUNT, Math.round(addr)));
+    for (var i = 0; i < st.nodes.length; ++i)
+        if (st.nodes[i].addr === a) return st;
+    var n = clone(st);
+    n.nodes = n.nodes.concat([{ id: _next(n), addr: a, active: true, refs: [] }]);
+    return n;
+}
+function addableAddresses(st) {
+    var have = {}, out = [];
+    for (var i = 0; i < st.nodes.length; ++i) have[st.nodes[i].addr] = true;
+    for (var a = 0; a <= SLOT_COUNT; ++a) if (!have[a]) out.push(a);
+    return out;
+}
 function removeNode(st, id) {
     var n = clone(st);
     n.nodes = n.nodes.filter(function (x) { return x.id !== id; });
@@ -456,6 +496,22 @@ function setSendField(st, groupId, field, value) {
     g.ini.send[field] = value;
     return n;
 }
+function setMaxRange(st, mm) {
+    if (typeof mm !== "number" || !isFinite(mm)) return st;
+    var v = clampRangeMm(mm);
+    if (v === st.maxRangeMm) return st;
+    var n = clone(st);
+    n.maxRangeMm = v;
+    return n;
+}
+function setSendRange(st, groupId, mm) {
+    var n = clone(st), g = groupById(n, groupId);
+    if (!g || !g.ini.send) return st;
+    if (mm === null) g.ini.send.reply = null;
+    else if (typeof mm !== "number" || !isFinite(mm)) return st;
+    else g.ini.send.reply = (mm <= 0) ? 0 : clampRangeMm(mm);
+    return n;
+}
 function attachSend(st, groupId) {
     var n = clone(st), g = groupById(n, groupId);
     if (!g) return st;
@@ -567,7 +623,9 @@ function nodesView(st) {
         for (var j = 0; j < x.refs.length; ++j)
             steps.push({ group: x.refs[j].group, cmd: x.refs[j].cmd, index: j,
                          on: x.refs[j].on !== false,
-                         groupIndex: groupIndexById(st, x.refs[j].group) });
+                         groupIndex: groupIndexById(st, x.refs[j].group),
+                         replyMm: replyMmForGroup(st, x.refs[j].group),
+                         ownRange: hasOwnRange(groupById(st, x.refs[j].group)) });
         out.push({ id: x.id, addr: x.addr, active: x.active,
                    cmdCount: x.refs.length, steps: steps });
     }
@@ -705,7 +763,7 @@ function markApplied(st, role) {
 // ── derived roles (never configured, always displayed) ────────────────────────
 function subroleInitiatorCode(g) {
     if (!g || !g.ini.send) return "notInitiator";
-    return g.ini.send.reply > 0 ? "interrogator" : "pinger";
+    return g.ini.send.reply === 0 ? "pinger" : "interrogator";
 }
 function subroleTransponderCode(g) {
     var t = g ? g.tr.request : null;
@@ -762,6 +820,9 @@ function issueCodes(st) {
 
         if (snd && snd.reply === 0 && rq && sectionCount(rq) > 0)
             out.push({ code: "pingerVsAnswering", sev: "warn", group: gi, key: key });
+        if (snd && typeof snd.reply === "number" && snd.reply > 0 && snd.reply < MIN_RANGE_MM)
+            out.push({ code: "rangeBelowOneMetre", sev: "warn", group: gi, key: key,
+                       mm: snd.reply });
         if (rs && !snd)
             out.push({ code: "replyHandlerWithoutRequest", sev: "warn", group: gi, key: key });
     }
@@ -770,9 +831,9 @@ function issueCodes(st) {
 
 // ── persistence payload ──────────────────────────────────────────────────────
 function serialize(st) {
-    return JSON.stringify({ v: 7, groups: st.groups, nodes: st.nodes,
+    return JSON.stringify({ v: 8, groups: st.groups, nodes: st.nodes,
                             nextId: st.nextId, activeId: st.activeId,
-                            applied: st.applied });
+                            applied: st.applied, maxRangeMm: st.maxRangeMm });
 }
 // Tolerant by design: a malformed or older blob yields a usable plan rather than a broken one.
 // The partition is repaired, not trusted -- orphan slots, double ownership and empty groups
@@ -799,6 +860,7 @@ function deserialize(raw) {
     // has no "still filling this one" context -- keeps none of them.
     st.groups = st.groups.filter(function (x) { return x.slots.length > 0; });
     if (st.groups.length > MAX_GROUPS) st.groups = st.groups.slice(0, MAX_GROUPS);
+    _migrateRange(st, o);
 
     // Selection: v6 stores an id, v5 stored an index into `groups`. Translate rather than
     // discard, or every reload of a v5 plan would open the wrong group.
@@ -854,6 +916,29 @@ function _migrateApplied(st, o, legacyBefore) {
     }
 }
 
+function _migrateRange(st, o) {
+    var i, s;
+    for (i = 0; i < st.groups.length; ++i) {
+        s = st.groups[i].ini.send;
+        if (s && (typeof s.reply !== "number" || !isFinite(s.reply))) s.reply = null;
+    }
+    if (typeof o.maxRangeMm === "number" && isFinite(o.maxRangeMm)) {
+        st.maxRangeMm = clampRangeMm(o.maxRangeMm);
+        return;
+    }
+    var base = null;
+    for (i = 0; i < st.groups.length; ++i) {
+        s = st.groups[i].ini.send;
+        if (s && typeof s.reply === "number" && s.reply >= MIN_RANGE_MM) { base = s.reply; break; }
+    }
+    if (base === null || base === LEGACY_RANGE_MM) base = DEFAULT_MAX_RANGE_MM;
+    st.maxRangeMm = clampRangeMm(base);
+    for (i = 0; i < st.groups.length; ++i) {
+        s = st.groups[i].ini.send;
+        if (s && (s.reply === st.maxRangeMm || s.reply === LEGACY_RANGE_MM)) s.reply = null;
+    }
+}
+
 // A blob written by an older build may lack `adv`, or carry the wrong type in a section.
 function _repairTrigger(t) {
     if (!t) return;
@@ -901,6 +986,11 @@ function defaults() {
 if (typeof module !== "undefined" && module.exports) {
     module.exports = {
         SLOT_COUNT: SLOT_COUNT, MAX_GROUPS: MAX_GROUPS, ROLES: ROLES,
+        DEFAULT_MAX_RANGE_MM: DEFAULT_MAX_RANGE_MM, LEGACY_RANGE_MM: LEGACY_RANGE_MM,
+        MIN_RANGE_MM: MIN_RANGE_MM, MAX_RANGE_MM: MAX_RANGE_MM,
+        clampRangeMm: clampRangeMm, hasOwnRange: hasOwnRange, replyMm: replyMm,
+        replyMmForGroup: replyMmForGroup, maxReplyMm: maxReplyMm,
+        setMaxRange: setMaxRange, setSendRange: setSendRange,
         canAddGroup: canAddGroup,
         initialState: initialState, clone: clone,
         newSend: newSend, newTrigger: newTrigger, newGroup: newGroup,
@@ -914,6 +1004,7 @@ if (typeof module !== "undefined" && module.exports) {
         trigger: trigger, sectionCount: sectionCount, hasRewrite: hasRewrite,
         roleEvent: roleEvent, triggerFor: triggerFor,
         addGroup: addGroup, removeGroup: removeGroup, addNode: addNode,
+        addNodeAt: addNodeAt, addableAddresses: addableAddresses,
         removeNode: removeNode, setNodeAddr: setNodeAddr, toggleNode: toggleNode,
         addStep: addStep, removeStep: removeStep, toggleStep: toggleStep, setStepCmd: setStepCmd,
         slotClick: slotClick,

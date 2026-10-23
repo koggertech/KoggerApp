@@ -670,6 +670,7 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
 
         openedfilePath_ = fileOpenedOk ? localfilePath : "";
         emit openedFilePathChanged();
+        emit klfEpochIndexSizeChanged();
         if (fileOpenedOk) {
             if (!isAppend) appendedFiles_.clear();
             appendedFiles_.append(localfilePath);
@@ -732,6 +733,7 @@ bool Core::closeLogFile()
     createLinkManagerConnections();
     openedfilePath_.clear();
     emit openedFilePathChanged();
+    emit klfEpochIndexSizeChanged();
     appendedFiles_.clear();
     if (isAppendMode_) {
         isAppendMode_ = false;
@@ -1363,6 +1365,122 @@ bool Core::exportComplexToCSV(QString file_path) {
     return true;
 }
 
+namespace {
+
+using UsblDiagCsv = IDBinUsblDiag::UsblSignalDiag;
+using UsblChannelCsv = IDBinUsblDiag::UsblChannelDiag;
+
+QString usblDiagCsvNum(double v)
+{
+    return std::isfinite(v) ? QString("%1").arg(v) : QString();
+}
+
+const char* const kUsblChannelCsvFields[] = {
+    "peak_amp", "mf_noise_rms", "in_rms", "phase_deg", "phase_resid_deg", "peak_offset_smp", "flags"
+};
+constexpr int kUsblChannelCsvFieldCount = sizeof(kUsblChannelCsvFields) / sizeof(kUsblChannelCsvFields[0]);
+
+QString usblChannelCsvCell(const UsblChannelCsv& c, int field)
+{
+    switch (field) {
+    case 0: return usblDiagCsvNum(c.peak_amp);
+    case 1: return usblDiagCsvNum(c.mf_noise_rms);
+    case 2: return usblDiagCsvNum(c.in_rms);
+    case 3: return c.phase_cdeg == UsblChannelCsv::PhaseNone ? QString() : usblDiagCsvNum(c.phase_cdeg / 100.0);
+    case 4: return c.phase_resid_cdeg == UsblChannelCsv::PhaseNone ? QString() : usblDiagCsvNum(c.phase_resid_cdeg / 100.0);
+    case 5: return c.peak_offset == UsblChannelCsv::OffsetNone ? QString() : usblDiagCsvNum(c.peak_offset / 8.0);
+    default: return QString::number(static_cast<int>(c.flags));
+    }
+}
+
+QStringList usblDiagCsvHeader()
+{
+    QStringList header = {
+        "epoch", "id", "role", "cmd_id", "ch_count", "timestamp_us", "ping_counter", "carrier_counter",
+        "distance_m", "azimuth_deg", "elevation_deg",
+        "sync_val", "sync_snr", "sync_first_val", "sync_first_snr", "sync_rms", "sync_first_main_max_msec",
+        "dir_az_array_deg", "dir_el_array_deg", "dir_flags", "geometry_id", "peak_frac_offset_smp",
+        "fit_misfit", "amp_nonuniformity", "phase_nonplanarity", "dir_width_az_deg", "dir_width_el_deg",
+        "alt_margin_db", "mirror_margin_db", "array_coherence"
+    };
+    for (int field = 0; field < kUsblChannelCsvFieldCount; ++field) {
+        for (int i = 0; i < UsblDiagCsv::ChannelCapacity; ++i) {
+            header << QStringLiteral("ch%1_%2").arg(i).arg(QLatin1String(kUsblChannelCsvFields[field]));
+        }
+    }
+    return header;
+}
+
+QStringList usblDiagCsvRow(int epoch, const UsblDiagCsv& d)
+{
+    QStringList row;
+    row << QString::number(epoch)
+        << QString::number(static_cast<int>(d.id))
+        << QString::number(static_cast<int>(d.role))
+        << QString::number(static_cast<int>(d.cmd_id))
+        << QString::number(static_cast<int>(d.ch_count))
+        << QString::number(static_cast<qlonglong>(d.timestamp_us))
+        << QString::number(static_cast<qulonglong>(d.ping_counter))
+        << QString::number(static_cast<qlonglong>(d.carrier_counter))
+        << usblDiagCsvNum(d.distance_m) << usblDiagCsvNum(d.azimuth_deg) << usblDiagCsvNum(d.elevation_deg)
+        << usblDiagCsvNum(d.sync_val) << usblDiagCsvNum(d.sync_snr)
+        << usblDiagCsvNum(d.sync_first_val) << usblDiagCsvNum(d.sync_first_snr)
+        << usblDiagCsvNum(d.sync_rms) << usblDiagCsvNum(d.sync_first_main_max_msec)
+        << usblDiagCsvNum(d.dir_az_array_deg) << usblDiagCsvNum(d.dir_el_array_deg)
+        << QString::number(static_cast<int>(d.dir_flags))
+        << QString::number(static_cast<int>(d.geometry_id))
+        << (d.peak_frac_offset == UsblChannelCsv::OffsetNone ? QString() : usblDiagCsvNum(d.peak_frac_offset / 8.0))
+        << usblDiagCsvNum(d.fit_misfit) << usblDiagCsvNum(d.amp_nonuniformity) << usblDiagCsvNum(d.phase_nonplanarity)
+        << usblDiagCsvNum(d.dir_width_az_deg) << usblDiagCsvNum(d.dir_width_el_deg)
+        << usblDiagCsvNum(d.alt_margin_db) << usblDiagCsvNum(d.mirror_margin_db) << usblDiagCsvNum(d.array_coherence);
+
+    const bool channelsValid = d.dir_flags & UsblDiagCsv::DirChannelsValid;
+    const int channels = d.channelCount();
+    for (int field = 0; field < kUsblChannelCsvFieldCount; ++field) {
+        for (int i = 0; i < UsblDiagCsv::ChannelCapacity; ++i) {
+            row << ((channelsValid && i < channels) ? usblChannelCsvCell(d.ch[i], field) : QString());
+        }
+    }
+    return row;
+}
+
+}
+
+bool Core::exportUsblDiagToCSV(QString filePath)
+{
+    const QString resolvedBasePath = this->resolveExportBasePath(filePath);
+    const QString export_file_name = buildExportFileStem(openedfilePath_);
+    const QString exportPath = resolvedBasePath + "/" + export_file_name + "_export_usbl_diag_csv.csv";
+    if (!logger_.creatExportStream(exportPath)) {
+        notifications.warning(tr("Export failed: %1").arg(exportPath));
+        return false;
+    }
+
+    logger_.dataExport(usblDiagCsvHeader().join(QLatin1Char(',')) + QLatin1Char('\n'));
+
+    int reports = 0;
+    for (int i = 0; i < datasetPtr_->size(); ++i) {
+        Epoch* epoch = datasetPtr_->fromIndex(i);
+        if (epoch == nullptr) {
+            continue;
+        }
+        const auto diag = epoch->usblDiag();
+        if (!diag) {
+            continue;
+        }
+        logger_.dataExport(usblDiagCsvRow(i, *diag).join(QLatin1Char(',')) + QLatin1Char('\n'));
+        ++reports;
+    }
+
+    if (!logger_.endExportStream()) {
+        notifications.warning(tr("Export failed: %1").arg(exportPath));
+        return false;
+    }
+    notifications.info(tr("USBL diagnostics exported to CSV (%1 reports): %2").arg(reports).arg(exportPath), exportPath);
+
+    return true;
+}
+
 bool Core::exportUSBLToCSV(QString filePath)
 {
     const QString resolvedBasePath = this->resolveExportBasePath(filePath);
@@ -1777,6 +1895,180 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
     return true;
 }
 
+namespace {
+
+bool isKlfPrologueId(int id)
+{
+    switch (id) {
+    case Parsers::ID_VERSION:
+    case Parsers::ID_DATASET:
+    case Parsers::ID_DIST_SETUP:
+    case Parsers::ID_CHART_SETUP:
+    case Parsers::ID_DSP:
+    case Parsers::ID_TRANSC:
+    case Parsers::ID_SND_SPEED:
+    case Parsers::ID_UART:
+    case Parsers::ID_DEV_SYNC:
+        return true;
+    default:
+        return false;
+    }
+}
+
+QByteArray klfPrologue(QFile& src, qint64 limit)
+{
+    constexpr qint64 kBlock = static_cast<qint64>(1) << 20;
+
+    QMap<quint32, QByteArray> newest;
+    QVector<quint32> order;
+
+    Parsers::FrameParser parser;
+
+    for (qint64 left = limit; left > 0; ) {
+        QByteArray block = src.read(qMin(left, kBlock));
+        if (block.isEmpty()) {
+            break;
+        }
+        left -= block.size();
+
+        parser.setContext(reinterpret_cast<uint8_t*>(block.data()),
+                          static_cast<uint32_t>(block.size()));
+
+        while (parser.availContext() > 0) {
+            parser.process();
+
+            if (!parser.isComplete() || parser.isNested() || parser.isProxy()) {
+                continue;
+            }
+            if (!parser.completeAsKBP() && !parser.completeAsKBP2()) {
+                continue;
+            }
+            if (!isKlfPrologueId(static_cast<int>(parser.id()))) {
+                continue;
+            }
+
+            if (!((parser.type() == Parsers::CONTENT && !parser.resp())
+                  || parser.type() == Parsers::SETTING)) {
+                continue;
+            }
+
+            const quint32 key = (static_cast<quint32>(parser.completeAsKBP2() ? 1 : 0) << 24)
+                              | (static_cast<quint32>(parser.route()) << 16)
+                              | (static_cast<quint32>(parser.id()) << 3)
+                              | (static_cast<quint32>(parser.ver()) & 0x7u);
+
+            if (!newest.contains(key)) {
+                order.append(key);
+            }
+            newest.insert(key, QByteArray(reinterpret_cast<const char*>(parser.frame()),
+                                          static_cast<int>(parser.frameLen())));
+        }
+    }
+
+    QByteArray out;
+    for (const quint32 key : std::as_const(order)) {
+        out.append(newest.value(key));
+    }
+
+    return out;
+}
+
+}
+
+int Core::klfEpochIndexSize() const
+{
+    DeviceManager* worker = deviceManagerWrapperPtr_ ? deviceManagerWrapperPtr_->getWorker()
+                                                     : nullptr;
+    return worker ? worker->epochFileOffsets().size() : 0;
+}
+
+bool Core::exportKlfFragment(int firstEpoch, int lastEpoch, QString filePath)
+{
+    if (openedfilePath_.isEmpty()) {
+        notifications.warning(tr("Export failed: no log file is open"));
+        return false;
+    }
+
+    DeviceManager* worker = deviceManagerWrapperPtr_ ? deviceManagerWrapperPtr_->getWorker()
+                                                     : nullptr;
+    if (!worker) {
+        notifications.warning(tr("Export failed"));
+        return false;
+    }
+
+    const QVector<qint64>& offsets = worker->epochFileOffsets();
+    if (offsets.isEmpty()) {
+        notifications.warning(tr("Export failed: this file has no epoch index"));
+        return false;
+    }
+
+    const int lastIndex = offsets.size() - 1;
+    const int from = qBound(0, firstEpoch, lastIndex);
+    const int to   = qBound(from, lastEpoch, lastIndex);
+
+    QFile src;
+    const QUrl srcUrl(openedfilePath_);
+    srcUrl.isLocalFile() ? src.setFileName(srcUrl.toLocalFile())
+                         : src.setFileName(srcUrl.toString());
+
+    if (!src.open(QIODevice::ReadOnly)) {
+        notifications.warning(tr("Export failed: cannot read %1").arg(openedfilePath_));
+        return false;
+    }
+
+    const qint64 total = src.size();
+    const qint64 fromByte = qBound<qint64>(0, offsets.at(from), total);
+    const qint64 toByte = (to + 1 <= lastIndex) ? qBound<qint64>(fromByte, offsets.at(to + 1), total)
+                                                : total;
+
+    const QByteArray prologue = klfPrologue(src, fromByte);
+    if (src.pos() != fromByte && !src.seek(fromByte)) {
+        notifications.warning(tr("Export failed: cannot read %1").arg(openedfilePath_));
+        return false;
+    }
+
+    const QString resolvedBasePath = this->resolveExportBasePath(filePath);
+    const QString exportPath = QString("%1/%2_epochs_%3-%4.klf")
+                                   .arg(resolvedBasePath)
+                                   .arg(buildExportFileStem(openedfilePath_))
+                                   .arg(from)
+                                   .arg(to);
+
+    if (!logger_.creatExportStream(exportPath)) {
+        notifications.warning(tr("Export failed: %1").arg(exportPath));
+        return false;
+    }
+
+    bool writeOk = logger_.dataByteExport(prologue);
+
+    constexpr qint64 kBlock = static_cast<qint64>(1) << 20;
+    qint64 copied = 0;
+    for (qint64 left = toByte - fromByte; writeOk && left > 0; ) {
+        const QByteArray block = src.read(qMin(left, kBlock));
+        if (block.isEmpty()) {
+            break;
+        }
+        left -= block.size();
+        copied += block.size();
+        writeOk = logger_.dataByteExport(block);
+    }
+
+    const bool closedOk = logger_.endExportStream();
+
+    if (!writeOk || !closedOk || copied == 0) {
+        notifications.warning(tr("Export failed: %1").arg(exportPath));
+        return false;
+    }
+
+    notifications.info(tr("KLF fragment saved: %1 (%2 epochs, %3 MB)")
+                           .arg(exportPath)
+                           .arg(to - from + 1)
+                           .arg(QString::number((prologue.size() + copied) / 1048576.0, 'f', 1)),
+                       exportPath);
+
+    return true;
+}
+
 bool Core::exportPlotAsXTF(QString filePath)
 {
     if (plot2dList_.empty()) {
@@ -1869,6 +2161,15 @@ void Core::broadcastEpochCursor(qPlot2D* source, int epoch, float depth, int cha
         auto* plot = plot2dList_.at(i);
         if (plot != nullptr && plot != source) {
             plot->setSyncCursor(epoch, depth, channel);
+        }
+    }
+}
+
+void Core::clearEpochCursors()
+{
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        if (auto* plot = plot2dList_.at(i); plot != nullptr) {
+            plot->clearSyncCursor();
         }
     }
 }
@@ -2756,6 +3057,7 @@ void Core::createDeviceManagerConnections()
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::rawDataRecieved,        datasetPtr_, &Dataset::rawDataRecieved, deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::distComplete,           datasetPtr_, &Dataset::addDist,         deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::usblSolutionComplete,   datasetPtr_, &Dataset::addUsblSolution, deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::usblDiagComplete,       datasetPtr_, &Dataset::addUsblDiag,     deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::dopplerBeamComlete,     datasetPtr_, &Dataset::addDopplerBeam,  deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::dvlSolutionComplete,    datasetPtr_, &Dataset::addDVLSolution,  deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::upgradeProgressChanged, this,        &Core::upgradeChanged,     deviceManagerConnection);

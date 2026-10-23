@@ -72,6 +72,7 @@ public:
     // Q_INVOKABLE per address, because a function call in a QML binding is not a tracked
     // dependency -- the value would render once and then never update.
     Q_PROPERTY(QVariantMap usblSolutions                READ getUsblSolutions               NOTIFY lastUsblSolutionChanged)
+    Q_PROPERTY(QVariantMap usblDiagnostics              READ getUsblDiagnostics             NOTIFY usblDiagChanged)
     Q_PROPERTY(double lastUsblBeaconLatitude           READ getLastUsblBeaconLatitude      NOTIFY lastUsblSolutionChanged)
     Q_PROPERTY(double lastUsblBeaconLongitude          READ getLastUsblBeaconLongitude     NOTIFY lastUsblSolutionChanged)
     Q_PROPERTY(float  lastUsblBeaconDepth              READ getLastUsblBeaconDepth         NOTIFY lastUsblSolutionChanged)
@@ -341,6 +342,9 @@ public:
         return LLA(lastUsblSolution_.beacon_latitude, lastUsblSolution_.beacon_longitude).isCoordinatesValid();
     }
     QVariantMap getUsblSolutions() const;
+    QVector<QPair<int, IDBinUsblSolution::UsblSolution>> usblSolutionsFromEpoch(int firstEpoch, int* resumeEpoch = nullptr) const;
+    QVariantMap getUsblDiagnostics() const;
+    Q_INVOKABLE QVariantList usblDiagHistory(int address, int count) const;
 
     BottomTrackParam getBottomTrackParam() {
         QReadLocker rl(&lock_);
@@ -435,6 +439,7 @@ public slots:
     void addDist(const ChannelId& channelId, int dist);
     void addRangefinder(const ChannelId& channelId, float distance);
     void addUsblSolution(IDBinUsblSolution::UsblSolution data);
+    void addUsblDiag(IDBinUsblDiag::UsblSignalDiag data);
     void addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt);
     void addDVLSolution(IDBinDVL::DVLSolution dvlSolution);
     void addAtt(float yaw, float pitch, float roll);
@@ -520,6 +525,7 @@ signals:
     // usbl_yaw and the head's own position are not in `usblSolutions`, and a map track needs both.
     // Emitted on the LINK thread, so anything on the GUI side must connect queued.
     void usblSolutionAdded(IDBinUsblSolution::UsblSolution solution);
+    void usblDiagChanged();
     void simpleNavV2Changed();
     void boatStatusChanged();
     void spatialPreparingChanged();
@@ -636,6 +642,10 @@ private:
     // Written from the data thread, read from the QML thread. A torn read of the POD
     // above is a wrong number; a torn read of a QMap is a crash, so this one is locked.
     mutable QReadWriteLock usblAddrLock_;
+    QMap<int, IDBinUsblDiag::UsblSignalDiag> usblDiagByAddr_;
+    QMap<int, double> usblDiagEpochMsByAddr_;
+    QMap<int, bool> usblDiagJoinedByAddr_;
+    QMap<int, QVector<int>> usblDiagEpochsByAddr_;
     bool simpleNavV2Valid_ = false;
     uint8_t simpleNavV2GnssFixType_ = 0;
     uint8_t simpleNavV2NumSats_ = 0;

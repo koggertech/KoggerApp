@@ -188,13 +188,18 @@ DeviceSettingsGroup {
                                  w[i].cmdIdAction, w[i].cmdIdRepl,
                                  w[i].addrAction, w[i].addrRepl)
         if (role === "transponder") {
-            var accepted = []
-            for (var n = 0; n < plan.nodes.length; ++n)
-                if (plan.nodes[n].active) accepted.push(plan.nodes[n].addr)
-            dev.acousticResponceFilterSlots(accepted)
+            dev.acousticResponceFilterSlots(_transponderAddresses())
             dev.setUsblTransponderEnable(true)
         }
         plan.markApplied(role)
+    }
+
+    function _transponderAddresses() {
+        var accepted = []
+        if (!plan) return accepted
+        for (var n = 0; n < plan.nodes.length; ++n)
+            if (plan.nodes[n].active) accepted.push(plan.nodes[n].addr)
+        return accepted
     }
 
     // ── command groups ──────────────────
@@ -537,19 +542,44 @@ DeviceSettingsGroup {
                                 }
                             }
                             FieldRow {
+                                id: _rangeRow
                                 label: qsTr("max range")
+                                readonly property int _mode: !_sendCol._snd ? 0
+                                    : (typeof _sendCol._snd.reply !== "number") ? 0
+                                    : (_sendCol._snd.reply === 0 ? 2 : 1)
+                                KCombo {
+                                    model: [qsTr("plan · %1 m").arg(plan ? Math.round(plan.maxRangeMm / 1000) : 0),
+                                            qsTr("own"),
+                                            qsTr("no reply")]
+                                    currentIndex: _rangeRow._mode
+                                    implicitWidth: Math.round(104 * AppPalette.scale)
+                                    fontPixelSize: Tokens.fontXs
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    toolTipText: qsTr("plan: the Max range next to Dwell; own: this group's "
+                                                    + "requests carry their own; no reply: a pinger, "
+                                                    + "nothing is ranged")
+                                    onActivated: function (i) {
+                                        if (!plan || !planGroup._g) return
+                                        plan.setSendRange(planGroup._g.id,
+                                                          i === 0 ? null : (i === 2 ? 0 : plan.maxRangeMm))
+                                    }
+                                }
                                 UsblSpin {
-                                    from: 0; to: 2000000; stepSize: 1000
-                                    devValue: _sendCol._snd ? _sendCol._snd.reply : 0
-                                    implicitWidth: Math.round(110 * AppPalette.scale)
+                                    visible: _rangeRow._mode === 1
+                                    from: plan ? plan.minRangeMm : 1000
+                                    to: plan ? plan.maxRangeLimitMm : 2000000
+                                    stepSize: 10000
+                                    divisor: 1000
+                                    devValue: (_sendCol._snd && _sendCol._snd.reply > 0) ? _sendCol._snd.reply : 0
+                                    implicitWidth: Math.round(90 * AppPalette.scale)
                                     anchors.verticalCenter: parent.verticalCenter
                                     writeBack: function (v) {
-                                        if (plan && planGroup._g) plan.setSendField(planGroup._g.id, "reply", v)
+                                        if (plan && planGroup._g) plan.setSendRange(planGroup._g.id, v)
                                     }
                                 }
                                 Text {
-                                    text: (_sendCol._snd && _sendCol._snd.reply === 0)
-                                          ? qsTr("mm · expect no reply") : qsTr("mm")
+                                    visible: _rangeRow._mode === 1
+                                    text: qsTr("m")
                                     color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
@@ -807,6 +837,25 @@ DeviceSettingsGroup {
                                 .arg(applyCard._i.frames).arg(applyCard._i.configured)
                               : ""
                         color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
+                        width: parent.width; elide: Text.ElideRight
+                    }
+                    Text {
+                        readonly property var _addrs: planGroup._transponderAddresses()
+                        readonly property var _onDevice: (planGroup.dev && planGroup.dev.usblRespFilterKnown)
+                                                         ? planGroup.dev.usblRespAcceptedAddresses : null
+                        readonly property bool _differs: !!_onDevice
+                                                         && _onDevice.slice().sort().join(",") !== _addrs.slice().sort().join(",")
+                        visible: applyCard.modelData.role === "transponder" && !!planGroup.plan
+                        text: _differs
+                              ? qsTr("device answers %1 (set in USBL response); plan: %2")
+                                .arg(_onDevice.length ? _onDevice.join(", ") : qsTr("none"))
+                                .arg(_addrs.length ? _addrs.join(", ") : qsTr("none"))
+                              : (_addrs.length
+                                 ? qsTr("answers addresses %1").arg(_addrs.join(", "))
+                                 : qsTr("no active node: will answer nothing"))
+                        color: _differs ? AppPalette.linkIdleText
+                                        : (_addrs.length ? AppPalette.textMuted : AppPalette.linkDownText)
+                        font.pixelSize: Tokens.fontXs; font.bold: _differs || _addrs.length === 0
                         width: parent.width; elide: Text.ElideRight
                     }
                     Text {

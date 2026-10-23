@@ -51,6 +51,8 @@ public:
     Q_INVOKABLE void setNodes(const QVariantList& nodes);
     Q_INVOKABLE void clear();
 
+    void setSyncEpochIndex(int epochIndex);
+
     void rebuildIfNeeded();
 
 public Q_SLOTS:
@@ -73,9 +75,21 @@ private:
         bool active{true};
     };
 
+    struct EpochFix
+    {
+        int epoch{-1};
+        double lat{0.0};
+        double lon{0.0};
+        float depth{NAN};
+        float yaw{NAN};
+    };
+
     // Full re-projection of every remembered fix. Only for the events that invalidate the whole
     // frame -- a camera rebase, a projection switch, a new plan. A new fix appends instead.
     void rebuild();
+    void indexEpochs();
+    void applyMarks();
+    static int lastAtOrBefore(const QVector<EpochFix>& marks, int epoch);
     void push();
     // The surface point (z pinned to 0) for one geo position.
     QVector3D toSurface(double latDeg, double lonDeg) const;
@@ -97,6 +111,11 @@ private:
     // re-projection of the history behind it.
     UsblLayer::RenderData scene_;
     QHash<int, int> sceneIndex_;
+
+    QHash<int, QVector<EpochFix>> beaconMarks_;
+    QVector<EpochFix> headMarks_;
+    int indexedEpochs_{0};
+    int syncEpoch_{-1};
 
     LLARef lastViewRef_;
     bool lastPerspective_{false};

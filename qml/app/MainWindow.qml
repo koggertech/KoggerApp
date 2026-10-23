@@ -54,7 +54,25 @@ ApplicationWindow {
         id: appUsblEngine
         plan: appUsblPlan
         preferredDev: workspaceStore.activeDevice
+        exclusiveWith: appNodesEngine
     }
+    NodesStore {
+        id: appNodesStore
+        Component.onCompleted: load()
+    }
+    NodesWriter {
+        id: appNodesWriter
+        store: appNodesStore
+    }
+    NodesEngine {
+        id: appNodesEngine
+        store: appNodesStore
+        exclusiveWith: appUsblEngine
+    }
+    property string _nodesMode: "design"
+    readonly property var activeUsblEngine: appNodesEngine.running
+                                            || (!appUsblEngine.running && appNodesStore.hasSteps)
+                                            ? appNodesEngine : appUsblEngine
 
     // Читаем глобальные настройки при запуске (те же ключи, что сохраняет AppSettingsPage)
     Settings {
@@ -992,6 +1010,8 @@ ApplicationWindow {
             missionEnabled: workspaceStore.quickActionMissionEnabled
             autopilotEnabled: workspaceStore.quickActionAutopilotEnabled
             profilesEnabled: workspaceStore.quickActionProfilesEnabled
+            nodesEnabled: workspaceStore.quickActionNodesEnabled
+            nodesRunning: appNodesEngine.running
             widgetsEnabled: workspaceStore.quickActionWidgetsEnabled
             consoleButtonEnabled: workspaceStore.quickActionConsoleEnabled
             powerOffEnabled: workspaceStore.quickActionPowerOffEnabled
@@ -1371,12 +1391,53 @@ ApplicationWindow {
             anchors.fill: parent
             z: ZOrder.widgetPopup + workspaceStore.widgetStackRank(workspaceStore.usblPanelId)
             store: workspaceStore
-            engine: appUsblEngine
+            engine: root.activeUsblEngine
+            network: appNodesStore
+            networkEngine: appNodesEngine
             def: workspaceStore.usblPanelDef
             popupVisible: workspaceStore.usblPanelShown
             popupId: "widget:" + workspaceStore.usblPanelId
             siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds, root.autopilotPopupEffectiveBounds]
             siblingIdList: ["btEdit", "profiles", "autopilot"]
+            onAntennaDiagRequested: function(address) { usblAntennaDiagPopup.openFor(address) }
+            onConfiguratorRequested: workspaceStore.nodesConfiguratorOpen = true
+        }
+
+        NodesFloatingWindow {
+            id: nodesWindow
+            anchors.fill: parent
+            z: maximized ? ZOrder.nodesConfiguratorMaximized : ZOrder.nodesConfigurator
+            maxInsetTop: hotActions.visible ? hotActions.y + hotActions.barHeight + Tokens.spaceSm : 0
+            maxInsetLeft: workspaceStore.settingsSide === "left" && root._workspaceShouldShift ? workspaceStore.settingsPanelSizePx : 0
+            maxInsetRight: workspaceStore.settingsSide === "right" && root._workspaceShouldShift ? workspaceStore.settingsPanelSizePx : 0
+            maxInsetBottom: consoleDrawer.height
+            open: workspaceStore.nodesConfiguratorOpen
+            title: qsTr("Nodes-Configurator")
+            subtitle: appNodesStore.displayName + (appNodesStore.dirty ? " ●" : "")
+                      + (appNodesEngine.running ? "  ·  " + qsTr("running") : "")
+            onCloseRequested: workspaceStore.nodesConfiguratorOpen = false
+            onInteracted: appNodesStore.checkExternalChange()
+
+            Loader {
+                anchors.fill: parent
+                active: nodesWindow.open
+                asynchronous: true
+                sourceComponent: NodesConfigurator {
+                    active: nodesWindow.open && !nodesWindow.collapsed
+                    keysEnabled: nodesWindow.keysInside
+                    mode: root._nodesMode
+                    onModeChanged: root._nodesMode = mode
+                    store: appNodesStore
+                    engine: appNodesEngine
+                    writer: appNodesWriter
+                    workspaceStore: workspaceStore
+                }
+            }
+        }
+
+        UsblAntennaDiagPopup {
+            id: usblAntennaDiagPopup
+            store: workspaceStore
         }
 
         ServoPanelPopup {
@@ -1564,6 +1625,8 @@ ApplicationWindow {
                 // on the ids.
                 usblPlan: appUsblPlan
                 usblEngine: appUsblEngine
+                nodesStore: appNodesStore
+                nodesEngine: appNodesEngine
             }
         }
 
@@ -1572,6 +1635,7 @@ ApplicationWindow {
 
             AppSettingsPage {
                 store: workspaceStore
+                usblPlan: appUsblPlan
                 targetPlot: workspaceView.primaryPlotItem
                 echograms: workspaceView.visibleEchograms
             }
@@ -1589,6 +1653,7 @@ ApplicationWindow {
             anchors.bottomMargin: consoleDrawer.height
             store: workspaceStore
             usblPlan: appUsblPlan
+            usblNetwork: appNodesStore
             secondaryPlotItem: secondaryContent ? secondaryContent.plot2DInstance : null
         }
 

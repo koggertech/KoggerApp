@@ -69,6 +69,10 @@ Item {
     property bool profilesEnabled: true
     readonly property bool _profilesRevealOverride: _revealActiveKey === "profiles"
     readonly property bool showProfiles: profilesEnabled || _profilesRevealOverride
+    property bool nodesEnabled: true
+    property bool nodesRunning: false
+    readonly property bool _nodesRevealOverride: _revealActiveKey === "nodes"
+    readonly property bool showNodes: nodesEnabled || _nodesRevealOverride
     property bool widgetsEnabled: true
     readonly property bool _widgetsRevealOverride: _revealActiveKey === "widgets"
     readonly property bool showWidgets: widgetsEnabled || _widgetsRevealOverride
@@ -559,6 +563,8 @@ Item {
                     : root.panelPaddingX + 2 * root.toggleButtonSize + Math.round(8 * root._s)
                       + (collapsedDeviceRow.visible ? Math.round(8 * root._s) + collapsedDeviceRow.width : 0))
     height: Math.max(leadingClusterHeight, panel.height, layoutsCombo.y + backing.height, btEditCombo.y + btEditCombo.height, widgetsCombo.y + widgetsBacking.height)
+    // The button bar alone, without open dropdowns: what a window docked under the bar must clear.
+    readonly property real barHeight: Math.max(leadingClusterHeight, panel.height)
 
     component LayoutsTriggerButton: Rectangle {
         id: button
@@ -1509,6 +1515,8 @@ Item {
                         if (lbl && lbl.length > 0)
                             t += " · " + lbl
                     }
+                    if (RecorderStatus.imuDegraded(_dev))
+                        t += " · " + qsTr("IMU fault")
                     return t
                 }
 
@@ -1930,6 +1938,39 @@ Item {
         }
     }
 
+    Component {
+        id: qaNodesComp
+        KCircleIconButton {
+            id: nodesBtn
+            readonly property bool _open: root.store && root.store.nodesConfiguratorOpen
+            width: root.controlHeight
+            height: root.controlHeight
+            iconSource: "qrc:/icons/ui/device-usbl.svg"
+            iconTintColor: AppPalette.text
+            toolTipText: _open ? qsTr("Close Nodes-Configurator") : qsTr("Nodes-Configurator")
+            fillColor:        _open ? AppPalette.accentBgStrong : root.buttonFillColor
+            fillHoverColor:   _open ? AppPalette.accentBorder : root.buttonHoverColor
+            fillPressedColor: root.buttonPressedColor
+            borderColor:      _open ? AppPalette.accentBorder : root.buttonBorderColor
+            borderHoverColor: _open ? AppPalette.accentBorder : root.buttonHoverBorderColor
+            highlighted: root.highlightedQuickActionKey === "nodes"
+            flashToken: root.highlightPulseToken
+            highlightHold: root.draggingKey === "nodes"
+            onClicked: if (root.store) root.store.nodesConfiguratorOpen = !root.store.nodesConfiguratorOpen
+
+            KCloseBadge { visible: nodesBtn._open }
+            Rectangle {
+                visible: root.nodesRunning
+                anchors.top: parent.top
+                anchors.right: parent.right
+                width: Math.round(9 * AppPalette.scale); height: width; radius: width / 2
+                color: AppPalette.linkOkBorder
+                border.width: 1
+                border.color: AppPalette.bg
+            }
+        }
+    }
+
     Connections {
         target: core
         function onActiveTransientUiChanged(who) {
@@ -2192,6 +2233,7 @@ Item {
                            : key === "widgets"     ? root.showWidgets
                            : key === "console"      ? root.showConsole
                            : key === "profiles"     ? root.showProfiles
+                           : key === "nodes"        ? root.showNodes
                            : key === "inputLock"    ? root._showInputLock
                            : key === "secondWindow" ? root._showSecondWindow
                            : key === "powerOff"     ? root._showPowerOff
@@ -2207,6 +2249,7 @@ Item {
                                    : key === "widgets"      ? qaWidgetsComp
                                    : key === "console"      ? qaConsoleComp
                                    : key === "profiles"     ? qaProfilesComp
+                                   : key === "nodes"        ? qaNodesComp
                                    : key === "inputLock"    ? qaInputLockComp
                                    : key === "secondWindow" ? qaSecondWindowComp
                                    : key === "powerOff"     ? qaPowerOffComp

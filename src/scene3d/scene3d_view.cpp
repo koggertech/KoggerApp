@@ -1519,6 +1519,26 @@ void GraphicsScene3dView::setUsblLayerVisible(bool state)
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::setUsblBeaconTrackDots(bool state)
+{
+    if (usblLayer_) {
+        usblLayer_->setBeaconTrackStyle(state ? UsblLayer::TrackStyle::Dots
+                                              : UsblLayer::TrackStyle::Line);
+    }
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setUsblHeadTrackDots(bool state)
+{
+    if (usblLayer_) {
+        usblLayer_->setHeadTrackStyle(state ? UsblLayer::TrackStyle::Dots
+                                            : UsblLayer::TrackStyle::Line);
+    }
+
+    QQuickFramebufferObject::update();
+}
+
 void GraphicsScene3dView::resetHeadingToNorth()
 {
     if (!m_camera) {
@@ -1961,12 +1981,35 @@ void GraphicsScene3dView::setSyncEpochIndex(int epochIndex)
 
     syncEpochIndex_ = epochIndex;
 
+    if (usblLayerController_) {
+        usblLayerController_->setSyncEpochIndex(syncEpochIndex_);
+    }
+
+    emit syncEpochIndexChanged();
+
     if (!syncLoupeUiAllowed_ && !syncLoupeZoomAdjusting_) {
         return;
     }
 
     refreshSyncLoupePreview();
     emit syncLoupeStateChanged();
+}
+
+int GraphicsScene3dView::syncEpochIndex() const
+{
+    return syncEpochIndex_;
+}
+
+void GraphicsScene3dView::clearEpochSync()
+{
+    if (boatTrack_) {
+        boatTrack_->clearSelectedEpoch();
+    }
+    else {
+        setSyncEpochIndex(-1);
+    }
+
+    core.clearEpochCursors();
 }
 
 void GraphicsScene3dView::setEpochSyncEnabled(bool state)

@@ -66,6 +66,7 @@ DeviceManager::DeviceManager()
     qRegisterMetaType<QVector<uint8_t>>("QVector<uint8_t>");
     qRegisterMetaType<QByteArray>("QByteArray");
     qRegisterMetaType<IDBinUsblSolution::UsblSolution>("IDBinUsblSolution::UsblSolution");
+    qRegisterMetaType<IDBinUsblDiag::UsblSignalDiag>("IDBinUsblDiag::UsblSignalDiag");
     qRegisterMetaType<IDBinUsblSolution::AcousticNavSolution>("IDBinUsblSolution::AcousticNavSolution");
     qRegisterMetaType<IDBinUsblSolution::BaseToBeacon>("IDBinUsblSolution::BaseToBeacon");
     qRegisterMetaType<IDBinModemSolution::ModemSolutionHeader>("IDBinModemSolution::ModemSolutionHeader");
@@ -1096,6 +1097,12 @@ void DeviceManager::openFile(QString filePath)
 
     delAllDev();
 
+    epochFileOffsets_.clear();
+
+    qint64 pendingFrameStart = -1;
+    qint64 lastFrameStart = -1;
+    bool justWrapped = false;
+
     while (true) {
         QByteArray chunk = file.read(static_cast<qint64>(1024) * 1024);
         const qint64 chunkSize = chunk.size();
@@ -1117,9 +1124,29 @@ void DeviceManager::openFile(QString filePath)
 
         while (frameParser.availContext() > 0) {
 
+            if (!justWrapped && !frameParser.isNested() && pendingFrameStart < 0) {
+                pendingFrameStart = bytesRead - frameParser.availContext();
+            }
+
             frameParser.process();
             if (frameParser.isComplete()) {
+                if (!frameParser.isNested()) {
+                    lastFrameStart = pendingFrameStart;
+                    pendingFrameStart = -1;
+                    justWrapped = frameParser.isProxy();
+                }
+                else {
+                    justWrapped = false;
+                }
+
                 frameInput(someUuid, nullptr, frameParser);
+
+                if (Dataset* datasetPtr = core.getDatasetPtr(); datasetPtr && lastFrameStart >= 0) {
+                    const int epochs = datasetPtr->size();
+                    while (epochFileOffsets_.size() < epochs) {
+                        epochFileOffsets_.append(lastFrameStart);
+                    }
+                }
             }
         }
 
@@ -1139,6 +1166,7 @@ void DeviceManager::closeFile()
 {
     delAllDev();
     resetAutopilot();
+    epochFileOffsets_.clear();
     publishVru();
 }
 
@@ -1231,6 +1259,11 @@ void DeviceManager::setNmeaConsoled(bool isConsoled)
 void DeviceManager::setMavlinkConsoled(bool isConsoled)
 {
     mavlinkConsoled_ = isConsoled;
+}
+
+void DeviceManager::setUsblConsoled(bool isConsoled)
+{
+    DevDriver::usblConsoled_ = isConsoled;
 }
 
 void DeviceManager::upgradeLastDev(QByteArray data)
@@ -1546,6 +1579,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::distComplete, this, &DeviceManager::distComplete);
     connect(dev, &DevQProperty::encoderComplete, this, &DeviceManager::encoderComplete);
     connect(dev, &DevQProperty::usblSolutionComplete, this, &DeviceManager::usblSolutionComplete);
+    connect(dev, &DevQProperty::usblDiagComplete, this, &DeviceManager::usblDiagComplete);
     connect(dev, &DevQProperty::beaconActivationComplete, this, &DeviceManager::beaconActivationReceive);
     connect(dev, &DevQProperty::dopplerBeamComplete, this, &DeviceManager::dopplerBeamComlete);
     connect(dev, &DevQProperty::dvlSolutionComplete, this, &DeviceManager::dvlSolutionComplete);

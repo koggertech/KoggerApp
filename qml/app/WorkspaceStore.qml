@@ -112,6 +112,7 @@ property bool quickActionContactEnabled: true
 property bool quickActionMissionEnabled: true
 property bool quickActionAutopilotEnabled: true
 property bool quickActionProfilesEnabled: true
+property bool quickActionNodesEnabled: true
 property bool quickActionWidgetsEnabled: true
 property bool quickActionConsoleEnabled: true
 property bool quickActionSecondWindowEnabled: true
@@ -131,7 +132,7 @@ function toggleInputLock() { setInputLocked(!inputLocked) }
 property string quickActionDraggingKey: ""
 
 readonly property var quickActionKeys: {
-    var base = ["connections", "logging", "layouts", "widgets", "console", "bottomTrack", "contact", "mission", "autopilot", "profiles", "inputLock"]
+    var base = ["connections", "logging", "layouts", "widgets", "console", "bottomTrack", "contact", "mission", "autopilot", "profiles", "nodes", "inputLock"]
     if (Qt.platform.os !== "android" && Qt.platform.os !== "ios")
         base.push("secondWindow")   // desktop-only; mobile drops it on normalize
     if (Qt.platform.os === "linux" || (typeof manualTesting !== "undefined" && manualTesting === true))
@@ -150,6 +151,7 @@ property var quickActionOrderModel: ListModel {
     ListElement { key: "mission" }
     ListElement { key: "autopilot" }
     ListElement { key: "profiles" }
+    ListElement { key: "nodes" }
     ListElement { key: "inputLock" }
     ListElement { key: "secondWindow" }
     ListElement { key: "powerOff" }
@@ -176,6 +178,8 @@ function normalizeQuickActionOrder(list) {
                 out.splice(out.indexOf("contact") + 1, 0, "mission")
             else if (quickActionKeys[j] === "autopilot" && out.indexOf("mission") !== -1)
                 out.splice(out.indexOf("mission") + 1, 0, "autopilot")
+            else if (quickActionKeys[j] === "nodes" && out.indexOf("profiles") !== -1)
+                out.splice(out.indexOf("profiles") + 1, 0, "nodes")
             else if (quickActionKeys[j] === "inputLock" && out.indexOf("secondWindow") !== -1)
                 out.splice(out.indexOf("secondWindow"), 0, "inputLock") // keep the lock right before the second window
             else
@@ -499,6 +503,7 @@ onAutopilotOnlineChanged: {
 }
 
 property bool profilesPopupOpen: false
+property bool nodesConfiguratorOpen: false
 property var settingsProfiles: []
 property var profilesPopupState: ({ x: -1, y: -1 })
 
@@ -1061,7 +1066,7 @@ function widgetStackIds() {
 }
 
 function widgetStackRank(id) {
-    return Math.max(0, Math.min(widgetStackSlots - 1, widgetInstance(id).z))
+    return Math.max(0, Math.min(Math.min(widgetStackSlots, ZOrder.widgetBandLevels) - 1, widgetInstance(id).z))
 }
 
 function widgetBringToFront(id) {
@@ -1240,6 +1245,7 @@ onAutopilotPopupOpenChanged: {
     layoutStore.autopilotPopupOpenStored = autopilotPopupOpen
 }
 onProfilesPopupOpenChanged: layoutStore.profilesPopupOpenStored = profilesPopupOpen
+onNodesConfiguratorOpenChanged: layoutStore.nodesConfiguratorOpenStored = nodesConfiguratorOpen
 
 readonly property real splitterThickness: 0
 readonly property real minPaneSize: 120
@@ -1273,12 +1279,62 @@ property Settings scene3dLayerVisibility: Settings {
     property bool bottomTrackCheckButton: false
     property bool isobathsCheckButton: false
     property bool mosaicViewCheckButton: false
+    property bool usblCheckButton: false
+    property bool usblBeaconTrackDots: false
+    property bool usblHeadTrackDots: false
+    property bool usblSignalDetails: true
+    property bool usblMessageBytes: true
     property bool missionRunCheckButton: true
 }
 property alias boatTrackVisible:   scene3dLayerVisibility.boatTrackCheckButton
 property alias bottomTrackVisible: scene3dLayerVisibility.bottomTrackCheckButton
 property alias isobathsVisible:    scene3dLayerVisibility.isobathsCheckButton
 property alias mosaicVisible:      scene3dLayerVisibility.mosaicViewCheckButton
+property alias usblVisible:        scene3dLayerVisibility.usblCheckButton
+property alias usblBeaconTrackDots: scene3dLayerVisibility.usblBeaconTrackDots
+property alias usblHeadTrackDots:   scene3dLayerVisibility.usblHeadTrackDots
+property alias usblSignalDetails:   scene3dLayerVisibility.usblSignalDetails
+property alias usblMessageBytes:    scene3dLayerVisibility.usblMessageBytes
+
+readonly property bool usblLayerActive: developerMode && usblVisible
+
+property Settings usblDiagSettings: Settings {
+    id: usblDiagSettings
+    category: "main/usblDiag"
+    property bool antennaLine: true
+    property real misfitMax: 0.065
+    property real ampMax: 0.051
+    property real phaseMax: 0.019
+    property real altMinDb: 1.4
+    property real levelMinDb: -6.0
+    property bool levelAbsolute: false
+}
+property alias usblAntennaDiag:     usblDiagSettings.antennaLine
+property alias usblDiagMisfitMax:   usblDiagSettings.misfitMax
+property alias usblDiagAmpMax:      usblDiagSettings.ampMax
+property alias usblDiagPhaseMax:    usblDiagSettings.phaseMax
+property alias usblDiagAltMinDb:    usblDiagSettings.altMinDb
+property alias usblDiagLevelMinDb:  usblDiagSettings.levelMinDb
+property alias usblDiagLevelAbsolute: usblDiagSettings.levelAbsolute
+
+readonly property bool usblAntennaDiagActive: developerMode && usblAntennaDiag
+readonly property var usblDiagThresholds: ({
+    misfit:  usblDiagMisfitMax,
+    amp:     usblDiagAmpMax,
+    phase:   usblDiagPhaseMax,
+    altDb:   usblDiagAltMinDb,
+    levelDb: usblDiagLevelMinDb
+})
+
+function resetUsblDiagThresholds() {
+    var t = DataFieldCatalog.usblDiagDefaults()
+    usblDiagMisfitMax  = t.misfit
+    usblDiagAmpMax     = t.amp
+    usblDiagPhaseMax   = t.phase
+    usblDiagAltMinDb   = t.altDb
+    usblDiagLevelMinDb = t.levelDb
+}
+
 property alias missionRunVisible:  scene3dLayerVisibility.missionRunCheckButton
 
 property Settings missionRunPrefs: Settings {
@@ -1592,6 +1648,7 @@ property Settings consolePersist: Settings {
     property bool protoBinConsoled: false
     property bool nmeaConsoled: true
     property bool mavlinkConsoled: false
+    property bool usblConsoled: false
 }
 
 property alias consoleColorize: consolePersist.consColorize
@@ -1606,6 +1663,7 @@ readonly property int consoleMaxRowsDefault: 1500
 property alias consoleProtoBin: consolePersist.protoBinConsoled
 property alias consoleNmea: consolePersist.nmeaConsoled
 property alias consoleMavlink: consolePersist.mavlinkConsoled
+property alias consoleUsbl: consolePersist.usblConsoled
 
 function applyConsoleMaxRows() {
     if (typeof core !== "undefined" && core)
@@ -1618,12 +1676,14 @@ function applyConsoleProtoToggles() {
     deviceManagerWrapper.setProtoBinConsoled(consoleProtoBin)
     deviceManagerWrapper.setNmeaConsoled(consoleNmea)
     deviceManagerWrapper.setMavlinkConsoled(consoleMavlink)
+    deviceManagerWrapper.setUsblConsoled(consoleUsbl)
 }
 
 onConsoleMaxRowsChanged: applyConsoleMaxRows()
 onConsoleProtoBinChanged: applyConsoleProtoToggles()
 onConsoleNmeaChanged: applyConsoleProtoToggles()
 onConsoleMavlinkChanged: applyConsoleProtoToggles()
+onConsoleUsblChanged: applyConsoleProtoToggles()
 
 property Settings exportPersist: Settings {
     id: exportPersist
@@ -1699,6 +1759,11 @@ onMosaicVisibleChanged: {
     MosaicViewControlMenuController.onUpdateStateChanged(mosaicVisible)
     MosaicViewControlMenuController.onVisibilityChanged(mosaicVisible)
 }
+onUsblLayerActiveChanged: {
+    Scene3dToolBarController.onUsblLayerVisibilityChanged(usblLayerActive)
+}
+onUsblBeaconTrackDotsChanged: Scene3dToolBarController.onUsblBeaconTrackDotsChanged(usblBeaconTrackDots)
+onUsblHeadTrackDotsChanged:   Scene3dToolBarController.onUsblHeadTrackDotsChanged(usblHeadTrackDots)
 
 function initLayerVisibilityControllers() {
     BoatTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(boatTrackVisible)
@@ -1708,6 +1773,9 @@ function initLayerVisibilityControllers() {
     IsobathsViewControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(isobathsVisible)
     MosaicViewControlMenuController.onVisibilityChanged(mosaicVisible)
     MosaicViewControlMenuController.onUpdateStateChanged(mosaicVisible)
+    Scene3dToolBarController.onUsblLayerVisibilityChanged(usblLayerActive)
+    Scene3dToolBarController.onUsblBeaconTrackDotsChanged(usblBeaconTrackDots)
+    Scene3dToolBarController.onUsblHeadTrackDotsChanged(usblHeadTrackDots)
     pushMosaicChannelsFromCore()
 }
 
@@ -1791,6 +1859,7 @@ property Settings layoutStore: Settings {
     property bool quickActionMissionEnabledStored: true
     property bool quickActionAutopilotEnabledStored: true
     property bool quickActionProfilesEnabledStored: true
+    property bool quickActionNodesEnabledStored: true
     property string quickActionOrderStored: "connections,logging,layouts,bottomTrack,contact,widgets,console,profiles,inputLock,secondWindow,powerOff"
     property string rememberedLinksJson: "[]"
     property string selectedConnectionFilePathStored: ""
@@ -1808,6 +1877,7 @@ property Settings layoutStore: Settings {
     property string settingsProfilesJson: "[]"
     property string profilesPopupStateJson: "{\"x\":-1,\"y\":-1}"
     property bool profilesPopupOpenStored: false
+    property bool nodesConfiguratorOpenStored: false
     property bool bottomTrackEditorOpenStored: false
     property bool autopilotPopupOpenStored: false
     property string autopilotPopupStateJson: "{\"x\":-1,\"y\":-1}"
@@ -4093,6 +4163,7 @@ function saveLayoutState() {
     layoutStore.quickActionMissionEnabledStored = quickActionMissionEnabled
     layoutStore.quickActionAutopilotEnabledStored = quickActionAutopilotEnabled
     layoutStore.quickActionProfilesEnabledStored = quickActionProfilesEnabled
+    layoutStore.quickActionNodesEnabledStored = quickActionNodesEnabled
     layoutStore.quickActionWidgetsEnabledStored = quickActionWidgetsEnabled
     layoutStore.quickActionConsoleEnabledStored = quickActionConsoleEnabled
     layoutStore.quickActionSecondWindowEnabledStored = quickActionSecondWindowEnabled
@@ -4116,6 +4187,7 @@ function restoreLayoutState() {
     quickActionMissionEnabled = layoutStore.quickActionMissionEnabledStored
     quickActionAutopilotEnabled = layoutStore.quickActionAutopilotEnabledStored
     quickActionProfilesEnabled = layoutStore.quickActionProfilesEnabledStored
+    quickActionNodesEnabled = layoutStore.quickActionNodesEnabledStored
     quickActionWidgetsEnabled = layoutStore.quickActionWidgetsEnabledStored
     quickActionConsoleEnabled = layoutStore.quickActionConsoleEnabledStored
     quickActionSecondWindowEnabled = layoutStore.quickActionSecondWindowEnabledStored
@@ -5603,6 +5675,7 @@ function loadPersistedUiState() {
     loadUsblPanelPreferences()
     loadStandPanelPreferences()
     profilesPopupOpen = layoutStore.profilesPopupOpenStored
+    nodesConfiguratorOpen = layoutStore.nodesConfiguratorOpenStored
     autopilotPopupOpen = layoutStore.autopilotPopupOpenStored
     bottomTrackEditorOpen = layoutStore.bottomTrackEditorOpenStored
     loadPopupDocks()

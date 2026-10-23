@@ -501,6 +501,24 @@ Resp IDBinRecorderStatus::parsePayload(FrameParser& proto)
     return respOk;
 }
 
+static_assert(sizeof(IDBinNavSensorStatus::NavSensorStatus) == 38,
+              "NavSensorStatusV0 wire layout must stay 38 bytes");
+
+Resp IDBinNavSensorStatus::parsePayload(FrameParser& proto)
+{
+    if (proto.ver() != NavSensorStatus::getVer()) {
+        return respErrorVersion;
+    }
+
+    if (proto.readAvailable() < static_cast<int16_t>(sizeof(NavSensorStatus))) {
+        return respErrorPayload;
+    }
+
+    data_ = proto.read<NavSensorStatus>();
+    valid_ = true;
+    return respOk;
+}
+
 Resp IDBinDVL::parsePayload(FrameParser &proto) {
     if(proto.ver() == v0) {
          vel_x = proto.read<F4>();
@@ -1342,6 +1360,21 @@ void IDBinUsblSolution::enableBeaconOnce(float timeout) {
     emit binFrameOut(req_out);
 }
 
+Resp IDBinUsblDiag::parsePayload(FrameParser& proto)
+{
+    if (proto.ver() != UsblSignalDiag::getVer()) {
+        return respErrorVersion;
+    }
+
+    if (proto.readAvailable() < static_cast<int16_t>(sizeof(UsblSignalDiag))) {
+        return respErrorPayload;
+    }
+
+    data_ = proto.read<UsblSignalDiag>();
+    valid_ = true;
+    return respOk;
+}
+
 
 
 Resp IDBinUsblControl::parsePayload(FrameParser& proto)
@@ -1351,11 +1384,25 @@ Resp IDBinUsblControl::parsePayload(FrameParser& proto)
     return respOk;
 }
 
-void IDBinUsblControl::pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id) {
-    pingRequest(timeout_us, address, cmd_id, 20000, QByteArray());
+uint16_t IDBinUsblControl::pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id) {
+    return pingRequest(timeout_us, address, cmd_id, 20000, QByteArray());
 }
 
-void IDBinUsblControl::pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id, uint32_t reply_distance_mm, const QByteArray& payload) {
+uint16_t IDBinUsblControl::send(ProtoBinOut& frame) {
+    emit binFrameOut(frame);
+
+    const uint8_t* bytes = frame.frame();
+    const int checked_end = frame.frameLen() - 2;
+    uint8_t check1 = 0, check2 = 0;
+    for(int i = 2; i < checked_end; i++) {
+        check1 += (i == 2) ? 0 : bytes[i];
+        check2 += check1;
+    }
+    lastRelayedChecksum_ = (uint16_t)(check1 | (check2 << 8));
+    return frame.checksum();
+}
+
+uint16_t IDBinUsblControl::pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id, uint32_t reply_distance_mm, const QByteArray& payload, int payload_bits) {
     ProtoBinOut ping_req;
     ping_req.create(SETTING, USBLPingRequest::getVer(), id(), m_address);
 
@@ -1363,49 +1410,54 @@ void IDBinUsblControl::pingRequest(uint32_t timeout_us, uint8_t address, uint8_t
     if(max_payload_bytes < 0) {
         max_payload_bytes = 0;
     }
-    const int payload_bytes = qMin((int)payload.size(), max_payload_bytes);
+    int payload_bytes = qMin((int)payload.size(), max_payload_bytes);
+    int bits = payload_bytes * 8;
+    if(payload_bits >= 0 && payload_bits < bits) {
+        bits = payload_bits;
+        payload_bytes = (bits + 7) / 8;
+    }
 
     USBLPingRequest req;
     req.trigger_timeout_us = timeout_us;
     req.address = address;
     req.cmd_id = cmd_id;
     req.reply_distance_mm = reply_distance_mm;
-    req.function = payload_bytes > 0 ? USBLPingRequest::FunctionBitArray : USBLPingRequest::FunctionDefault;
-    req.payload_bit_length = (uint16_t)(payload_bytes * 8);
+    req.function = bits > 0 ? USBLPingRequest::FunctionBitArray : USBLPingRequest::FunctionDefault;
+    req.payload_bit_length = (uint16_t)bits;
 
     ping_req.write<USBLPingRequest>(req);
-    if(payload_bytes > 0) {
+    if(bits > 0) {
         ping_req.write((void*)payload.constData(), (uint16_t)payload_bytes);
     }
     ping_req.end();
 
-    emit binFrameOut(ping_req);
+    return send(ping_req);
 }
 
-void IDBinUsblControl::setTransponderEnable(uint32_t timeout_us) {
+uint16_t IDBinUsblControl::setTransponderEnable(uint32_t timeout_us) {
     ProtoBinOut ping_resp_t;
     ping_resp_t.create(SETTING, USBLResponseTimeout::getVer(), id(), m_address);
     USBLResponseTimeout req = {timeout_us};
     ping_resp_t.write<USBLResponseTimeout>(req);
     ping_resp_t.end();
 
-    emit binFrameOut(ping_resp_t);
+    return send(ping_resp_t);
 }
 
-void IDBinUsblControl::setResponseTimeout(uint32_t timeout_us) {
-    setTransponderEnable(timeout_us);
+uint16_t IDBinUsblControl::setResponseTimeout(uint32_t timeout_us) {
+    return setTransponderEnable(timeout_us);
 }
 
-void IDBinUsblControl::setMonitorConfig(const USBLMonitorConfig& cfg) {
+uint16_t IDBinUsblControl::setMonitorConfig(const USBLMonitorConfig& cfg) {
     ProtoBinOut monitor_cfg;
     monitor_cfg.create(SETTING, USBLMonitorConfig::getVer(), id(), m_address);
     monitor_cfg.write<USBLMonitorConfig>(cfg);
     monitor_cfg.end();
 
-    emit binFrameOut(monitor_cfg);
+    return send(monitor_cfg);
 }
 
-void IDBinUsblControl::setResponseAddressFilter(const std::array<uint8_t, 8>& addresses) {
+uint16_t IDBinUsblControl::setResponseAddressFilter(const std::array<uint8_t, 8>& addresses) {
     ProtoBinOut ping_resp_a;
     ping_resp_a.create(SETTING, USBLResponseAddressFilter::getVer(), id(), m_address);
     USBLResponseAddressFilter req;
@@ -1415,17 +1467,17 @@ void IDBinUsblControl::setResponseAddressFilter(const std::array<uint8_t, 8>& ad
     ping_resp_a.write<USBLResponseAddressFilter>(req);
     ping_resp_a.end();
 
-    emit binFrameOut(ping_resp_a);
+    return send(ping_resp_a);
 }
 
-void IDBinUsblControl::setResponseAddressFilter(uint8_t address) {
+uint16_t IDBinUsblControl::setResponseAddressFilter(uint8_t address) {
     std::array<uint8_t, 8> addresses;
     addresses.fill(0xFF);
     addresses[0] = address;
-    setResponseAddressFilter(addresses);
+    return setResponseAddressFilter(addresses);
 }
 
-void IDBinUsblControl::setCmdConfig(const USBLCmdConfig& cfg, const QByteArray& sendingPayload) {
+uint16_t IDBinUsblControl::setCmdConfig(const USBLCmdConfig& cfg, const QByteArray& sendingPayload, int sending_bits) {
     ProtoBinOut proto_cfg;
     proto_cfg.create(SETTING, USBLCmdConfig::getVer(), id(), m_address);
 
@@ -1436,10 +1488,15 @@ void IDBinUsblControl::setCmdConfig(const USBLCmdConfig& cfg, const QByteArray& 
 
     const bool sender_is_bit_array = cfg.sender_function == USBLCmdConfig::FunctionBitArray;
     const QByteArray payload = sender_is_bit_array ? sendingPayload : QByteArray();
-    const int payload_bytes = qMin((int)payload.size(), max_payload_bytes);
+    int payload_bytes = qMin((int)payload.size(), max_payload_bytes);
+    int bits = payload_bytes * 8;
+    if(sending_bits >= 0 && sending_bits < bits) {
+        bits = sending_bits;
+        payload_bytes = (bits + 7) / 8;
+    }
 
     USBLCmdConfig cfg_out = cfg;
-    cfg_out.sending_bit_length = sender_is_bit_array ? (uint16_t)(payload_bytes * 8) : 0;
+    cfg_out.sending_bit_length = sender_is_bit_array ? (uint16_t)bits : 0;
 
     proto_cfg.write<USBLCmdConfig>(cfg_out);
     if(payload_bytes > 0) {
@@ -1447,7 +1504,7 @@ void IDBinUsblControl::setCmdConfig(const USBLCmdConfig& cfg, const QByteArray& 
     }
     proto_cfg.end();
 
-    emit binFrameOut(proto_cfg);
+    return send(proto_cfg);
 }
 
 Resp IDBinModemSolution::parsePayload(FrameParser &proto) {

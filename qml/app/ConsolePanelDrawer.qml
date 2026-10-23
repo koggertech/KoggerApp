@@ -492,6 +492,18 @@ Item {
                     }
                 }
 
+                Toggle {
+                    id: usblConsoled
+                    visible: root.protoTogglesVisible
+                    label: qsTr("USBL")
+                    checked: !!root.store && root.store.consoleUsbl
+                    onToggled: function(value) {
+                        if (root.store)
+                            root.store.consoleUsbl = value
+                        checked = Qt.binding(function() { return !!root.store && root.store.consoleUsbl })
+                    }
+                }
+
                 Item { Layout.fillWidth: true }
 
                 KCircleIconButton {

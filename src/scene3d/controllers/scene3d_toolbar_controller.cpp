@@ -20,7 +20,9 @@ Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
       compassSize_(1),
       scaleBar_(true),
       shadowsEnabled_(true),
-      usblLayerVisible_(true),
+      usblLayerVisible_(false),
+      usblBeaconTrackDots_(false),
+      usblHeadTrackDots_(false),
       shadowVectorX_(0.40f),
       shadowVectorY_(0.40f),
       shadowVectorZ_(0.40f),
@@ -230,6 +232,30 @@ void Scene3dToolBarController::onScaleBarButtonChanged(bool state)
 
     if (graphicsScene3dViewPtr_) {
         graphicsScene3dViewPtr_->setScaleBarState(scaleBar_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onUsblBeaconTrackDotsChanged(bool state)
+{
+    usblBeaconTrackDots_ = state;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setUsblBeaconTrackDots(usblBeaconTrackDots_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onUsblHeadTrackDotsChanged(bool state)
+{
+    usblHeadTrackDots_ = state;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setUsblHeadTrackDots(usblHeadTrackDots_);
     }
     else {
         tryInitPendingLambda();
@@ -557,6 +583,8 @@ void Scene3dToolBarController::tryInitPendingLambda()
                 graphicsScene3dViewPtr_->setScaleBarState(scaleBar_);
                 graphicsScene3dViewPtr_->setShadowsEnabled(shadowsEnabled_);
                 graphicsScene3dViewPtr_->setUsblLayerVisible(usblLayerVisible_);
+                graphicsScene3dViewPtr_->setUsblBeaconTrackDots(usblBeaconTrackDots_);
+                graphicsScene3dViewPtr_->setUsblHeadTrackDots(usblHeadTrackDots_);
                 graphicsScene3dViewPtr_->setShadowVectorX(shadowVectorX_);
                 graphicsScene3dViewPtr_->setShadowVectorY(shadowVectorY_);
                 graphicsScene3dViewPtr_->setShadowVectorZ(shadowVectorZ_);

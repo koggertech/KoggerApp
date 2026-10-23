@@ -48,8 +48,20 @@ QtObject {
         { key: "usblAge",         label: qsTr("Fix age"),         unit: qsTr("s"),  group: "usbl", addressable: true },
         { key: "usblState",       label: qsTr("Acoustic link"),   unit: "",         group: "usbl", addressable: true },
         { key: "usblAddress",     label: qsTr("Last beacon"),     unit: "",         group: "usbl" },
-        { key: "usblPresent",     label: qsTr("USBL data"),       unit: "",         group: "usbl" }
+        { key: "usblPresent",     label: qsTr("USBL data"),       unit: "",         group: "usbl" },
+        { key: "usblAntenna",     label: qsTr("Antenna"),         unit: "",         group: "usbl", addressable: true },
+        { key: "usblFit",         label: qsTr("Array fit misfit"), unit: "",        group: "usbl", addressable: true },
+        { key: "usblDirWidth",    label: qsTr("Direction width"), unit: "°",        group: "usbl", addressable: true },
+        { key: "usblWeakCh",      label: qsTr("Weakest channel"), unit: qsTr("dB"), group: "usbl", addressable: true },
+        { key: "usblAltMargin",   label: qsTr("Alt. direction margin"), unit: qsTr("dB"), group: "usbl", addressable: true }
     ]
+
+    readonly property var _usblAntennaText: ({
+        "ok":    qsTr("OK"),
+        "check": qsTr("CHECK"),
+        "fault": qsTr("FAULT"),
+        "none":  "—"
+    })
 
     // Codes from UsblFieldLogic, translated here — the logic module never returns prose.
     readonly property var _usblStateText: ({
@@ -77,6 +89,40 @@ QtObject {
     // of this file.
     function _usblEntry(ds, addr) {
         return ds ? UsblLogic.pick(ds.usblSolutions, addr) : null
+    }
+    function _usblDiagEntry(ds, addr) {
+        return ds ? UsblLogic.pick(ds.usblDiagnostics, addr) : null
+    }
+    function _usblDiagThr(store) {
+        return store ? store.usblDiagThresholds : null
+    }
+    function usblDiagDefaults() { return UsblLogic.diagThresholds(null) }
+    function usblDeadBelowDb() { return UsblLogic.DEAD_BELOW_DB }
+    function usblAntennaCode(diag, store) { return UsblLogic.antennaCode(diag, _usblDiagThr(store)) }
+    function usblAntennaText(code) { return _usblAntennaText[code] || "—" }
+    function usblLevelSeverity(db, store) { return UsblLogic.levelSeverity(db, _usblDiagThr(store)) }
+    function usblMetricSeverity(name, v, store) { return UsblLogic.metricSeverity(name, v, _usblDiagThr(store)) }
+    function usblSeverityInk(sev, okInk, noneInk) {
+        if (sev === 2) return AppPalette.linkDownText
+        if (sev === 1) return AppPalette.linkIdleText
+        var ok = okInk !== undefined ? okInk : AppPalette.text
+        if (sev === 0) return ok
+        return noneInk !== undefined ? noneInk : ok
+    }
+    function usblAntennaInk(code) {
+        if (code === "fault") return AppPalette.linkDownText
+        if (code === "check") return AppPalette.linkIdleText
+        if (code === "ok") return AppPalette.text
+        return AppPalette.textMuted
+    }
+    function formatAgeMs(ms) {
+        if (!(ms >= 0)) return ""
+        var s = ms / 1000
+        if (s < 10)  return s.toFixed(1) + qsTr(" s")
+        if (s < 100) return Math.round(s) + qsTr(" s")
+        var m = s / 60
+        if (m < 100) return Math.round(m) + qsTr(" m")
+        return Math.round(m / 60) + qsTr(" h")
     }
     // `store.nowMs` is WorkspaceStore's 1 s clock, and it has to exist: Date.now() inside a
     // binding is evaluated once and then frozen, so without a ticking property `usblAge` and
@@ -132,6 +178,8 @@ QtObject {
         if (UsblLogic.isUsblField(key)) {
             if (key === "usblPresent")
                 return !!(ds && ds.hasUsblData)
+            if (UsblLogic.isDiagField(key))
+                return UsblLogic.isValid(key, _usblDiagEntry(ds, addr), _nowMs(store), _usblDiagThr(store))
             return UsblLogic.isValid(key, _usblEntry(ds, addr), _nowMs(store))
         }
         switch (key) {
@@ -202,6 +250,9 @@ QtObject {
         if (key === "usblPresent")
             return (ds && ds.hasUsblData) ? qsTr("yes") : qsTr("no")
 
+        if (UsblLogic.isDiagField(key))
+            return _formatUsblDiag(key, _usblDiagEntry(ds, addr), _usblDiagThr(store))
+
         var e = _usblEntry(ds, addr)
         var now = _nowMs(store)
 
@@ -221,6 +272,21 @@ QtObject {
         case "usblBeaconCoord": return v
         case "usblAge":         return (v < 10 ? v.toFixed(1) : Math.round(v)) + " " + qsTr("s")
         case "usblAddress":     return v
+        }
+        return String(v)
+    }
+
+    function _formatUsblDiag(key, d, thr) {
+        if (key === "usblAntenna")
+            return d ? usblAntennaText(UsblLogic.antennaCode(d, thr)) : "—"
+        var v = UsblLogic.rawValue(key, d, 0, thr)
+        if (v === null || v === undefined)
+            return "—"
+        switch (key) {
+        case "usblFit":       return v
+        case "usblDirWidth":  return v
+        case "usblWeakCh":    return qsTr("ch%1 %2 dB").arg(d.weakChannel).arg(v)
+        case "usblAltMargin": return v + " " + qsTr("dB")
         }
         return String(v)
     }
@@ -253,6 +319,11 @@ QtObject {
         case "usblState":       return _usblStateText["tracking"]
         case "usblAddress":     return "2"
         case "usblPresent":     return qsTr("yes")
+        case "usblAntenna":     return _usblAntennaText["ok"]
+        case "usblFit":         return "0.012"
+        case "usblDirWidth":    return "9°×26°"
+        case "usblWeakCh":      return qsTr("ch%1 %2 dB").arg(1).arg("-1.4")
+        case "usblAltMargin":   return "4.4 " + qsTr("dB")
         }
         return "—"
     }

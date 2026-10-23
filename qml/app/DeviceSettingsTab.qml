@@ -9,6 +9,8 @@ Item {
     // whenever the operator navigates away, which must no longer stop the schedule.
     property var usblPlan: null
     property var usblEngine: null
+    property var nodesStore: null
+    property var nodesEngine: null
 
     width: parent ? parent.width : implicitWidth
     implicitHeight: topoWrap.height + Tokens.spaceLg + contentCol.implicitHeight
@@ -79,6 +81,8 @@ Item {
             store: page.store
             usblPlan: page.usblPlan
             usblEngine: page.usblEngine
+            nodesStore: page.nodesStore
+            nodesEngine: page.nodesEngine
             scrollTopInset: topoWrap.height + Tokens.spaceMd
         }
     }

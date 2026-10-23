@@ -87,6 +87,7 @@ public:
     Q_PROPERTY(bool              posZeroing                   READ getPosZeroing                   NOTIFY posZeroingChanged)
     Q_PROPERTY(int               bottomTrackEditTool          READ getBottomTrackEditTool          WRITE setBottomTrackEditTool          NOTIFY bottomTrackEditToolChanged)
     Q_PROPERTY(bool              contactPlacementArmed        READ getContactPlacementArmed        WRITE setContactPlacementArmed        NOTIFY contactPlacementArmedChanged)
+    Q_PROPERTY(int               klfEpochIndexSize            READ klfEpochIndexSize                                                     NOTIFY klfEpochIndexSizeChanged)
     Q_PROPERTY(bool              missionEditorActive          READ getMissionEditorActive          WRITE setMissionEditorActive          NOTIFY missionEditorActiveChanged)
 
     MosaicIndexProvider* getMosaicIndexProviderPtr();
@@ -164,6 +165,7 @@ public slots:
     void setUseGPS(bool state);
     bool exportComplexToCSV(QString filePath);
     bool exportUSBLToCSV(QString filePath);
+    bool exportUsblDiagToCSV(QString filePath);
     bool exportPlotAsCVS(QString filePath, const ChannelId& channelId, float decimation = 0);
     bool exportPlotAsXTF(QString filePath);
     Q_INVOKABLE bool csvExportFieldEnabled(const QString& key) const;
@@ -205,6 +207,9 @@ public slots:
     bool getMissionEditorActive() const { return missionEditorActive_; }
     Q_INVOKABLE void setMissionEditorActive(bool active);
     QString missionDirectoryFor(const QString& logDir) const;
+
+    int klfEpochIndexSize() const;
+    Q_INVOKABLE bool exportKlfFragment(int firstEpoch, int lastEpoch, QString filePath);
     Q_INVOKABLE bool getIsFileOpening() const;
     Q_INVOKABLE bool getIsAppendMode() const;
     Q_INVOKABLE QString getFileTitle() const;
@@ -222,6 +227,7 @@ public slots:
     bool echogramSyncView() const { return echogramSyncView_; }
     void broadcastEpochCursor(qPlot2D* source, int epoch, float depth, int channel);
     void broadcastCursorClear(qPlot2D* source);
+    void clearEpochCursors();
     Q_INVOKABLE void broadcastEchogramTime(QObject* source, double timelinePos);        // time/scroll → gated by echogramSyncCursor_
     Q_INVOKABLE void broadcastEchogramVertical(QObject* source, double from, double to); // vertical zoom+offset → gated by echogramSyncView_
     Q_INVOKABLE void registerSyncLoupePlot(QObject* plotObj);
@@ -280,6 +286,7 @@ signals:
     void posZeroingChanged();
     void bottomTrackEditToolChanged();
     void contactPlacementArmedChanged();
+    void klfEpochIndexSizeChanged();
     void missionEditorActiveChanged();
     void languageChanged();
 

@@ -56,6 +56,7 @@ class GraphicsScene3dView : public QQuickFramebufferObject
     Q_PROPERTY(bool sceneContentVisible READ sceneContentVisible NOTIFY sceneContentVisibleChanged)
     Q_PROPERTY(bool followReturnPending READ followReturnPending NOTIFY followReturnStateChanged)
     Q_PROPERTY(int followReturnSeconds READ followReturnSeconds NOTIFY followReturnStateChanged)
+    Q_PROPERTY(int syncEpochIndex READ syncEpochIndex NOTIFY syncEpochIndexChanged)
     Q_PROPERTY(bool syncLoupeOverlayVisible READ syncLoupeOverlayVisible NOTIFY syncLoupeStateChanged)
     Q_PROPERTY(int syncLoupeEpochIndex READ syncLoupeEpochIndex NOTIFY syncLoupeStateChanged)
     Q_PROPERTY(float syncLoupeDepthFrom READ syncLoupeDepthFrom NOTIFY syncLoupeStateChanged)
@@ -317,6 +318,8 @@ public:
     void setCompassSize(int val);
     void setScaleBarState(bool state);
     void setUsblLayerVisible(bool state);
+    void setUsblBeaconTrackDots(bool state);
+    void setUsblHeadTrackDots(bool state);
     void setShadowsEnabled(bool state);
     void setShadowVectorX(float value);
     void setShadowVectorY(float value);
@@ -338,6 +341,8 @@ public:
     void setSyncLoupeZoom(int val);
     void setSyncLoupeZoomAdjusting(bool adjusting);
     void setSyncEpochIndex(int epochIndex);
+    int syncEpochIndex() const;
+    Q_INVOKABLE void clearEpochSync();
     void setEpochSyncEnabled(bool state);
     bool isEpochSyncEnabled() const { return epochSyncEnabled_; }
     void setContactPlacementArmed(bool armed);
@@ -396,6 +401,7 @@ signals:
     void sendVisibleTileKeys(int zoomIndx, const QSet<TileKey>& tileKeys);
     void forceSingleZoomAutoStateChanged(bool active);
     void syncLoupeStateChanged();
+    void syncEpochIndexChanged();
     void verticalScaleChanged();
     void followReturnStateChanged();
 

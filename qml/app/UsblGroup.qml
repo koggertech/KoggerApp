@@ -120,23 +120,13 @@ DeviceSettingsGroup {
         _expanded = next
     }
 
-    // The one received payload the app retains. Dataset keeps a solution per address, but the
-    // modem payload is not cached at all -- modemLastPayload and friends read straight through to
-    // the CURRENT frame's header -- so exactly one command row can show data, the one the newest
-    // frame names. Rows say "—" rather than nothing so the answer does not jump between rows of
-    // different heights, and the pane says once that only the latest frame is kept.
-    //
-    // The arrival time is stamped here because the frame carries none; it is one scalar for the
-    // one retained payload, not a cache.
-    property real _modemAtMs: 0
-    Connections {
-        target: dev
-        enabled: !!dev
-        function onModemPayloadChanged() { usblGroup._modemAtMs = Date.now() }
+    function _modemEntry(addr) {
+        var m = dev ? dev.modemPayloads : null
+        return m ? (m[String(addr)] || null) : null
     }
     function _modemMatches(addr, cmd) {
-        return !!dev && dev.modemLastBitLength > 0
-               && dev.modemLastAddressFrom === addr && dev.modemLastCmdId === cmd
+        var e = _modemEntry(addr)
+        return !!e && e.bits > 0 && e.cmdId === cmd
     }
 
     // KSwitch is a full-width labelled row; a node needs a compact inline toggle, so this
@@ -310,6 +300,7 @@ DeviceSettingsGroup {
             id: _dwellLbl
             text: qsTr("Dwell"); color: AppPalette.textMuted
             font.pixelSize: Tokens.fontSm; font.bold: true
+            width: Math.max(implicitWidth, _rangeLbl.implicitWidth)
             anchors.verticalCenter: parent.verticalCenter
         }
         KSpinBox {
@@ -323,8 +314,11 @@ DeviceSettingsGroup {
             implicitWidth: Math.round(96 * AppPalette.scale)
             anchors.verticalCenter: parent.verticalCenter
             toolTipText: qsTr("Interval between steps, and the answer window each step is "
-                            + "allowed — a reply still counts for %1 s past it")
+                            + "allowed — a reply still counts for %1 s past it. "
+                            + "It cannot go below %2 s: the round trip of the max range "
+                            + "plus the beacon's turn-around and decoding")
                          .arg((Node.GRACE_MS / 1000).toFixed(2))
+                         .arg((usblGroup._dwellMinMs / 1000).toFixed(2))
             onValueModified: function (v) { if (usblGroup.engine) usblGroup.engine.setDwellMs(v) }
         }
         // Also the spacer: it takes whatever is left, which is what pins the buttons right.
@@ -355,6 +349,71 @@ DeviceSettingsGroup {
             enabled: !!(usblGroup.engine && usblGroup.engine.canRun)
             onClicked: if (usblGroup.engine) usblGroup.engine.toggleRun()
         }
+    }
+
+    Row {
+        width: parent.width; height: Tokens.controlHMd; spacing: Tokens.spaceSm
+        Text {
+            id: _rangeLbl
+            text: qsTr("Max range"); color: AppPalette.textMuted
+            font.pixelSize: Tokens.fontSm; font.bold: true
+            width: Math.max(implicitWidth, _dwellLbl.implicitWidth)
+            anchors.verticalCenter: parent.verticalCenter
+        }
+        KSpinBox {
+            id: _range
+            from: plan ? plan.minRangeMm : 1000
+            to: plan ? plan.maxRangeLimitMm : 2000000
+            stepSize: 10000
+            divisor: 1000; decimals: 0
+            value: plan ? plan.maxRangeMm : 0
+            enabled: !!plan
+            implicitWidth: Math.round(96 * AppPalette.scale)
+            anchors.verticalCenter: parent.verticalCenter
+            toolTipText: qsTr("The farthest beacon you expect, in metres. Every request carries "
+                            + "it as the answer window unless its command group sets its own, "
+                            + "and Dwell is kept long enough for it")
+            onValueModified: function (v) { if (plan) plan.setMaxRange(v) }
+        }
+        Text {
+            text: qsTr("m · Dwell ≥ %1 s").arg((usblGroup._dwellMinMs / 1000).toFixed(2))
+            color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
+            width: Math.max(0, parent.width - _rangeLbl.width - _range.width - parent.spacing * 2)
+            elide: Text.ElideRight
+            anchors.verticalCenter: parent.verticalCenter
+        }
+    }
+
+    Row {
+        width: parent.width
+        spacing: Tokens.spaceSm
+        Text {
+            text: qsTr("Transmit"); color: AppPalette.textMuted
+            font.pixelSize: Tokens.fontSm; font.bold: true
+            anchors.verticalCenter: parent.verticalCenter
+        }
+        KTabBar {
+            buttonHeight: Tokens.controlHSm
+            fontPixelSize: Tokens.fontSm
+            trackColor: AppPalette.bgDeep
+            options: [
+                { label: qsTr("Immediately"), value: false },
+                { label: qsTr("On PPS"), value: true }
+            ]
+            currentValue: !!(usblGroup.engine && usblGroup.engine.fireOnPps)
+            anchors.verticalCenter: parent.verticalCenter
+            onValueSelected: function(v) { if (usblGroup.engine) usblGroup.engine.setFireOnPps(v) }
+        }
+    }
+
+    Text {
+        visible: !!(usblGroup.engine && usblGroup.engine.fireOnPps)
+        width: parent.width
+        wrapMode: Text.WordWrap
+        text: qsTr("Each step only arms the request; the device transmits on its next PPS pulse, "
+                 + "and without a PPS signal nothing is sent. Keep Dwell at 1 s or more.")
+        color: AppPalette.textMuted
+        font.pixelSize: Tokens.fontXs
     }
 
     Rectangle { width: parent.width; height: 1; color: AppPalette.border }
@@ -587,7 +646,7 @@ DeviceSettingsGroup {
                         MiniStat {
                             width: parent.cellW
                             value: usblGroup._num(nodeCard._e ? nodeCard._e.snr : NaN, 0)
-                            label: qsTr("SNR, dB")
+                            label: qsTr("RSRQ, dB")
                         }
                     }
 
@@ -757,7 +816,8 @@ DeviceSettingsGroup {
                         Text {
                             visible: !nodeCard._n.steps.length
                             width: parent.width
-                            text: qsTr("No commands. This node is interrogated once with cmd 0.")
+                            text: qsTr("No commands. This node is interrogated once with cmd 0, max range %1 m.")
+                                  .arg(plan ? Math.round(plan.maxRangeMm / 1000) : 0)
                             color: AppPalette.textMuted; font.pixelSize: Tokens.fontXs
                             wrapMode: Text.WordWrap
                         }
@@ -779,7 +839,6 @@ DeviceSettingsGroup {
                                 readonly property bool _bad: _state === "stale"
                                 readonly property bool _queued: Node.isQueued(
                                         usblGroup._manual, nodeCard._n.id, modelData.cmd)
-                                // The one retained payload, and only if it names THIS command.
                                 readonly property bool _hasData: usblGroup._modemMatches(
                                         nodeCard._n.addr, modelData.cmd)
                                 readonly property color _cmdInk:
@@ -850,6 +909,15 @@ DeviceSettingsGroup {
                                         font.pixelSize: Tokens.fontSm; font.bold: true
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
+                                    Text {
+                                        text: _cmdRow.modelData.replyMm > 0
+                                              ? qsTr("%1 m").arg(Math.round(_cmdRow.modelData.replyMm / 1000))
+                                              : qsTr("no reply")
+                                        color: _cmdRow.modelData.ownRange ? AppPalette.textStrong
+                                                                          : AppPalette.textMuted
+                                        font.pixelSize: Tokens.fontXs
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
                                 }
 
                                 Row {
@@ -887,10 +955,6 @@ DeviceSettingsGroup {
                                     }
                                 }
 
-                                // What came back. See usblGroup._modemMatches: the app keeps ONE
-                                // modem payload, so at most one row in the pane can fill this in.
-                                // The line is reserved on every row so the answer does not move
-                                // rows of different heights around as frames arrive.
                                 Text {
                                     anchors.left: _cmdLeft.right
                                     anchors.leftMargin: Tokens.spaceMd
@@ -906,11 +970,12 @@ DeviceSettingsGroup {
                                     text: {
                                         var _t = usblGroup.clockTick
                                         if (!_cmdRow._hasData) return "—"
-                                        var age = usblGroup._modemAtMs > 0
-                                                  ? usblGroup._fmtAge(Math.max(0, Date.now() - usblGroup._modemAtMs))
+                                        var e = usblGroup._modemEntry(nodeCard._n.addr)
+                                        var age = e.atMs > 0
+                                                  ? usblGroup._fmtAge(Math.max(0, Date.now() - e.atMs))
                                                   : ""
-                                        return dev.modemLastPayload
-                                               + qsTr(" · %1 bit").arg(dev.modemLastBitLength)
+                                        return e.payload
+                                               + qsTr(" · %1 bit").arg(e.bits)
                                                + (age.length ? " · " + age : "")
                                     }
                                 }

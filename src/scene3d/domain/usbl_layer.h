@@ -36,6 +36,12 @@ public:
         bool hasYaw{false};
     };
 
+    enum class TrackStyle
+    {
+        Line = 0,
+        Dots = 1
+    };
+
     struct RenderData
     {
         QVector<Beacon> beacons;
@@ -47,7 +53,8 @@ public:
     public:
         void setRenderData(RenderData data);
 
-        void render(QOpenGLFunctions* ctx, const QMatrix4x4& mvp,
+        void render(QOpenGLFunctions* ctx, const QMatrix4x4& model, const QMatrix4x4& view,
+                    const QMatrix4x4& projection,
                     const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const final;
 
     private:
@@ -58,6 +65,8 @@ public:
 
         friend class UsblLayer;
         RenderData data_;
+        TrackStyle beaconTrackStyle_{TrackStyle::Line};
+        TrackStyle headTrackStyle_{TrackStyle::Line};
     };
 
     explicit UsblLayer(QObject* parent = nullptr);
@@ -68,5 +77,7 @@ public:
 
     /*UsblLayer*/
     void setRenderData(RenderData data);
+    void setBeaconTrackStyle(TrackStyle style);
+    void setHeadTrackStyle(TrackStyle style);
     void clear();
 };

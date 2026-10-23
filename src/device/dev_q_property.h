@@ -118,6 +118,35 @@ public:
     Q_PROPERTY(int  recorderDurationSeconds       READ recorderDurationSeconds       NOTIFY recorderStatusChanged)
     Q_PROPERTY(int  recorderSecondsSinceLastWrite READ recorderSecondsSinceLastWrite NOTIFY recorderStatusChanged)
 
+    Q_PROPERTY(bool usblRespKnown              READ usblRespKnown              NOTIFY usblResponseConfigChanged)
+    Q_PROPERTY(bool usblRespTransponderKnown   READ usblRespTransponderKnown   NOTIFY usblResponseConfigChanged)
+    Q_PROPERTY(bool usblRespEnabled            READ usblRespEnabled            NOTIFY usblResponseConfigChanged)
+    Q_PROPERTY(bool usblRespFilterKnown        READ usblRespFilterKnown        NOTIFY usblResponseConfigChanged)
+    Q_PROPERTY(QVariantList usblRespAcceptedAddresses READ usblRespAcceptedAddresses NOTIFY usblResponseConfigChanged)
+    Q_PROPERTY(bool usblRespMonitorKnown       READ usblRespMonitorKnown       NOTIFY usblResponseConfigChanged)
+    Q_PROPERTY(int  usblRespSuppressResponseUs READ usblRespSuppressResponseUs NOTIFY usblResponseConfigChanged)
+    Q_PROPERTY(int  usblRespSuppressRequestUs  READ usblRespSuppressRequestUs  NOTIFY usblResponseConfigChanged)
+    Q_PROPERTY(bool usblRespReceiveInIdle      READ usblRespReceiveInIdle      NOTIFY usblResponseConfigChanged)
+    Q_PROPERTY(int  usblRespApplyState         READ usblRespApplyState         NOTIFY usblResponseConfigChanged)
+
+    Q_PROPERTY(bool navSensorStatusValid READ navSensorStatusValid NOTIFY navSensorStatusChanged)
+    Q_PROPERTY(bool navSensorStatusStale READ navSensorStatusStale NOTIFY navSensorStatusChanged)
+    Q_PROPERTY(int  navSensorSeq         READ navSensorSeq         NOTIFY navSensorStatusChanged)
+    Q_PROPERTY(int  imuState             READ imuState             NOTIFY navSensorStatusChanged)
+    Q_PROPERTY(int  imuWhoAmI            READ imuWhoAmI            NOTIFY navSensorStatusChanged)
+    Q_PROPERTY(int  imuFaultFlags        READ imuFaultFlags        NOTIFY navSensorStatusChanged)
+    Q_PROPERTY(int  imuSamplesPerS       READ imuSamplesPerS       NOTIFY navSensorStatusChanged)
+    Q_PROPERTY(int  imuEkfFedPerS        READ imuEkfFedPerS        NOTIFY navSensorStatusChanged)
+    Q_PROPERTY(int  imuBusErrCnt         READ imuBusErrCnt         NOTIFY navSensorStatusChanged)
+    Q_PROPERTY(int  imuInvalidCnt        READ imuInvalidCnt        NOTIFY navSensorStatusChanged)
+    Q_PROPERTY(int  imuStuckRunMax       READ imuStuckRunMax       NOTIFY navSensorStatusChanged)
+    Q_PROPERTY(int  imuAccNormMg         READ imuAccNormMg         NOTIFY navSensorStatusChanged)
+    Q_PROPERTY(int  imuGyrNormCdps       READ imuGyrNormCdps       NOTIFY navSensorStatusChanged)
+    Q_PROPERTY(int  imuTempCc            READ imuTempCc            NOTIFY navSensorStatusChanged)
+    Q_PROPERTY(int  imuClipMask          READ imuClipMask          NOTIFY navSensorStatusChanged)
+    Q_PROPERTY(int  imuReinitCnt         READ imuReinitCnt         NOTIFY navSensorStatusChanged)
+    Q_PROPERTY(int  imuBadSeconds        READ imuBadSeconds        NOTIFY navSensorStatusChanged)
+
     // Last modem payload received over ID_MODEM_SOLUTION. Device-scoped (a per-device
     // test tool), unlike the USBL solution readout, which is scene telemetry and comes
     // from Dataset.
@@ -127,6 +156,7 @@ public:
     Q_PROPERTY(int modemLastCmdId           READ modemLastCmdId       NOTIFY modemPayloadChanged)
     Q_PROPERTY(int modemLastBitLength       READ modemLastBitLength   NOTIFY modemPayloadChanged)
     Q_PROPERTY(int modemLastEvent           READ modemLastEvent       NOTIFY modemPayloadChanged)
+    Q_PROPERTY(QVariantMap modemPayloads    READ modemPayloads        NOTIFY modemPayloadChanged)
 
     int modemLastAddressFrom() const { return idModemSolution ? idModemSolution->header().address_from : 0; }
     int modemLastAddressTo() const   { return idModemSolution ? idModemSolution->header().address_to : 0; }

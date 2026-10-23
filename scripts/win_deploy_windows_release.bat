@@ -47,7 +47,13 @@ if exist "%outPath%" (
 mkdir "%outPath%"
 
 REM 5. Deploy and copy binary file
-windeployqt "%binPath%" -qmldir %qmlPath% -dir "%outPath%" -no-translations -no-virtualkeyboard
+windeployqt "%binPath%" -qmldir %qmlPath% -dir "%outPath%" -no-translations
+if errorlevel 1 (
+    echo.
+    echo [ERROR] windeployqt failed or was not found in PATH; "%outPath%" is incomplete.
+    pause
+    exit /b 1
+)
 copy /y "%binPath%" "%outPath%\" >nul
 
 REM 6. copy LLVM-MINGW RUNTIME manually

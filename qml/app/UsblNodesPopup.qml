@@ -28,8 +28,16 @@ BasePanePopup {
     required property var store
     required property var def
     property var engine: null
+    property var network: null
+    property var networkEngine: null
+    readonly property bool _fromNetwork: !!engine && engine === networkEngine
 
     property real widgetScale: 1.0
+
+    signal antennaDiagRequested(int address)
+    signal configuratorRequested()
+
+    onPopupDoubleClicked: configuratorRequested()
 
     readonly property real _bgAlpha: {
         var t = store ? store.usblPanelTransparency : 0
@@ -88,26 +96,43 @@ BasePanePopup {
     readonly property real _ageFont:  Math.max(7, Math.round(_uAgeFont * _k))
     readonly property real _cmdFont:  Math.max(9, Math.round(_uCmdFont * _k))
     // The number the panel is READ for. The status bar took the top line, so this one carries
-    // only the range and the SNR and can afford the size.
+    // only the range, the azimuth and the RSRQ and can afford the size.
     readonly property real _rangeFont: Math.max(10, Math.round(22 * _k))
+    readonly property real _uLabelFont: Tokens.fontLg / Math.max(0.01, AppPalette.scale)
+    readonly property real _labelFont: Math.max(9, Math.round(_uLabelFont * _k))
+    readonly property real _diagFont: _labelFont
+    readonly property bool _details: !!(store && store.developerMode && store.usblSignalDetails)
+    readonly property bool _bytes: !!(store && store.developerMode && store.usblMessageBytes)
+    readonly property bool _antenna: !!(store && store.usblAntennaDiagActive)
+    readonly property var _diags: (_antenna && typeof dataset !== "undefined" && dataset && dataset.usblDiagnostics)
+                                  ? dataset.usblDiagnostics : ({})
+    readonly property real _readSmallFont: _labelFont
+    readonly property real _bytesFont: Math.max(7, Math.round(11 * _k))
+    readonly property real _pairGap: Math.round(10 * _k)
     // Two lines plus the gutters between and around them. The status bar is a chip tall; the
     // readings line is as tall as the range number RENDERS, which at 22 px is taller than a
     // chip -- so it comes off the same prototype the width does rather than being assumed to be
     // another chipH. Derived rather than literal, so the row grows when the theme's controls do
     // instead of clipping them.
     readonly property real _readH: Math.max(_chipH, Math.ceil(_protoRead.implicitHeight))
-    readonly property real _rowH: _chipH + _readH + Math.round(12 * _k)
+    readonly property real _diagH: _details ? Math.ceil(_protoDiag.implicitHeight) + Math.round(3 * _k) : 0
+    readonly property real _bytesH: _bytes ? Math.ceil(_protoBytes.implicitHeight) + Math.round(3 * _k) : 0
+    readonly property real _antH: _antenna ? Math.ceil(_protoAnt.implicitHeight) + Math.round(3 * _k) : 0
+    readonly property real _baseRowH: _chipH + _readH + Math.round(12 * _k)
+    readonly property real _rowH: _baseRowH + _bytesH + _diagH + _antH
     readonly property real _noteH: Math.round(18 * _k)
     readonly property real _gap: Math.round(4 * _k)
     readonly property real _pad: Math.round(8 * _k)
 
     // Same scale space as the prototype, so nothing is converted and nothing accumulates.
     readonly property real _contentW: Math.ceil(Math.max(_protoStatus.implicitWidth,
-                                                         _protoRead.implicitWidth)
+                                                         _protoRead.implicitWidth,
+                                                         _details ? _protoDiag.implicitWidth : 0,
+                                                         _antenna ? _protoAnt.implicitWidth : 0)
                                                 + _rowPadH * 2)
     readonly property real _contentH: {
         var n = Math.max(1, _shown)          // an empty plan still occupies one line, which says so
-        var h = n * _rowH + (n - 1) * _gap
+        var h = n * (_shown > 0 ? _rowH : _baseRowH) + (n - 1) * _gap
         if (_hidden > 0) h += _gap + _noteH
         if (_note)      h += _gap + _noteH
         return h
@@ -190,17 +215,27 @@ BasePanePopup {
     // night on the bench -- a string that grows without bound cannot share a column with
     // anything, and the slot it sits in would have to resize to hold it.
     function _fmtAge(ms) {
-        if (ms < 0) return ""
-        var s = ms / 1000
-        if (s < 10)  return s.toFixed(1) + qsTr(" s")
-        if (s < 100) return Math.round(s) + qsTr(" s")
-        var m = s / 60
-        if (m < 100) return Math.round(m) + qsTr(" m")
-        return Math.round(m / 60) + qsTr(" h")
+        return DataFieldCatalog.formatAgeMs(ms)
     }
     function _num(v, digits, suffix) {
         if (v === undefined || v === null || isNaN(v)) return "—"
         return v.toFixed(digits) + (suffix ? suffix : "")
+    }
+    readonly property var _dev: engine ? engine.dev : null
+    function _modemText(addr) {
+        var m = _dev ? _dev.modemPayloads : null
+        var e = m ? m[String(addr)] : null
+        if (!e || !(e.bits > 0))
+            return "—"
+        var age = e.atMs > 0 ? _fmtAge(Math.max(0, Date.now() - e.atMs)) : ""
+        return e.payload
+               + qsTr(" · %1 bit").arg(e.bits)
+               + (age.length ? " · " + age : "")
+    }
+
+    function _ampDb(v) {
+        if (v === undefined || v === null || !isFinite(v) || v <= 0) return "—"
+        return (20 * Math.log10(v)).toFixed(1) + " " + qsTr("dB")
     }
 
     // WHICH COMMAND was last sent. The only chip on the status bar that is neither of the two
@@ -306,6 +341,252 @@ BasePanePopup {
         Component.onCompleted: rm.requestPaint()
     }
 
+    component AzimuthMark: Canvas {
+        id: am
+        property color ink: AppPalette.textMuted
+        antialiasing: true
+        onPaint: {
+            var ctx = getContext("2d")
+            if (!ctx)
+                return
+            ctx.clearRect(0, 0, width, height)
+            var w = width, h = height
+            var vx = w * 0.12, vy = h * 0.82
+            var tx = w * 0.62, ty = h * 0.14
+            ctx.strokeStyle = am.ink
+            ctx.lineCap = "round"
+            ctx.lineJoin = "round"
+            ctx.lineWidth = Math.max(1, w * 0.094)
+            ctx.beginPath()
+            ctx.moveTo(w * 0.9, vy); ctx.lineTo(vx, vy); ctx.lineTo(tx, ty)
+            ctx.stroke()
+            ctx.lineWidth = Math.max(1, w * 0.07)
+            ctx.beginPath()
+            ctx.arc(vx, vy, w * 0.42, 0, Math.atan2(ty - vy, tx - vx), true)
+            ctx.stroke()
+        }
+        onInkChanged: am.requestPaint()
+        onWidthChanged: am.requestPaint()
+        onHeightChanged: am.requestPaint()
+        Component.onCompleted: am.requestPaint()
+    }
+
+    component SyncLine: Row {
+        id: syncLine
+        property string peak: "—"
+        property string peakSnr: "—"
+        property string first: "—"
+        property string firstSnr: "—"
+        property string rms: "—"
+        property string lead: "—"
+        property real fontPixelSize: Tokens.fontXs
+        readonly property real _pairGap: Math.round(syncLine.fontPixelSize * 0.7)
+        spacing: Math.round(syncLine.fontPixelSize * 0.3)
+
+        Text {
+            text: qsTr("Peak")
+            color: AppPalette.textMuted
+            font.pixelSize: syncLine.fontPixelSize
+        }
+        Text {
+            text: syncLine.peak
+            color: AppPalette.text
+            font.pixelSize: syncLine.fontPixelSize
+            font.bold: true
+        }
+        Text {
+            leftPadding: syncLine._pairGap
+            text: qsTr("Peak SNR")
+            color: AppPalette.textMuted
+            font.pixelSize: syncLine.fontPixelSize
+        }
+        Text {
+            text: syncLine.peakSnr
+            color: AppPalette.text
+            font.pixelSize: syncLine.fontPixelSize
+            font.bold: true
+        }
+        Text {
+            leftPadding: syncLine._pairGap
+            text: qsTr("1st peak")
+            color: AppPalette.textMuted
+            font.pixelSize: syncLine.fontPixelSize
+        }
+        Text {
+            text: syncLine.first
+            color: AppPalette.text
+            font.pixelSize: syncLine.fontPixelSize
+            font.bold: true
+        }
+        Text {
+            leftPadding: syncLine._pairGap
+            text: qsTr("1st SNR")
+            color: AppPalette.textMuted
+            font.pixelSize: syncLine.fontPixelSize
+        }
+        Text {
+            text: syncLine.firstSnr
+            color: AppPalette.text
+            font.pixelSize: syncLine.fontPixelSize
+            font.bold: true
+        }
+        Text {
+            leftPadding: syncLine._pairGap
+            text: qsTr("RMS")
+            color: AppPalette.textMuted
+            font.pixelSize: syncLine.fontPixelSize
+        }
+        Text {
+            text: syncLine.rms
+            color: AppPalette.text
+            font.pixelSize: syncLine.fontPixelSize
+            font.bold: true
+        }
+        Text {
+            leftPadding: syncLine._pairGap
+            text: qsTr("1st→peak")
+            color: AppPalette.textMuted
+            font.pixelSize: syncLine.fontPixelSize
+        }
+        Text {
+            text: syncLine.lead
+            color: AppPalette.text
+            font.pixelSize: syncLine.fontPixelSize
+            font.bold: true
+        }
+    }
+
+    component AntennaLine: Row {
+        id: antLine
+        property var diag: null
+        property var store: null
+        property bool current: true
+        property bool sampled: false
+        property real fontPixelSize: Tokens.fontXs
+        readonly property real _pairGap: Math.round(antLine.fontPixelSize * 0.7)
+        readonly property var _levels: {
+            if (antLine.sampled)
+                return [{ db: 0, used: true }, { db: 0, used: true }, { db: 0, used: true },
+                        { db: 0, used: true }, { db: 0, used: true }]
+            var ch = (antLine.diag && antLine.diag.channels) ? antLine.diag.channels : []
+            var out = []
+            for (var i = 0; i < ch.length; ++i)
+                out.push({ db: ch[i].levelDb, used: !!ch[i].used })
+            return out
+        }
+        readonly property string _code: antLine.sampled ? "check"
+                                                        : DataFieldCatalog.usblAntennaCode(antLine.diag, antLine.store)
+        spacing: Math.round(antLine.fontPixelSize * 0.3)
+        opacity: antLine.current ? 1.0 : 0.5
+
+        function _fmt(v, digits, suffix, sample) {
+            if (antLine.sampled) return sample
+            if (v === undefined || v === null || !isFinite(v)) return "—"
+            return v.toFixed(digits) + (suffix ? suffix : "")
+        }
+        function _ink(sev) {
+            return DataFieldCatalog.usblSeverityInk(sev)
+        }
+        function _metric(name) {
+            return antLine.sampled || !antLine.diag ? -1
+                                                    : DataFieldCatalog.usblMetricSeverity(name, antLine.diag[name], antLine.store)
+        }
+
+        TextMetrics { id: _mOk;    font.pixelSize: antLine.fontPixelSize; font.bold: true; text: DataFieldCatalog.usblAntennaText("ok") }
+        TextMetrics { id: _mCheck; font.pixelSize: antLine.fontPixelSize; font.bold: true; text: DataFieldCatalog.usblAntennaText("check") }
+        TextMetrics { id: _mFault; font.pixelSize: antLine.fontPixelSize; font.bold: true; text: DataFieldCatalog.usblAntennaText("fault") }
+
+        Text {
+            text: qsTr("Antenna")
+            color: AppPalette.textMuted
+            font.pixelSize: antLine.fontPixelSize
+        }
+        Text {
+            width: Math.ceil(Math.max(_mOk.width, _mCheck.width, _mFault.width))
+            text: DataFieldCatalog.usblAntennaText(antLine._code)
+            color: DataFieldCatalog.usblAntennaInk(antLine._code)
+            font.pixelSize: antLine.fontPixelSize
+            font.bold: true
+        }
+        Text {
+            leftPadding: antLine._pairGap
+            text: qsTr("Fit")
+            color: AppPalette.textMuted
+            font.pixelSize: antLine.fontPixelSize
+        }
+        Text {
+            text: antLine._fmt(antLine.diag ? antLine.diag.misfit : NaN, 3, "", "0.888")
+            color: antLine._ink(antLine._metric("misfit"))
+            font.pixelSize: antLine.fontPixelSize
+            font.bold: true
+        }
+        Text {
+            leftPadding: antLine._pairGap
+            text: qsTr("Width")
+            color: AppPalette.textMuted
+            font.pixelSize: antLine.fontPixelSize
+        }
+        Text {
+            text: {
+                if (antLine.sampled) return "888°×888°"
+                var d = antLine.diag
+                if (!d || !isFinite(d.widthAz) || !isFinite(d.widthEl)) return "—"
+                return d.widthAz.toFixed(0) + "°×" + d.widthEl.toFixed(0) + "°"
+            }
+            color: AppPalette.text
+            font.pixelSize: antLine.fontPixelSize
+            font.bold: true
+        }
+        Text {
+            leftPadding: antLine._pairGap
+            text: qsTr("Alt")
+            color: AppPalette.textMuted
+            font.pixelSize: antLine.fontPixelSize
+        }
+        Text {
+            text: antLine._fmt(antLine.diag ? antLine.diag.altDb : NaN, 1, " " + qsTr("dB"), "-88.8 " + qsTr("dB"))
+            color: antLine._ink(antLine._metric("altDb"))
+            font.pixelSize: antLine.fontPixelSize
+            font.bold: true
+        }
+        Item {
+            id: _bars
+            readonly property real _h: Math.round(antLine.fontPixelSize * 0.9)
+            readonly property real _w: Math.max(2, Math.round(antLine.fontPixelSize * 0.4))
+            readonly property real _gap: Math.max(1, Math.round(antLine.fontPixelSize * 0.2))
+            readonly property int _slots: 5
+            width: antLine._pairGap + _slots * _w + (_slots - 1) * _gap
+            height: _h
+            anchors.verticalCenter: parent.verticalCenter
+
+            Repeater {
+                model: _bars._slots
+                delegate: Rectangle {
+                    required property int index
+                    readonly property var _l: index < antLine._levels.length ? antLine._levels[index] : null
+                    readonly property real _db: _l ? _l.db : NaN
+                    readonly property int _sev: antLine.sampled ? 0 : DataFieldCatalog.usblLevelSeverity(_db, antLine.store)
+                    readonly property color _c: DataFieldCatalog.usblSeverityInk(_sev, AppPalette.textMuted, AppPalette.separator)
+                    x: antLine._pairGap + index * (_bars._w + _bars._gap)
+                    width: _bars._w
+                    height: isFinite(_db) ? Math.max(2, Math.round(_bars._h * Math.max(0.15, 1 + _db / 30))) : 2
+                    y: _bars._h - height
+                    radius: Math.max(1, Math.round(_bars._w / 4))
+                    color: (_l && _l.used) || _sev < 0 ? _c : "transparent"
+                    border.width: (_l && !_l.used) ? 1 : 0
+                    border.color: _c
+                }
+            }
+        }
+        Text {
+            leftPadding: antLine._pairGap
+            text: "›"
+            color: AppPalette.textMuted
+            font.pixelSize: antLine.fontPixelSize
+            font.bold: true
+        }
+    }
+
     // ── what the card has to be wide enough for ───────────────────────────
     // Laid out but never drawn, at exactly the sizes the real rows use, out of exactly the
     // components the real rows use -- a prototype that drifts from the row measures the wrong
@@ -319,6 +600,10 @@ BasePanePopup {
     readonly property string _ageSample: _fmtAge(3596400000)
     // Four digits and a decimal -- past any acoustic range this protocol carries.
     readonly property string _rangeSample: "8888.8"
+    readonly property string _azSample: "-888.8°"
+    readonly property string _ampDbSample: "-188.8 " + qsTr("dB")
+    readonly property string _dbSample: "888 " + qsTr("dB")
+    readonly property string _msSample: "88.88 " + qsTr("ms")
 
     Item {
         visible: false
@@ -344,11 +629,39 @@ BasePanePopup {
                 text: root._rangeSample
                 font.pixelSize: root._rangeFont; font.bold: true
             }
-            Text { text: qsTr("m"); font.pixelSize: Math.max(7, Math.round(11 * root._k)) }
+            Text { text: qsTr("m"); font.pixelSize: root._readSmallFont }
+            Item { width: root._pairGap; height: 1 }
+            Item { width: Math.round(root._chipH * 0.66); height: root._chipH }
+            Text {
+                text: root._azSample
+                font.pixelSize: root._rangeFont; font.bold: true
+            }
+            Text { text: qsTr("RSRQ"); font.pixelSize: root._readSmallFont }
             Text {
                 text: "888 " + qsTr("dB")
-                font.pixelSize: Math.max(7, Math.round(11 * root._k))
+                font.pixelSize: root._readSmallFont
             }
+        }
+        Text {
+            id: _protoBytes
+            text: "0A"
+            font.pixelSize: root._bytesFont
+            font.family: "monospace"
+        }
+        SyncLine {
+            id: _protoDiag
+            fontPixelSize: root._diagFont
+            peak: root._ampDbSample
+            peakSnr: root._dbSample
+            first: root._ampDbSample
+            firstSnr: root._dbSample
+            rms: root._ampDbSample
+            lead: root._msSample
+        }
+        AntennaLine {
+            id: _protoAnt
+            fontPixelSize: root._diagFont
+            sampled: true
         }
     }
 
@@ -369,12 +682,12 @@ BasePanePopup {
             Text {
                 visible: root._noDevice || root._noNodes
                 width: parent.width
-                height: root._rowH
+                height: root._baseRowH
                 verticalAlignment: Text.AlignVCenter
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
-                text: root._noDevice ? qsTr("No acoustic device")
-                                     : qsTr("No nodes in the USBL plan")
+                text: root._noDevice ? (root._fromNetwork ? qsTr("No bound head connected") : qsTr("No acoustic device"))
+                                     : (root._fromNetwork ? qsTr("No beacons in the network") : qsTr("No nodes in the USBL plan"))
                 color: AppPalette.textMuted
                 font.pixelSize: Math.max(8, Math.round(12 * root._k))
             }
@@ -388,6 +701,7 @@ BasePanePopup {
                     id: nodeRow
                     required property int index
                     readonly property var _r: root._rows[index]
+                    readonly property var _e: _r ? _r.entry : null
 
                     width: root._contentW
                     height: root._rowH
@@ -491,8 +805,10 @@ BasePanePopup {
                         id: _line2
                         anchors.left: parent.left
                         anchors.leftMargin: Math.round(6 * root._k)
-                        anchors.bottom: parent.bottom
-                        anchors.bottomMargin: Math.round(4 * root._k)
+                        anchors.bottom: root._bytes ? _lineBytes.top
+                                                    : (root._details ? _line3.top
+                                                                     : (root._antenna ? _line4.top : parent.bottom))
+                        anchors.bottomMargin: Math.round((root._bytes || root._details || root._antenna ? 3 : 4) * root._k)
                         spacing: Math.round(6 * root._k)
 
                         RangeMark {
@@ -515,22 +831,100 @@ BasePanePopup {
                         Text {
                             text: qsTr("m")
                             color: AppPalette.textMuted
-                            font.pixelSize: Math.max(7, Math.round(11 * root._k))
+                            font.pixelSize: root._readSmallFont
                             anchors.baseline: _range.baseline
+                        }
+                        Item { width: root._pairGap; height: 1 }
+                        AzimuthMark {
+                            width: Math.round(root._chipH * 0.66)
+                            height: width
+                            ink: AppPalette.textMuted
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Text {
+                            text: root._num(nodeRow._e ? nodeRow._e.azimuth : NaN, 1, "°")
+                            color: AppPalette.textStrong
+                            font.pixelSize: root._rangeFont
+                            font.bold: true
+                            anchors.verticalCenter: parent.verticalCenter
                         }
                     }
 
                     // SNR is absent on the v1/v2 solution paths -- the payload carries none and
                     // the projection leaves it NAN -- so this is an em dash far more often than
                     // it is a number. It used to read a confident 0.
-                    Text {
+                    Row {
                         anchors.right: parent.right
                         anchors.rightMargin: Math.round(6 * root._k)
                         anchors.verticalCenter: _line2.verticalCenter
-                        text: root._num(nodeRow._r && nodeRow._r.entry
-                                        ? nodeRow._r.entry.snr : NaN, 0) + " " + qsTr("dB")
-                        color: AppPalette.textMuted
-                        font.pixelSize: Math.max(7, Math.round(11 * root._k))
+                        spacing: Math.round(3 * root._k)
+                        Text {
+                            text: qsTr("RSRQ")
+                            color: AppPalette.textMuted
+                            font.pixelSize: root._readSmallFont
+                        }
+                        Text {
+                            text: root._num(nodeRow._e ? nodeRow._e.snr : NaN, 0) + " " + qsTr("dB")
+                            color: AppPalette.text
+                            font.pixelSize: root._readSmallFont
+                        }
+                    }
+
+                    Text {
+                        id: _lineBytes
+                        visible: root._bytes
+                        anchors.left: parent.left
+                        anchors.leftMargin: Math.round(6 * root._k)
+                        anchors.right: parent.right
+                        anchors.rightMargin: Math.round(6 * root._k)
+                        anchors.bottom: root._details ? _line3.top : (root._antenna ? _line4.top : parent.bottom)
+                        anchors.bottomMargin: Math.round((root._details || root._antenna ? 3 : 4) * root._k)
+                        elide: Text.ElideMiddle
+                        font.pixelSize: root._bytesFont
+                        font.family: "monospace"
+                        readonly property string _txt: {
+                            var _t = root.engine ? root.engine.clockTick : ""
+                            return root._modemText(nodeRow._r ? nodeRow._r.addr : -1)
+                        }
+                        text: _txt
+                        color: _txt === "—" ? AppPalette.textMuted : AppPalette.textStrong
+                    }
+
+                    SyncLine {
+                        id: _line3
+                        visible: root._details
+                        anchors.left: parent.left
+                        anchors.leftMargin: Math.round(6 * root._k)
+                        anchors.bottom: root._antenna ? _line4.top : parent.bottom
+                        anchors.bottomMargin: Math.round((root._antenna ? 3 : 4) * root._k)
+                        fontPixelSize: root._diagFont
+                        peak: root._ampDb(nodeRow._e ? nodeRow._e.syncVal : NaN)
+                        peakSnr: root._num(nodeRow._e ? nodeRow._e.syncSnr : NaN, 0) + " " + qsTr("dB")
+                        first: root._ampDb(nodeRow._e ? nodeRow._e.syncFirstVal : NaN)
+                        firstSnr: root._num(nodeRow._e ? nodeRow._e.syncFirstSnr : NaN, 0) + " " + qsTr("dB")
+                        rms: root._ampDb(nodeRow._e ? nodeRow._e.syncRms : NaN)
+                        lead: root._num(nodeRow._e ? nodeRow._e.syncFirstMainMaxMs : NaN, 2) + " " + qsTr("ms")
+                    }
+
+                    AntennaLine {
+                        id: _line4
+                        visible: root._antenna
+                        anchors.left: parent.left
+                        anchors.leftMargin: Math.round(6 * root._k)
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: Math.round(4 * root._k)
+                        fontPixelSize: root._diagFont
+                        store: root.store
+                        diag: nodeRow._r ? (root._diags[String(nodeRow._r.addr)] || null) : null
+                        current: !diag || !nodeRow._e || diag.pingCounter === nodeRow._e.pingCounter
+
+                        TapHandler {
+                            enabled: !!nodeRow._r
+                            onTapped: root.antennaDiagRequested(nodeRow._r.addr)
+                        }
+                        HoverHandler {
+                            cursorShape: Qt.PointingHandCursor
+                        }
                     }
                 }
             }
@@ -555,7 +949,7 @@ BasePanePopup {
                 elide: Text.ElideRight
                 // Not a button. Starting a schedule transmits, and a transmit control under a
                 // finger on a moving boat is a different feature from a readout.
-                text: qsTr("Schedule stopped")
+                text: root._fromNetwork ? qsTr("Cycle stopped · double-click for the configurator") : qsTr("Schedule stopped")
                 color: AppPalette.textMuted
                 font.pixelSize: Math.max(7, Math.round(10 * root._k))
             }
