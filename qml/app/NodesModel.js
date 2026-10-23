@@ -278,23 +278,59 @@ function _cleanAddrs(arr) {
     return out.sort(function (x, y) { return x - y; });
 }
 
-/** binding: { serial, uid, devName, fw } or null. A device binds to at most one lifeline. */
+/** Whether two bindings name one board: by UID when it has one, else by serial and the port it was bound on. */
+function sameDevice(a, b) {
+    if (!a || !b || a.serial !== b.serial || (a.uid || "") !== (b.uid || "")) return false;
+    return !!a.uid || (a.at || "") === (b.at || "");
+}
+
+/**
+ * binding: { serial, uid, devName, fw, at } or null; `at` is the port the device was bound on.
+ * A device binds to at most one lifeline.
+ */
 function bindLifeline(st, id, binding) {
     var n = clone(st), l = lifeline(n, id);
     if (!l || l.kind === "external") return st;
     if (binding) {
         for (var i = 0; i < n.lifelines.length; ++i) {
             var o = n.lifelines[i];
-            if (o.id !== id && o.binding && o.binding.serial === binding.serial
-                    && (o.binding.uid || "") === (binding.uid || ""))
-                o.binding = null;
+            if (o.id !== id && sameDevice(o.binding, binding)) o.binding = null;
         }
         l.binding = { serial: binding.serial, uid: binding.uid || "",
-                      devName: binding.devName || "", fw: binding.fw || "" };
+                      devName: binding.devName || "", fw: binding.fw || "", at: binding.at || "" };
     } else {
         l.binding = null;
     }
     return n;
+}
+
+/**
+ * Pairs bound lifelines with connected devices, one to one. devs: [{ serial, uid, at }].
+ * A binding fits a device by serial, and by UID when the binding has one. Among fitting devices
+ * the one on the bound port wins, then list order.
+ * Returns { owner: [lifeline id or -1, per device], deviceOf: { lifelineId: device index },
+ * ambiguous: { lifelineId: fitting devices } } — ambiguous lists lifelines matched by order alone.
+ */
+function assignDevices(st, devs) {
+    var owner = devs.map(function () { return -1; }), deviceOf = {}, ambiguous = {};
+    function fits(b, d) { return b.serial === d.serial && (!b.uid || b.uid === d.uid); }
+    for (var pass = 0; pass < 2; ++pass) {
+        for (var i = 0; i < st.lifelines.length; ++i) {
+            var l = st.lifelines[i], b = l.binding;
+            if (!b || deviceOf[l.id] !== undefined) continue;
+            var pick = -1, n = 0;
+            for (var k = 0; k < devs.length; ++k) {
+                if (!fits(b, devs[k])) continue;
+                n += 1;
+                if (pick < 0 && owner[k] < 0 && (pass > 0 || (!!b.at && devs[k].at === b.at))) pick = k;
+            }
+            if (pick < 0) continue;
+            owner[pick] = l.id;
+            deviceOf[l.id] = pick;
+            if (pass > 0 && n > 1) ambiguous[l.id] = n;
+        }
+    }
+    return { owner: owner, deviceOf: deviceOf, ambiguous: ambiguous };
 }
 
 function moveLifeline(st, id, toIndex) {
@@ -630,7 +666,8 @@ function deserialize(text) {
         l.active = src.active !== false;
         l.binding = (src.binding && typeof src.binding.serial === "number" && l.kind !== "external")
                   ? { serial: src.binding.serial, uid: String(src.binding.uid || ""),
-                      devName: String(src.binding.devName || ""), fw: String(src.binding.fw || "") }
+                      devName: String(src.binding.devName || ""), fw: String(src.binding.fw || ""),
+                      at: String(src.binding.at || "") }
                   : null;
         st.lifelines.push(l);
     }
@@ -973,6 +1010,7 @@ if (typeof module !== "undefined" && module.exports) {
         lifelineBySerial: lifelineBySerial,
         setNetworkField: setNetworkField, addLifeline: addLifeline, removeLifeline: removeLifeline,
         setLifelineField: setLifelineField, bindLifeline: bindLifeline, moveLifeline: moveLifeline,
+        sameDevice: sameDevice, assignDevices: assignDevices,
         addExchange: addExchange,
         removeExchange: removeExchange, setExchangeField: setExchangeField,
         setExchangeData: setExchangeData, setFollowUp: setFollowUp, setFollowUpCmd: setFollowUpCmd,

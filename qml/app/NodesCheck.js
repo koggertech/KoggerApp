@@ -175,6 +175,16 @@ function liveCheck(st, compiled, solutions) {
     return out;
 }
 
+/** Problems of pairing lifelines with connected devices. assign: NodesModel.assignDevices(st, ...). */
+function deviceCheck(st, assign) {
+    var out = [];
+    for (var i = 0; i < st.lifelines.length; ++i) {
+        var l = st.lifelines[i], n = assign ? assign.ambiguous[l.id] : 0;
+        if (n) out.push(_p("sharedSerial", "warning", { lifeline: l.id }, { serial: l.binding.serial, count: n }, { action: "bind" }));
+    }
+    return out;
+}
+
 /** Worst severity of the problems touching a lifeline, exchange or step: "error" | "warning" | "info" | "". */
 function worstFor(problems, key, id) {
     var best = "";
@@ -195,6 +205,6 @@ function counts(problems) {
 if (typeof module !== "undefined" && module.exports) {
     module.exports = {
         RANGING_REQUEST_BITS_MAX: RANGING_REQUEST_BITS_MAX,
-        check: check, liveCheck: liveCheck, worstFor: worstFor, counts: counts
+        check: check, liveCheck: liveCheck, deviceCheck: deviceCheck, worstFor: worstFor, counts: counts
     };
 }

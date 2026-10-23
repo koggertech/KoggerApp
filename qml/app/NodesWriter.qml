@@ -164,7 +164,7 @@ QtObject {
         if (!dev) { finished(item.lifelineId, "noDevice"); Qt.callLater(_startNext); return }
         var writes = _sendable(dev, item.writes)
         if (typeof dev.usblControlReady === "function" && !dev.usblControlReady()) {
-            store.setWriteStatus(item.lifelineId, { state: "notReady", serial: dev.devSN, atMs: Date.now(),
+            store.setWriteStatus(item.lifelineId, { state: "notReady", serial: dev.devSN, at: store.linkKeyOf(dev), atMs: Date.now(),
                                                     done: 0, total: writes.length, fingerprint: item.fingerprint,
                                                     failure: null })
             finished(item.lifelineId, "notReady")
@@ -172,7 +172,7 @@ QtObject {
             return
         }
         lastLog = []
-        job = { lifelineId: item.lifelineId, kind: item.kind, dev: dev, serial: dev.devSN,
+        job = { lifelineId: item.lifelineId, kind: item.kind, dev: dev, serial: dev.devSN, at: store.linkKeyOf(dev),
                 fingerprint: item.fingerprint, writes: writes, index: 0, acked: 0, attempt: 0,
                 awaitVer: -1, awaitCk: -1, sentAt: 0 }
         _progress()
@@ -184,7 +184,7 @@ QtObject {
         if (!j) return
         progressDone = j.acked
         progressTotal = j.writes.length
-        store.setWriteStatus(j.lifelineId, { state: "writing", serial: j.serial, atMs: Date.now(),
+        store.setWriteStatus(j.lifelineId, { state: "writing", serial: j.serial, at: j.at, atMs: Date.now(),
                                              done: j.acked, total: j.writes.length,
                                              fingerprint: j.fingerprint, failure: null })
     }
@@ -228,7 +228,7 @@ QtObject {
             state = "partial"
         progressDone = j.acked
         progressTotal = j.writes.length
-        var status = { state: state, serial: j.serial, atMs: Date.now(), done: j.acked,
+        var status = { state: state, serial: j.serial, at: j.at, atMs: Date.now(), done: j.acked,
                        total: j.writes.length, fingerprint: j.fingerprint, failure: failure }
         if (j.kind === "baseline") {
             status.fingerprint = ""

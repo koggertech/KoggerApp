@@ -24,7 +24,8 @@ QtObject {
                                  ? dataset.usblSolutions : ({})
     readonly property var problems: Check.check(st, compiled)
     readonly property var liveProblems: Check.liveCheck(st, compiled, _sols)
-    readonly property var allProblems: problems.concat(liveProblems)
+    readonly property var deviceProblems: Check.deviceCheck(st, _assign)
+    readonly property var allProblems: problems.concat(liveProblems).concat(deviceProblems)
     readonly property var problemCounts: Check.counts(allProblems)
 
     readonly property var mapNodes: {
@@ -359,9 +360,13 @@ QtObject {
     function bindingFromDevice(dev) {
         if (!dev) return null
         return { serial: dev.devSN, uid: String(dev.devUID || ""), devName: String(dev.devName || ""),
-                 fw: String(dev.fwVersion || "") }
+                 fw: String(dev.fwVersion || ""), at: linkKeyOf(dev) }
     }
-    function bindLifeline(id, dev) { _commit(Model.bindLifeline(st, id, bindingFromDevice(dev))) }
+    function bindLifeline(id, dev) {
+        var owner = lifelineForDevice(dev)
+        var base = owner && owner.id !== id ? Model.bindLifeline(st, owner.id, null) : st
+        _commit(Model.bindLifeline(base, id, bindingFromDevice(dev)))
+    }
     function unbindLifeline(id) { _commit(Model.bindLifeline(st, id, null)) }
 
     function addExchange(fromId, toId, kind, atIndex) {
@@ -509,23 +514,25 @@ QtObject {
             function onDeviceVersionChanged() { store._refreshDevices() }
         }
     }
-    function _matches(binding, dev) {
-        if (!binding || !dev) return false
-        if (binding.serial !== dev.devSN) return false
-        return !binding.uid || binding.uid === String(dev.devUID || "")
-    }
+    readonly property var _assign: Model.assignDevices(st, devices.map(function (d) {
+        return { serial: d.devSN, uid: String(d.devUID || ""), at: store.linkKeyOf(d) }
+    }))
     function deviceFor(lifelineId) {
-        var l = Model.lifeline(st, lifelineId)
-        if (!l || !l.binding) return null
-        for (var i = 0; i < devices.length; ++i) if (_matches(l.binding, devices[i])) return devices[i]
-        return null
+        var k = _assign.deviceOf[lifelineId]
+        return k !== undefined ? devices[k] : null
     }
     function lifelineForDevice(dev) {
-        for (var i = 0; i < st.lifelines.length; ++i) if (_matches(st.lifelines[i].binding, dev)) return st.lifelines[i]
-        return null
+        var k = devices.indexOf(dev)
+        return k >= 0 && _assign.owner[k] >= 0 ? Model.lifeline(st, _assign.owner[k]) : null
     }
-    readonly property var unboundDevices: devices.filter(function (d) { return !store.lifelineForDevice(d) })
+    readonly property var unboundDevices: devices.filter(function (d, k) { return store._assign.owner[k] < 0 })
 
+    /** The port a device sits on: the link's port name and the logger port; stable across reconnects, unlike the link. */
+    function linkKeyOf(dev) {
+        if (!dev || typeof deviceTopology === "undefined" || !deviceTopology) return ""
+        var g = deviceTopology.groupForDevice(dev)
+        return (g ? String(g.portName || "") : "") + "#" + dev.busAddress
+    }
     function linkLabelOf(dev) {
         if (!dev || typeof deviceTopology === "undefined" || !deviceTopology) return ""
         var g = deviceTopology.groupForDevice(dev)
@@ -576,7 +583,7 @@ QtObject {
         var fp = compiled.devices[l.id] ? compiled.devices[l.id].fingerprint : ""
         var dev = deviceFor(l.id)
         var s = writeStatus[l.id]
-        if (dev && s && s.serial === dev.devSN) {
+        if (_statusOf(s, dev)) {
             if (s.state === "writing") return "writing"
             if (s.state === "baseline") return "baseline"
             if (s.state === "rejected" || s.state === "noAnswer" || s.state === "partial" || s.state === "notReady"
@@ -602,11 +609,12 @@ QtObject {
         var n = {}, changed = false
         for (var k in writeStatus) {
             var id = Number(k), dev = deviceFor(id), s = writeStatus[k]
-            if (dev && s && s.serial === dev.devSN) n[k] = s
+            if (_statusOf(s, dev)) n[k] = s
             else changed = true
         }
         if (changed) writeStatus = n
     }
+    function _statusOf(s, dev) { return !!s && !!dev && s.serial === dev.devSN && (s.at || "") === linkKeyOf(dev) }
 
     // ── quick interrogate ────────────────────────────────────────────────
     /** Returns the head lifeline id that interrogates `addresses` from `dev`. */
@@ -618,7 +626,7 @@ QtObject {
             _replace(Model.quickNetwork(b, addresses, maxRangeM), "", undefined)
             return st.lifelines[0].id
         }
-        var r = Model.addQuickHead(st, b, addresses)
+        var r = Model.addQuickHead(existing ? Model.bindLifeline(st, existing.id, null) : st, b, addresses)
         if (typeof maxRangeM === "number" && maxRangeM > 0 && !st.exchanges.length)
             r.state = Model.setNetworkField(r.state, "maxRangeM", maxRangeM)
         _commit(r.state)
@@ -806,6 +814,7 @@ QtObject {
         switch (p.code) {
         case "emptyNetwork": return qsTr("The network is empty. Add a head and beacons, or start from a template.")
         case "unbound": return qsTr("%1 is not bound to a device.").arg(ll)
+        case "sharedSerial": return qsTr("%1: %2 connected devices report SN %3, and the port it was bound on matches none of them; one was picked by list order. Bind it again.").arg(ll).arg(d.count).arg(d.serial)
         case "windowExpires": return qsTr("%1 answers only for %2 s after each write.").arg(ll).arg(d.windowS)
         case "deafLifeline": return qsTr("%1 hears no address: its request filter is empty.").arg(ll)
         case "targetHasNoAddress": return qsTr("%1 has no acoustic address.").arg(ll)
