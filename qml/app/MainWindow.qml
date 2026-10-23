@@ -22,6 +22,7 @@ ApplicationWindow {
     visible: true
     visibility: isMobilePlatform ? Window.FullScreen : Window.Windowed
     title: (core.fileTitle !== "" ? (core.fileTitle + " — KoggerApp, KOGGER") : qsTr("KoggerApp, KOGGER"))
+           + (controlServer.listening ? " · control :" + controlServer.port : "")
            + appUtils.instanceSuffix
     onActiveChanged: if (active) root.lastActiveWindow = root
 

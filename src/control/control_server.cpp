@@ -50,8 +50,10 @@ bool ControlServer::start(const QHostAddress& address, quint16 port, const QStri
     connect(dispatcher_, &CommandDispatcher::taken,       listener_,   &ControlListener::onTaken,      Qt::QueuedConnection);
     connect(dispatcher_, &CommandDispatcher::reply,       listener_,   &ControlListener::sendReply,    Qt::QueuedConnection);
 
-    connect(listener_, &ControlListener::listening, this, [](const QHostAddress& addr, quint16 p) {
+    connect(listener_, &ControlListener::listening, this, [this](const QHostAddress& addr, quint16 p) {
         qInfo().noquote() << QStringLiteral("control: listening %1:%2").arg(addr.toString()).arg(p);
+        port_ = p;
+        emit listeningChanged();
     }, Qt::QueuedConnection);
     connect(listener_, &ControlListener::listenFailed, this, [](const QString& error) {
         qWarning().noquote() << QStringLiteral("control: %1").arg(error);
@@ -76,4 +78,8 @@ void ControlServer::stop()
     thread_->wait();
     listener_ = nullptr;
     thread_.reset();
+    if (port_ != 0) {
+        port_ = 0;
+        emit listeningChanged();
+    }
 }

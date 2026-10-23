@@ -56,7 +56,6 @@ DeviceManager::DeviceManager()
       isConsoled_(false),
       nmeaConsoled_(true),
       mavlinkConsoled_(false),
-      break_(false),
       upgradeUuid_(QUuid()),
       upgradeAddr_(0)
 {
@@ -170,9 +169,7 @@ void DeviceManager::sendMissionSetCurrent(int seq)
     message.target_system = uint8_t(vru_.systemId);
     message.target_component = uint8_t(vru_.componentId);
     sendAutopilotMessage(MAVLink_MSG_MISSION_SET_CURRENT::getID(), autopilot::payloadOf(message), MAVLink_MSG_MISSION_SET_CURRENT::v1Length());
-#ifndef SEPARATE_READING
     core.consoleInfo(QString("<< MAVLink: MISSION_SET_CURRENT %1 to sys %2").arg(seq).arg(vru_.systemId));
-#endif
 }
 
 void DeviceManager::requestAutopilotStreams()
@@ -200,9 +197,7 @@ void DeviceManager::sendDataStreamRequest()
     request.req_stream_id = kMavDataStreamExtendedStatus;
     request.start_stop = 1;
     sendAutopilotMessage(MAVLink_MSG_REQUEST_DATA_STREAM::getID(), autopilot::payloadOf(request), MAVLink_MSG_REQUEST_DATA_STREAM::v1Length());
-#ifndef SEPARATE_READING
     core.consoleInfo(QString("<< MAVLink: REQUEST_DATA_STREAM extended status %1 Hz to sys %2").arg(kExtendedStatusRateHz).arg(vru_.systemId));
-#endif
 }
 
 void DeviceManager::resetMissionTelemetry()
@@ -259,9 +254,7 @@ void DeviceManager::emitStatusText(int severity, const QString& text)
     if (trimmed.isEmpty()) {
         return;
     }
-#ifndef SEPARATE_READING
     core.consoleInfo(QString(">> FC [%1]: %2").arg(severity).arg(trimmed));
-#endif
     emit autopilotStatusText(severity, trimmed);
 }
 
@@ -287,9 +280,7 @@ void DeviceManager::sendCommandLong(uint16_t command, float p1, float p2, float 
 
     emit writeMavlinkBytes(autopilot::encodeFrame(vru_.mavlinkVersion, mavlinkSeq_++, MAVLink_MSG_COMMAND_LONG::getID(),
                                                 autopilot::payloadOf(cmd), MAVLink_MSG_COMMAND_LONG::v1Length()));
-#ifndef SEPARATE_READING
     core.consoleInfo(QString("<< MAVLink: COMMAND_LONG %1 (%2, %3) to sys %4").arg(command).arg(p1).arg(p2).arg(vru_.systemId));
-#endif
 }
 
 double DeviceManager::vehicleHomeLat()
@@ -321,13 +312,11 @@ void DeviceManager::startMissionUpload(const autopilot::MissionBatches& batches)
         emit missionUploadRefused(autopilot::MissionTransfer::ResultNoLink, MavMissionTypeMission);
         return;
     }
-#ifndef SEPARATE_READING
     QStringList sizes;
     for (const auto& b : batches) {
         sizes.append(QString::number(b.items.size()));
     }
     core.consoleInfo(QString("<< MAVLink: mission upload (route/fence/rally items %1) to sys %2").arg(sizes.join(QLatin1Char('/'))).arg(vru_.systemId));
-#endif
     if (vru_.mavlinkVersion == 1) {
         autopilot::MissionBatches routeOnly;
         for (const auto& b : batches) {
@@ -350,9 +339,7 @@ void DeviceManager::startMissionDownload()
         emit missionDownloadRefused(autopilot::MissionTransfer::ResultNoLink);
         return;
     }
-#ifndef SEPARATE_READING
     core.consoleInfo(QString("<< MAVLink: mission download (route/fence/rally) from sys %1").arg(vru_.systemId));
-#endif
     if (vru_.mavlinkVersion == 1) {
         emit missionDownloadStart({ MavMissionTypeMission }, vru_.systemId, vru_.componentId);
         return;
@@ -605,9 +592,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
             DevQProperty* dev = getDevice(uuid, link, frame.route());
 
             if (isConsoled_ && link && frame.id() != 32 && frame.id() != 33) { // link ptr check added
-#ifndef SEPARATE_READING
                 core.consoleProto(frame);
-#endif
             }
 
 #if !defined(Q_OS_ANDROID)
@@ -642,11 +627,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
         if (frame.isCompleteAsNMEA()) {
             ProtoNMEA& prot_nmea = (ProtoNMEA&)frame;
             QString str_data = QByteArray((char*)prot_nmea.frame(), prot_nmea.frameLen() - 2);
-#ifndef SEPARATE_READING
             if (nmeaConsoled_) {
                 core.consoleProtoText(QString(">> NMEA: %5").arg(str_data));
             }
-#endif
             if (prot_nmea.isEqualId("DBT")) {
                 prot_nmea.skip();
                 prot_nmea.skip();
@@ -802,17 +785,13 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                 }
 
                 // if (isConsoled_) {
-#ifndef SEPARATE_READING
                     core.consoleStreamInfo(QString(">> UBX: NAV_PVT, fix %1, sats %2, lat %3, lon %4, time %5:%6:%7.%8")
                                          .arg(fix_type).arg(satellites_in_used).arg(double(lat_int)*0.0000001).arg(double(lon_int)*0.0000001).arg(h).arg(m).arg(s).arg(nanosec/1000));
-#endif
                     // }
             }
             else {
                 // if (isConsoled_)
-#ifndef SEPARATE_READING
                     core.consoleStreamInfo(QString(">> UBX: class/id 0x%1 0x%2, len %3").arg(ubx_frame.msgClass(), 2, 16, QLatin1Char('0')).arg(ubx_frame.msgId(), 2, 16, QLatin1Char('0')).arg(ubx_frame.frameLen()));
-#endif
             }
         }
 
@@ -921,9 +900,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     vru_.armState = (int)heartbeat.isArmed();
                     int flight_mode = (int)heartbeat.customMode();
                     if (flight_mode != vru_.flightMode) {
-#ifndef SEPARATE_READING
                         core.consoleStreamInfo(QString(">> FC: Flight mode %1").arg(flight_mode));
-#endif
                     }
                     vru_.flightMode = flight_mode;
                     vru_.systemId = mavlink_frame.systemID();
@@ -952,9 +929,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     const bool addressedToUs = (ack.target_system == 0 || ack.target_system == kMavGcsSystemId)
                                                && (ack.target_component == 0 || ack.target_component == kMavGcsComponentId);
                     if (addressedToUs) {
-#ifndef SEPARATE_READING
                         core.consoleInfo(QString(">> MAVLink: COMMAND_ACK %1 result %2").arg(ack.command).arg(ack.result));
-#endif
                         bool forwardAck = true;
                         if (ack.command == MavCmdSetMessageInterval && ack.result == MavResultUnsupported && !streamIntervalUnsupported_) {
                             streamIntervalUnsupported_ = true;
@@ -994,11 +969,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     next.missionId = current.mission_id;
                     next.reports = missionTelemetry_.reports + 1;
                     lastMissionCurrentMs_ = heartbeatClock_.elapsed();
-#ifndef SEPARATE_READING
                     if (next.seq != missionTelemetry_.seq) {
                         core.consoleInfo(QString(">> MAVLink: MISSION_CURRENT %1 (total %2, state %3)").arg(next.seq).arg(next.total).arg(next.state));
                     }
-#endif
                     missionTelemetry_ = next;
                     publishVru();
                 }
@@ -1006,9 +979,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                 if (fromAutopilotComponent && msgId == MAVLink_MSG_MISSION_ITEM_REACHED::getID()) {
                     const auto reached = mavlink_frame.read<MAVLink_MSG_MISSION_ITEM_REACHED>();
                     missionTelemetry_.reachedSeq = reached.seq;
-#ifndef SEPARATE_READING
                     core.consoleInfo(QString(">> MAVLink: MISSION_ITEM_REACHED %1").arg(reached.seq));
-#endif
                     emit autopilotMissionItemReached(reached.seq);
                     publishVru();
                 }
@@ -1077,11 +1048,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                         emit attitudeComplete(yaw, attitude.pitchDeg(), attitude.rollDeg());
                     }
                 }
-#ifndef SEPARATE_READING
                 if (mavlinkConsoled_) {
                     core.consoleProtoText(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
                 }
-#endif
             }
             else {
                 if (link != nullptr) {
@@ -1112,10 +1081,6 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
 
 void DeviceManager::openFile(QString filePath)
 {
-#ifdef SEPARATE_READING
-    break_ = false;
-#endif
-
     QFile file;
     const QUrl url(filePath);
     url.isLocalFile() ? file.setFileName(url.toLocalFile()) : file.setFileName(url.toString());
@@ -1134,35 +1099,11 @@ void DeviceManager::openFile(QString filePath)
 
     epochFileOffsets_.clear();
 
-#ifndef SEPARATE_READING
     qint64 pendingFrameStart = -1;
     qint64 lastFrameStart = -1;
     bool justWrapped = false;
-#endif
-
-#ifdef SEPARATE_READING
-    emit fileStartOpening();
-    bool fileReadEnough{false};
-#endif
 
     while (true) {
-
-#ifdef SEPARATE_READING
-        QCoreApplication::processEvents();
-        if (break_) {
-            emit fileBreaked(onOpen_);
-            onOpen_ = false;
-            file.close();
-            emit fileStopsOpening();
-            return;
-        }
-#else
-        if (break_) {
-            file.close();
-            return;
-        }
-#endif
-
         QByteArray chunk = file.read(static_cast<qint64>(1024) * 1024);
         const qint64 chunkSize = chunk.size();
 
@@ -1181,35 +1122,14 @@ void DeviceManager::openFile(QString filePath)
 
         frameParser.setContext((uint8_t*)chunk.data(), chunk.size());
 
-#ifdef SEPARATE_READING
-        int sleepCnt = 0;
-#endif
-
         while (frameParser.availContext() > 0) {
 
-#ifdef SEPARATE_READING
-            QCoreApplication::processEvents();
-            if (break_) {
-                emit fileBreaked(onOpen_);
-                onOpen_ = false;
-                file.close();
-                return;
-            }
-            if (sleepCnt > 10) {
-                QThread::msleep(1);
-                sleepCnt = 0;
-            }
-            ++sleepCnt;
-#endif
-#ifndef SEPARATE_READING
             if (!justWrapped && !frameParser.isNested() && pendingFrameStart < 0) {
                 pendingFrameStart = bytesRead - frameParser.availContext();
             }
-#endif
 
             frameParser.process();
             if (frameParser.isComplete()) {
-#ifndef SEPARATE_READING
                 if (!frameParser.isNested()) {
                     lastFrameStart = pendingFrameStart;
                     pendingFrameStart = -1;
@@ -1218,24 +1138,15 @@ void DeviceManager::openFile(QString filePath)
                 else {
                     justWrapped = false;
                 }
-#endif
 
                 frameInput(someUuid, nullptr, frameParser);
 
-#ifndef SEPARATE_READING
                 if (Dataset* datasetPtr = core.getDatasetPtr(); datasetPtr && lastFrameStart >= 0) {
                     const int epochs = datasetPtr->size();
                     while (epochFileOffsets_.size() < epochs) {
                         epochFileOffsets_.append(lastFrameStart);
                     }
                 }
-#endif
-#ifdef SEPARATE_READING
-                if (!fileReadEnough) { // TODO: check this
-                    emit onFileReadEnough();
-                    fileReadEnough = true;
-                }
-#endif
             }
         }
 
@@ -1251,17 +1162,6 @@ void DeviceManager::openFile(QString filePath)
     emit fileStopsOpening();
 }
 
-#ifdef SEPARATE_READING
-void DeviceManager::closeFile(bool onOpen)
-{
-    onOpen_ = onOpen;
-    break_ = true;
-
-    resetAutopilot();
-    delAllDev();
-    publishVru();
-}
-#else
 void DeviceManager::closeFile()
 {
     delAllDev();
@@ -1269,7 +1169,6 @@ void DeviceManager::closeFile()
     epochFileOffsets_.clear();
     publishVru();
 }
-#endif
 
 void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
 {
@@ -1279,9 +1178,7 @@ void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
             connect(this, &DeviceManager::writeProxyFrame, link, &Link::writeFrame);
             publishVru();
         } else if(link->attribute() == LinkAttribute::kLinkAttributeBoot) {
-#ifndef SEPARATE_READING
             core.consoleInfo("Device: Boot opened");
-#endif
         } else {
             getDevice(uuid, link, 0);
         }
@@ -1339,9 +1236,7 @@ void DeviceManager::onLinkDeleted(QUuid uuid, Link *link)
 void DeviceManager::binFrameOut(Parsers::ProtoBinOut protoOut)
 {
     if (isConsoled_ && protoOut.id() != 33) {
-#ifndef SEPARATE_READING
         core.consoleProto(protoOut, false);
-#endif
     }
     emit sendProtoFrame(protoOut);
 }
@@ -1630,11 +1525,7 @@ void DeviceManager::deleteDevicesByLink(QUuid uuid)
             }
             disconnect(i.value());
 
-#ifdef SEPARATE_READING
-            QMetaObject::invokeMethod(i.value(), "deleteLater", Qt::QueuedConnection);
-#else
             i.value()->deleteLater();
-#endif
         }
         devTree_[uuid].clear();
         devTree_.remove(uuid);
@@ -1664,54 +1555,6 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     dev->setBusAddress(addr);
     dev->setLinkUuid(uuid);
 
-#ifdef SEPARATE_READING
-    auto connType = Qt::AutoConnection;
-
-    if (link != nullptr) {
-        connect(dev, &DevQProperty::binFrameOut, this, &DeviceManager::binFrameOut, connType);
-        connect(dev, &DevQProperty::binFrameOut, link, &Link::writeFrame, connType);
-        connect(dev, &DevQProperty::startUpgradingFirmware, link, &Link::onStartUpgradingFirmware, connType);
-        connect(dev, &DevQProperty::upgradingFirmwareDone, link, &Link::onUpgradingFirmwareDone, connType);
-    }
-
-    connect(dev, &DevQProperty::startUpgradingFirmwareDM, this, &DeviceManager::onStartUpgradingFirmware, connType);
-    connect(dev, &DevQProperty::upgradingFirmwareDoneDM, this, &DeviceManager::onUpgradingFirmwareDone, connType);
-
-    //
-    connect(dev, &DevQProperty::sendChartSetup, this, &DeviceManager::sendChartSetup, connType);
-    connect(dev, &DevQProperty::sendTranscSetup, this, &DeviceManager::sendTranscSetup, connType);
-    connect(dev, &DevQProperty::sendSoundSpeed, this, &DeviceManager::sendSoundSpeeed, connType);
-    connect(dev, &DevQProperty::averageChartLossesChanged, this, &DeviceManager::chartLossesChanged, connType);
-    connect(dev, &DevQProperty::standChanged, this, &DeviceManager::standAvailableChanged, connType);
-
-    connect(dev, &DevQProperty::chartComplete, this, &DeviceManager::chartComplete, connType);
-    connect(dev, &DevQProperty::rawDataRecieved, this, &DeviceManager::rawDataRecieved, connType);
-    connect(dev, &DevQProperty::attitudeComplete, this, &DeviceManager::attitudeComplete, connType);
-    connect(dev, &DevQProperty::tempComplete, this, &DeviceManager::tempComplete, connType);
-    connect(dev, &DevQProperty::distComplete, this, &DeviceManager::distComplete, connType);
-    connect(dev, &DevQProperty::usblSolutionComplete, this, &DeviceManager::usblSolutionComplete, connType);
-    connect(dev, &DevQProperty::usblDiagComplete, this, &DeviceManager::usblDiagComplete, connType);
-    connect(dev, &DevQProperty::dopplerBeamComplete, this, &DeviceManager::dopplerBeamComlete, connType);
-    connect(dev, &DevQProperty::dvlSolutionComplete, this, &DeviceManager::dvlSolutionComplete, connType);
-    connect(dev, &DevQProperty::upgradeProgressChanged, this, &DeviceManager::upgradeProgressChanged, connType);
-
-    connect(dev, &DevQProperty::positionComplete, this, &DeviceManager::positionComplete, connType);
-    connect(dev, &DevQProperty::gnssVelocityComplete, this, &DeviceManager::gnssVelocityComplete, connType);
-    connect(dev, &DevQProperty::simpleNavV2Complete, this, &DeviceManager::simpleNavV2Complete, connType);
-    connect(dev, &DevQProperty::boatStatusComplete, this, &DeviceManager::boatStatusComplete, connType);
-    connect(dev, &DevQProperty::depthComplete, this, &DeviceManager::depthComplete, connType);
-
-    dev->moveToThread(qApp->thread());
-    dev->getProcessTimer()->moveToThread(qApp->thread());
-    QList<QTimer*> timers = dev->getChildTimers();
-    foreach (QTimer* timer, timers) {
-        timer->moveToThread(qApp->thread());
-    }
-
-    QMetaObject::invokeMethod(dev, "initProcessTimerConnects", Qt::QueuedConnection);
-    QMetaObject::invokeMethod(dev, "initChildsTimersConnects", Qt::QueuedConnection);
-    QMetaObject::invokeMethod(dev, "startConnection", Qt::QueuedConnection, Q_ARG(bool, link != nullptr));
-#else
     if (link != nullptr) {
         connect(dev, &DevQProperty::binFrameOut, this, &DeviceManager::binFrameOut);
         connect(dev, &DevQProperty::binFrameOut, link, &Link::writeFrame);
@@ -1727,6 +1570,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::sendTranscSetup, this, &DeviceManager::sendTranscSetup);
     connect(dev, &DevQProperty::sendSoundSpeed, this, &DeviceManager::sendSoundSpeeed);
     connect(dev, &DevQProperty::averageChartLossesChanged, this, &DeviceManager::chartLossesChanged);
+    connect(dev, &DevQProperty::standChanged, this, &DeviceManager::standAvailableChanged);
 
     connect(dev, &DevQProperty::chartComplete, this, &DeviceManager::chartComplete);
     connect(dev, &DevQProperty::rawDataRecieved, this, &DeviceManager::rawDataRecieved);
@@ -1748,7 +1592,6 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::depthComplete, this, &DeviceManager::depthComplete);
 
     dev->startConnection(link != nullptr);
-#endif
 
     if (link != nullptr) {
         auto syncStatus = [dev, link](QUuid = {}) {

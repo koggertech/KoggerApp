@@ -13,7 +13,6 @@ public:
         DevDriver(parent){
     }
 
-#ifndef SEPARATE_READING
     Q_PROPERTY(int distMax READ distMax WRITE setDistMax NOTIFY distSetupChanged)
     Q_PROPERTY(int distDeadZone READ distDeadZone WRITE setDistDeadZone NOTIFY distSetupChanged)
     Q_PROPERTY(int distConfidence READ distConfidence WRITE setConfidence NOTIFY distSetupChanged)
@@ -147,7 +146,6 @@ public:
     Q_PROPERTY(int  imuClipMask          READ imuClipMask          NOTIFY navSensorStatusChanged)
     Q_PROPERTY(int  imuReinitCnt         READ imuReinitCnt         NOTIFY navSensorStatusChanged)
     Q_PROPERTY(int  imuBadSeconds        READ imuBadSeconds        NOTIFY navSensorStatusChanged)
-#endif
 
     // Last modem payload received over ID_MODEM_SOLUTION. Device-scoped (a per-device
     // test tool), unlike the USBL solution readout, which is scene telemetry and comes

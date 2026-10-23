@@ -298,6 +298,7 @@ Rectangle {
     }
     readonly property string _uploadTag: "mission-upload"
     readonly property string _downloadTag: "mission-download"
+    readonly property string _errorTag: "mission-error"
 
     function pushVehicleHome() {
         if (!ctl) return
@@ -542,7 +543,7 @@ Rectangle {
         }
         function onLastErrorChanged() {
             if (root.plan && root.plan.lastError && root.plan.lastError.length && typeof notifications !== "undefined" && notifications)
-                notifications.warning(root.plan.lastError)
+                notifications.warning(root.plan.lastError, root._errorTag)
         }
     }
 
