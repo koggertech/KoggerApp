@@ -491,6 +491,9 @@ int main(int argc, char *argv[])
     core.initStreamList();
 
     setApplicationDisplayName(app);
+    UiProbe uiProbe;
+    ControlServer controlServer;
+
     QQmlApplicationEngine engine;
     engine.addImportPath("qrc:/");
     engine.addImportPath("qrc:/qml");
@@ -524,13 +527,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("appUtils", &appUtils);
     engine.rootContext()->setContextProperty("tutorial", &tutorial);
 
-    // Machine-readable UI verification. Costs nothing unless KOGGER_UI_PROBE names an
-    // output directory; exposed to QML so an interaction test can dump at a chosen
-    // moment instead of on a timer.
-    UiProbe uiProbe;
     engine.rootContext()->setContextProperty("uiProbe", &uiProbe);
-
-    ControlServer controlServer;
     engine.rootContext()->setContextProperty("controlServer", &controlServer);
 
     // Expose compile-time MANUAL_TESTING flag to QML — the Settings panel
