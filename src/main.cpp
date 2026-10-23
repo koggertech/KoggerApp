@@ -531,6 +531,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("uiProbe", &uiProbe);
 
     ControlServer controlServer;
+    engine.rootContext()->setContextProperty("controlServer", &controlServer);
 
     // Expose compile-time MANUAL_TESTING flag to QML — the Settings panel
     // shows a "Test" group (with developer-only knobs) only when this is true.
