@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <cstdint>
 
 #include <QColor>
 #include <QVector>
@@ -36,7 +37,7 @@ public:
         bool hasYaw{false};
     };
 
-    enum class TrackStyle
+    enum class TrackStyle : uint8_t
     {
         Line = 0,
         Dots = 1

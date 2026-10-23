@@ -1947,8 +1947,8 @@ QByteArray klfPrologue(QFile& src, qint64 limit)
                 continue;
             }
 
-            if (!((parser.type() == Parsers::CONTENT && !parser.resp())
-                  || parser.type() == Parsers::SETTING)) {
+            if ((parser.type() != Parsers::CONTENT || parser.resp())
+                && parser.type() != Parsers::SETTING) {
                 continue;
             }
 

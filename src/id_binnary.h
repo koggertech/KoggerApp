@@ -1654,7 +1654,7 @@ public:
         static constexpr Version getVer() { return v0; }
         static constexpr int ChannelCapacity = 5;
 
-        enum DirFlag : uint16_t {
+        enum DirFlag : uint8_t {
             DirChannelsValid = 1u << 0,
             DirValid         = 1u << 1,
             DirSolverFailed  = 1u << 2,

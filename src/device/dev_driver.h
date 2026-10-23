@@ -157,7 +157,7 @@ public:
     int  imuReinitCnt()         { return idNavSensorStatus ? idNavSensorStatus->imuReinitCnt() : 0; }
     int  imuBadSeconds()        { return idNavSensorStatus ? idNavSensorStatus->imuBadSeconds() : 0; }
 
-    enum UsblApplyState {
+    enum UsblApplyState : uint8_t {
         UsblApplyNone      = 0,
         UsblApplyQueued    = 1,
         UsblApplyPending   = 2,
