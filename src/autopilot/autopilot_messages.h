@@ -15,6 +15,7 @@ constexpr int kMavParamIdLength = 16;
 
 enum MavCommandId : uint16_t {
     MavCmdDoSetMode = 176,
+    MavCmdDoChangeSpeed = 178,
     MavCmdDoSetMissionCurrent = 224,
     MavCmdMissionStart = 300,
     MavCmdComponentArmDisarm = 400,

@@ -288,6 +288,8 @@ void Core::setEngine(QQmlApplicationEngine *engine)
             missionRunTrackerPtr_.get(), &mission::MissionRunTracker::onVehicleMissionRead);
     connect(missionRunTrackerPtr_.get(), &mission::MissionRunTracker::readRequested,
             deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::readMissionSilently);
+    connect(missionRunTrackerPtr_.get(), &mission::MissionRunTracker::legSpeedRequested,
+            deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::autopilotSetSpeed, Qt::QueuedConnection);
     connect(deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::vruChanged, this, &Core::pushMissionRunTelemetry);
     connect(deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::missionTransferChanged, this, &Core::pushMissionRunTelemetry);
 }

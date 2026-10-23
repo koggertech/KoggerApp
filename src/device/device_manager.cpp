@@ -20,6 +20,8 @@ constexpr int kRadioRssiUnknown = 255;
 constexpr qint64 kNavOutputTimeoutMs = 3000;
 constexpr float kCrossTrackStepM = 0.1f;
 constexpr int kMissionSeqMax = 0xFFFF;
+constexpr float kSpeedTypeGround = 1.0f;
+constexpr float kThrottleUnchanged = -1.0f;
 constexpr qint64 kStreamWatchdogMs = 10000;
 constexpr int kStreamRequestAttempts = 3;
 constexpr float kMissionCurrentIntervalUs = 1000000.0f;
@@ -143,6 +145,14 @@ void DeviceManager::autopilotSetMode(int customMode)
 void DeviceManager::autopilotStartMission()
 {
     sendCommandLong(MavCmdMissionStart);
+}
+
+void DeviceManager::autopilotSetSpeed(float speed)
+{
+    if (!(speed > 0.0f)) {
+        return;
+    }
+    sendCommandLong(MavCmdDoChangeSpeed, kSpeedTypeGround, speed, kThrottleUnchanged);
 }
 
 void DeviceManager::autopilotSetMissionCurrent(int seq)

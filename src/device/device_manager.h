@@ -141,6 +141,8 @@ public slots:
     void autopilotArm(bool arm, bool force);
     void autopilotSetMode(int customMode);
     void autopilotStartMission();
+    /** Sets the ground speed of the running mode in m/s (MAV_CMD_DO_CHANGE_SPEED, throttle unchanged); ignored unless positive. */
+    void autopilotSetSpeed(float speed);
     /**
      * Makes mission item @p seq (vehicle list index, 0 = home slot) the current one: the vehicle
      * goes to it on the shortest path, skipping the items in between. Sends

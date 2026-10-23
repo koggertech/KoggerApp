@@ -143,6 +143,11 @@ void DeviceManagerWrapper::autopilotSetMissionCurrent(int seq)
     workerObject_->autopilotSetMissionCurrent(seq);
 }
 
+void DeviceManagerWrapper::autopilotSetSpeed(double speed)
+{
+    workerObject_->autopilotSetSpeed(float(speed));
+}
+
 bool DeviceManagerWrapper::beginMissionTransfer(bool download, bool silent)
 {
     if (missionTransferActive_) {

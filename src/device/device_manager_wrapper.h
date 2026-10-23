@@ -117,6 +117,8 @@ public:
     Q_INVOKABLE void autopilotStartMission();
     /** Makes vehicle mission item @p seq current (skip ahead or back); see DeviceManager::autopilotSetMissionCurrent. */
     Q_INVOKABLE void autopilotSetMissionCurrent(int seq);
+    /** Sets the vehicle's ground speed in m/s; see DeviceManager::autopilotSetSpeed. */
+    void autopilotSetSpeed(double speed);
 
     void initStreamList();
 

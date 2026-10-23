@@ -175,6 +175,8 @@ void MissionRunTracker::setTelemetry(const RunTelemetry& telemetry)
     const bool wasOnline = telemetry_.online;
     const bool wasReading = reading();
     const bool wasTransfer = telemetry_.transferActive;
+    const int previousMode = wasOnline ? telemetry_.flightMode : -1;
+    const int previousSeq = telemetry_.currentSeq;
     telemetry_ = telemetry;
     if (!telemetry_.online) {
         if (wasOnline) {
@@ -182,6 +184,7 @@ void MissionRunTracker::setTelemetry(const RunTelemetry& telemetry)
             readTimer_.stop();
             failedReads_ = 0;
             hasPendingUpload_ = false;
+            speedSyncPending_ = false;
             clearSnapshot();
         }
         if (wasReading != reading()) {
@@ -203,6 +206,7 @@ void MissionRunTracker::setTelemetry(const RunTelemetry& telemetry)
     }
     checkStale();
     updateProgress(false);
+    syncLegSpeed(previousMode, previousSeq);
     const GeoPoint vehicle = vehiclePosition();
     const GeoPoint home = vehicleHome();
     const bool vehicleChanged = vehicle.isValid() != drawnVehicle_.isValid()
@@ -554,6 +558,39 @@ void MissionRunTracker::autoRead(int delayMs)
 {
     if (readAutomatically_) {
         wantRead(delayMs);
+    }
+}
+
+int MissionRunTracker::nextNavSeq(int seq) const
+{
+    for (int i = std::max(seq + 1, 1); i < items_.size(); ++i) {
+        if (items_.at(i).navigation) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void MissionRunTracker::syncLegSpeed(int previousMode, int previousSeq)
+{
+    if (telemetry_.flightMode != kRoverModeAuto) {
+        speedSyncPending_ = false;
+        return;
+    }
+    const int seq = telemetry_.currentSeq;
+    if (previousMode >= 0 && previousMode != kRoverModeAuto) {
+        speedSyncPending_ = true;
+    } else if (previousMode == kRoverModeAuto && previousSeq >= 0 && actionable() && seq != previousSeq
+               && seq != nextNavSeq(previousSeq)) {
+        speedSyncPending_ = true;
+    }
+    if (!speedSyncPending_ || !actionable() || seq < 1 || seq >= items_.size() || !items_.at(seq).navigation) {
+        return;
+    }
+    speedSyncPending_ = false;
+    const double speed = items_.at(seq).plannedSpeed;
+    if (std::isfinite(speed) && speed > 0.0) {
+        emit legSpeedRequested(speed);
     }
 }
 
