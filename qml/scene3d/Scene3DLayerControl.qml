@@ -26,17 +26,22 @@ Item {
     property var themeStopsFn: null    // function(id) -> [{pos, color}]
     property real themeStripMaxWidth: 0 // cap so the right-opening strip fits
 
+    property string actionIconSource: ""
+    property string actionToolTipText: ""
+    readonly property bool hasAction: actionIconSource.length > 0
+
     readonly property bool menuHovered: (menuOpen && capsuleHover.hovered)
                                         || (hasTheme && themeSwitcher.menuHovered)
 
     signal toggleRequested()           // flip visibility
     signal settingsRequested()         // open the full settings group
     signal themePicked(int index)
+    signal actionRequested()
 
     readonly property real _s: theme ? theme.resCoeff : 1.0
     readonly property int _pad: Math.round(5 * _s)
     readonly property int gap: Math.round(6 * AppPalette.scale)
-    readonly property int _slots: hasTheme ? 4 : 3   // trigger + visibility + gear [+ theme]
+    readonly property int _slots: 3 + (hasTheme ? 1 : 0) + (hasAction ? 1 : 0)
     readonly property real _openH: _pad * 2 + buttonSize * _slots + gap * (_slots - 1)
 
     width: buttonSize
@@ -70,6 +75,22 @@ Item {
             anchors.top: parent.top
             anchors.topMargin: root._pad
             spacing: root.gap
+
+            KCircleIconButton {
+                width: root.buttonSize
+                height: root.buttonSize
+                visible: root.hasAction
+                iconSource: root.actionIconSource
+                iconTintColor: AppPalette.text
+                fillColor: AppPalette.card
+                fillHoverColor: AppPalette.cardHover
+                borderColor: AppPalette.border
+                toolTipText: root.actionToolTipText
+                onClicked: {
+                    root.menuOpen = false
+                    root.actionRequested()
+                }
+            }
 
             KCircleIconButton {
                 width: root.buttonSize

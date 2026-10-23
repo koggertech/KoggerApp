@@ -582,6 +582,27 @@ BasePanePopup {
                     }
                 }
 
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 1
+                    height: Math.round(root._controlH * 0.6)
+                    color: AppPalette.border
+                }
+
+                KCircleIconButton {
+                    width: root._controlH
+                    height: root._controlH
+                    iconSource: "qrc:/icons/ui/map_route.svg"
+                    iconTintColor: AppPalette.text
+                    fillColor: AppPalette.card
+                    fillHoverColor: AppPalette.cardHover
+                    fillPressedColor: AppPalette.bgDeep
+                    borderColor: AppPalette.border
+                    borderHoverColor: AppPalette.borderHover
+                    toolTipText: qsTr("Mission editor")
+                    onClicked: if (typeof core !== "undefined" && core) core.setMissionEditorActive(true)
+                }
+
                 KCircleIconButton {
                     width: root._controlH
                     height: root._controlH

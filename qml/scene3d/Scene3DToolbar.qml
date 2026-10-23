@@ -240,6 +240,9 @@ Item  {
             active: toolbarRoot.store ? toolbarRoot.store.missionRunVisible : false
             onToggleRequested: { toolbarRoot.cancelRuler(); if (toolbarRoot.store) toolbarRoot.store.missionRunVisible = !toolbarRoot.store.missionRunVisible }
             onSettingsRequested: if (toolbarRoot.store) toolbarRoot.store.toggleAppSettingsAtGroup("app.missionrun")
+            actionIconSource: "qrc:/icons/ui/pencil.svg"
+            actionToolTipText: qsTr("Mission editor")
+            onActionRequested: { toolbarRoot.cancelRuler(); if (typeof core !== "undefined" && core) core.setMissionEditorActive(true) }
             onMenuOpenChanged: if (menuOpen) { boatTrackCtl.menuOpen = false; bottomTrackCtl.menuOpen = false; isobathsCtl.menuOpen = false; mosaicCtl.menuOpen = false; usblCtl.menuOpen = false }
         }
     }

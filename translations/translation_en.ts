@@ -1617,6 +1617,11 @@
         <source>Disarm</source>
         <translation>Disarm</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="602"/>
+        <source>Mission editor</source>
+        <translation>Mission editor</translation>
+    </message>
 </context>
 <context>
     <name>BottomTrackEditPopup</name>
@@ -8634,6 +8639,11 @@ udp://@:1234
         <location filename="../qml/scene3d/Scene3DToolbar.qml" line="224"/>
         <source>Vehicle mission</source>
         <translation>Vehicle mission</translation>
+    </message>
+    <message>
+        <location filename="../qml/scene3d/Scene3DToolbar.qml" line="244"/>
+        <source>Mission editor</source>
+        <translation>Mission editor</translation>
     </message>
 </context>
 <context>
