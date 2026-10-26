@@ -227,6 +227,9 @@ public slots:
     bool echogramSyncView() const { return echogramSyncView_; }
     void broadcastEpochCursor(qPlot2D* source, int epoch, float depth, int channel);
     void broadcastCursorClear(qPlot2D* source);
+    void broadcastLiveHold(qPlot2D* source);
+    void broadcastLiveHoldEnd(qPlot2D* source, bool toLiveEnd);
+    void updateLiveHoldPause();
     void clearEpochCursors();
     Q_INVOKABLE void broadcastEchogramTime(QObject* source, double timelinePos);        // time/scroll → gated by echogramSyncCursor_
     Q_INVOKABLE void broadcastEchogramVertical(QObject* source, double from, double to); // vertical zoom+offset → gated by echogramSyncView_

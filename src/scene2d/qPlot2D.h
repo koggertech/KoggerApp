@@ -30,6 +30,10 @@ public:
     Q_PROPERTY(double  contactLon       READ getContactLon /*WRITE setContactLon*/ NOTIFY contactChanged)
     Q_PROPERTY(double  contactDepth     READ getContactDepth /*WRITE setContactLon*/ NOTIFY contactChanged)
     Q_PROPERTY(bool    contactIsActive  READ getContactIsActive NOTIFY contactChanged)
+    Q_PROPERTY(bool liveHoldEnabled READ liveHoldEnabled WRITE setLiveHoldEnabled NOTIFY liveHoldChanged)
+    Q_PROPERTY(bool liveHoldPaused  READ liveHoldPaused  WRITE setLiveHoldPaused  NOTIFY liveHoldChanged)
+    Q_PROPERTY(bool liveHoldActive  READ liveHoldActive  NOTIFY liveHoldChanged)
+    Q_PROPERTY(int  liveHoldSeconds READ liveHoldSeconds NOTIFY liveHoldChanged)
 
     qPlot2D(QQuickItem* parent = nullptr);
     void paint(QPainter *painter) override;
@@ -157,6 +161,20 @@ public:
     }
     Q_INVOKABLE void setIndx(int indx) { indx_ = indx; }
 
+    bool liveHoldEnabled() const { return liveHoldEnabled_; }
+    void setLiveHoldEnabled(bool enabled);
+    bool liveHoldPaused() const { return liveHoldPaused_; }
+    void setLiveHoldPaused(bool paused);
+    bool liveHoldActive() const { return liveHold_; }
+    int liveHoldSeconds() const;
+    Q_INVOKABLE void holdLiveView();
+    Q_INVOKABLE void cancelLiveHold();
+    Q_INVOKABLE void resumeLiveScroll();
+    Q_INVOKABLE void returnToLiveNow();
+    void joinLiveHold(bool followsSource);
+    void releaseLiveHold(bool toLiveEnd);
+    void setLiveHoldSyncPaused(bool paused);
+
 protected:
     Dataset* m_plot = nullptr;
     QTimer* m_updateTimer;
@@ -169,6 +187,8 @@ signals:
     void contactChanged();
     void plotHorizontalChanged();
     void plotEnabledChanged();
+    void liveHoldChanged();
+    void liveReturnRequested();
 
 protected slots:
     void timerUpdater();
@@ -306,6 +326,17 @@ public slots:
     void setOffsetZ(float value);
 
 private:
+    bool atLiveEnd() const;
+    bool liveHoldPausedNow() const;
+    void applyLiveHoldPause(bool wasPaused);
+    void startLiveHold();
+
+    QTimer* liveHoldTimer_ = nullptr;
+    QTimer* liveHoldTickTimer_ = nullptr;
+    bool liveHoldEnabled_ = false;
+    bool liveHoldPaused_ = false;
+    bool liveHoldSyncPaused_ = false;
+    bool liveHoldFromEnd_ = false;
     int indx_ = -1;
     bool zoomPreviewMode_ = false;
     int zoomPreviewSourceSize_ = 44;

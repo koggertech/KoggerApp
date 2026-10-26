@@ -430,6 +430,8 @@ private:
     void notifyManualCameraInteraction();
     void beginFollowReturn();
     void cancelFollowReturn();
+    void holdFollowForContact();
+    void releaseFollowAfterContact();
     void cancelCameraPoseAnim();
     void cancelVScaleAnim();
 
@@ -527,6 +529,7 @@ private:
     qreal wheelZoomResidual_ = 0.0;
     QPointF wheelZoomAnchor_;
     bool followSuspended_ = false;
+    bool contactFollowPending_ = false;
     bool positionsLive_ = false;
     QTimer* followResumeTimer_ = nullptr;
     QTimer* followTickTimer_ = nullptr;

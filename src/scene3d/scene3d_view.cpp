@@ -266,7 +266,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     positionsLiveTimer_->setInterval(3000);
     QObject::connect(positionsLiveTimer_, &QTimer::timeout, this, [this]() {
         positionsLive_ = false;
-        if (followSuspended_) {
+        if (followSuspended_ && !contactFollowPending_) {
             cancelFollowReturn();
         }
     });
@@ -1266,7 +1266,56 @@ void GraphicsScene3dView::setContactPlacementArmed(bool armed)
         contacts_->cancelPlacement();
     }
 
+    if (armed) {
+        holdFollowForContact();
+    }
+    else {
+        releaseFollowAfterContact();
+    }
+
     QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::holdFollowForContact()
+{
+    if (!trackLastData_) {
+        return;
+    }
+
+    const bool wasPending = followReturnPending();
+
+    animator_.cancel(ChFollow);
+    followResumeTimer_->stop();
+    followTickTimer_->stop();
+
+    followSuspended_ = true;
+    contactFollowPending_ = true;
+    if (wasPending) {
+        emit followReturnStateChanged();
+    }
+}
+
+void GraphicsScene3dView::releaseFollowAfterContact()
+{
+    if (!contactFollowPending_) {
+        return;
+    }
+
+    if (!followSuspended_ || !trackLastData_) {
+        contactFollowPending_ = false;
+        return;
+    }
+
+    if (!positionsLive_) {
+        return;
+    }
+
+    contactFollowPending_ = false;
+    followResumeTimer_->start();
+    if (!followTickTimer_->isActive()) {
+        followTickTimer_->start();
+    }
+    emit followReturnStateChanged();
 }
 
 bool GraphicsScene3dView::placeContactAt(qreal x, qreal y)
@@ -1623,6 +1672,9 @@ void GraphicsScene3dView::notifyManualCameraInteraction()
     animator_.cancel(ChFollow);
 
     followSuspended_ = true;
+    if (contactPlacementArmed_) {
+        return;
+    }
     followResumeTimer_->start();
     if (!followTickTimer_->isActive()) {
         followTickTimer_->start();
@@ -1736,6 +1788,7 @@ void GraphicsScene3dView::cancelFollowReturn()
     }
     animator_.cancel(ChFollow);
 
+    contactFollowPending_ = false;
     const bool wasSuspended = followSuspended_;
     followSuspended_ = false;
     if (wasSuspended) {
@@ -3745,8 +3798,12 @@ void GraphicsScene3dView::onPositionAdded(uint64_t indx)
         return;
     }
 
+    const bool wasLive = positionsLive_;
     positionsLive_ = true;
     positionsLiveTimer_->start();
+    if (!wasLive && !contactPlacementArmed_) {
+        releaseFollowAfterContact();
+    }
 
     boatTrack_->onPositionAdded(indx); // сюда лодка
 
@@ -3765,7 +3822,7 @@ void GraphicsScene3dView::onPositionAdded(uint64_t indx)
         m_planeGrid->setCirclePosition(boatPosVec3D);
     }
 
-    if (trackLastData_ && !followSuspended_) {
+    if (trackLastData_ && !followSuspended_ && !contactPlacementArmed_) {
         setLastEpochFocusView(useAngleLocation_, navigatorViewLocation_); // сюда лодка
     }
 }

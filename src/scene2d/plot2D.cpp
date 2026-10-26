@@ -1352,10 +1352,14 @@ void Plot2D::reindexingCursor() {
         float position = timelinePosition();
 
         float last_head = round(position*cursor_.last_dataset_size);
-        float last_offset_head = float(cursor_.last_dataset_size) - last_head;
-        float new_head = data_width - last_offset_head;
-
-        position = float(new_head)/float(data_width);
+        if (liveHold_) {
+            position = last_head / float(data_width);
+        }
+        else {
+            float last_offset_head = float(cursor_.last_dataset_size) - last_head;
+            float new_head = data_width - last_offset_head;
+            position = float(new_head)/float(data_width);
+        }
 
         setTimelinePosition(position);
     }

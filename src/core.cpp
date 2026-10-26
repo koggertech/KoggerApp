@@ -2134,6 +2134,7 @@ void Core::setTimelinePosition(double position)
 void Core::setEchogramSyncCursor(bool state)
 {
     echogramSyncCursor_ = state;
+    updateLiveHoldPause();
 }
 
 void Core::setEchogramSyncView(bool state)
@@ -2198,7 +2199,58 @@ void Core::broadcastEchogramTime(QObject* source, double timelinePos)
         auto* plot = plot2dList_.at(i);
         if (plot != nullptr && plot != src && plot->getPlotEnabled()) {
             plot->setTimelinePosition(static_cast<float>(timelinePos));
+            if (src && src->liveHoldActive()) {
+                plot->joinLiveHold(true);
+            }
+            else {
+                plot->cancelLiveHold();
+            }
             plot->update();
+        }
+    }
+}
+
+void Core::broadcastLiveHold(qPlot2D* source)
+{
+    if (!echogramSyncCursor_) {
+        return;
+    }
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        auto* plot = plot2dList_.at(i);
+        if (plot != nullptr && plot != source && plot->getPlotEnabled()) {
+            plot->joinLiveHold(true);
+        }
+    }
+}
+
+void Core::broadcastLiveHoldEnd(qPlot2D* source, bool toLiveEnd)
+{
+    if (!echogramSyncCursor_) {
+        return;
+    }
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        auto* plot = plot2dList_.at(i);
+        if (plot != nullptr && plot != source && plot->getPlotEnabled()) {
+            plot->releaseLiveHold(toLiveEnd);
+        }
+    }
+}
+
+void Core::updateLiveHoldPause()
+{
+    bool paused = false;
+    if (echogramSyncCursor_) {
+        for (int i = 0; i < plot2dList_.size(); i++) {
+            auto* plot = plot2dList_.at(i);
+            if (plot != nullptr && plot->getPlotEnabled() && plot->liveHoldPaused()) {
+                paused = true;
+                break;
+            }
+        }
+    }
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        if (auto* plot = plot2dList_.at(i); plot != nullptr) {
+            plot->setLiveHoldSyncPaused(paused);
         }
     }
 }
@@ -2346,6 +2398,7 @@ void Core::registerPlot2D(QObject* plotObj)
 
     bindPlot2D(plot);
     plot->setAimFieldsMask(aimFieldsMask_);
+    updateLiveHoldPause();
 
     if (!alreadyRegistered && datasetPtr_ && !datasetPtr_->channelsList().isEmpty()) {
         onChannelsUpdated();
@@ -2902,6 +2955,12 @@ void Core::setContactPlacementArmed(bool armed)
         setBottomTrackEditTool(0);
         if (scene3dViewPtr_) {
             scene3dViewPtr_->setRulerEnabled(false);
+        }
+        for (int i = 0; i < plot2dList_.size(); i++) {
+            auto* plot = plot2dList_.at(i);
+            if (plot != nullptr && plot->getPlotEnabled()) {
+                plot->joinLiveHold(false);
+            }
         }
     }
 

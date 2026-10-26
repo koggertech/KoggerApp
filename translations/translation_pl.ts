@@ -8101,6 +8101,16 @@ udp://@:1234
         <source>zoom</source>
         <translation>powiększenie</translation>
     </message>
+    <message>
+        <location filename="../qml/scene2d/Plot2D.qml" line="2050"/>
+        <source>Resume scrolling now</source>
+        <translation>Wznów przewijanie</translation>
+    </message>
+    <message>
+        <location filename="../qml/scene2d/Plot2D.qml" line="2076"/>
+        <source>Scroll to the newest data</source>
+        <translation>Przewiń do najnowszych danych</translation>
+    </message>
 </context>
 <context>
     <name>PowerOffConfirmOverlay</name>

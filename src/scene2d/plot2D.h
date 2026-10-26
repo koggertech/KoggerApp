@@ -227,6 +227,7 @@ protected:
     float syncDepth_ = 0.0f;          // absolute physical depth (>=0 from surface)
     int syncChannel_ = 1;             // which channel the synced depth belongs to (1/2)
     int aimFieldsMask_ = 0xFF;
+    bool liveHold_ = false;
 
 private:
     bool isEnabled_;

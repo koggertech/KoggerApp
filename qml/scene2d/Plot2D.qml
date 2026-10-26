@@ -15,6 +15,17 @@ WaterFall {
     property bool is3dVisible: false
     property bool scrollBarsShown: true
     property bool isLiveMode: core.openedFilePath.length === 0
+    property bool pointerHeld: false
+    liveHoldEnabled: isLiveMode
+    liveHoldPaused: pointerHeld || pinchActive || scrollMouseH.pressed || scrollMouseV.pressed || contactDialog.visible
+                    || (typeof core !== "undefined" && core && core.contactPlacementArmed)
+    onLiveReturnRequested: (plot.horizontal ? snapToEndH : snapToEndV).start()
+    onLiveHoldChanged: {
+        if (liveHoldActive) {
+            snapToEndH.stop()
+            snapToEndV.stop()
+        }
+    }
     onIsLiveModeChanged: {
         if (isLiveMode) {
             timelinePosition = 1.0
@@ -26,6 +37,7 @@ WaterFall {
         target: core
         function onChannelListUpdated() {
             if (plot.isLiveMode) {
+                plot.cancelLiveHold()
                 plot.timelinePosition = 1.0
                 updateOtherPlot(plot.indx)
             }
@@ -62,6 +74,7 @@ WaterFall {
     // touch near the pane border drags the split instead of jabbing a button.
     readonly property real edgeSafetyMargin: AppPalette.splitHitSizePx / 2
     readonly property int  scrollEdgeMargin: Math.round(6 * AppPalette.scale) + plot.edgeSafetyMargin
+    readonly property int  liveEdgeGap: Math.round(6 * AppPalette.scale)
     readonly property color scrollThumbColor: theme.controlBorderColor   // цвет темы
     readonly property real scrollThumbOpacity: 0.7                        // resting; pressed → 1.0 (opaque)
     property alias viewState: echoViewState
@@ -239,6 +252,8 @@ WaterFall {
 
     function handlePointerPress(mouseButton, buttons, x, y, keyboardKey) {
         markMouseKeyboardInput()
+        pointerHeld = true
+        holdLiveView()
         scrollBarsShown = true
         scrollHideTimer.restart()
         pointerLastMouseX = x
@@ -267,6 +282,7 @@ WaterFall {
 
     function handlePointerRelease(mouseButton, buttons, x, y, keyboardKey) {
         markMouseKeyboardInput()
+        pointerHeld = false
         pointerLastMouseX = -1
         pointerLastMouseY = -1
 
@@ -279,6 +295,7 @@ WaterFall {
 
     function handlePointerCancel() {
         markMouseKeyboardInput()
+        pointerHeld = false
         pointerLastMouseX = -1
         pointerLastMouseY = -1
 
@@ -306,6 +323,13 @@ WaterFall {
             updateOtherPlot(indx)
             syncTimeToOthers()
         }
+    }
+
+    function finishScrollDrag(nearLiveEnd) {
+        if (nearLiveEnd)
+            returnToLiveNow()
+        else
+            holdLiveView()
     }
 
     function syncTimeToOthers() {
@@ -372,7 +396,12 @@ WaterFall {
         if (enabled) {
             update();
         }
+        else {
+            pointerHeld = false
+        }
     }
+
+    onVisibleChanged: if (!visible) pointerHeld = false
 
     Component.onCompleted: {
         setPlotEnabled(enabled)
@@ -1667,6 +1696,7 @@ WaterFall {
         readonly property bool scrolledBackLive: plot.isLiveMode && scrollThumbH.progress < 0.999
         readonly property real thumbW: Math.round(((scrollMouseH.pressed || isScrolling) ? 96 : 68) * AppPalette.scale)
         readonly property real thumbH: Math.round(((scrollMouseH.pressed || isScrolling) ? 28 : 20) * AppPalette.scale)
+        readonly property bool nearLiveEnd: plot.isLiveMode && scrollThumbH.x + scrollThumbH.width > width - thumbW * 0.5
 
         visible: plot.horizontal && plot.hasData
         opacity: (plot.scrollBarsShown || trackVisible || scrolledBackLive) ? 1.0 : 0.0
@@ -1682,11 +1712,12 @@ WaterFall {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.leftMargin: plot.scrollEdgeMargin
-        anchors.rightMargin: plot.scrollEdgeMargin
+        anchors.rightMargin: plot.scrollEdgeMargin + liveEdgeControls.extent
         anchors.bottomMargin: plot.scrollEdgeMargin
         height: thumbH
         z: 10
 
+        Behavior on anchors.rightMargin { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
         Behavior on height   { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         Behavior on opacity  { NumberAnimation { duration: 400 } }
 
@@ -1729,7 +1760,7 @@ WaterFall {
             height: parent.height
             radius: height / 2
             color: theme.controlBorderColor
-            opacity: (scrollMouseH.pressed && plot.isLiveMode && scrollThumbH.progress > 0.85) ? 1.0 : 0.0
+            opacity: (scrollMouseH.pressed && echoScrollBarH.nearLiveEnd) ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { duration: 150 } }
         }
 
@@ -1742,7 +1773,7 @@ WaterFall {
             color: "transparent"
             border.color: theme.controlBorderColor
             border.width: 2
-            opacity: (scrollMouseH.pressed && plot.isLiveMode && scrollThumbH.progress > 0.85) ? 0.65 : 0.0
+            opacity: (scrollMouseH.pressed && echoScrollBarH.nearLiveEnd) ? 0.65 : 0.0
             Behavior on opacity { NumberAnimation { duration: 150 } }
         }
 
@@ -1790,21 +1821,18 @@ WaterFall {
                 echoScrollBarH.grabOffsetX = mouse.x - scrollThumbH.x
                 if (echoScrollBarH.grabOffsetX < 0 || echoScrollBarH.grabOffsetX > echoScrollBarH.thumbW)
                     echoScrollBarH.grabOffsetX = echoScrollBarH.thumbW / 2
+                plot.holdLiveView()
+                syncTimeToOthers()
             }
-            onReleased: {
-                if (plot.isLiveMode && scrollThumbH.progress > 0.85)
-                    snapToEndH.start()
-            }
-            onCanceled: {
-                if (plot.isLiveMode && scrollThumbH.progress > 0.85)
-                    snapToEndH.start()
-            }
+            onReleased: plot.finishScrollDrag(echoScrollBarH.nearLiveEnd)
+            onCanceled: plot.finishScrollDrag(echoScrollBarH.nearLiveEnd)
             onPositionChanged: function(mouse) {
                 if (!pressed) return
                 const trackPx = echoScrollBarH.width - echoScrollBarH.thumbW
                 if (trackPx <= 0) return
                 const prog = Math.max(0, Math.min(1, (mouse.x - echoScrollBarH.grabOffsetX) / trackPx))
                 plot.timelinePosition = prog * (1.0 - plot.viewportRatio) + plot.viewportRatio
+                plot.holdLiveView()
                 updateOtherPlot(indx)
                 syncTimeToOthers()
             }
@@ -1823,6 +1851,7 @@ WaterFall {
         readonly property bool scrolledBackLive: plot.isLiveMode && scrollThumbV.progress < 0.999
         readonly property real thumbH: Math.round(((scrollMouseV.pressed || isScrolling) ? 96 : 68) * AppPalette.scale)
         readonly property real thumbW: Math.round(((scrollMouseV.pressed || isScrolling) ? 28 : 20) * AppPalette.scale)
+        readonly property bool nearLiveEnd: plot.isLiveMode && scrollThumbV.y < thumbH * 0.5
 
         visible: !plot.horizontal && plot.hasData
         opacity: (plot.scrollBarsShown || trackVisible || scrolledBackLive) ? 1.0 : 0.0
@@ -1837,12 +1866,13 @@ WaterFall {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         anchors.right: parent.right
-        anchors.topMargin: plot.scrollEdgeMargin
+        anchors.topMargin: plot.scrollEdgeMargin + liveEdgeControls.extent
         anchors.bottomMargin: plot.scrollEdgeMargin
         anchors.rightMargin: plot.scrollEdgeMargin
         width: thumbW
         z: 10
 
+        Behavior on anchors.topMargin { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
         Behavior on width    { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         Behavior on opacity  { NumberAnimation { duration: 400 } }
 
@@ -1885,7 +1915,7 @@ WaterFall {
             width: parent.width
             radius: width / 2
             color: theme.controlBorderColor
-            opacity: (scrollMouseV.pressed && plot.isLiveMode && scrollThumbV.progress > 0.85) ? 1.0 : 0.0
+            opacity: (scrollMouseV.pressed && echoScrollBarV.nearLiveEnd) ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { duration: 150 } }
         }
 
@@ -1898,7 +1928,7 @@ WaterFall {
             color: "transparent"
             border.color: theme.controlBorderColor
             border.width: 2
-            opacity: (scrollMouseV.pressed && plot.isLiveMode && scrollThumbV.progress > 0.85) ? 0.65 : 0.0
+            opacity: (scrollMouseV.pressed && echoScrollBarV.nearLiveEnd) ? 0.65 : 0.0
             Behavior on opacity { NumberAnimation { duration: 150 } }
         }
 
@@ -1947,15 +1977,11 @@ WaterFall {
                 echoScrollBarV.grabOffsetY = mouse.y - scrollThumbV.y
                 if (echoScrollBarV.grabOffsetY < 0 || echoScrollBarV.grabOffsetY > echoScrollBarV.thumbH)
                     echoScrollBarV.grabOffsetY = echoScrollBarV.thumbH / 2
+                plot.holdLiveView()
+                syncTimeToOthers()
             }
-            onReleased: {
-                if (plot.isLiveMode && scrollThumbV.progress > 0.85)
-                    snapToEndV.start()
-            }
-            onCanceled: {
-                if (plot.isLiveMode && scrollThumbV.progress > 0.85)
-                    snapToEndV.start()
-            }
+            onReleased: plot.finishScrollDrag(echoScrollBarV.nearLiveEnd)
+            onCanceled: plot.finishScrollDrag(echoScrollBarV.nearLiveEnd)
             onPositionChanged: function(mouse) {
                 if (!pressed) return
                 const trackPx = echoScrollBarV.height - echoScrollBarV.thumbH
@@ -1963,9 +1989,98 @@ WaterFall {
                 const visualProg = Math.max(0, Math.min(1, (mouse.y - echoScrollBarV.grabOffsetY) / trackPx))
                 const prog = 1.0 - visualProg
                 plot.timelinePosition = prog * (1.0 - plot.viewportRatio) + plot.viewportRatio
+                plot.holdLiveView()
                 updateOtherPlot(indx)
                 syncTimeToOthers()
             }
+        }
+    }
+
+    Item {
+        id: liveEdgeControls
+
+        readonly property int size: Tokens.controlHMd
+        readonly property bool dragging: scrollMouseH.pressed || scrollMouseV.pressed
+        readonly property bool endWanted: plot.hasData && plot.isLiveMode
+                                          && (plot.liveHoldActive
+                                              || (plot.horizontal ? echoScrollBarH.scrolledBackLive : echoScrollBarV.scrolledBackLive))
+        readonly property bool countWanted: plot.hasData && plot.liveHoldActive
+        property bool endShown: false
+        property bool countShown: false
+        readonly property real endExtent: endShown ? size + plot.liveEdgeGap : 0
+        readonly property real extent: endExtent + (countShown ? size + plot.liveEdgeGap : 0)
+
+        function syncShown() {
+            if (dragging)
+                return
+            endShown = endWanted
+            countShown = countWanted
+        }
+
+        onEndWantedChanged: syncShown()
+        onCountWantedChanged: syncShown()
+        onDraggingChanged: syncShown()
+        Component.onCompleted: syncShown()
+
+        function edgeX(offset) {
+            return plot.horizontal ? plot.width - plot.scrollEdgeMargin - offset - size
+                                   : echoScrollBarV.x + (echoScrollBarV.width - size) / 2
+        }
+        function edgeY(offset) {
+            return plot.horizontal ? echoScrollBarH.y + (echoScrollBarH.height - size) / 2
+                                   : plot.scrollEdgeMargin + offset
+        }
+
+        anchors.fill: parent
+        z: 11
+
+        KCircleIconButton {
+            id: liveHoldCountButton
+            objectName: "echogramLiveHoldCount"
+            width: liveEdgeControls.size
+            height: liveEdgeControls.size
+            x: liveEdgeControls.edgeX(liveEdgeControls.endExtent)
+            y: liveEdgeControls.edgeY(liveEdgeControls.endExtent)
+            hitPadding: plot.liveEdgeGap / 2
+            glyph: String(Math.max(1, plot.liveHoldSeconds))
+            glyphPixelSize: Math.round(liveEdgeControls.size * 0.45)
+            fillColor: AppPalette.card
+            fillHoverColor: AppPalette.cardHover
+            borderWidth: 0
+            toolTipText: qsTr("Resume scrolling now")
+            opacity: liveEdgeControls.countShown ? 1.0 : 0.0
+            scale: liveEdgeControls.countShown ? 1.0 : 0.6
+            visible: opacity > 0.01
+            onClicked: if (liveEdgeControls.countShown) plot.resumeLiveScroll()
+
+            Behavior on x       { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+            Behavior on y       { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+            Behavior on opacity { NumberAnimation { duration: 170; easing.type: Easing.OutCubic } }
+            Behavior on scale   { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+        }
+
+        KCircleIconButton {
+            id: liveEndButton
+            objectName: "echogramLiveEndButton"
+            width: liveEdgeControls.size
+            height: liveEdgeControls.size
+            x: liveEdgeControls.edgeX(0)
+            y: liveEdgeControls.edgeY(0)
+            hitPadding: plot.liveEdgeGap / 2
+            iconSource: "qrc:/icons/ui/arrow_bar_to_up.svg"
+            iconRotation: plot.horizontal ? 90 : 0
+            iconTintColor: AppPalette.text
+            fillColor: AppPalette.card
+            fillHoverColor: AppPalette.cardHover
+            borderWidth: 0
+            toolTipText: qsTr("Scroll to the newest data")
+            opacity: liveEdgeControls.endShown ? 1.0 : 0.0
+            scale: liveEdgeControls.endShown ? 1.0 : 0.6
+            visible: opacity > 0.01
+            onClicked: if (liveEdgeControls.endShown) plot.returnToLiveNow()
+
+            Behavior on opacity { NumberAnimation { duration: 170; easing.type: Easing.OutCubic } }
+            Behavior on scale   { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
         }
     }
 }

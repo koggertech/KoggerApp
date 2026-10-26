@@ -35,7 +35,159 @@ qPlot2D::qPlot2D(QQuickItem* parent)
     setAcceptedMouseButtons(Qt::AllButtons);
 //    setFillColor(QColor(255, 255, 255));
 
+    liveHoldTimer_ = new QTimer(this);
+    liveHoldTimer_->setSingleShot(true);
+    liveHoldTimer_->setInterval(5000);
+    connect(liveHoldTimer_, &QTimer::timeout, this, &qPlot2D::resumeLiveScroll);
+
+    liveHoldTickTimer_ = new QTimer(this);
+    liveHoldTickTimer_->setInterval(250);
+    connect(liveHoldTickTimer_, &QTimer::timeout, this, &qPlot2D::liveHoldChanged);
+
     _isHorizontal = false;
+}
+
+void qPlot2D::setLiveHoldEnabled(bool enabled)
+{
+    if (liveHoldEnabled_ == enabled) {
+        return;
+    }
+    liveHoldEnabled_ = enabled;
+    if (!enabled) {
+        cancelLiveHold();
+    }
+    emit liveHoldChanged();
+}
+
+void qPlot2D::setLiveHoldPaused(bool paused)
+{
+    if (liveHoldPaused_ == paused) {
+        return;
+    }
+    const bool wasPaused = liveHoldPausedNow();
+    liveHoldPaused_ = paused;
+    applyLiveHoldPause(wasPaused);
+    core.updateLiveHoldPause();
+    emit liveHoldChanged();
+}
+
+void qPlot2D::setLiveHoldSyncPaused(bool paused)
+{
+    if (liveHoldSyncPaused_ == paused) {
+        return;
+    }
+    const bool wasPaused = liveHoldPausedNow();
+    liveHoldSyncPaused_ = paused;
+    applyLiveHoldPause(wasPaused);
+    emit liveHoldChanged();
+}
+
+bool qPlot2D::liveHoldPausedNow() const
+{
+    return liveHoldPaused_ || liveHoldSyncPaused_;
+}
+
+void qPlot2D::applyLiveHoldPause(bool wasPaused)
+{
+    const bool paused = liveHoldPausedNow();
+    if (paused == wasPaused || !liveHold_) {
+        return;
+    }
+    if (paused) {
+        liveHoldTimer_->stop();
+    }
+    else {
+        liveHoldTimer_->start();
+    }
+}
+
+int qPlot2D::liveHoldSeconds() const
+{
+    if (!liveHold_) {
+        return 0;
+    }
+    const int remainingMs = liveHoldTimer_->isActive() ? liveHoldTimer_->remainingTime() : liveHoldTimer_->interval();
+    return static_cast<int>(std::ceil(remainingMs / 1000.0));
+}
+
+bool qPlot2D::atLiveEnd() const
+{
+    return cursor_.position >= 1.0f - 0.5f / static_cast<float>(datasetPtr_->size());
+}
+
+void qPlot2D::holdLiveView()
+{
+    if (!liveHoldEnabled_ || !hasData()) {
+        return;
+    }
+
+    liveHoldFromEnd_ = atLiveEnd();
+    startLiveHold();
+    core.broadcastLiveHold(this);
+}
+
+void qPlot2D::joinLiveHold(bool followsSource)
+{
+    if (!liveHoldEnabled_ || !hasData()) {
+        return;
+    }
+
+    if (followsSource || !liveHold_) {
+        liveHoldFromEnd_ = atLiveEnd();
+    }
+    startLiveHold();
+}
+
+void qPlot2D::startLiveHold()
+{
+    const bool wasHeld = liveHold_;
+    liveHold_ = true;
+    if (!liveHoldPausedNow()) {
+        liveHoldTimer_->start();
+    }
+    if (!liveHoldTickTimer_->isActive()) {
+        liveHoldTickTimer_->start();
+    }
+    if (!wasHeld) {
+        emit liveHoldChanged();
+    }
+}
+
+void qPlot2D::cancelLiveHold()
+{
+    liveHoldTimer_->stop();
+    liveHoldTickTimer_->stop();
+    if (liveHold_) {
+        liveHold_ = false;
+        emit liveHoldChanged();
+    }
+}
+
+void qPlot2D::resumeLiveScroll()
+{
+    if (!liveHold_) {
+        return;
+    }
+    releaseLiveHold(false);
+    core.broadcastLiveHoldEnd(this, false);
+}
+
+void qPlot2D::returnToLiveNow()
+{
+    if (!liveHoldEnabled_) {
+        return;
+    }
+    releaseLiveHold(true);
+    core.broadcastLiveHoldEnd(this, true);
+}
+
+void qPlot2D::releaseLiveHold(bool toLiveEnd)
+{
+    const bool snapToEnd = toLiveEnd || (liveHold_ && liveHoldFromEnd_);
+    cancelLiveHold();
+    if (snapToEnd && liveHoldEnabled_) {
+        emit liveReturnRequested();
+    }
 }
 
 void qPlot2D::paint(QPainter *painter)
@@ -373,6 +525,13 @@ void qPlot2D::horScrollEvent(int delta) {
     if (cursor_.position < minPos) {
         Plot2D::setTimelinePosition(minPos);
     }
+
+    if (hasData() && atLiveEnd()) {
+        cancelLiveHold();
+    }
+    else {
+        holdLiveView();
+    }
 }
 
 void qPlot2D::verZoomEvent(int delta) {
@@ -418,6 +577,9 @@ void qPlot2D::setPlotEnabled(bool state)
     }
     Plot2D::setPlotEnabled(state);
     Q_EMIT plotEnabledChanged();
+    if (liveHoldPaused_) {
+        core.updateLiveHoldPause();
+    }
     if (state) {
         m_updateTimer->start(30);
         update();
