@@ -496,8 +496,6 @@ onAutopilotOnlineChanged: {
         _autopilotAutoOpening = true
         autopilotPopupOpen = true
         _autopilotAutoOpening = false
-    } else if (!autopilotOnline && _autopilotWasOnline && autopilotPopupOpen) {
-        autopilotPopupOpen = false
     }
     _autopilotWasOnline = autopilotOnline
 }
