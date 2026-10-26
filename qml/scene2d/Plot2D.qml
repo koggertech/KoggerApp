@@ -16,6 +16,8 @@ WaterFall {
     property bool scrollBarsShown: true
     property bool isLiveMode: core.openedFilePath.length === 0
     property bool pointerHeld: false
+    property bool _holdBeforeTap: false
+    property real _lastPressMs: 0
     liveHoldEnabled: isLiveMode
     liveHoldPaused: pointerHeld || pinchActive || scrollMouseH.pressed || scrollMouseV.pressed || contactDialog.visible
                     || (typeof core !== "undefined" && core && core.contactPlacementArmed)
@@ -272,6 +274,10 @@ WaterFall {
         markMouseKeyboardInput()
         pointerHeld = true
         cancelSmoothScroll()
+        const now = Date.now()
+        if (now - _lastPressMs > 500)
+            _holdBeforeTap = liveHoldActive
+        _lastPressMs = now
         holdLiveView()
         scrollBarsShown = true
         scrollHideTimer.restart()
@@ -335,6 +341,16 @@ WaterFall {
             snapToEndV.stop()
             plot.smoothHorScroll(angleDelta.y, true)
         }
+    }
+
+    function endScrollbarDrag(nearLiveEnd) {
+        endTimelineDrag()
+        finishScrollDrag(nearLiveEnd)
+    }
+
+    function releaseTapHold() {
+        if (!_holdBeforeTap && liveHoldActive)
+            resumeLiveScroll()
     }
 
     function finishScrollDrag(nearLiveEnd) {
@@ -1744,7 +1760,13 @@ WaterFall {
         Connections {
             target: plot
             function onTimelinePositionChanged() {
-                if (scrollMouseH.pressed) return
+                if (scrollMouseH.pressed) {
+                    if (plot.timelinePosition !== echoScrollBarH.prevTimelinePos) {
+                        echoScrollBarH.prevTimelinePos = plot.timelinePosition
+                        syncTimeToOthers()
+                    }
+                    return
+                }
                 const pos = plot.timelinePosition
                 if (echoScrollBarH.scrolledBackLive) {
                     echoScrollBarH.prevTimelinePos = pos
@@ -1793,11 +1815,7 @@ WaterFall {
         Rectangle {
             id: scrollThumbH
 
-            readonly property real scrollRange: 1.0 - plot.viewportRatio
-            readonly property real progress: {
-                if (scrollRange <= 0.0001) return 1.0
-                return Math.max(0, Math.min(1, (plot.timelinePosition - plot.viewportRatio) / scrollRange))
-            }
+            readonly property real progress: plot.timelineProgress
 
             x: {
                 const restingW = Math.round(68 * AppPalette.scale)
@@ -1832,20 +1850,21 @@ WaterFall {
             onPressed: function(mouse) {
                 snapToEndH.stop()
                 plot.cancelSmoothScroll()
+                plot.beginTimelineDrag()
                 echoScrollBarH.grabOffsetX = mouse.x - scrollThumbH.x
                 if (echoScrollBarH.grabOffsetX < 0 || echoScrollBarH.grabOffsetX > echoScrollBarH.thumbW)
                     echoScrollBarH.grabOffsetX = echoScrollBarH.thumbW / 2
                 plot.holdLiveView()
                 syncTimeToOthers()
             }
-            onReleased: plot.finishScrollDrag(echoScrollBarH.nearLiveEnd)
-            onCanceled: plot.finishScrollDrag(echoScrollBarH.nearLiveEnd)
+            onReleased: plot.endScrollbarDrag(echoScrollBarH.nearLiveEnd)
+            onCanceled: plot.endScrollbarDrag(echoScrollBarH.nearLiveEnd)
             onPositionChanged: function(mouse) {
                 if (!pressed) return
                 const trackPx = echoScrollBarH.width - echoScrollBarH.thumbW
                 if (trackPx <= 0) return
                 const prog = Math.max(0, Math.min(1, (mouse.x - echoScrollBarH.grabOffsetX) / trackPx))
-                plot.timelinePosition = prog * (1.0 - plot.viewportRatio) + plot.viewportRatio
+                plot.setTimelineProgress(prog)
                 plot.holdLiveView()
                 updateOtherPlot(indx)
                 syncTimeToOthers()
@@ -1900,7 +1919,13 @@ WaterFall {
         Connections {
             target: plot
             function onTimelinePositionChanged() {
-                if (scrollMouseV.pressed) return
+                if (scrollMouseV.pressed) {
+                    if (plot.timelinePosition !== echoScrollBarV.prevTimelinePos) {
+                        echoScrollBarV.prevTimelinePos = plot.timelinePosition
+                        syncTimeToOthers()
+                    }
+                    return
+                }
                 const pos = plot.timelinePosition
                 if (echoScrollBarV.scrolledBackLive) {
                     echoScrollBarV.prevTimelinePos = pos
@@ -1949,11 +1974,7 @@ WaterFall {
         Rectangle {
             id: scrollThumbV
 
-            readonly property real scrollRange: 1.0 - plot.viewportRatio
-            readonly property real progress: {
-                if (scrollRange <= 0.0001) return 1.0
-                return Math.max(0, Math.min(1, (plot.timelinePosition - plot.viewportRatio) / scrollRange))
-            }
+            readonly property real progress: plot.timelineProgress
 
             y: {
                 const restingH = Math.round(68 * AppPalette.scale)
@@ -1989,21 +2010,22 @@ WaterFall {
             onPressed: function(mouse) {
                 snapToEndV.stop()
                 plot.cancelSmoothScroll()
+                plot.beginTimelineDrag()
                 echoScrollBarV.grabOffsetY = mouse.y - scrollThumbV.y
                 if (echoScrollBarV.grabOffsetY < 0 || echoScrollBarV.grabOffsetY > echoScrollBarV.thumbH)
                     echoScrollBarV.grabOffsetY = echoScrollBarV.thumbH / 2
                 plot.holdLiveView()
                 syncTimeToOthers()
             }
-            onReleased: plot.finishScrollDrag(echoScrollBarV.nearLiveEnd)
-            onCanceled: plot.finishScrollDrag(echoScrollBarV.nearLiveEnd)
+            onReleased: plot.endScrollbarDrag(echoScrollBarV.nearLiveEnd)
+            onCanceled: plot.endScrollbarDrag(echoScrollBarV.nearLiveEnd)
             onPositionChanged: function(mouse) {
                 if (!pressed) return
                 const trackPx = echoScrollBarV.height - echoScrollBarV.thumbH
                 if (trackPx <= 0) return
                 const visualProg = Math.max(0, Math.min(1, (mouse.y - echoScrollBarV.grabOffsetY) / trackPx))
                 const prog = 1.0 - visualProg
-                plot.timelinePosition = prog * (1.0 - plot.viewportRatio) + plot.viewportRatio
+                plot.setTimelineProgress(prog)
                 plot.holdLiveView()
                 updateOtherPlot(indx)
                 syncTimeToOthers()

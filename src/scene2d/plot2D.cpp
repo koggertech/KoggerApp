@@ -500,6 +500,14 @@ void Plot2D::setTimelinePosition(float position)
     }
 }
 
+void Plot2D::adoptTimelinePosition(float position, int datasetSize)
+{
+    if (datasetSize > 0) {
+        cursor_.last_dataset_size = datasetSize;
+    }
+    setTimelinePosition(position);
+}
+
 void Plot2D::resetAim()
 {
     cursor_.selectEpochIndx = -1;
@@ -1374,7 +1382,13 @@ void Plot2D::reindexingCursor() {
         cursor_.indexes.resize(image_width);
     }
 
-    if(cursor_.last_dataset_size > 0) {
+    if (timelineDragProgress_ >= 0.0f && data_width > 0) {
+        const float view = static_cast<float>(std::min(image_width, data_width));
+        const float width = static_cast<float>(data_width);
+        cursor_.last_dataset_size = data_width;
+        setTimelinePosition((timelineDragProgress_ * (width - view) + view) / width);
+    }
+    else if(cursor_.last_dataset_size > 0) {
         float position = timelinePosition();
 
         float last_head = round(position*cursor_.last_dataset_size);
@@ -1387,6 +1401,7 @@ void Plot2D::reindexingCursor() {
             position = float(new_head)/float(data_width);
         }
 
+        cursor_.last_dataset_size = data_width;
         setTimelinePosition(position);
     }
     cursor_.last_dataset_size = data_width;

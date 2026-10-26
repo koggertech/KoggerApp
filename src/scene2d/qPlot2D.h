@@ -21,6 +21,7 @@ public:
     Q_PROPERTY(bool horizontal READ isHorizontal() WRITE setHorizontal NOTIFY plotHorizontalChanged)
     Q_PROPERTY(float timelinePosition READ timelinePosition WRITE setTimelinePosition NOTIFY timelinePositionChanged)
     Q_PROPERTY(float viewportRatio READ viewportRatio NOTIFY timelinePositionChanged)
+    Q_PROPERTY(float timelineProgress READ timelineProgress NOTIFY timelinePositionChanged)
     Q_PROPERTY(bool hasData READ hasData NOTIFY timelinePositionChanged)
     Q_PROPERTY(bool isEnabled READ getPlotEnabled WRITE setPlotEnabled NOTIFY plotEnabledChanged)
     Q_PROPERTY(QString contactInfo      READ getContactInfo      WRITE setContactInfo     NOTIFY contactChanged)
@@ -206,6 +207,9 @@ public slots:
     Q_INVOKABLE void smoothVerScroll(qreal delta, bool sync);
     Q_INVOKABLE void smoothVerZoom(qreal delta, bool sync);
     Q_INVOKABLE void cancelSmoothScroll();
+    Q_INVOKABLE void beginTimelineDrag();
+    Q_INVOKABLE void endTimelineDrag();
+    Q_INVOKABLE void setTimelineProgress(float progress);
     Q_INVOKABLE void plotMousePosition(int x, int y, bool isSync = false);
     Q_INVOKABLE void simplePlotMousePosition(int x, int y);
     Q_INVOKABLE void onCursorMoved(int x, int y);
@@ -350,6 +354,8 @@ private:
     bool stepSmoothVer(SmoothScrollAxis& axis, bool sync);
     bool stepSmoothZoom(SmoothScrollAxis& axis, bool sync);
     void stepSmoothScroll();
+
+    float timelineProgress() const;
 
     QTimer* smoothScrollTimer_ = nullptr;
     SmoothScrollSources smoothHor_;

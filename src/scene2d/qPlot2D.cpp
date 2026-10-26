@@ -673,6 +673,53 @@ void qPlot2D::stepSmoothScroll()
     }
 }
 
+void qPlot2D::beginTimelineDrag()
+{
+    timelineDragProgress_ = timelineProgress();
+}
+
+void qPlot2D::endTimelineDrag()
+{
+    if (timelineDragProgress_ < 0.0f) {
+        return;
+    }
+    timelineDragProgress_ = -1.0f;
+    Q_EMIT timelinePositionChanged();
+}
+
+float qPlot2D::timelineProgress() const
+{
+    if (timelineDragProgress_ >= 0.0f) {
+        return timelineDragProgress_;
+    }
+    if (!hasData()) {
+        return 1.0f;
+    }
+
+    const float ratio = viewportRatio();
+    const float range = 1.0f - ratio;
+    if (range <= 0.0001f) {
+        return 1.0f;
+    }
+
+    return qBound(0.0f, (cursor_.position - ratio) / range, 1.0f);
+}
+
+void qPlot2D::setTimelineProgress(float progress)
+{
+    if (!hasData()) {
+        return;
+    }
+
+    const float clamped = qBound(0.0f, progress, 1.0f);
+    if (timelineDragProgress_ >= 0.0f) {
+        timelineDragProgress_ = clamped;
+    }
+
+    const float ratio = viewportRatio();
+    adoptTimelinePosition(clamped * (1.0f - ratio) + ratio, datasetPtr_->size());
+}
+
 void qPlot2D::plotMouseTool(int mode) {
     setMouseTool((MouseTool)mode);
 }

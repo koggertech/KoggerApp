@@ -2198,7 +2198,7 @@ void Core::broadcastEchogramTime(QObject* source, double timelinePos)
     for (int i = 0; i < plot2dList_.size(); i++) {
         auto* plot = plot2dList_.at(i);
         if (plot != nullptr && plot != src && plot->getPlotEnabled()) {
-            plot->setTimelinePosition(static_cast<float>(timelinePos));
+            plot->adoptTimelinePosition(static_cast<float>(timelinePos), src ? src->timelineDatasetSize() : 0);
             if (src && src->liveHoldActive()) {
                 plot->joinLiveHold(true);
             }

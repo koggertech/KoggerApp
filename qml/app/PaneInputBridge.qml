@@ -167,6 +167,9 @@ Item {
         if (!root.workspaceRoot || !root.workspaceRoot.store || root.leafId < 0)
             return
 
+        if (root.paneKind === "2D" && root.plotTarget && typeof root.plotTarget.releaseTapHold === "function")
+            root.plotTarget.releaseTapHold()
+
         if (root.leafId === root.workspaceRoot.store.globalPopupLeafId) {
             if (typeof root.workspaceRoot.toggleGlobalPopupFullscreen === "function")
                 root.workspaceRoot.toggleGlobalPopupFullscreen()

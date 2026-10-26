@@ -61,6 +61,8 @@ public:
 
     void setAimEpochEventState(bool state);
     void setTimelinePosition(float position);
+    void adoptTimelinePosition(float position, int datasetSize);
+    int timelineDatasetSize() const { return cursor_.last_dataset_size; }
     void resetAim();
 
     void setTimelinePositionSec(float position);
@@ -229,6 +231,7 @@ protected:
     int syncChannel_ = 1;             // which channel the synced depth belongs to (1/2)
     int aimFieldsMask_ = 0xFF;
     bool liveHold_ = false;
+    float timelineDragProgress_ = -1.0f;
 
 private:
     bool isEnabled_;
