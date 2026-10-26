@@ -19,7 +19,25 @@ WaterFall {
     liveHoldEnabled: isLiveMode
     liveHoldPaused: pointerHeld || pinchActive || scrollMouseH.pressed || scrollMouseV.pressed || contactDialog.visible
                     || (typeof core !== "undefined" && core && core.contactPlacementArmed)
-    onLiveReturnRequested: (plot.horizontal ? snapToEndH : snapToEndV).start()
+    onLiveReturnRequested: {
+        cancelSmoothScroll()
+        if (plot.horizontal)
+            snapToEndH.start()
+        else
+            snapToEndV.start()
+    }
+    onSmoothScrollStepped: function(horizontal, sync) {
+        if (horizontal) {
+            updateOtherPlot(indx)
+            if (sync)
+                syncTimeToOthers()
+        }
+        else {
+            plotCursorChanged(indx, cursorFrom(), cursorTo())
+            if (sync)
+                syncVerticalToOthers()
+        }
+    }
     onLiveHoldChanged: {
         if (liveHoldActive) {
             snapToEndH.stop()
@@ -253,6 +271,7 @@ WaterFall {
     function handlePointerPress(mouseButton, buttons, x, y, keyboardKey) {
         markMouseKeyboardInput()
         pointerHeld = true
+        cancelSmoothScroll()
         holdLiveView()
         scrollBarsShown = true
         scrollHideTimer.restart()
@@ -306,22 +325,15 @@ WaterFall {
         markMouseKeyboardInput()
 
         if (modifiers & Qt.ControlModifier) {
-            let val = -angleDelta.y
-            plot.verZoomEvent(val)
-            plotCursorChanged(indx, cursorFrom(), cursorTo())
-            syncVerticalToOthers()
+            plot.smoothVerZoom(-angleDelta.y, true)
         }
         else if (modifiers & Qt.ShiftModifier) {
-            let val = -angleDelta.y
-            plot.verScrollEvent(val)
-            plotCursorChanged(indx, cursorFrom(), cursorTo())
-            syncVerticalToOthers()
+            plot.smoothVerScroll(-angleDelta.y, true)
         }
         else {
-            let val = angleDelta.y
-            plot.horScrollEvent(val)
-            updateOtherPlot(indx)
-            syncTimeToOthers()
+            snapToEndH.stop()
+            snapToEndV.stop()
+            plot.smoothHorScroll(angleDelta.y, true)
         }
     }
 
@@ -345,6 +357,7 @@ WaterFall {
     function handlePinchStarted(centerX, centerY) {
         markTouchInput()
         pinchActive = true
+        cancelSmoothScroll()
         plot.plotMousePosition(-1, -1)
         clearPinchMovementState()
         pinchStartPos = Qt.point(centerX, centerY)
@@ -1818,6 +1831,7 @@ WaterFall {
 
             onPressed: function(mouse) {
                 snapToEndH.stop()
+                plot.cancelSmoothScroll()
                 echoScrollBarH.grabOffsetX = mouse.x - scrollThumbH.x
                 if (echoScrollBarH.grabOffsetX < 0 || echoScrollBarH.grabOffsetX > echoScrollBarH.thumbW)
                     echoScrollBarH.grabOffsetX = echoScrollBarH.thumbW / 2
@@ -1974,6 +1988,7 @@ WaterFall {
 
             onPressed: function(mouse) {
                 snapToEndV.stop()
+                plot.cancelSmoothScroll()
                 echoScrollBarV.grabOffsetY = mouse.y - scrollThumbV.y
                 if (echoScrollBarV.grabOffsetY < 0 || echoScrollBarV.grabOffsetY > echoScrollBarV.thumbH)
                     echoScrollBarV.grabOffsetY = echoScrollBarV.thumbH / 2

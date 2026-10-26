@@ -27,5 +27,10 @@ inline constexpr SmoothSpec FollowPitch{ 0.40f, 0.0f, 0.0f };
 // Mouse-wheel zoom: the accumulated wheel steps drain toward 0 (units = wheel
 // steps). smoothTime is the lever between "instant/harsh" and "laggy".
 inline constexpr SmoothSpec WheelZoom  { 0.09f, 0.0f, 0.002f };
+// Echogram wheel/hotkey scroll: the queued scroll drains toward 0 (units = wheel
+// angleDelta, 120 per notch: columns horizontally, scrollDistance ratio vertically).
+inline constexpr SmoothSpec EchogramScroll{ 0.09f, 0.0f, 0.5f };
+// 3D hotkey pan / vertical-scale nudges (units = hotkey steps / scale units).
+inline constexpr SmoothSpec KeyNudge  { 0.09f, 0.0f, 0.002f };
 
 } // namespace smooth

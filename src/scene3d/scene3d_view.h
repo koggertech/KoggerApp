@@ -426,6 +426,8 @@ private:
     void queueWheelZoom(qreal steps, const QPointF& anchorPos);
     void stepWheelZoom();
     void cancelWheelZoom();
+    void stepKeyNudge();
+    void cancelKeyNudge();
     void resetHeadingToNorth();
     void notifyManualCameraInteraction();
     void beginFollowReturn();
@@ -528,6 +530,12 @@ private:
     QTimer* wheelZoomTimer_ = nullptr;
     qreal wheelZoomResidual_ = 0.0;
     QPointF wheelZoomAnchor_;
+    QTimer* keyNudgeTimer_ = nullptr;
+    Smoother keyPanXSmoother_;
+    Smoother keyPanYSmoother_;
+    Smoother keyVScaleSmoother_;
+    QPointF keyPanResidual_;
+    qreal keyVScaleResidual_ = 0.0;
     bool followSuspended_ = false;
     bool contactFollowPending_ = false;
     bool positionsLive_ = false;

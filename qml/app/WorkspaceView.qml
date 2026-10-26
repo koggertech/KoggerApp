@@ -175,16 +175,16 @@ Item {
 
         switch (fn) {
         case "horScrollLeft":
-            applyToVisiblePlots(function(item) { item.horScrollEvent(-delta) })
+            applyToVisiblePlots(function(item) { item.smoothHorScroll(-delta, false) })
             break
         case "horScrollRight":
-            applyToVisiblePlots(function(item) { item.horScrollEvent(delta) })
+            applyToVisiblePlots(function(item) { item.smoothHorScroll(delta, false) })
             break
         case "verScrollUp":
-            applyToVisiblePlots(function(item) { item.verScrollEvent(-delta) })
+            applyToVisiblePlots(function(item) { item.smoothVerScroll(-delta, false) })
             break
         case "verScrollDown":
-            applyToVisiblePlots(function(item) { item.verScrollEvent(delta) })
+            applyToVisiblePlots(function(item) { item.smoothVerScroll(delta, false) })
             break
         case "verZoomOut":
             applyToVisiblePlots(function(item) { item.verZoomEvent(-delta) })

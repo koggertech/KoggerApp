@@ -6,7 +6,9 @@
 #include <QVariant>
 #include <dataset.h>
 #include <QTimer>
+#include <array>
 #include "plot2D.h"
+#include "smoother.h"
 
 //#define USE_PIXMAP
 
@@ -189,6 +191,7 @@ signals:
     void plotEnabledChanged();
     void liveHoldChanged();
     void liveReturnRequested();
+    void smoothScrollStepped(bool horizontal, bool sync);
 
 protected slots:
     void timerUpdater();
@@ -199,6 +202,10 @@ public slots:
     void horScrollEvent(int delta);
     void verZoomEvent(int delta);
     void verScrollEvent(int delta);
+    Q_INVOKABLE void smoothHorScroll(qreal delta, bool sync);
+    Q_INVOKABLE void smoothVerScroll(qreal delta, bool sync);
+    Q_INVOKABLE void smoothVerZoom(qreal delta, bool sync);
+    Q_INVOKABLE void cancelSmoothScroll();
     Q_INVOKABLE void plotMousePosition(int x, int y, bool isSync = false);
     Q_INVOKABLE void simplePlotMousePosition(int x, int y);
     Q_INVOKABLE void onCursorMoved(int x, int y);
@@ -331,6 +338,23 @@ private:
     void applyLiveHoldPause(bool wasPaused);
     void startLiveHold();
 
+    struct SmoothScrollAxis {
+        qreal residual = 0.0;
+        qreal carry = 0.0;
+        Smoother smoother;
+    };
+    using SmoothScrollSources = std::array<SmoothScrollAxis, 2>;
+    void queueSmoothScroll(SmoothScrollSources& sources, qreal delta, bool sync);
+    qreal drainSmoothScroll(SmoothScrollAxis& axis);
+    bool stepSmoothHor(SmoothScrollAxis& axis, bool sync);
+    bool stepSmoothVer(SmoothScrollAxis& axis, bool sync);
+    bool stepSmoothZoom(SmoothScrollAxis& axis, bool sync);
+    void stepSmoothScroll();
+
+    QTimer* smoothScrollTimer_ = nullptr;
+    SmoothScrollSources smoothHor_;
+    SmoothScrollSources smoothVer_;
+    SmoothScrollSources smoothZoom_;
     QTimer* liveHoldTimer_ = nullptr;
     QTimer* liveHoldTickTimer_ = nullptr;
     bool liveHoldEnabled_ = false;

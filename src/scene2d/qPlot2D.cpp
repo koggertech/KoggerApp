@@ -8,12 +8,19 @@
 #include <QQuickWindow>
 #include <cmath>
 #include <limits>
+#include "animation_specs.h"
 #include "core.h"
 #include "epoch_event.h"
 #include "themes.h"
 
 extern Core core;
 
+namespace {
+
+constexpr qreal kSmoothScrollMax = 960.0;
+constexpr int kSmoothScrollIntervalMs = 16;
+
+} // namespace
 
 qPlot2D::qPlot2D(QQuickItem* parent)
     : QQuickPaintedItem(parent)
@@ -43,6 +50,11 @@ qPlot2D::qPlot2D(QQuickItem* parent)
     liveHoldTickTimer_ = new QTimer(this);
     liveHoldTickTimer_->setInterval(250);
     connect(liveHoldTickTimer_, &QTimer::timeout, this, &qPlot2D::liveHoldChanged);
+
+    smoothScrollTimer_ = new QTimer(this);
+    smoothScrollTimer_->setInterval(kSmoothScrollIntervalMs);
+    smoothScrollTimer_->setTimerType(Qt::PreciseTimer);
+    connect(smoothScrollTimer_, &QTimer::timeout, this, &qPlot2D::stepSmoothScroll);
 
     _isHorizontal = false;
 }
@@ -546,6 +558,121 @@ void qPlot2D::verScrollEvent(int delta) {
     scrollDistance(delta);
 }
 
+void qPlot2D::smoothHorScroll(qreal delta, bool sync)
+{
+    queueSmoothScroll(smoothHor_, delta, sync);
+}
+
+void qPlot2D::smoothVerScroll(qreal delta, bool sync)
+{
+    queueSmoothScroll(smoothVer_, delta, sync);
+}
+
+void qPlot2D::smoothVerZoom(qreal delta, bool sync)
+{
+    queueSmoothScroll(smoothZoom_, delta, sync);
+}
+
+void qPlot2D::cancelSmoothScroll()
+{
+    smoothScrollTimer_->stop();
+    smoothHor_.fill({});
+    smoothVer_.fill({});
+    smoothZoom_.fill({});
+}
+
+void qPlot2D::queueSmoothScroll(SmoothScrollSources& sources, qreal delta, bool sync)
+{
+    if (!std::isfinite(delta) || qFuzzyIsNull(delta)) {
+        return;
+    }
+
+    auto& axis = sources[sync ? 1 : 0];
+    if (axis.residual * delta < 0.0) {
+        axis.residual = 0.0;
+        axis.carry = 0.0;
+    }
+    if (qFuzzyIsNull(axis.residual)) {
+        axis.smoother.reset();
+    }
+    axis.residual = qBound(-kSmoothScrollMax, axis.residual + delta, kSmoothScrollMax);
+
+    if (!smoothScrollTimer_->isActive()) {
+        smoothScrollTimer_->start();
+    }
+}
+
+qreal qPlot2D::drainSmoothScroll(SmoothScrollAxis& axis)
+{
+    if (qFuzzyIsNull(axis.residual)) {
+        return 0.0;
+    }
+
+    const qreal before = axis.residual;
+    const qreal after = static_cast<qreal>(axis.smoother.step(static_cast<float>(before), 0.0f, smooth::EchogramScroll));
+    axis.residual = std::fabs(after) <= smooth::EchogramScroll.deadband ? 0.0 : after;
+    return before - axis.residual;
+}
+
+bool qPlot2D::stepSmoothHor(SmoothScrollAxis& axis, bool sync)
+{
+    axis.carry += drainSmoothScroll(axis);
+    const bool done = qFuzzyIsNull(axis.residual);
+    const qreal columns = done ? std::round(axis.carry) : std::trunc(axis.carry);
+    axis.carry = done ? 0.0 : axis.carry - columns;
+    if (columns != 0.0) {
+        horScrollEvent(static_cast<int>(columns));
+        Q_EMIT smoothScrollStepped(true, sync);
+    }
+    return done;
+}
+
+bool qPlot2D::stepSmoothVer(SmoothScrollAxis& axis, bool sync)
+{
+    axis.carry += drainSmoothScroll(axis);
+    const bool done = qFuzzyIsNull(axis.residual);
+    const qreal range = std::fabs(static_cast<qreal>(cursor_.distance.to - cursor_.distance.from));
+    const int depthPixels = canvas_.height();
+    if (range > 0.0 && depthPixels > 0) {
+        const qreal pixelRatio = 1000.0 / depthPixels;
+        const qreal pixels = done ? std::round(axis.carry / pixelRatio) : std::trunc(axis.carry / pixelRatio);
+        axis.carry = done ? 0.0 : axis.carry - pixels * pixelRatio;
+        if (pixels != 0.0) {
+            offsetDistance(static_cast<float>(pixels * range / depthPixels));
+            Q_EMIT smoothScrollStepped(false, sync);
+        }
+    }
+    else if (done) {
+        axis.carry = 0.0;
+    }
+    return done;
+}
+
+bool qPlot2D::stepSmoothZoom(SmoothScrollAxis& axis, bool sync)
+{
+    const qreal zoom = drainSmoothScroll(axis);
+    if (!qFuzzyIsNull(zoom)) {
+        zoomDistance(static_cast<float>(zoom));
+        Q_EMIT smoothScrollStepped(false, sync);
+    }
+    return qFuzzyIsNull(axis.residual);
+}
+
+void qPlot2D::stepSmoothScroll()
+{
+    bool done = true;
+    for (int source = 0; source < 2; ++source) {
+        const bool sync = source == 1;
+        done &= stepSmoothHor(smoothHor_[source], sync);
+        done &= stepSmoothVer(smoothVer_[source], sync);
+        done &= stepSmoothZoom(smoothZoom_[source], sync);
+    }
+
+    if (done) {
+        smoothScrollTimer_->stop();
+    }
+}
+
 void qPlot2D::plotMouseTool(int mode) {
     setMouseTool((MouseTool)mode);
 }
@@ -585,6 +712,7 @@ void qPlot2D::setPlotEnabled(bool state)
         update();
     } else {
         m_updateTimer->stop();
+        cancelSmoothScroll();
     }
 }
 

@@ -257,6 +257,11 @@ GraphicsScene3dView::GraphicsScene3dView() :
     wheelZoomTimer_->setTimerType(Qt::PreciseTimer);
     QObject::connect(wheelZoomTimer_, &QTimer::timeout, this, [this]() { stepWheelZoom(); });
 
+    keyNudgeTimer_ = new QTimer(this);
+    keyNudgeTimer_->setInterval(16);
+    keyNudgeTimer_->setTimerType(Qt::PreciseTimer);
+    QObject::connect(keyNudgeTimer_, &QTimer::timeout, this, [this]() { stepKeyNudge(); });
+
     followTickTimer_ = new QTimer(this);
     followTickTimer_->setInterval(250);
     QObject::connect(followTickTimer_, &QTimer::timeout, this, [this]() { emit followReturnStateChanged(); });
@@ -597,6 +602,7 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
     clearComboSelectionRect();
     cancelCameraPoseAnim();
     cancelWheelZoom();
+    cancelKeyNudge();
 
     compassPressed_ = false;
     if (compass_ && mouseButton.testFlag(Qt::MouseButton::LeftButton) && !compassRect_.isEmpty()) {
@@ -1013,6 +1019,7 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
 
     if (keyboardKey == Qt::Key_Control) {
         cancelWheelZoom();
+        cancelKeyNudge();
         cancelVScaleAnim();
         float tempVerticalScale = m_verticalScale;
         angleDelta.y() > 0.0f ? tempVerticalScale += 0.3f : tempVerticalScale -= 0.3f;
@@ -1045,6 +1052,7 @@ void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF&
 {
     cancelCameraPoseAnim();
     cancelWheelZoom();
+    cancelKeyNudge();
 
     const qreal dx = currCenter.x() - prevCenter.x();
     const qreal dy = currCenter.y() - prevCenter.y();
@@ -1190,29 +1198,35 @@ void GraphicsScene3dView::zoomStepTrigger(qreal delta)
         return;
     }
 
-    const QPointF anchor(width() * 0.5, height() * 0.5);
-    zoomAroundScreenAnchor(delta * 0.3f, anchor);
-    updatePlaneGrid();
-    QQuickFramebufferObject::update();
-    onCameraMoved();
+    cancelCameraPoseAnim();
+    queueWheelZoom(delta * 0.3, QPointF(width() * 0.5, height() * 0.5));
 }
 void GraphicsScene3dView::panStepTrigger(qreal dx, qreal dy)
 {
-    if (!m_camera) {
+    if (!m_camera || !std::isfinite(dx) || !std::isfinite(dy)) {
         return;
     }
 
-    const float dist = std::max(1.0f, static_cast<float>(m_camera->distForMapView()));
-    const float step = std::max(5.0f, dist * 0.12f);
+    cancelCameraPoseAnim();
 
-    m_camera->m_lookAt.setX(m_camera->m_lookAt.x() + static_cast<float>(dx * 0.2f) * step);
-    m_camera->m_lookAt.setY(m_camera->m_lookAt.y() + static_cast<float>(dy * 0.2f) * step);
-    m_camera->updateViewMatrix();
+    if (keyPanResidual_.x() * dx < 0.0) {
+        keyPanResidual_.setX(0.0);
+    }
+    if (keyPanResidual_.y() * dy < 0.0) {
+        keyPanResidual_.setY(0.0);
+    }
+    if (qFuzzyIsNull(keyPanResidual_.x())) {
+        keyPanXSmoother_.reset();
+    }
+    if (qFuzzyIsNull(keyPanResidual_.y())) {
+        keyPanYSmoother_.reset();
+    }
+    keyPanResidual_ += QPointF(dx, dy);
 
     notifyManualCameraInteraction();
-    updatePlaneGrid();
-    QQuickFramebufferObject::update();
-    onCameraMoved();
+    if (!keyNudgeTimer_->isActive()) {
+        keyNudgeTimer_->start();
+    }
 }
 void GraphicsScene3dView::zStepTrigger(qreal delta)
 {
@@ -1221,13 +1235,27 @@ void GraphicsScene3dView::zStepTrigger(qreal delta)
     }
 
     cancelVScaleAnim();
-    setVerticalScale(m_verticalScale + static_cast<float>(delta * 0.3f));
+
+    const qreal step = delta * 0.3;
+    if (keyVScaleResidual_ * step < 0.0) {
+        keyVScaleResidual_ = 0.0;
+    }
+    if (qFuzzyIsNull(keyVScaleResidual_)) {
+        keyVScaleSmoother_.reset();
+    }
+    keyVScaleResidual_ += step;
+
+    if (!keyNudgeTimer_->isActive()) {
+        keyNudgeTimer_->start();
+    }
 }
 void GraphicsScene3dView::resetCameraAngleTrigger()
 {
     if (!m_camera || !m_axesThumbnailCamera) {
         return;
     }
+
+    cancelKeyNudge();
 
     m_camera->resetRotationAngle();
     m_axesThumbnailCamera->resetRotationAngle();
@@ -2332,6 +2360,7 @@ void GraphicsScene3dView::setMissionEditorActive(bool active)
     animator_.cancel(ChHeading);
     cancelVScaleAnim();
     cancelWheelZoom();
+    cancelKeyNudge();
     cancelFollowReturn();
 
     if (active) {
@@ -2386,6 +2415,7 @@ void GraphicsScene3dView::missionFocusBounds(const QVector3D& minB, const QVecto
 
     cancelCameraPoseAnim();
     cancelWheelZoom();
+    cancelKeyNudge();
 
     const QVector2D startRot = m_camera->getRotAngle();
     const float twoPi = 2.0f * static_cast<float>(M_PI);
@@ -2498,6 +2528,8 @@ void GraphicsScene3dView::setSceneBoundingBoxVisible(bool visible)
 
 void GraphicsScene3dView::fitAllInView()
 {
+    cancelKeyNudge();
+
     auto maxSize = std::max(m_bounds.width(),
                             std::max(m_bounds.height(),
                                      m_bounds.length()));
@@ -2541,6 +2573,7 @@ void GraphicsScene3dView::setCameraAngles(qreal yawDeg, qreal pitchDeg)
 
     cancelCameraPoseAnim();
     cancelWheelZoom();
+    cancelKeyNudge();
 
     const qreal yawNorm = std::fmod(std::fmod(yawDeg, 360.0) + 360.0, 360.0);
     const qreal pitchClamped = std::clamp(pitchDeg, 0.0, 90.0);
@@ -2560,6 +2593,8 @@ void GraphicsScene3dView::setCancelZoomView()
 }
 
 void GraphicsScene3dView::setMapView() {
+    cancelKeyNudge();
+
     auto datasetLlaRef = datasetPtr_->getLlaRef();
     if (datasetLlaRef.isInit) {
         m_camera->viewLlaRef_ = datasetPtr_->getLlaRef();
@@ -2583,6 +2618,7 @@ void GraphicsScene3dView::setMapViewAnimated()
 {
     cancelCameraPoseAnim();
     cancelWheelZoom();
+    cancelKeyNudge();
 
     if (!m_camera || !datasetPtr_) {
         return;
@@ -2696,6 +2732,59 @@ void GraphicsScene3dView::cancelWheelZoom()
     }
     wheelZoomResidual_ = 0.0;
     wheelZoomSmoother_.reset();
+}
+
+void GraphicsScene3dView::stepKeyNudge()
+{
+    auto drain = [](qreal& residual, Smoother& smoother) -> qreal {
+        if (qFuzzyIsNull(residual)) {
+            return 0.0;
+        }
+        const qreal before = residual;
+        const qreal after = static_cast<qreal>(smoother.step(static_cast<float>(before), 0.0f, smooth::KeyNudge));
+        residual = std::fabs(after) <= smooth::KeyNudge.deadband ? 0.0 : after;
+        return before - residual;
+    };
+
+    qreal panX = keyPanResidual_.x();
+    qreal panY = keyPanResidual_.y();
+    const qreal appliedX = drain(panX, keyPanXSmoother_);
+    const qreal appliedY = drain(panY, keyPanYSmoother_);
+    keyPanResidual_ = QPointF(panX, panY);
+
+    if (m_camera && (!qFuzzyIsNull(appliedX) || !qFuzzyIsNull(appliedY))) {
+        const float dist = std::max(1.0f, static_cast<float>(m_camera->distForMapView()));
+        const float step = std::max(5.0f, dist * 0.12f) * 0.2f;
+        m_camera->m_lookAt.setX(m_camera->m_lookAt.x() + static_cast<float>(appliedX) * step);
+        m_camera->m_lookAt.setY(m_camera->m_lookAt.y() + static_cast<float>(appliedY) * step);
+        m_camera->updateViewMatrix();
+
+        notifyManualCameraInteraction();
+        updatePlaneGrid();
+        QQuickFramebufferObject::update();
+        onCameraMoved();
+    }
+
+    const qreal appliedScale = drain(keyVScaleResidual_, keyVScaleSmoother_);
+    if (!qFuzzyIsNull(appliedScale)) {
+        setVerticalScale(m_verticalScale + static_cast<float>(appliedScale));
+    }
+
+    if (keyPanResidual_.isNull() && qFuzzyIsNull(keyVScaleResidual_)) {
+        keyNudgeTimer_->stop();
+    }
+}
+
+void GraphicsScene3dView::cancelKeyNudge()
+{
+    if (keyNudgeTimer_) {
+        keyNudgeTimer_->stop();
+    }
+    keyPanResidual_ = QPointF();
+    keyVScaleResidual_ = 0.0;
+    keyPanXSmoother_.reset();
+    keyPanYSmoother_.reset();
+    keyVScaleSmoother_.reset();
 }
 
 void GraphicsScene3dView::zoomButtonAnimated(qreal steps)
@@ -2819,6 +2908,7 @@ void GraphicsScene3dView::setVerticalScale(float scale)
 void GraphicsScene3dView::resetVerticalScale()
 {
     cancelVScaleAnim();
+    cancelKeyNudge();
 
     const float start = m_verticalScale;
     if (std::fabs(start - 1.0f) < 1e-4f) {

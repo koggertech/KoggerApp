@@ -951,6 +951,32 @@ void Plot2D::scrollDistance(float ratio)
     plotUpdate();
 }
 
+void Plot2D::offsetDistance(float offset)
+{
+    cursor_.distance.mode = AutoRangeNone;
+
+    float from = cursor_.distance.from;
+    float to = cursor_.distance.to;
+
+    if (from < to) {
+        from += offset;
+        to += offset;
+        if (!cursor_.isChannelDoubled() && from < 0) {
+            to -= from;
+            from = 0;
+        }
+    }
+    else if (from > to) {
+        from -= offset;
+        to -= offset;
+    }
+
+    cursor_.distance.from = from;
+    cursor_.distance.to = to;
+
+    plotUpdate();
+}
+
 void Plot2D::setMousePosition(int x, int y, bool isSync) {
     syncDepthValid_ = false;
     if (!datasetPtr_ || canvas_.width() <= 0 || canvas_.height() <= 0) {
