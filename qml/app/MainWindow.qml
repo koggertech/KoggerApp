@@ -1652,6 +1652,8 @@ ApplicationWindow {
             anchors.rightMargin: root.settingsInsetRight
             anchors.bottomMargin: consoleDrawer.height
             store: workspaceStore
+            controlsAvoidRect: hotActions.visible ? Qt.rect(hotActions.x, hotActions.y, hotActions.width, hotActions.barHeight)
+                                                  : Qt.rect(0, 0, 0, 0)
             usblPlan: appUsblPlan
             usblNetwork: appNodesStore
             secondaryPlotItem: secondaryContent ? secondaryContent.plot2DInstance : null

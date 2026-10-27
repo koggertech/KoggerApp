@@ -13,6 +13,18 @@ WaterFall {
     id: plot
 
     property bool is3dVisible: false
+    property rect controlsAvoidRect: Qt.rect(0, 0, 0, 0)
+    readonly property real controlsTopClearance: {
+        const r = controlsAvoidRect
+        if (r.width <= 0 || r.height <= 0 || width <= 0 || height <= 0)
+            return 0
+        const origin = plot.mapToItem(null, 0, 0)
+        const columnLeft = origin.x + Math.round(10 * AppPalette.scale) + edgeSafetyMargin
+        const columnRight = columnLeft + controlButtonSize
+        if (r.x >= columnRight || r.x + r.width <= columnLeft || r.y + r.height <= origin.y)
+            return 0
+        return r.y + r.height - origin.y
+    }
     property bool scrollBarsShown: true
     property bool isLiveMode: core.openedFilePath.length === 0
     property bool pointerHeld: false
@@ -556,8 +568,6 @@ WaterFall {
     ColumnLayout {
         id: settingsRow
 
-        readonly property bool _shiftRight: indx === 1 && !is3dVisible
-                                            && height > plot.height - 170 * theme.resCoeff
         readonly property int _scrollClearance: Math.round(44 * AppPalette.scale)
 
         property int levelStart: 10
@@ -565,6 +575,7 @@ WaterFall {
         readonly property int  _levelReserve: 2 * plot.controlButtonSize + 2 * plot.edgeSafetyMargin
                                               + Math.round(122 * AppPalette.scale)
                                               + (scaleSlot.shown ? plot.controlButtonSize + spacing : 0)
+                                              + Math.max(0, plot.controlsTopClearance - plot.edgeSafetyMargin)
         readonly property real _levelCtrlH: theme ? theme.controlHeight : 26
         readonly property int  _rawCoeff: Math.floor((plot.height - _levelReserve) / _levelCtrlH)
         readonly property bool sliderFits: _rawCoeff >= 3
@@ -592,7 +603,6 @@ WaterFall {
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         anchors.leftMargin: Math.round(10 * AppPalette.scale) + plot.edgeSafetyMargin
-                            + (_shiftRight ? width + Math.round(12 * AppPalette.scale) : 0)
         anchors.bottomMargin: plot.edgeSafetyMargin + _scrollClearance
         spacing: Math.round(6 * AppPalette.scale)
 
