@@ -17,8 +17,8 @@ exact steps that produced every file here.
 | `llvm-mingw-x64` | `libSDL3.a` | static, Qt llvm-mingw 17.0.6 |
 | `arm64-v8a` | `libSDL3.so` | shared, NDK r27d, `android-28`, 16 KB page aligned |
 | `armeabi-v7a` | `libSDL3.so` | shared, NDK r27d, `android-28` |
-| `gcc` | `libSDL3.a` | static, x86_64 Linux host — not built yet |
-| `aarch64` | `libSDL3.a` | static, aarch64 Linux (native or cross) — not built yet |
+| `linux-x86_64` | `libSDL3.a` | static, Clang 18.1.3, glibc 2.39 (Ubuntu 24.04), udev |
+| `linux-aarch64` | `libSDL3.a` | static, aarch64 Linux (native or cross) — not built yet |
 
 ## Configuration
 
@@ -27,13 +27,13 @@ virtual joystick, power, sensor. Audio, GPU, render, camera, dialog, D-Bus and I
 Video is off on desktop and on for Android.
 
 - Windows: `SDL_XINPUT=ON`, `SDL_DIRECTX=OFF` — joystick drivers hidapi, rawinput, virtual, wgi, xinput.
-- Linux: `SDL_UNIX_CONSOLE_BUILD=ON`; udev hotplug only when `libudev-dev` was present at build time.
+- Linux: `SDL_UNIX_CONSOLE_BUILD=ON` — joystick drivers hidapi, linux, virtual; udev hotplug only when `libudev-dev` was present at build time.
 - Android: shared library, `SDL_ANDROID_JAR=OFF`, `SDL_HIDAPI_LIBUSB=OFF` — joystick drivers android, hidapi, virtual.
 
 ## Linking
 
 The root `CMakeLists.txt` (block "SDL3 game controllers") picks `lib/<kit>/` for the kit being
-built. When the file is missing — today the `gcc` and `aarch64` kits — the app still builds, just
+built. When the file is missing — today the `linux-aarch64` kit — the app still builds, just
 without game controller support, and CMake prints a `STATUS` line saying so. Adding a library here
 is all it takes to enable a kit; no CMake change is needed.
 
@@ -107,12 +107,24 @@ cmake --build build-android-<ABI>
 Check the result: `llvm-readelf -d` shows `SONAME libSDL3.so`; `llvm-readelf -l` on the arm64
 library shows LOAD alignment `0x4000` (16 KB pages).
 
-### 5. Linux — `lib/gcc/libSDL3.a`, `lib/aarch64/libSDL3.a`
+### 5. Linux — `lib/linux-x86_64/libSDL3.a`, `lib/linux-aarch64/libSDL3.a`
 
-Packages (Ubuntu/Debian): `cmake ninja-build gcc g++ pkg-config libudev-dev`; cross-compiling for
+Packages (Ubuntu/Debian): `cmake ninja-build clang pkg-config libudev-dev`; cross-compiling for
 aarch64 adds `gcc-aarch64-linux-gnu g++-aarch64-linux-gnu`. Without `libudev-dev` SDL builds
-without udev hotplug. The archive depends on the build host's glibc, so build on the oldest
-distribution the app supports.
+without udev hotplug (with it, SDL `dlopen`s `libudev.so.1` at run time — no link dependency).
+Directory names on Linux name the OS and CPU, not the compiler: SDL is plain C, so the archive
+links into the app whichever of GCC or Clang built it — what ties it to a system is glibc (below).
+On Windows the name does carry the toolchain, because llvm-mingw (UCRT) and other MinGW or MSVC
+builds are not interchangeable. It is built with the app's own Linux
+compiler anyway — Clang 18.1.3 on Ubuntu 24.04, as in the top-level README — hence
+`-DCMAKE_C_COMPILER=clang` below. Qt's own CMake and Ninja (`~/Qt/Tools/CMake/bin/cmake`,
+`-DCMAKE_MAKE_PROGRAM=~/Qt/Tools/Ninja/ninja`) work in place of the system packages.
+
+The archive is tied to the build host's glibc **at link time**. Built on Ubuntu 24.04 (glibc 2.39)
+it references `__isoc23_strtol`/`__isoc23_sscanf`/… and `strlcpy`/`strlcat`, which exist only in
+glibc ≥ 2.38: linking the app on an older distribution (Ubuntu 22.04 has 2.35) fails with undefined
+references. That matches the app's own Linux baseline (the AppImage needs glibc 2.39); to support
+an older system, rebuild SDL on it.
 
 ```bash
 cmake -S SDL3-3.4.2 -B build-linux <COMMON> -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DSDL_SHARED=OFF -DSDL_STATIC=ON -DSDL_VIDEO=OFF -DSDL_UNIX_CONSOLE_BUILD=ON
@@ -120,10 +132,13 @@ cmake --build build-linux
 strip --strip-debug build-linux/libSDL3.a
 ```
 
-Run that on an x86_64 host for `gcc`, or on the Raspberry Pi itself for `aarch64`. To cross-compile
-`aarch64` from x86_64, add
+Run that on an x86_64 host for `linux-x86_64` with `-DCMAKE_C_COMPILER=clang` added, or on the
+Raspberry Pi itself for `linux-aarch64`. To cross-compile for `linux-aarch64` from x86_64, add
 `-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++`
-and strip with `aarch64-linux-gnu-strip`.
+and strip with `aarch64-linux-gnu-strip`. The same glibc rule applies to the Pi image.
+
+Check the result: `readelf -p .comment` on the archive names the compiler, and
+`nm -u libSDL3.a | grep -E '__isoc23_|strlcpy'` shows whether it needs glibc ≥ 2.38.
 
 ### 6. Copy into this directory
 
