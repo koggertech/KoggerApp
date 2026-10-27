@@ -85,6 +85,38 @@ Column {
 
     KIsland {
         KIslandRow {
+            label: qsTr("Gamepad")
+            toolTipText: qsTr("Shows a connected game controller and which of its buttons and sticks are pressed.")
+            interactive: true
+            onClicked: page.openGamepadTest()
+
+            LogButton {
+                text: qsTr("Open")
+                onClicked: page.openGamepadTest()
+            }
+        }
+    }
+
+    function openGamepadTest() {
+        if (gamepadTestLoader.item)
+            gamepadTestLoader.item.open()
+        else
+            gamepadTestLoader.active = true
+    }
+
+    Loader {
+        id: gamepadTestLoader
+        visible: false
+        active: false
+        source: "qrc:/qml/settings/GamepadTestDialog.qml"
+        onLoaded: {
+            item.store = page.store
+            item.open()
+        }
+    }
+
+    KIsland {
+        KIslandRow {
             label: qsTr("Application log")
             caption: page.appLogPath.length ? page.appLogPath : qsTr("Log file is not active")
             stacked: true

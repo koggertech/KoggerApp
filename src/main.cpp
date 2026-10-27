@@ -38,6 +38,7 @@
 #include "instance_lock.h"
 #endif
 #include "system_battery.h"
+#include "gamepad_monitor.h"
 #include "mosaic_db.h"
 #include "language_controller.h"
 #include "app_utils.h"
@@ -474,6 +475,7 @@ int main(int argc, char *argv[])
     LanguageController langController;
     InputDeviceTracker inputDeviceTracker;
     SystemBattery systemBattery;
+    GamepadMonitor gamepadMonitor;
     core.initAfterApp();
     LinkDiscovery linkDiscovery(core.getLinkManagerWrapperPtr());
     Tutorial tutorial;
@@ -523,6 +525,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("notifications", &notifications);
     engine.rootContext()->setContextProperty("inputDeviceTracker", &inputDeviceTracker);
     engine.rootContext()->setContextProperty("systemBattery", &systemBattery);
+    engine.rootContext()->setContextProperty("gamepadMonitor", &gamepadMonitor);
     engine.rootContext()->setContextProperty("langController", &langController);
     engine.rootContext()->setContextProperty("appUtils", &appUtils);
     engine.rootContext()->setContextProperty("tutorial", &tutorial);
@@ -631,6 +634,7 @@ int main(int argc, char *argv[])
                 controlServer.registerObject(QStringLiteral("notifications"),        &notifications);
                 controlServer.registerObject(QStringLiteral("inputDeviceTracker"),   &inputDeviceTracker);
                 controlServer.registerObject(QStringLiteral("systemBattery"),        &systemBattery);
+                controlServer.registerObject(QStringLiteral("gamepadMonitor"),       &gamepadMonitor);
                 controlServer.registerObject(QStringLiteral("langController"),       &langController);
                 controlServer.registerObject(QStringLiteral("appUtils"),             &appUtils);
                 controlServer.registerObject(QStringLiteral("uiProbe"),              &uiProbe);

@@ -2,4 +2,5 @@ add_library(kogger_settings STATIC)
 qt_add_qml_module(kogger_settings
     URI settings VERSION 1.0 RESOURCE_PREFIX /qml
     QML_FILES
-        HotkeysDialog.qml)
+        HotkeysDialog.qml
+        GamepadTestDialog.qml)
