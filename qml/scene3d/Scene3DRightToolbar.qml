@@ -302,30 +302,17 @@ Item {
                     hoverEnabled: true
                 }
 
-                Rectangle {
+                KCountdownButton {
                     id: frDigit
                     anchors.right: parent.right
                     anchors.rightMargin: navArrowControl._pad + root.buttonSize + navArrowControl._gap
                     anchors.verticalCenter: parent.verticalCenter
                     width: root.buttonSize
                     height: root.buttonSize
-                    radius: height / 2
-                    color: AppPalette.card
-                    border.color: AppPalette.accentBorder
-                    border.width: 2
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: root.view ? root.view.followReturnSeconds : 0
-                        color: AppPalette.text
-                        font: theme.textFont
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: if (root.view) root.view.returnToBoatNow()
-                    }
+                    deadlineMs: root.view ? root.view.followReturnDeadlineMs : 0
+                    remainingMs: root.view ? root.view.followReturnRemainingMs : 0
+                    running: navArrowControl.pending
+                    onClicked: if (root.view) root.view.returnToBoatNow()
                 }
             }
 

@@ -2239,19 +2239,17 @@ WaterFall {
         anchors.fill: parent
         z: 11
 
-        KCircleIconButton {
+        KCountdownButton {
             id: liveHoldCountButton
             objectName: "echogramLiveHoldCount"
             width: liveEdgeControls.size
             height: liveEdgeControls.size
-            x: liveEdgeControls.edgeX(liveEdgeControls.endExtent)
-            y: liveEdgeControls.edgeY(liveEdgeControls.endExtent)
+            x: Math.round(liveEdgeControls.edgeX(liveEdgeControls.endExtent))
+            y: Math.round(liveEdgeControls.edgeY(liveEdgeControls.endExtent))
             hitPadding: plot.liveEdgeGap / 2
-            glyph: String(Math.max(1, plot.liveHoldSeconds))
-            glyphPixelSize: Math.round(liveEdgeControls.size * 0.45)
-            fillColor: AppPalette.card
-            fillHoverColor: AppPalette.cardHover
-            borderWidth: 0
+            deadlineMs: plot.liveHoldDeadlineMs
+            remainingMs: plot.liveHoldRemainingMs
+            running: plot.liveHoldRunning
             toolTipText: qsTr("Resume scrolling now")
             opacity: liveEdgeControls.countShown ? 1.0 : 0.0
             scale: liveEdgeControls.countShown ? 1.0 : 0.6

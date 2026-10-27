@@ -6,6 +6,7 @@
 #include <QPainter>
 #include <QSGSimpleTextureNode>
 #include <QQuickWindow>
+#include <QDateTime>
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -119,13 +120,25 @@ void qPlot2D::applyLiveHoldPause(bool wasPaused)
     }
 }
 
-int qPlot2D::liveHoldSeconds() const
+int qPlot2D::liveHoldRemainingMs() const
 {
     if (!liveHold_) {
         return 0;
     }
-    const int remainingMs = liveHoldTimer_->isActive() ? liveHoldTimer_->remainingTime() : liveHoldTimer_->interval();
-    return static_cast<int>(std::ceil(remainingMs / 1000.0));
+    return liveHoldTimer_->isActive() ? liveHoldTimer_->remainingTime() : liveHoldTimer_->interval();
+}
+
+double qPlot2D::liveHoldDeadlineMs() const
+{
+    if (!liveHold_ || !liveHoldTimer_->isActive()) {
+        return 0.0;
+    }
+    return static_cast<double>(QDateTime::currentMSecsSinceEpoch() + liveHoldTimer_->remainingTime());
+}
+
+int qPlot2D::liveHoldSeconds() const
+{
+    return static_cast<int>(std::ceil(liveHoldRemainingMs() / 1000.0));
 }
 
 bool qPlot2D::atLiveEnd() const
@@ -158,7 +171,6 @@ void qPlot2D::joinLiveHold(bool followsSource)
 
 void qPlot2D::startLiveHold()
 {
-    const bool wasHeld = liveHold_;
     liveHold_ = true;
     if (!liveHoldPausedNow()) {
         liveHoldTimer_->start();
@@ -166,9 +178,7 @@ void qPlot2D::startLiveHold()
     if (!liveHoldTickTimer_->isActive()) {
         liveHoldTickTimer_->start();
     }
-    if (!wasHeld) {
-        emit liveHoldChanged();
-    }
+    emit liveHoldChanged();
 }
 
 void qPlot2D::cancelLiveHold()
@@ -601,7 +611,6 @@ void qPlot2D::smoothTimeZoom(qreal delta, qreal x, qreal y, bool sync)
     }
     else {
         timeZoomAnchorEpoch_ = timelineEpochAt(timeZoomAnchorColumn_);
-        holdLiveView();
     }
 
     queueSmoothScroll(smoothTimeZoom_, delta, sync);
@@ -625,7 +634,6 @@ void qPlot2D::pinchTimeZoom(qreal prevX, qreal prevY, qreal x, qreal y, qreal fa
         return;
     }
 
-    holdLiveView();
     setTimelineZoom(zoom, columnAt(x, y), timelineEpochAt(columnAt(prevX, prevY)));
 }
 
@@ -653,9 +661,6 @@ void qPlot2D::resetHorizontalScale()
     const float center = static_cast<float>(width) * 0.5f;
     const bool followEnd = liveHoldEnabled_ && !liveHold_ && atLiveEnd();
     const float anchorEpoch = followEnd ? std::numeric_limits<float>::quiet_NaN() : timelineEpochAt(center);
-    if (!followEnd) {
-        holdLiveView();
-    }
 
     const float start = timelineZoom();
     scaleAnimator_->start(kAnimTimeZoom, anim::EchogramScaleReset,

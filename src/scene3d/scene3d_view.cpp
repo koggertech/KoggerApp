@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <QOpenGLFramebufferObject>
 #include <QQuickWindow>
+#include <QDateTime>
 #include <QVector3D>
 #include <QLineF>
 #include <QDebug>
@@ -1672,6 +1673,18 @@ bool GraphicsScene3dView::followReturnPending() const
     return followSuspended_ && positionsLive_ && followResumeTimer_ && followResumeTimer_->isActive();
 }
 
+int GraphicsScene3dView::followReturnRemainingMs() const
+{
+    return followReturnPending() ? followResumeTimer_->remainingTime() : 0;
+}
+
+double GraphicsScene3dView::followReturnDeadlineMs() const
+{
+    return followReturnPending()
+        ? static_cast<double>(QDateTime::currentMSecsSinceEpoch() + followResumeTimer_->remainingTime())
+        : 0.0;
+}
+
 int GraphicsScene3dView::followReturnSeconds() const
 {
     if (!followReturnPending()) {
@@ -1695,8 +1708,6 @@ void GraphicsScene3dView::notifyManualCameraInteraction()
         return;
     }
 
-    const bool wasPending = followReturnPending();
-
     animator_.cancel(ChFollow);
 
     followSuspended_ = true;
@@ -1708,9 +1719,7 @@ void GraphicsScene3dView::notifyManualCameraInteraction()
         followTickTimer_->start();
     }
 
-    if (!wasPending) {
-        emit followReturnStateChanged();
-    }
+    emit followReturnStateChanged();
 }
 
 void GraphicsScene3dView::beginFollowReturn()

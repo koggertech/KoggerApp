@@ -18,6 +18,7 @@ qt_add_qml_module(kogger_kqml_types
         KCoachArrow.qml
         KCoachBubble.qml
         KCombo.qml
+        KCountdownButton.qml
         KDragBar.qml
         KFocusRing.qml
         KIsland.qml

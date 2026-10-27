@@ -44,6 +44,9 @@ public:
     Q_PROPERTY(bool liveHoldPaused  READ liveHoldPaused  WRITE setLiveHoldPaused  NOTIFY liveHoldChanged)
     Q_PROPERTY(bool liveHoldActive  READ liveHoldActive  NOTIFY liveHoldChanged)
     Q_PROPERTY(int  liveHoldSeconds READ liveHoldSeconds NOTIFY liveHoldChanged)
+    Q_PROPERTY(bool liveHoldRunning READ liveHoldRunning NOTIFY liveHoldChanged)
+    Q_PROPERTY(int  liveHoldRemainingMs READ liveHoldRemainingMs NOTIFY liveHoldChanged)
+    Q_PROPERTY(double liveHoldDeadlineMs READ liveHoldDeadlineMs NOTIFY liveHoldChanged)
 
     qPlot2D(QQuickItem* parent = nullptr);
     void paint(QPainter *painter) override;
@@ -185,6 +188,9 @@ public:
     void setLiveHoldPaused(bool paused);
     bool liveHoldActive() const { return liveHold_; }
     int liveHoldSeconds() const;
+    int liveHoldRemainingMs() const;
+    double liveHoldDeadlineMs() const;
+    bool liveHoldRunning() const { return liveHold_ && !liveHoldPausedNow(); }
     Q_INVOKABLE void holdLiveView();
     Q_INVOKABLE void cancelLiveHold();
     Q_INVOKABLE void resumeLiveScroll();

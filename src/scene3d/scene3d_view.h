@@ -56,6 +56,8 @@ class GraphicsScene3dView : public QQuickFramebufferObject
     Q_PROPERTY(bool sceneContentVisible READ sceneContentVisible NOTIFY sceneContentVisibleChanged)
     Q_PROPERTY(bool followReturnPending READ followReturnPending NOTIFY followReturnStateChanged)
     Q_PROPERTY(int followReturnSeconds READ followReturnSeconds NOTIFY followReturnStateChanged)
+    Q_PROPERTY(int followReturnRemainingMs READ followReturnRemainingMs NOTIFY followReturnStateChanged)
+    Q_PROPERTY(double followReturnDeadlineMs READ followReturnDeadlineMs NOTIFY followReturnStateChanged)
     Q_PROPERTY(int syncEpochIndex READ syncEpochIndex NOTIFY syncEpochIndexChanged)
     Q_PROPERTY(bool syncLoupeOverlayVisible READ syncLoupeOverlayVisible NOTIFY syncLoupeStateChanged)
     Q_PROPERTY(int syncLoupeEpochIndex READ syncLoupeEpochIndex NOTIFY syncLoupeStateChanged)
@@ -247,6 +249,8 @@ public:
     bool sceneContentVisible() const { return sceneContentVisible_; }
     bool followReturnPending() const;
     int followReturnSeconds() const;
+    int followReturnRemainingMs() const;
+    double followReturnDeadlineMs() const;
     Dataset* dataset() const;
     void clear(bool cleanMap = false);
     void clearSurfaceViewRender();
