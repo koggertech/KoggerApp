@@ -31,11 +31,11 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
     if (cursor.selectEpochIndx != -1) {
         auto* ep = dataset->fromIndex(cursor.selectEpochIndx);
         int offsetX = 0;
-        int halfCanvas = canvas.width() / 2;
+        int halfCanvas = static_cast<int>(static_cast<float>(canvas.width()) / (2.0f * cursor.horZoom));
         int withoutHalf = dataset->size() - halfCanvas;
 
         if (cursor.selectEpochIndx >= withoutHalf) {
-            offsetX = cursor.selectEpochIndx - withoutHalf;
+            offsetX = qRound((cursor.selectEpochIndx - withoutHalf) * cursor.horZoom);
         }
 
         if (ep) {

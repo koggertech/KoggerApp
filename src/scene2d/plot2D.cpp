@@ -1,7 +1,23 @@
 #include "plot2D.h"
 #include "epoch_event.h"
 #include "qmath.h"
+#include <algorithm>
 #include <cmath>
+
+namespace {
+
+constexpr float kTimelineZoomMin = 0.1f;
+constexpr float kTimelineZoomMax = 10.0f;
+constexpr float kHeadGrid = 64.0f;
+constexpr float kDistanceZoomLimit = 10.0f;
+constexpr float kTimelineZoomStep = 0.1f;
+
+float gridPosition(float head, float base)
+{
+    return std::round(head * kHeadGrid) / kHeadGrid / base;
+}
+
+} // namespace
 
 MiniPreviewPlot2D::MiniPreviewPlot2D()
 {
@@ -504,6 +520,7 @@ void Plot2D::adoptTimelinePosition(float position, int datasetSize)
 {
     if (datasetSize > 0) {
         cursor_.last_dataset_size = datasetSize;
+        position = gridPosition(position * static_cast<float>(datasetSize), static_cast<float>(datasetSize));
     }
     setTimelinePosition(position);
 }
@@ -533,7 +550,7 @@ void Plot2D::setTimelinePositionByEpoch(int epochIndx)
         return;
     }
 
-    const int halfWindow = static_cast<int>(cursor_.indexes.size() / 2);
+    const int halfWindow = static_cast<int>(static_cast<float>(cursor_.indexes.size()) / (2.0f * cursor_.horZoom));
     float pos = epochIndx == -1
         ? cursor_.position
         : static_cast<float>(epochIndx + halfWindow) / static_cast<float>(datasetPtr_->size());
@@ -565,8 +582,73 @@ void Plot2D::scrollPosition(int columns)
         return;
     }
 
-    float new_position = timelinePosition() + (1.0f / datasetPtr_->size()) * columns;
-    setTimelinePosition(new_position);
+    const int baseSize = cursor_.last_dataset_size > 0 ? cursor_.last_dataset_size : datasetPtr_->size();
+    const float base = static_cast<float>(baseSize);
+    const float head = timelinePosition() * base + static_cast<float>(columns) / cursor_.horZoom;
+    setTimelinePosition(gridPosition(head, base));
+}
+
+void Plot2D::clampTimelineStart(float viewEpochs)
+{
+    if (!datasetPtr_ || datasetPtr_->size() <= 0) {
+        return;
+    }
+
+    const int baseSize = cursor_.last_dataset_size > 0 ? cursor_.last_dataset_size : datasetPtr_->size();
+    const float base = static_cast<float>(baseSize);
+    const float minHead = std::min(viewEpochs, base);
+    if (cursor_.position * base < minHead) {
+        setTimelinePosition(std::ceil(minHead * kHeadGrid) / kHeadGrid / base);
+    }
+}
+
+float Plot2D::timelineEpochAt(float column) const
+{
+    if (!datasetPtr_ || datasetPtr_->size() <= 0) {
+        return NAN;
+    }
+
+    const int base = cursor_.last_dataset_size > 0 ? cursor_.last_dataset_size : datasetPtr_->size();
+    const float head = cursor_.position * static_cast<float>(base);
+    return head + (column - static_cast<float>(canvas_.width())) / cursor_.horZoom - 1.0f;
+}
+
+void Plot2D::zoomTimeline(float steps, float anchorColumn, float anchorEpoch)
+{
+    if (!datasetPtr_ || datasetPtr_->size() <= 0 || canvas_.width() <= 0 || !std::isfinite(steps)) {
+        return;
+    }
+
+    setTimelineZoom(cursor_.horZoom + steps * kTimelineZoomStep, anchorColumn, anchorEpoch);
+}
+
+void Plot2D::snapTimelineZoom(float anchorColumn, float anchorEpoch)
+{
+    setTimelineZoom(std::round(cursor_.horZoom / kTimelineZoomStep) * kTimelineZoomStep, anchorColumn, anchorEpoch);
+}
+
+void Plot2D::setTimelineZoom(float zoom, float anchorColumn, float anchorEpoch)
+{
+    if (!datasetPtr_ || datasetPtr_->size() <= 0 || canvas_.width() <= 0 || !std::isfinite(zoom)) {
+        return;
+    }
+
+    zoom = std::clamp(zoom, kTimelineZoomMin, kTimelineZoomMax);
+    if (zoom == cursor_.horZoom && !std::isfinite(anchorEpoch)) {
+        return;
+    }
+    cursor_.horZoom = zoom;
+
+    if (std::isfinite(anchorEpoch)) {
+        const int baseSize = cursor_.last_dataset_size > 0 ? cursor_.last_dataset_size : datasetPtr_->size();
+        const float base = static_cast<float>(baseSize);
+        const float width = static_cast<float>(canvas_.width());
+        const float view = std::min(width / zoom, base);
+        const float head = std::clamp(anchorEpoch + 1.0f - (anchorColumn - width) / zoom, view, base);
+        setTimelinePosition(gridPosition(head, base));
+    }
+
+    plotUpdate();
 }
 
 void Plot2D::setDataChannel(bool fromGui, const ChannelId& channel, uint8_t subChannel1, const QString& portName1, const ChannelId& channel2, uint8_t subChannel2, const QString& portName2)
@@ -585,6 +667,10 @@ void Plot2D::setDataChannel(bool fromGui, const ChannelId& channel, uint8_t subC
 
         if (isfinite(from) && isfinite(to) && (to - from) > 0) {
             cursor_.distance.set(from, to);
+            if (distanceOverride_) {
+                distanceOverride_ = false;
+                cursor_.distance.mode = distanceBaseMode_;
+            }
         }
     }
 
@@ -879,6 +965,66 @@ void Plot2D::setVelocityRange(float velocity) {
 
 void Plot2D::setDistanceAutoRange(int auto_range_type) {
     cursor_.distance.mode = AutoRangeMode(auto_range_type);
+    distanceOverride_ = false;
+}
+
+void Plot2D::beginDistanceOverride()
+{
+    if (distanceOverride_) {
+        return;
+    }
+    distanceOverride_ = true;
+    distanceBaseFrom_ = cursor_.distance.from;
+    distanceBaseTo_ = cursor_.distance.to;
+    distanceBaseMode_ = cursor_.distance.mode;
+}
+
+void Plot2D::settleDistanceOverride()
+{
+    if (!distanceOverride_ || !std::isfinite(distanceBaseFrom_) || !std::isfinite(distanceBaseTo_)) {
+        return;
+    }
+
+    const float tolerance = std::max(0.01f, 0.005f * std::fabs(distanceBaseTo_ - distanceBaseFrom_));
+    if (std::fabs(cursor_.distance.from - distanceBaseFrom_) <= tolerance
+        && std::fabs(cursor_.distance.to - distanceBaseTo_) <= tolerance) {
+        cursor_.distance.from = distanceBaseFrom_;
+        cursor_.distance.to = distanceBaseTo_;
+        cursor_.distance.mode = distanceBaseMode_;
+        distanceOverride_ = false;
+    }
+}
+
+float Plot2D::distanceShift() const
+{
+    if (!distanceOverride_ || !std::isfinite(distanceBaseFrom_)) {
+        return 0.0f;
+    }
+    return cursor_.distance.from - distanceBaseFrom_;
+}
+
+float Plot2D::distanceZoom() const
+{
+    const float baseRange = std::fabs(distanceBaseTo_ - distanceBaseFrom_);
+    const float range = std::fabs(cursor_.distance.to - cursor_.distance.from);
+    if (!distanceOverride_ || !std::isfinite(baseRange) || !(range > 0.0f)) {
+        return 1.0f;
+    }
+    return baseRange / range;
+}
+
+void Plot2D::restoreDistance()
+{
+    if (!distanceOverride_) {
+        return;
+    }
+    distanceOverride_ = false;
+    cursor_.distance.mode = distanceBaseMode_;
+    if (std::isfinite(distanceBaseFrom_) && std::isfinite(distanceBaseTo_)) {
+        cursor_.distance.from = distanceBaseFrom_;
+        cursor_.distance.to = distanceBaseTo_;
+    }
+    plotUpdate();
 }
 
 void Plot2D::setDistance(float from, float to) {
@@ -887,10 +1033,12 @@ void Plot2D::setDistance(float from, float to) {
 
 void Plot2D::zoomDistance(float ratio)
 {
+    beginDistanceOverride();
     cursor_.distance.mode = AutoRangeNone;
 
     const float delta = ratio;
     if (qFuzzyIsNull(delta)) {
+        settleDistanceOverride();
         return;
     }
 
@@ -908,6 +1056,11 @@ void Plot2D::zoomDistance(float ratio)
     const float steps = delta / kWheelStep;
     float new_range = absrange * std::pow(zoomPerStep, steps);
 
+    const float baseRange = std::fabs(distanceBaseTo_ - distanceBaseFrom_);
+    if (std::isfinite(baseRange) && baseRange > 0.0f) {
+        new_range = std::clamp(new_range, baseRange / kDistanceZoomLimit, baseRange * kDistanceZoomLimit);
+    }
+
     if(new_range < 1) {
         new_range = 1;
     } else if(new_range > 500) {
@@ -922,11 +1075,13 @@ void Plot2D::zoomDistance(float ratio)
        cursor_.distance.to = cursor_.distance.from + new_range;
     }
 
+    settleDistanceOverride();
     plotUpdate();
 }
 
 void Plot2D::scrollDistance(float ratio)
 {
+    beginDistanceOverride();
     cursor_.distance.mode = AutoRangeNone;
 
     float from = cursor_.distance.from;
@@ -956,11 +1111,13 @@ void Plot2D::scrollDistance(float ratio)
         cursor_.distance.to = (to - delta_offset);
     }
 
+    settleDistanceOverride();
     plotUpdate();
 }
 
 void Plot2D::offsetDistance(float offset)
 {
+    beginDistanceOverride();
     cursor_.distance.mode = AutoRangeNone;
 
     float from = cursor_.distance.from;
@@ -982,6 +1139,7 @@ void Plot2D::offsetDistance(float offset)
     cursor_.distance.from = from;
     cursor_.distance.to = to;
 
+    settleDistanceOverride();
     plotUpdate();
 }
 
@@ -1069,14 +1227,19 @@ void Plot2D::setMousePosition(int x, int y, bool isSync) {
     if(cursor_.tool() > MouseToolNothing && !isSync) {
 
         for(int x_ind = 0; x_ind < x_length; x_ind++) {
-            int epoch_index = cursor_.getIndex(x_start + x_ind);
-
-            Epoch* epoch = datasetPtr_->fromIndex(epoch_index);
+            const int first_epoch = cursor_.getIndex(x_start + x_ind);
+            const int next_epoch = cursor_.getIndex(x_start + x_ind + 1);
+            const int last_epoch = next_epoch > first_epoch + 1 ? next_epoch - 1 : first_epoch;
 
             const ChannelId channel1 = cursor_.channel1;
             const ChannelId channel2 = cursor_.channel2;
 
-            if(epoch != nullptr) {
+            for (int epoch_indx = first_epoch; epoch_indx <= last_epoch; ++epoch_indx) {
+                Epoch* epoch = datasetPtr_->fromIndex(epoch_indx);
+                if(epoch == nullptr) {
+                    continue;
+                }
+
                 float image_y_pos = ((float)y_start + (float)x_ind*y_scale);
                 float dist = abs(image_y_pos*image_distance_ratio + distance_from);
 
@@ -1383,7 +1546,7 @@ void Plot2D::reindexingCursor() {
     }
 
     if (timelineDragProgress_ >= 0.0f && data_width > 0) {
-        const float view = static_cast<float>(std::min(image_width, data_width));
+        const float view = std::min(static_cast<float>(image_width) / cursor_.horZoom, static_cast<float>(data_width));
         const float width = static_cast<float>(data_width);
         cursor_.last_dataset_size = data_width;
         setTimelinePosition((timelineDragProgress_ * (width - view) + view) / width);
@@ -1391,7 +1554,7 @@ void Plot2D::reindexingCursor() {
     else if(cursor_.last_dataset_size > 0) {
         float position = timelinePosition();
 
-        float last_head = round(position*cursor_.last_dataset_size);
+        float last_head = std::round(position * cursor_.last_dataset_size * kHeadGrid) / kHeadGrid;
         if (liveHold_) {
             position = last_head / float(data_width);
         }
@@ -1406,15 +1569,15 @@ void Plot2D::reindexingCursor() {
     }
     cursor_.last_dataset_size = data_width;
 
-    float hor_ratio = 1.0f;
+    float hor_ratio = cursor_.horZoom;
 
     float position = timelinePosition();
 
-    int head_data_index = round(position*float(data_width));
+    const float head = position * float(data_width);
 
     int cntZeros = 0;
     for(int i = 0; i < image_width; i++) {
-        int data_index = head_data_index + round((i - image_width)/hor_ratio) - 1;
+        int data_index = static_cast<int>(std::floor(head + (i - image_width) / hor_ratio + 0.5f)) - 1;
         if(data_index >= 0 && data_index < data_width) {
              cursor_.indexes[i] = data_index;
         } else {

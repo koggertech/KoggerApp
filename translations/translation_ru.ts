@@ -8111,6 +8111,26 @@ udp://@:1234
         <source>Scroll to the newest data</source>
         <translation>К новейшим данным</translation>
     </message>
+    <message>
+        <location filename="../qml/scene2d/Plot2D.qml" line="602"/>
+        <source> m</source>
+        <translation> м</translation>
+    </message>
+    <message>
+        <location filename="../qml/scene2d/Plot2D.qml" line="624"/>
+        <source>Echogram scale changed</source>
+        <translation>Масштаб эхограммы изменён</translation>
+    </message>
+    <message>
+        <location filename="../qml/scene2d/Plot2D.qml" line="682"/>
+        <source>Reset vertical scale</source>
+        <translation>Сбросить масштаб по вертикали</translation>
+    </message>
+    <message>
+        <location filename="../qml/scene2d/Plot2D.qml" line="697"/>
+        <source>Reset horizontal scale</source>
+        <translation>Сбросить масштаб по горизонтали</translation>
+    </message>
 </context>
 <context>
     <name>PowerOffConfirmOverlay</name>

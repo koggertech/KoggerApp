@@ -2270,6 +2270,20 @@ void Core::broadcastEchogramVertical(QObject* source, double from, double to)
     }
 }
 
+void Core::broadcastEchogramVerticalReset(QObject* source)
+{
+    if (!echogramSyncView_) {
+        return;
+    }
+    auto* src = qobject_cast<qPlot2D*>(source);
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        auto* plot = plot2dList_.at(i);
+        if (plot != nullptr && plot != src && plot->getPlotEnabled()) {
+            plot->resetVerticalScale();
+        }
+    }
+}
+
 void Core::resetAim()
 {
     for (int i = 0; i < plot2dList_.size(); i++) {

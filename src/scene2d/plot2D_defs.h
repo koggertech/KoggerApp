@@ -52,6 +52,7 @@ typedef struct DatasetCursor {
 
     float position = 1;
     int last_dataset_size = 0;
+    float horZoom = 1.0f;
 
     int mouseX = -1, mouseY = -1;
     int contactX = -1, contactY = -1;

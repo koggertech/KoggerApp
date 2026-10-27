@@ -10,6 +10,8 @@
 #include "plot2D.h"
 #include "smoother.h"
 
+class Animator;
+
 //#define USE_PIXMAP
 
 
@@ -22,6 +24,11 @@ public:
     Q_PROPERTY(float timelinePosition READ timelinePosition WRITE setTimelinePosition NOTIFY timelinePositionChanged)
     Q_PROPERTY(float viewportRatio READ viewportRatio NOTIFY timelinePositionChanged)
     Q_PROPERTY(float timelineProgress READ timelineProgress NOTIFY timelinePositionChanged)
+    Q_PROPERTY(bool horizontalScaleModified READ timelineZoomModified NOTIFY timelinePositionChanged)
+    Q_PROPERTY(float horizontalScale READ timelineZoom NOTIFY timelinePositionChanged)
+    Q_PROPERTY(bool verticalScaleModified READ distanceModified NOTIFY timelinePositionChanged)
+    Q_PROPERTY(float verticalScale READ distanceZoom NOTIFY timelinePositionChanged)
+    Q_PROPERTY(float verticalShift READ distanceShift NOTIFY timelinePositionChanged)
     Q_PROPERTY(bool hasData READ hasData NOTIFY timelinePositionChanged)
     Q_PROPERTY(bool isEnabled READ getPlotEnabled WRITE setPlotEnabled NOTIFY plotEnabledChanged)
     Q_PROPERTY(QString contactInfo      READ getContactInfo      WRITE setContactInfo     NOTIFY contactChanged)
@@ -57,7 +64,7 @@ public:
 
     float viewportRatio() const {
         if (!datasetPtr_ || datasetPtr_->size() <= 0) return 1.0f;
-        const float dim = (_isHorizontal ? static_cast<float>(width()) : static_cast<float>(height())) * static_cast<float>(deviceScale_);
+        const float dim = (_isHorizontal ? static_cast<float>(width()) : static_cast<float>(height())) * static_cast<float>(deviceScale_) / cursor_.horZoom;
         return qBound(0.0f, dim / static_cast<float>(datasetPtr_->size()), 1.0f);
     }
 
@@ -83,7 +90,15 @@ public:
 
     Q_INVOKABLE float cursorFrom() const { return Plot2D::cursor_.distance.from; }
     Q_INVOKABLE float cursorTo() const { return Plot2D::cursor_.distance.to; }
-    Q_INVOKABLE void setCursorFromTo(float from, float to) { cursor_.distance.mode = AutoRangeNone; Plot2D::cursor_.distance.from = from; Plot2D::cursor_.distance.to = to; }
+    Q_INVOKABLE void setCursorFromTo(float from, float to) {
+        cancelDistanceAnimation();
+        beginDistanceOverride();
+        cursor_.distance.mode = AutoRangeNone;
+        Plot2D::cursor_.distance.from = from;
+        Plot2D::cursor_.distance.to = to;
+        settleDistanceOverride();
+        Q_EMIT timelinePositionChanged();
+    }
     Q_INVOKABLE int getAimEpochIndex() const { return cursor_.selectEpochIndx; }
     Q_INVOKABLE int firstVisibleEpochIndex() const {
         for (int i = 0; i < static_cast<int>(cursor_.indexes.size()); ++i) {
@@ -119,7 +134,7 @@ public:
             cursor_.selectEpochIndx = -1;
             return;
         }
-        const float halfWidth = static_cast<float>(qRound(width() * deviceScale_ * 0.5));
+        const float halfWidth = static_cast<float>(qRound(width() * deviceScale_ * 0.5 / cursor_.horZoom));
         const float timelinePos = static_cast<float>(epochIndx + halfWidth) / static_cast<float>(datasetPtr_->size());
         Plot2D::setTimelinePosition(qBound(0.0f, timelinePos, 1.0f));
         cursor_.selectEpochIndx = epochIndx;
@@ -206,6 +221,11 @@ public slots:
     Q_INVOKABLE void smoothHorScroll(qreal delta, bool sync);
     Q_INVOKABLE void smoothVerScroll(qreal delta, bool sync);
     Q_INVOKABLE void smoothVerZoom(qreal delta, bool sync);
+    Q_INVOKABLE void smoothTimeZoom(qreal delta, qreal x, qreal y, bool sync);
+    Q_INVOKABLE void resetHorizontalScale();
+    Q_INVOKABLE void pinchTimeZoom(qreal prevX, qreal prevY, qreal x, qreal y, qreal factor);
+    Q_INVOKABLE void settleTimeZoom();
+    Q_INVOKABLE void resetVerticalScale();
     Q_INVOKABLE void cancelSmoothScroll();
     Q_INVOKABLE void beginTimelineDrag();
     Q_INVOKABLE void endTimelineDrag();
@@ -275,7 +295,7 @@ public slots:
     void plotVelocityVisible(bool visible) { setVelocityVisible(visible); }
     void plotVelocityRange(float velocity) { setVelocityRange(velocity); }
 
-    void plotDistanceAutoRange(int auto_range_type) { setDistanceAutoRange(auto_range_type); }
+    void plotDistanceAutoRange(int auto_range_type) { setDistanceAutoRange(auto_range_type); Q_EMIT timelinePositionChanged(); }
     void plotLoupeVisible(bool state) { setLoupeVisible(state); }
     void plotLoupeSize(int size) { setLoupeSize(size); }
     void plotLoupeZoom(int zoom) { setLoupeZoom(zoom); }
@@ -353,14 +373,20 @@ private:
     bool stepSmoothHor(SmoothScrollAxis& axis, bool sync);
     bool stepSmoothVer(SmoothScrollAxis& axis, bool sync);
     bool stepSmoothZoom(SmoothScrollAxis& axis, bool sync);
+    bool stepSmoothTimeZoom(SmoothScrollAxis& axis, bool sync);
     void stepSmoothScroll();
 
     float timelineProgress() const;
+    void cancelDistanceAnimation();
 
     QTimer* smoothScrollTimer_ = nullptr;
+    Animator* scaleAnimator_ = nullptr;
     SmoothScrollSources smoothHor_;
     SmoothScrollSources smoothVer_;
     SmoothScrollSources smoothZoom_;
+    SmoothScrollSources smoothTimeZoom_;
+    float timeZoomAnchorColumn_ = 0.0f;
+    float timeZoomAnchorEpoch_ = 0.0f;
     QTimer* liveHoldTimer_ = nullptr;
     QTimer* liveHoldTickTimer_ = nullptr;
     bool liveHoldEnabled_ = false;

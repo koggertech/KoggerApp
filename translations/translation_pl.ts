@@ -8111,6 +8111,26 @@ udp://@:1234
         <source>Scroll to the newest data</source>
         <translation>Przewiń do najnowszych danych</translation>
     </message>
+    <message>
+        <location filename="../qml/scene2d/Plot2D.qml" line="602"/>
+        <source> m</source>
+        <translation> m</translation>
+    </message>
+    <message>
+        <location filename="../qml/scene2d/Plot2D.qml" line="624"/>
+        <source>Echogram scale changed</source>
+        <translation>Zmieniono skalę echogramu</translation>
+    </message>
+    <message>
+        <location filename="../qml/scene2d/Plot2D.qml" line="682"/>
+        <source>Reset vertical scale</source>
+        <translation>Resetuj skalę pionową</translation>
+    </message>
+    <message>
+        <location filename="../qml/scene2d/Plot2D.qml" line="697"/>
+        <source>Reset horizontal scale</source>
+        <translation>Resetuj skalę poziomą</translation>
+    </message>
 </context>
 <context>
     <name>PowerOffConfirmOverlay</name>

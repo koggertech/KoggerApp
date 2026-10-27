@@ -307,7 +307,9 @@ int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int 
 
 
 //    _cashPosition = wrap_start_pos;
+    int renderedPrev = -1;
     for(int column = 0; column < width; column++) {
+        int renderedNow = -1;
         if(_cash[column].data.size() != height) {
 //            _cash[column].stateColor = CashLine::CashState::CashStateNotValid;
             _cash[column].state = CashLine::CashState::CashStateNotValid;
@@ -334,7 +336,22 @@ int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int 
 
         int pool_index = cursor.getIndex(cursor_pos);
         int pool_index_safe = dataset->validIndex(pool_index);
-        if(pool_index_safe >= 0) {
+        if(pool_index_safe >= 0 && pool_index_safe == renderedPrev) {
+            _cash[column].poolIndex = pool_index_safe;
+            _cash[column].data = _cash[column - 1].data;
+            _cash[column].state = CashLine::CashState::CashStateValid;
+            _cash[column].isNeedUpdate = true;
+
+            const int16_t* cash_data = _cash[column].data.constData();
+            const int16_t cash_data_size = _cash[column].data.size();
+            uint8_t * img_data = image_data + column;
+            for (int image_row = 0; image_row < cash_data_size; image_row++) {
+                *img_data = *cash_data;
+                img_data += b_scanline;
+                cash_data++;
+            }
+            renderedNow = pool_index_safe;
+        } else if(pool_index_safe >= 0) {
 
             bool wasValidlyRendered = true;
             if (reRenderPlotIndxs_.contains(pool_index_safe)) {
@@ -375,6 +392,7 @@ int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int 
 
                     _cash[column].state = CashLine::CashState::CashStateValid;
                     _cash[column].isNeedUpdate = true;
+                    renderedNow = pool_index_safe;
                     uint8_t * img_data = image_data + column;
                     for (int image_row = 0; image_row < cash_data_size; image_row++) {
                         *img_data = *cash_data;
@@ -423,6 +441,7 @@ int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int 
             }
 
         }
+        renderedPrev = renderedNow;
     }
 
     //qInfo("Cash validate %u", cash_validate);

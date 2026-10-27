@@ -16,6 +16,7 @@ inline constexpr AnimationSpec Follow  { 900, QEasingCurve::OutCubic };
 inline constexpr AnimationSpec MapReset{ 500, QEasingCurve::OutCubic };
 inline constexpr AnimationSpec Zoom    { 220, QEasingCurve::OutCubic };
 inline constexpr AnimationSpec VScale  { 280, QEasingCurve::OutCubic };
+inline constexpr AnimationSpec EchogramScaleReset{ 280, QEasingCurve::OutCubic };
 
 } // namespace anim
 

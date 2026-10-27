@@ -110,6 +110,8 @@ WaterFall {
     property bool pinchMovementX: false
     property bool pinchMovementY: false
     property bool pinchZoomY: false
+    property bool pinchZoomX: false
+    property bool pinchAlongTime: false
     property point pinchStartPos: Qt.point(-1, -1)
     property bool pinchActive: false
 
@@ -253,6 +255,7 @@ WaterFall {
         pinchMovementX = false
         pinchMovementY = false
         pinchZoomY = false
+        pinchZoomX = false
     }
 
     function handlePointerClick(mouseButton, buttons, x, y, keyboardKey) {
@@ -330,7 +333,12 @@ WaterFall {
     function handlePointerWheel(buttons, x, y, angleDelta, modifiers, keyboardKey) {
         markMouseKeyboardInput()
 
-        if (modifiers & Qt.ControlModifier) {
+        if (modifiers & Qt.AltModifier) {
+            snapToEndH.stop()
+            snapToEndV.stop()
+            plot.smoothTimeZoom(angleDelta.y !== 0 ? angleDelta.y : angleDelta.x, x, y, true)
+        }
+        else if (modifiers & Qt.ControlModifier) {
             plot.smoothVerZoom(-angleDelta.y, true)
         }
         else if (modifiers & Qt.ShiftModifier) {
@@ -341,6 +349,19 @@ WaterFall {
             snapToEndV.stop()
             plot.smoothHorScroll(angleDelta.y, true)
         }
+    }
+
+    function resetVerticalScaleFromUi() {
+        resetVerticalScale()
+        plotCursorChanged(indx, cursorFrom(), cursorTo())
+        if (typeof core !== "undefined" && core)
+            core.broadcastEchogramVerticalReset(plot)
+    }
+
+    function resetHorizontalScaleFromUi() {
+        resetHorizontalScale()
+        updateOtherPlot(indx)
+        syncTimeToOthers()
     }
 
     function endScrollbarDrag(nearLiveEnd) {
@@ -370,13 +391,14 @@ WaterFall {
             core.broadcastEchogramVertical(plot, cursorFrom(), cursorTo())
     }
 
-    function handlePinchStarted(centerX, centerY) {
+    function handlePinchStarted(centerX, centerY, fingersHorizontal) {
         markTouchInput()
         pinchActive = true
         cancelSmoothScroll()
         plot.plotMousePosition(-1, -1)
         clearPinchMovementState()
         pinchStartPos = Qt.point(centerX, centerY)
+        pinchAlongTime = fingersHorizontal === true ? plot.horizontal : (fingersHorizontal === false && !plot.horizontal)
     }
 
     function handlePinchUpdated(prevCenterX, prevCenterY, currCenterX, currCenterY, prevScale, scale, prevAngle, angle) {
@@ -399,6 +421,12 @@ WaterFall {
             plotCursorChanged(indx, cursorFrom(), cursorTo())
             syncVerticalToOthers()
         }
+        else if (pinchZoomX) {
+            if (prevScale > 0)
+                plot.pinchTimeZoom(prevCenterX, prevCenterY, currCenterX, currCenterY, scale / prevScale)
+            updateOtherPlot(indx)
+            syncTimeToOthers()
+        }
         else {
             if (Math.abs(pinchStartPos.x - currCenterX) > pinchThresholdXAxis) {
                 pinchMovementX = true
@@ -407,13 +435,21 @@ WaterFall {
                 pinchMovementY = true
             }
             else if (scale > (1.0 + pinchZoomThreshold) || scale < (1.0 - pinchZoomThreshold)) {
-                pinchZoomY = true
+                if (pinchAlongTime)
+                    pinchZoomX = true
+                else
+                    pinchZoomY = true
             }
         }
     }
 
     function handlePinchFinished() {
         markTouchInput()
+        if (pinchZoomX) {
+            plot.settleTimeZoom()
+            updateOtherPlot(indx)
+            syncTimeToOthers()
+        }
         pinchActive = false
         plot.plotMousePosition(-1, -1)
         clearPinchMovementState()
@@ -464,6 +500,7 @@ WaterFall {
         function onActiveTransientUiChanged(who) {
             if (who !== themeSwitcher) themeSwitcher.menuOpen = false
             if (who !== levelPill) levelPill.close()
+            if (who !== scalePill) scalePill.close()
         }
     }
 
@@ -472,7 +509,8 @@ WaterFall {
         anchors.fill: parent
         enabled: !plot.externalInputRouting
 
-        onPinchStarted: plot.handlePinchStarted(pinch.center.x, pinch.center.y)
+        onPinchStarted: plot.handlePinchStarted(pinch.center.x, pinch.center.y,
+                                                Math.abs(pinch.point1.x - pinch.point2.x) >= Math.abs(pinch.point1.y - pinch.point2.y))
 
         onPinchUpdated: plot.handlePinchUpdated(pinch.previousCenter.x, pinch.previousCenter.y,
                                                  pinch.center.x, pinch.center.y,
@@ -526,6 +564,7 @@ WaterFall {
         property int levelStop: 100
         readonly property int  _levelReserve: 2 * plot.controlButtonSize + 2 * plot.edgeSafetyMargin
                                               + Math.round(122 * AppPalette.scale)
+                                              + (scaleSlot.shown ? plot.controlButtonSize + spacing : 0)
         readonly property real _levelCtrlH: theme ? theme.controlHeight : 26
         readonly property int  _rawCoeff: Math.floor((plot.height - _levelReserve) / _levelCtrlH)
         readonly property bool sliderFits: _rawCoeff >= 3
@@ -560,7 +599,126 @@ WaterFall {
         opacity: settingsFade.value
         Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
         HoverHandler { id: settingsHover }
-        IdleFade { id: settingsFade; hovered: settingsHover.hovered || themeSwitcher.menuHovered || levelPill.open }
+        IdleFade { id: settingsFade; hovered: settingsHover.hovered || themeSwitcher.menuHovered || levelPill.open || scalePill.open }
+
+        Item {
+            id: scaleSlot
+            readonly property bool vModified: plot.verticalScaleModified
+            readonly property bool hModified: plot.horizontalScaleModified
+            readonly property bool shown: plot.hasData && (vModified || hModified)
+            readonly property int chipPad: Math.round(12 * AppPalette.scale)
+            readonly property int chipFontSize: Math.round(14 * AppPalette.scale)
+
+            function formatScale(value) {
+                return value.toFixed(value < 10 ? 1 : 0) + "×"
+            }
+
+            function formatVertical() {
+                const zoom = plot.verticalScale
+                const shift = plot.verticalShift
+                const nearOne = Math.abs(zoom - 1.0) < 0.05
+                if (nearOne && Math.abs(shift) >= 0.05)
+                    return (shift >= 0 ? "+" : "−") + Math.abs(shift).toFixed(1) + qsTr(" m")
+                return nearOne ? zoom.toFixed(2) + "×" : formatScale(zoom)
+            }
+
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: plot.controlButtonSize
+            Layout.preferredHeight: plot.controlButtonSize
+            visible: shown
+            onShownChanged: if (!shown) scalePill.close()
+
+            KCircleIconButton {
+                id: scaleBtn
+                anchors.centerIn: parent
+                width: plot.controlButtonSize
+                height: plot.controlButtonSize
+                glyph: (scaleSlot.vModified ? "V" : "") + (scaleSlot.hModified ? "H" : "")
+                glyphPixelSize: Math.round((glyph.length > 1 ? 13 : 16) * AppPalette.scale)
+                glyphColor: AppPalette.text
+                fillColor: AppPalette.card
+                fillHoverColor: AppPalette.cardHover
+                borderWidth: 0
+                z: 16
+                toolTipText: qsTr("Echogram scale changed")
+                toolTipSuppressed: scalePill.open
+                onClicked: scalePill.open ? scalePill.close() : scalePill.openPill()
+            }
+
+            Rectangle {
+                id: scalePill
+                property bool open: false
+                readonly property int pad: Math.round(5 * AppPalette.scale)
+                readonly property real fullW: pad + plot.controlButtonSize + Math.round(6 * AppPalette.scale)
+                                              + scaleChips.implicitWidth + pad
+                anchors.left: scaleBtn.left
+                anchors.leftMargin: -pad
+                anchors.verticalCenter: scaleBtn.verticalCenter
+                height: plot.controlButtonSize + 2 * pad
+                width: open ? fullW : 0
+                radius: height / 2
+                clip: true
+                color: AppPalette.bg
+                border.width: 0
+                opacity: open ? 1 : 0
+                z: 15
+
+                Behavior on width   { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                Behavior on opacity { NumberAnimation { duration: 170; easing.type: Easing.OutCubic } }
+
+                function openPill() { open = true; if (typeof core !== "undefined" && core) core.setActiveTransientUi(scalePill) }
+                function close() { open = false }
+
+                TextMetrics { id: vChipMetrics; font.pixelSize: scaleSlot.chipFontSize; font.bold: true; text: vChip.glyph }
+                TextMetrics { id: hChipMetrics; font.pixelSize: scaleSlot.chipFontSize; font.bold: true; text: hChip.glyph }
+
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: scalePill.open
+                    acceptedButtons: Qt.AllButtons
+                    onPressed: function(m) { m.accepted = true }
+                    onWheel: function(w) { w.accepted = true }
+                }
+
+                Row {
+                    id: scaleChips
+                    anchors.left: parent.left
+                    anchors.leftMargin: scalePill.pad + plot.controlButtonSize + Math.round(6 * AppPalette.scale)
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Math.round(6 * AppPalette.scale)
+
+                    KCircleIconButton {
+                        id: vChip
+                        visible: scaleSlot.vModified
+                        width: vChipMetrics.width + 2 * scaleSlot.chipPad
+                        height: plot.controlButtonSize
+                        glyph: "V  " + scaleSlot.formatVertical()
+                        glyphPixelSize: scaleSlot.chipFontSize
+                        glyphColor: AppPalette.text
+                        fillColor: AppPalette.card
+                        fillHoverColor: AppPalette.cardHover
+                        borderWidth: 0
+                        toolTipText: qsTr("Reset vertical scale")
+                        onClicked: { plot.resetVerticalScaleFromUi(); scalePill.close() }
+                    }
+
+                    KCircleIconButton {
+                        id: hChip
+                        visible: scaleSlot.hModified
+                        width: hChipMetrics.width + 2 * scaleSlot.chipPad
+                        height: plot.controlButtonSize
+                        glyph: "H  " + scaleSlot.formatScale(plot.horizontalScale)
+                        glyphPixelSize: scaleSlot.chipFontSize
+                        glyphColor: AppPalette.text
+                        fillColor: AppPalette.card
+                        fillHoverColor: AppPalette.cardHover
+                        borderWidth: 0
+                        toolTipText: qsTr("Reset horizontal scale")
+                        onClicked: { plot.resetHorizontalScaleFromUi(); scalePill.close() }
+                    }
+                }
+            }
+        }
 
         KThemeSwitcher {
             id: themeSwitcher

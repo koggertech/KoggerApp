@@ -6,9 +6,11 @@
 #include <QPainter>
 #include <QSGSimpleTextureNode>
 #include <QQuickWindow>
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include "animation_specs.h"
+#include "animator.h"
 #include "core.h"
 #include "epoch_event.h"
 #include "themes.h"
@@ -19,6 +21,8 @@ namespace {
 
 constexpr qreal kSmoothScrollMax = 960.0;
 constexpr int kSmoothScrollIntervalMs = 16;
+constexpr int kAnimTimeZoom = 0;
+constexpr int kAnimDistance = 1;
 
 } // namespace
 
@@ -55,6 +59,8 @@ qPlot2D::qPlot2D(QQuickItem* parent)
     smoothScrollTimer_->setInterval(kSmoothScrollIntervalMs);
     smoothScrollTimer_->setTimerType(Qt::PreciseTimer);
     connect(smoothScrollTimer_, &QTimer::timeout, this, &qPlot2D::stepSmoothScroll);
+
+    scaleAnimator_ = new Animator(this);
 
     _isHorizontal = false;
 }
@@ -533,9 +539,8 @@ void qPlot2D::horScrollEvent(int delta) {
     }
 
     // Don't allow scrolling into empty space — clamp to valid data range
-    const float minPos = viewportRatio();
-    if (cursor_.position < minPos) {
-        Plot2D::setTimelinePosition(minPos);
+    if (hasData()) {
+        clampTimelineStart(viewportRatio() * static_cast<float>(datasetPtr_->size()));
     }
 
     if (hasData() && atLiveEnd()) {
@@ -551,34 +556,162 @@ void qPlot2D::verZoomEvent(int delta) {
 //        m_plot->verZoom(delta);
 //    }
 
+    cancelDistanceAnimation();
     zoomDistance(delta);
 }
 
 void qPlot2D::verScrollEvent(int delta) {
+    cancelDistanceAnimation();
     scrollDistance(delta);
 }
 
 void qPlot2D::smoothHorScroll(qreal delta, bool sync)
 {
+    scaleAnimator_->cancel(kAnimTimeZoom);
     queueSmoothScroll(smoothHor_, delta, sync);
 }
 
 void qPlot2D::smoothVerScroll(qreal delta, bool sync)
 {
+    cancelDistanceAnimation();
     queueSmoothScroll(smoothVer_, delta, sync);
 }
 
 void qPlot2D::smoothVerZoom(qreal delta, bool sync)
 {
+    cancelDistanceAnimation();
     queueSmoothScroll(smoothZoom_, delta, sync);
+}
+
+void qPlot2D::smoothTimeZoom(qreal delta, qreal x, qreal y, bool sync)
+{
+    const int width = canvas_.width();
+    if (!hasData() || width <= 0) {
+        return;
+    }
+
+    const float column = _isHorizontal ? static_cast<float>(x * deviceScale_)
+                                       : static_cast<float>(width - 1) - static_cast<float>(y * deviceScale_);
+    timeZoomAnchorColumn_ = std::clamp(column, 0.0f, static_cast<float>(width - 1));
+    scaleAnimator_->cancel(kAnimTimeZoom);
+
+    if (liveHoldEnabled_ && !liveHold_ && atLiveEnd()) {
+        timeZoomAnchorColumn_ = static_cast<float>(width);
+        timeZoomAnchorEpoch_ = std::numeric_limits<float>::quiet_NaN();
+    }
+    else {
+        timeZoomAnchorEpoch_ = timelineEpochAt(timeZoomAnchorColumn_);
+        holdLiveView();
+    }
+
+    queueSmoothScroll(smoothTimeZoom_, delta, sync);
+}
+
+void qPlot2D::pinchTimeZoom(qreal prevX, qreal prevY, qreal x, qreal y, qreal factor)
+{
+    const int width = canvas_.width();
+    if (!hasData() || width <= 0 || !std::isfinite(factor) || factor <= 0.0) {
+        return;
+    }
+
+    auto columnAt = [this, width](qreal px, qreal py) {
+        return _isHorizontal ? static_cast<float>(px * deviceScale_)
+                             : static_cast<float>(width - 1) - static_cast<float>(py * deviceScale_);
+    };
+
+    const float zoom = timelineZoom() * static_cast<float>(factor);
+    if (liveHoldEnabled_ && !liveHold_ && atLiveEnd()) {
+        setTimelineZoom(zoom, static_cast<float>(width), std::numeric_limits<float>::quiet_NaN());
+        return;
+    }
+
+    holdLiveView();
+    setTimelineZoom(zoom, columnAt(x, y), timelineEpochAt(columnAt(prevX, prevY)));
+}
+
+void qPlot2D::settleTimeZoom()
+{
+    const int width = canvas_.width();
+    if (!hasData() || width <= 0) {
+        return;
+    }
+
+    const float center = static_cast<float>(width) * 0.5f;
+    const bool followEnd = liveHoldEnabled_ && !liveHold_ && atLiveEnd();
+    snapTimelineZoom(center, followEnd ? std::numeric_limits<float>::quiet_NaN() : timelineEpochAt(center));
+}
+
+void qPlot2D::resetHorizontalScale()
+{
+    smoothTimeZoom_.fill({});
+    scaleAnimator_->cancel(kAnimTimeZoom);
+    const int width = canvas_.width();
+    if (!hasData() || width <= 0 || !timelineZoomModified()) {
+        return;
+    }
+
+    const float center = static_cast<float>(width) * 0.5f;
+    const bool followEnd = liveHoldEnabled_ && !liveHold_ && atLiveEnd();
+    const float anchorEpoch = followEnd ? std::numeric_limits<float>::quiet_NaN() : timelineEpochAt(center);
+    if (!followEnd) {
+        holdLiveView();
+    }
+
+    const float start = timelineZoom();
+    scaleAnimator_->start(kAnimTimeZoom, anim::EchogramScaleReset,
+                          [this, start, center, anchorEpoch](qreal value) -> void {
+        setTimelineZoom(start + (1.0f - start) * static_cast<float>(value), center, anchorEpoch);
+        Q_EMIT smoothScrollStepped(true, true);
+    },
+                          [this, center, anchorEpoch]() -> void {
+        setTimelineZoom(1.0f, center, anchorEpoch);
+        Q_EMIT smoothScrollStepped(true, true);
+    });
+}
+
+void qPlot2D::cancelDistanceAnimation()
+{
+    scaleAnimator_->cancel(kAnimDistance);
+}
+
+void qPlot2D::resetVerticalScale()
+{
+    smoothVer_.fill({});
+    smoothZoom_.fill({});
+    cancelDistanceAnimation();
+    if (!distanceModified()) {
+        return;
+    }
+
+    const float fromStart = cursor_.distance.from;
+    const float toStart = cursor_.distance.to;
+    const float fromEnd = distanceBaseFrom_;
+    const float toEnd = distanceBaseTo_;
+    if (!std::isfinite(fromStart) || !std::isfinite(toStart) || !std::isfinite(fromEnd) || !std::isfinite(toEnd)) {
+        restoreDistance();
+        return;
+    }
+
+    scaleAnimator_->start(kAnimDistance, anim::EchogramScaleReset,
+                          [this, fromStart, toStart, fromEnd, toEnd](qreal value) -> void {
+        const float t = static_cast<float>(value);
+        cursor_.distance.from = fromStart + (fromEnd - fromStart) * t;
+        cursor_.distance.to = toStart + (toEnd - toStart) * t;
+        plotUpdate();
+    },
+                          [this]() -> void {
+        restoreDistance();
+    });
 }
 
 void qPlot2D::cancelSmoothScroll()
 {
     smoothScrollTimer_->stop();
+    scaleAnimator_->cancelAll();
     smoothHor_.fill({});
     smoothVer_.fill({});
     smoothZoom_.fill({});
+    smoothTimeZoom_.fill({});
 }
 
 void qPlot2D::queueSmoothScroll(SmoothScrollSources& sources, qreal delta, bool sync)
@@ -658,6 +791,20 @@ bool qPlot2D::stepSmoothZoom(SmoothScrollAxis& axis, bool sync)
     return qFuzzyIsNull(axis.residual);
 }
 
+bool qPlot2D::stepSmoothTimeZoom(SmoothScrollAxis& axis, bool sync)
+{
+    const qreal applied = drainSmoothScroll(axis);
+    const bool done = qFuzzyIsNull(axis.residual);
+    if (!qFuzzyIsNull(applied)) {
+        zoomTimeline(static_cast<float>(applied / 120.0), timeZoomAnchorColumn_, timeZoomAnchorEpoch_);
+        if (done) {
+            snapTimelineZoom(timeZoomAnchorColumn_, timeZoomAnchorEpoch_);
+        }
+        Q_EMIT smoothScrollStepped(true, sync);
+    }
+    return done;
+}
+
 void qPlot2D::stepSmoothScroll()
 {
     bool done = true;
@@ -666,6 +813,7 @@ void qPlot2D::stepSmoothScroll()
         done &= stepSmoothHor(smoothHor_[source], sync);
         done &= stepSmoothVer(smoothVer_[source], sync);
         done &= stepSmoothZoom(smoothZoom_[source], sync);
+        done &= stepSmoothTimeZoom(smoothTimeZoom_[source], sync);
     }
 
     if (done) {

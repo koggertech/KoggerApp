@@ -145,10 +145,10 @@ Item {
         root.plotTarget.handlePointerWheel(buttons, x, y, angleDelta, modifiers, lastKeyPressed)
     }
 
-    function routePlotPinchStarted(centerX, centerY) {
+    function routePlotPinchStarted(centerX, centerY, fingersHorizontal) {
         if (!root.plotTarget || typeof root.plotTarget.handlePinchStarted !== "function")
             return
-        root.plotTarget.handlePinchStarted(centerX, centerY)
+        root.plotTarget.handlePinchStarted(centerX, centerY, fingersHorizontal)
     }
 
     function routePlotPinchUpdated(prevCenterX, prevCenterY, currCenterX, currCenterY, prevScale, scale, prevAngle, angle) {
@@ -366,6 +366,22 @@ Item {
             property real _prevScale: 1.0
             property real _prevRotation: 0
             property point _prevCenter: Qt.point(0, 0)
+            property var _grabbedPoints: []
+
+            onGrabChanged: function(transition, point) {
+                if (transition !== PointerDevice.GrabPassive && transition !== PointerDevice.GrabExclusive)
+                    return
+                const kept = pinchHandler._grabbedPoints.filter(function(p) { return p.id !== point.id })
+                kept.push({ id: point.id, x: point.scenePosition.x, y: point.scenePosition.y })
+                pinchHandler._grabbedPoints = kept.slice(-2)
+            }
+
+            function _fingersHorizontal() {
+                const pts = pinchHandler._grabbedPoints
+                if (pts.length < 2)
+                    return undefined
+                return Math.abs(pts[0].x - pts[1].x) >= Math.abs(pts[0].y - pts[1].y)
+            }
 
             onActiveChanged: {
                 if (active) {
@@ -377,8 +393,9 @@ Item {
                     pinchHandler._prevRotation = activeRotation
                     pinchHandler._prevCenter = centroid.position
                     if (root.paneKind === "2D")
-                        root.routePlotPinchStarted(centroid.position.x, centroid.position.y)
+                        root.routePlotPinchStarted(centroid.position.x, centroid.position.y, pinchHandler._fingersHorizontal())
                 } else {
+                    pinchHandler._grabbedPoints = []
                     root.markTouchInput()
                     if (root.paneKind === "2D")
                         root.routePlotPinchFinished()
