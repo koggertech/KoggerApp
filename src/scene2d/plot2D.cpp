@@ -10,6 +10,7 @@ constexpr float kTimelineZoomMin = 0.1f;
 constexpr float kTimelineZoomMax = 10.0f;
 constexpr float kHeadGrid = 64.0f;
 constexpr float kDistanceZoomLimit = 10.0f;
+constexpr float kDistanceRangeMin = 0.1f;
 constexpr float kTimelineZoomStep = 0.1f;
 
 float gridPosition(float head, float base)
@@ -1061,8 +1062,8 @@ void Plot2D::zoomDistance(float ratio)
         new_range = std::clamp(new_range, baseRange / kDistanceZoomLimit, baseRange * kDistanceZoomLimit);
     }
 
-    if(new_range < 1) {
-        new_range = 1;
+    if(new_range < kDistanceRangeMin) {
+        new_range = kDistanceRangeMin;
     } else if(new_range > 500) {
         new_range = 500;
     }
