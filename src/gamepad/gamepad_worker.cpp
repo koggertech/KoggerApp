@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
+#include <vector>
 
 #ifdef KOGGER_SDL3
 #include <SDL3/SDL.h>
@@ -19,6 +21,47 @@ constexpr qreal kAxisScale = 32767.0;
 constexpr qreal kTriggerSpan = 65535.0;
 constexpr int kTriggerBase = -32768;
 constexpr char kVirtualPadName[] = "KoggerApp virtual gamepad";
+constexpr Uint16 kVendorValve = 0x28DE;
+
+QString padFamily(SDL_Gamepad* pad)
+{
+    switch (SDL_GetGamepadType(pad)) {
+    case SDL_GAMEPAD_TYPE_XBOX360:
+    case SDL_GAMEPAD_TYPE_XBOXONE:
+        return QStringLiteral("xbox");
+    case SDL_GAMEPAD_TYPE_PS4:
+        return QStringLiteral("ps4");
+    case SDL_GAMEPAD_TYPE_PS5:
+        return QStringLiteral("ps5");
+    default:
+        break;
+    }
+    return SDL_GetGamepadVendor(pad) == kVendorValve ? QStringLiteral("steam") : QStringLiteral("generic");
+}
+
+QString faceLabel(SDL_Gamepad* pad, SDL_GamepadButton button)
+{
+    switch (SDL_GetGamepadButtonLabel(pad, button)) {
+    case SDL_GAMEPAD_BUTTON_LABEL_A:
+        return QStringLiteral("A");
+    case SDL_GAMEPAD_BUTTON_LABEL_B:
+        return QStringLiteral("B");
+    case SDL_GAMEPAD_BUTTON_LABEL_X:
+        return QStringLiteral("X");
+    case SDL_GAMEPAD_BUTTON_LABEL_Y:
+        return QStringLiteral("Y");
+    case SDL_GAMEPAD_BUTTON_LABEL_CROSS:
+        return QStringLiteral("cross");
+    case SDL_GAMEPAD_BUTTON_LABEL_CIRCLE:
+        return QStringLiteral("circle");
+    case SDL_GAMEPAD_BUTTON_LABEL_SQUARE:
+        return QStringLiteral("square");
+    case SDL_GAMEPAD_BUTTON_LABEL_TRIANGLE:
+        return QStringLiteral("triangle");
+    default:
+        return QString();
+    }
+}
 #endif
 
 void setAndroidEventRouting(bool enabled)
@@ -68,7 +111,7 @@ void GamepadWorker::start()
     }
 
     emit errorChanged(QString());
-    openFirstPad();
+    selectLatestPad();
     readState(true);
     timer_.start();
 #else
@@ -97,12 +140,14 @@ void GamepadWorker::poll()
 #ifdef KOGGER_SDL3
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
-        if (event.type == SDL_EVENT_GAMEPAD_ADDED && !pad_) {
-            openFirstPad();
+        if (event.type == SDL_EVENT_GAMEPAD_ADDED && !continuous_) {
+            selectLatestPad();
         }
         else if (event.type == SDL_EVENT_GAMEPAD_REMOVED && pad_ && event.gdevice.which == SDL_GetGamepadID(pad_)) {
             closePad();
-            openFirstPad();
+            if (!continuous_) {
+                selectLatestPad();
+            }
         }
     }
 
@@ -119,6 +164,11 @@ void GamepadWorker::setRouting(bool routing)
 void GamepadWorker::setContinuous(bool continuous)
 {
     continuous_ = continuous;
+#ifdef KOGGER_SDL3
+    if (!continuous_ && subsystemUp_) {
+        selectLatestPad();
+    }
+#endif
 }
 
 void GamepadWorker::applyRouting()
@@ -128,7 +178,7 @@ void GamepadWorker::applyRouting()
     }
 }
 
-void GamepadWorker::attachVirtualPad()
+void GamepadWorker::attachVirtualPad(int vendorId, int productId)
 {
 #ifdef KOGGER_SDL3
     if (!subsystemUp_ || virtualPad_) {
@@ -138,6 +188,8 @@ void GamepadWorker::attachVirtualPad()
     SDL_VirtualJoystickDesc desc;
     SDL_INIT_INTERFACE(&desc);
     desc.type = SDL_JOYSTICK_TYPE_GAMEPAD;
+    desc.vendor_id = Uint16(vendorId);
+    desc.product_id = Uint16(productId);
     desc.naxes = SDL_GAMEPAD_AXIS_COUNT;
     desc.nbuttons = SDL_GAMEPAD_BUTTON_COUNT;
     desc.axis_mask = (1u << SDL_GAMEPAD_AXIS_COUNT) - 1u;
@@ -156,6 +208,9 @@ void GamepadWorker::attachVirtualPad()
         return;
     }
     setVirtualInput(0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+#else
+    Q_UNUSED(vendorId);
+    Q_UNUSED(productId);
 #endif
 }
 
@@ -167,12 +222,16 @@ void GamepadWorker::detachVirtualPad()
     }
 
     const SDL_JoystickID id = SDL_GetJoystickID(virtualPad_);
-    if (pad_ && SDL_GetGamepadID(pad_) == id) {
+    const bool wasOpen = pad_ && SDL_GetGamepadID(pad_) == id;
+    if (wasOpen) {
         closePad();
     }
     SDL_CloseJoystick(virtualPad_);
     virtualPad_ = nullptr;
     SDL_DetachVirtualJoystick(id);
+    if (wasOpen && subsystemUp_ && !continuous_) {
+        selectLatestPad();
+    }
 #endif
 }
 
@@ -207,24 +266,36 @@ void GamepadWorker::setVirtualInput(int buttons, qreal leftX, qreal leftY, qreal
 #endif
 }
 
-void GamepadWorker::openFirstPad()
+void GamepadWorker::selectLatestPad()
 {
 #ifdef KOGGER_SDL3
-    if (pad_) {
-        return;
-    }
-
     int count = 0;
     SDL_JoystickID* ids = SDL_GetGamepads(&count);
-    for (int i = 0; ids && i < count && !pad_; ++i) {
-        pad_ = SDL_OpenGamepad(ids[i]);
-    }
+    std::vector<SDL_JoystickID> order(ids, ids + (ids ? count : 0));
     SDL_free(ids);
+    std::sort(order.begin(), order.end(), std::greater<>());
 
-    if (!pad_) {
-        return;
+    const SDL_JoystickID current = pad_ ? SDL_GetGamepadID(pad_) : 0;
+    for (SDL_JoystickID id : order) {
+        if (id == current) {
+            return;
+        }
+        if (SDL_Gamepad* next = SDL_OpenGamepad(id)) {
+            if (pad_) {
+                SDL_CloseGamepad(pad_);
+            }
+            pad_ = next;
+            emitConnection();
+            readState(true);
+            return;
+        }
     }
+#endif
+}
 
+void GamepadWorker::emitConnection()
+{
+#ifdef KOGGER_SDL3
     const char* name = SDL_GetGamepadName(pad_);
     const char* type = SDL_GetGamepadStringForType(SDL_GetGamepadType(pad_));
     int available = 0;
@@ -233,10 +304,14 @@ void GamepadWorker::openFirstPad()
             available |= 1 << b;
         }
     }
+    const QStringList faces{ faceLabel(pad_, SDL_GAMEPAD_BUTTON_SOUTH), faceLabel(pad_, SDL_GAMEPAD_BUTTON_EAST),
+                             faceLabel(pad_, SDL_GAMEPAD_BUTTON_WEST), faceLabel(pad_, SDL_GAMEPAD_BUTTON_NORTH) };
 
     emit connectionChanged(true,
                            name ? QString::fromUtf8(name) : QString(),
                            type ? QString::fromUtf8(type) : QString(),
+                           padFamily(pad_),
+                           faces,
                            available);
 #endif
 }
@@ -250,7 +325,7 @@ void GamepadWorker::closePad()
 
     SDL_CloseGamepad(pad_);
     pad_ = nullptr;
-    emit connectionChanged(false, QString(), QString(), 0);
+    emit connectionChanged(false, QString(), QString(), QString(), QStringList(), 0);
     readState(false);
 #endif
 }

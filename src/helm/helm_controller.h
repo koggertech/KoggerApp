@@ -39,6 +39,7 @@ class HelmController : public QObject
     Q_PROPERTY(qreal startForwardLimit READ startForwardLimit WRITE setStartForwardLimit NOTIFY tuningChanged)
     Q_PROPERTY(qreal reverseLimit READ reverseLimit WRITE setReverseLimit NOTIFY tuningChanged)
     Q_PROPERTY(int rateHz READ rateHz WRITE setRateHz NOTIFY tuningChanged)
+    Q_PROPERTY(QString padFamily READ padFamily NOTIFY padFamilyChanged)
     Q_PROPERTY(QVariantList bindings READ bindings NOTIFY bindingsChanged)
     Q_PROPERTY(QVariantList bindingInputs READ bindingInputs WRITE setBindingInputs NOTIFY bindingsChanged)
 
@@ -80,6 +81,12 @@ public:
     int rateHz() const { return rateHz_; }
     void setRateHz(int value);
 
+    /**
+     * Pad family whose profile is in use ("xbox", "ps4", "ps5", "steam", "generic"): the layout and both dead
+     * zones are stored per family and follow the open pad while no session runs.
+     */
+    QString padFamily() const { return padFamily_; }
+
     /** One entry per action in UI order: action (int), key (string), kind ("button", "throttle", "steering"), input (int, −1 = none). */
     QVariantList bindings() const;
     /** Input code per action, indexed by action; a write that breaks the binding rules is ignored. */
@@ -92,6 +99,8 @@ public:
      */
     Q_INVOKABLE QVariantMap assignBinding(int action, int input);
     Q_INVOKABLE void resetBindings();
+    /** Resets the layout and both dead zones of the current pad family; refused while a session is on. */
+    Q_INVOKABLE void resetPadSettings();
 
     /** Starts a session: parameter check, Manual, then streaming. Refused with a toast when unsafe. */
     Q_INVOKABLE void engage();
@@ -106,6 +115,7 @@ signals:
     void vehicleStatusChanged();
     void tuningChanged();
     void bindingsChanged();
+    void padFamilyChanged();
 
 private:
     enum class ModeIntent {
@@ -138,7 +148,9 @@ private:
     void notify(const QString& text);
     void loadTuning();
     void saveTuning();
-    void loadBindings();
+    void loadProfile();
+    void saveProfile();
+    QString profileGroup() const;
     void saveBindings();
     helm::PadState padState() const;
 
@@ -151,6 +163,7 @@ private:
     bool background_ = false;
     helm::Tuning tuning_;
     helm::Bindings bindings_ = helm::defaultBindings();
+    QString padFamily_;
     qreal startForwardLimit_ = 1.0;
     qreal forwardLimit_ = 1.0;
     int rateHz_ = 20;

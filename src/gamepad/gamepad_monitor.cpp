@@ -67,10 +67,12 @@ void GamepadMonitor::setHelmActive(bool active)
     updateOwners();
 }
 
-void GamepadMonitor::attachVirtualPad()
+void GamepadMonitor::attachVirtualPad(int vendorId, int productId)
 {
     if (virtualPadAllowed_) {
-        QMetaObject::invokeMethod(worker_, &GamepadWorker::attachVirtualPad, Qt::QueuedConnection);
+        GamepadWorker* worker = worker_;
+        QMetaObject::invokeMethod(worker_, [worker, vendorId, productId] { worker->attachVirtualPad(vendorId, productId); },
+                                  Qt::QueuedConnection);
     }
 }
 
@@ -147,11 +149,14 @@ void GamepadMonitor::onWorkerReady(bool ready)
     emit readyChanged();
 }
 
-void GamepadMonitor::onWorkerConnection(bool connected, const QString& name, const QString& typeName, int availableButtons)
+void GamepadMonitor::onWorkerConnection(bool connected, const QString& name, const QString& typeName, const QString& family,
+                                        const QStringList& faceLabels, int availableButtons)
 {
     connected_ = connected;
     name_ = name;
     typeName_ = typeName;
+    family_ = family;
+    faceLabels_ = faceLabels;
     availableButtons_ = availableButtons;
     emit connectionChanged();
 }

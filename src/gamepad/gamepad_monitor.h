@@ -4,6 +4,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QStringList>
 #include <QThread>
 
 class GamepadWorker;
@@ -19,6 +20,8 @@ class GamepadMonitor : public QObject
     Q_PROPERTY(bool connected READ connected NOTIFY connectionChanged)
     Q_PROPERTY(QString name READ name NOTIFY connectionChanged)
     Q_PROPERTY(QString typeName READ typeName NOTIFY connectionChanged)
+    Q_PROPERTY(QString family READ family NOTIFY connectionChanged)
+    Q_PROPERTY(QStringList faceLabels READ faceLabels NOTIFY connectionChanged)
     Q_PROPERTY(int availableButtons READ availableButtons NOTIFY connectionChanged)
     Q_PROPERTY(int buttons READ buttons NOTIFY stateChanged)
     Q_PROPERTY(qreal leftX READ leftX NOTIFY stateChanged)
@@ -49,8 +52,11 @@ public:
     /** Enables the virtual pad invokables; called only when the control channel is on. */
     void setVirtualPadAllowed(bool allowed) { virtualPadAllowed_ = allowed; }
 
-    /** Attaches an SDL virtual gamepad while the subsystem is up; no-op unless allowed. */
-    Q_INVOKABLE void attachVirtualPad();
+    /**
+     * Attaches an SDL virtual gamepad while the subsystem is up; no-op unless allowed. A non-zero USB
+     * @p vendorId / @p productId lets SDL type it like that real pad (e.g. 0x054C / 0x09CC for a DualShock 4).
+     */
+    Q_INVOKABLE void attachVirtualPad(int vendorId = 0, int productId = 0);
     Q_INVOKABLE void detachVirtualPad();
     /** Sets the virtual pad state: @p buttons as in `buttons`, sticks −1…1, triggers 0…1. */
     Q_INVOKABLE void setVirtualInput(int buttons, qreal leftX, qreal leftY, qreal rightX, qreal rightY, qreal leftTrigger, qreal rightTrigger);
@@ -58,6 +64,10 @@ public:
     bool connected() const { return connected_; }
     QString name() const { return name_; }
     QString typeName() const { return typeName_; }
+    /** Layout family of the open pad: "xbox", "ps4", "ps5", "steam" or "generic"; empty while none is open. */
+    QString family() const { return family_; }
+    /** SDL labels of the south, east, west and north buttons: "A"…"Y", "cross", "circle", "square", "triangle" or empty. */
+    QStringList faceLabels() const { return faceLabels_; }
     int availableButtons() const { return availableButtons_; }
 
     int buttons() const { return buttons_; }
@@ -80,7 +90,8 @@ private:
     void updateOwners();
     void onWorkerError(const QString& error);
     void onWorkerReady(bool ready);
-    void onWorkerConnection(bool connected, const QString& name, const QString& typeName, int availableButtons);
+    void onWorkerConnection(bool connected, const QString& name, const QString& typeName, const QString& family,
+                            const QStringList& faceLabels, int availableButtons);
     void onWorkerState(int buttons, qreal leftX, qreal leftY, qreal rightX, qreal rightY, qreal leftTrigger, qreal rightTrigger);
 
     QThread thread_;
@@ -97,6 +108,8 @@ private:
     bool connected_ = false;
     QString name_;
     QString typeName_;
+    QString family_;
+    QStringList faceLabels_;
     int availableButtons_ = 0;
     int buttons_ = 0;
     std::array<qreal, 6> axes_{};

@@ -38,6 +38,8 @@ constexpr int kRcOptionsIgnoreOverrides = 1 << 1;
 
 const char kSettingsGroup[] = "main/gamepadHelm";
 const char kBindingsGroup[] = "bindings";
+const char kPadsGroup[] = "pads";
+const char kDefaultFamily[] = "generic";
 const char kParamOverrideTime[] = "RC_OVERRIDE_TIME";
 const char kParamRcOptions[] = "RC_OPTIONS";
 const char kParamFsThrottle[] = "FS_THR_ENABLE";
@@ -111,8 +113,9 @@ HelmController::HelmController(GamepadMonitor* monitor, DeviceManagerWrapper* ve
       checkTimer_(this),
       modeTimer_(this)
 {
+    padFamily_ = monitor_->family().isEmpty() ? QLatin1String(kDefaultFamily) : monitor_->family();
     loadTuning();
-    loadBindings();
+    loadProfile();
     forwardLimit_ = startForwardLimit_;
     clock_.start();
 
@@ -160,13 +163,15 @@ bool HelmController::available() const
 void HelmController::setStickDeadzone(qreal value)
 {
     tuning_.stickDeadzone = std::clamp(value, 0.0, kDeadzoneMax);
-    saveTuning();
+    saveProfile();
+    emit tuningChanged();
 }
 
 void HelmController::setTriggerDeadzone(qreal value)
 {
     tuning_.triggerDeadzone = std::clamp(value, 0.0, kDeadzoneMax);
-    saveTuning();
+    saveProfile();
+    emit tuningChanged();
 }
 
 void HelmController::setThrottleExpo(qreal value)
@@ -261,6 +266,20 @@ void HelmController::resetBindings()
     saveBindings();
 }
 
+void HelmController::resetPadSettings()
+{
+    if (state_ != Off) {
+        return;
+    }
+    const helm::Tuning defaults;
+    tuning_.stickDeadzone = defaults.stickDeadzone;
+    tuning_.triggerDeadzone = defaults.triggerDeadzone;
+    bindings_ = helm::defaultBindings();
+    saveProfile();
+    emit tuningChanged();
+    emit bindingsChanged();
+}
+
 void HelmController::engage()
 {
     if (state_ != Off) {
@@ -344,6 +363,14 @@ void HelmController::onPadConnection()
 
     if (!monitor_->connected()) {
         safeStop(tr("Gamepad disconnected — holding position"));
+        return;
+    }
+    if (state_ == Off && monitor_->family() != padFamily_) {
+        padFamily_ = monitor_->family();
+        loadProfile();
+        emit padFamilyChanged();
+        emit tuningChanged();
+        emit bindingsChanged();
     }
 }
 
@@ -727,8 +754,6 @@ void HelmController::loadTuning()
     QSettings settings(QStringLiteral("KOGGER"), QStringLiteral("KoggerApp"));
     settings.beginGroup(QLatin1String(kSettingsGroup));
     const helm::Tuning defaults;
-    tuning_.stickDeadzone = std::clamp(settings.value(QStringLiteral("stickDeadzone"), defaults.stickDeadzone).toDouble(), 0.0, kDeadzoneMax);
-    tuning_.triggerDeadzone = std::clamp(settings.value(QStringLiteral("triggerDeadzone"), defaults.triggerDeadzone).toDouble(), 0.0, kDeadzoneMax);
     tuning_.throttleExpo = std::clamp(settings.value(QStringLiteral("throttleExpo"), defaults.throttleExpo).toDouble(), 0.0, 1.0);
     tuning_.reverseLimit = std::clamp(settings.value(QStringLiteral("reverseLimit"), defaults.reverseLimit).toDouble(), 0.0, 1.0);
     startForwardLimit_ = std::clamp(settings.value(QStringLiteral("forwardLimit"), defaults.forwardLimit).toDouble(), kLimitMin, 1.0);
@@ -740,8 +765,6 @@ void HelmController::saveTuning()
 {
     QSettings settings(QStringLiteral("KOGGER"), QStringLiteral("KoggerApp"));
     settings.beginGroup(QLatin1String(kSettingsGroup));
-    settings.setValue(QStringLiteral("stickDeadzone"), tuning_.stickDeadzone);
-    settings.setValue(QStringLiteral("triggerDeadzone"), tuning_.triggerDeadzone);
     settings.setValue(QStringLiteral("throttleExpo"), tuning_.throttleExpo);
     settings.setValue(QStringLiteral("reverseLimit"), tuning_.reverseLimit);
     settings.setValue(QStringLiteral("forwardLimit"), startForwardLimit_);
@@ -750,10 +773,13 @@ void HelmController::saveTuning()
     emit tuningChanged();
 }
 
-void HelmController::loadBindings()
+void HelmController::loadProfile()
 {
     QSettings settings(QStringLiteral("KOGGER"), QStringLiteral("KoggerApp"));
-    settings.beginGroup(QLatin1String(kSettingsGroup));
+    settings.beginGroup(profileGroup());
+    const helm::Tuning defaults;
+    tuning_.stickDeadzone = std::clamp(settings.value(QStringLiteral("stickDeadzone"), defaults.stickDeadzone).toDouble(), 0.0, kDeadzoneMax);
+    tuning_.triggerDeadzone = std::clamp(settings.value(QStringLiteral("triggerDeadzone"), defaults.triggerDeadzone).toDouble(), 0.0, kDeadzoneMax);
     settings.beginGroup(QLatin1String(kBindingsGroup));
     helm::Bindings loaded = helm::defaultBindings();
     for (int action = 0; action < helm::ActionCount; ++action) {
@@ -764,16 +790,28 @@ void HelmController::loadBindings()
     bindings_ = helm::valid(loaded) ? loaded : helm::defaultBindings();
 }
 
-void HelmController::saveBindings()
+void HelmController::saveProfile()
 {
     QSettings settings(QStringLiteral("KOGGER"), QStringLiteral("KoggerApp"));
-    settings.beginGroup(QLatin1String(kSettingsGroup));
+    settings.beginGroup(profileGroup());
+    settings.setValue(QStringLiteral("stickDeadzone"), tuning_.stickDeadzone);
+    settings.setValue(QStringLiteral("triggerDeadzone"), tuning_.triggerDeadzone);
     settings.beginGroup(QLatin1String(kBindingsGroup));
     for (int action = 0; action < helm::ActionCount; ++action) {
         settings.setValue(QLatin1String(bindingKey(action)), bindings_[action]);
     }
     settings.endGroup();
     settings.endGroup();
+}
+
+QString HelmController::profileGroup() const
+{
+    return QStringLiteral("%1/%2/%3").arg(QLatin1String(kSettingsGroup), QLatin1String(kPadsGroup), padFamily_);
+}
+
+void HelmController::saveBindings()
+{
+    saveProfile();
     emit bindingsChanged();
 }
 

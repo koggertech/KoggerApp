@@ -4,6 +4,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QStringList>
 #include <QTimer>
 
 struct SDL_Gamepad;
@@ -21,19 +22,21 @@ public:
     void stop();
     void setRouting(bool routing);
     void setContinuous(bool continuous);
-    void attachVirtualPad();
+    void attachVirtualPad(int vendorId, int productId);
     void detachVirtualPad();
     void setVirtualInput(int buttons, qreal leftX, qreal leftY, qreal rightX, qreal rightY, qreal leftTrigger, qreal rightTrigger);
 
 signals:
     void errorChanged(const QString& error);
     void readyChanged(bool ready);
-    void connectionChanged(bool connected, const QString& name, const QString& typeName, int availableButtons);
+    void connectionChanged(bool connected, const QString& name, const QString& typeName, const QString& family,
+                           const QStringList& faceLabels, int availableButtons);
     void stateChanged(int buttons, qreal leftX, qreal leftY, qreal rightX, qreal rightY, qreal leftTrigger, qreal rightTrigger);
 
 private:
     void poll();
-    void openFirstPad();
+    void selectLatestPad();
+    void emitConnection();
     void closePad();
     void readState(bool force);
     void applyRouting();

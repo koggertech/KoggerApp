@@ -22,9 +22,6 @@ Column {
     readonly property color _bright: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
     readonly property var _helmCtl: (typeof helm !== "undefined") ? helm : null
     readonly property bool _gamepadSupported: typeof gamepadMonitor !== "undefined" && !!gamepadMonitor && gamepadMonitor.supported
-    readonly property string _gamepadCaption: !_gamepadSupported || !gamepadMonitor.running ? ""
-                                            : gamepadMonitor.connected ? gamepadMonitor.name
-                                            : qsTr("No gamepad connected")
     readonly property color _shownFill:    Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.14 : 0.20)
     readonly property color _shownHover:   Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.24 : 0.30)
     readonly property color _shownPressed: Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.32 : 0.38)
@@ -115,30 +112,29 @@ Column {
 
         Item {
             width: helmRow.slotWidth
-            height: helmRowLayout.implicitHeight
+            height: Tokens.controlHMd
 
-            RowLayout {
-                id: helmRowLayout
-                anchors.fill: parent
-                spacing: Tokens.spaceSm
-
-                KSlider {
-                    id: helmRowSlider
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                    from: helmRow.from
-                    to: helmRow.to
-                    stepSize: helmRow.stepSize
-                    value: helmRow.value
-                    onValueModified: function(val) { helmRow.valueMoved(val) }
-                }
-                Text {
-                    text: helmRow.format.arg(Math.round(helmRowSlider.value * helmRow.displayScale))
-                    color: root._bright
-                    font.pixelSize: Tokens.fontBase
-                    Layout.preferredWidth: Math.round(52 * AppPalette.scale)
-                    horizontalAlignment: Text.AlignRight
-                }
+            KSlider {
+                id: helmRowSlider
+                anchors.left: parent.left
+                anchors.right: helmRowValue.left
+                anchors.rightMargin: Tokens.spaceSm
+                anchors.verticalCenter: parent.verticalCenter
+                from: helmRow.from
+                to: helmRow.to
+                stepSize: helmRow.stepSize
+                value: helmRow.value
+                onValueModified: function(val) { helmRow.valueMoved(val) }
+            }
+            Text {
+                id: helmRowValue
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.round(52 * AppPalette.scale)
+                text: helmRow.format.arg(Math.round(helmRowSlider.value * helmRow.displayScale))
+                color: root._bright
+                font.pixelSize: Tokens.fontBase
+                horizontalAlignment: Text.AlignRight
             }
         }
     }
@@ -2921,28 +2917,27 @@ Column {
 
                     Item {
                         width: missionRunRouteWidthSliderRow.slotWidth
-                        height: missionRunRouteWidthSliderLayout.implicitHeight
+                        height: Tokens.controlHMd
 
-                        RowLayout {
-                            id: missionRunRouteWidthSliderLayout
-                            anchors.fill: parent
-                            spacing: Tokens.spaceSm
-
-                            KSlider {
-                                id: missionRunRouteWidthSlider
-                                Layout.fillWidth: true
-                                Layout.alignment: Qt.AlignVCenter
-                                from: 1; to: 8; stepSize: 0.5
-                                value: root.store ? root.store.missionRunRouteWidth : 2.5
-                                onValueModified: function(val) { if (root.store) root.store.missionRunRouteWidth = val }
-                            }
-                            Text {
-                                text: qsTr("%1 px").arg(missionRunRouteWidthSlider.value.toFixed(1))
-                                color: root._bright
-                                font.pixelSize: Tokens.fontBase
-                                Layout.preferredWidth: Math.round(44 * AppPalette.scale)
-                                horizontalAlignment: Text.AlignRight
-                            }
+                        KSlider {
+                            id: missionRunRouteWidthSlider
+                            anchors.left: parent.left
+                            anchors.right: missionRunRouteWidthValue.left
+                            anchors.rightMargin: Tokens.spaceSm
+                            anchors.verticalCenter: parent.verticalCenter
+                            from: 1; to: 8; stepSize: 0.5
+                            value: root.store ? root.store.missionRunRouteWidth : 2.5
+                            onValueModified: function(val) { if (root.store) root.store.missionRunRouteWidth = val }
+                        }
+                        Text {
+                            id: missionRunRouteWidthValue
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Math.round(44 * AppPalette.scale)
+                            text: qsTr("%1 px").arg(missionRunRouteWidthSlider.value.toFixed(1))
+                            color: root._bright
+                            font.pixelSize: Tokens.fontBase
+                            horizontalAlignment: Text.AlignRight
                         }
                     }
                 }
@@ -2954,28 +2949,27 @@ Column {
 
                     Item {
                         width: missionRunCurrentWidthSliderRow.slotWidth
-                        height: missionRunCurrentWidthSliderLayout.implicitHeight
+                        height: Tokens.controlHMd
 
-                        RowLayout {
-                            id: missionRunCurrentWidthSliderLayout
-                            anchors.fill: parent
-                            spacing: Tokens.spaceSm
-
-                            KSlider {
-                                id: missionRunCurrentWidthSlider
-                                Layout.fillWidth: true
-                                Layout.alignment: Qt.AlignVCenter
-                                from: 1; to: 8; stepSize: 0.5
-                                value: root.store ? root.store.missionRunCurrentWidth : 3.5
-                                onValueModified: function(val) { if (root.store) root.store.missionRunCurrentWidth = val }
-                            }
-                            Text {
-                                text: qsTr("%1 px").arg(missionRunCurrentWidthSlider.value.toFixed(1))
-                                color: root._bright
-                                font.pixelSize: Tokens.fontBase
-                                Layout.preferredWidth: Math.round(44 * AppPalette.scale)
-                                horizontalAlignment: Text.AlignRight
-                            }
+                        KSlider {
+                            id: missionRunCurrentWidthSlider
+                            anchors.left: parent.left
+                            anchors.right: missionRunCurrentWidthValue.left
+                            anchors.rightMargin: Tokens.spaceSm
+                            anchors.verticalCenter: parent.verticalCenter
+                            from: 1; to: 8; stepSize: 0.5
+                            value: root.store ? root.store.missionRunCurrentWidth : 3.5
+                            onValueModified: function(val) { if (root.store) root.store.missionRunCurrentWidth = val }
+                        }
+                        Text {
+                            id: missionRunCurrentWidthValue
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Math.round(44 * AppPalette.scale)
+                            text: qsTr("%1 px").arg(missionRunCurrentWidthSlider.value.toFixed(1))
+                            color: root._bright
+                            font.pixelSize: Tokens.fontBase
+                            horizontalAlignment: Text.AlignRight
                         }
                     }
                 }
@@ -3086,8 +3080,6 @@ Column {
                 KIslandRow {
                     label: qsTr("Gamepad layout")
                     labelColor: root._bright
-                    caption: root._gamepadCaption
-                    stacked: root._gamepadCaption.length > 0
                     chevron: true
                     interactive: true
                     toolTipText: qsTr("Controller test and which button does what")
@@ -3109,36 +3101,28 @@ Column {
             KIsland {
                 HelmSliderRow {
                     label: qsTr("Forward limit at start")
+                    toolTipText: qsTr("Max forward throttle; the D-pad changes it on the move")
                     from: 0.25; to: 1; stepSize: 0.25
                     value: root._helmCtl ? root._helmCtl.startForwardLimit : 1
                     onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.startForwardLimit = val }
                 }
                 HelmSliderRow {
                     label: qsTr("Reverse limit")
+                    toolTipText: qsTr("Max reverse throttle")
                     from: 0; to: 1; stepSize: 0.05
                     value: root._helmCtl ? root._helmCtl.reverseLimit : 0.5
                     onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.reverseLimit = val }
                 }
                 HelmSliderRow {
-                    label: qsTr("Stick dead zone")
-                    from: 0; to: 0.5; stepSize: 0.01
-                    value: root._helmCtl ? root._helmCtl.stickDeadzone : 0.1
-                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.stickDeadzone = val }
-                }
-                HelmSliderRow {
-                    label: qsTr("Trigger dead zone")
-                    from: 0; to: 0.5; stepSize: 0.01
-                    value: root._helmCtl ? root._helmCtl.triggerDeadzone : 0.05
-                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.triggerDeadzone = val }
-                }
-                HelmSliderRow {
-                    label: qsTr("Throttle expo")
+                    label: qsTr("Throttle softness")
+                    toolTipText: qsTr("Gentler throttle at the start of the travel")
                     from: 0; to: 1; stepSize: 0.05
                     value: root._helmCtl ? root._helmCtl.throttleExpo : 0.2
                     onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.throttleExpo = val }
                 }
                 HelmSliderRow {
                     label: qsTr("Send rate")
+                    toolTipText: qsTr("How often commands go to the boat")
                     from: 10; to: 25; stepSize: 1
                     displayScale: 1
                     format: qsTr("%1 Hz")

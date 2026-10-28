@@ -1398,6 +1398,31 @@
         <source>Controller test and which button does what</source>
         <translation>Test kontrolera i przypisanie przycisków</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3117"/>
+        <source>Throttle softness</source>
+        <translation>Łagodność gazu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3118"/>
+        <source>Gentler throttle at the start of the travel</source>
+        <translation>Łagodniejszy gaz na początku skoku</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3104"/>
+        <source>Max forward throttle; the D-pad changes it on the move</source>
+        <translation>Maks. gaz naprzód; krzyżak zmienia go w trakcie jazdy</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3111"/>
+        <source>Max reverse throttle</source>
+        <translation>Maks. gaz wstecz</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3125"/>
+        <source>How often commands go to the boat</source>
+        <translation>Jak często polecenia trafiają do łodzi</translation>
+    </message>
 </context>
 <context>
     <name>AutopilotPopup</name>
@@ -5208,6 +5233,71 @@ udp://@:1234
         <location filename="../qml/settings/GamepadTestDialog.qml" line="201"/>
         <source>D-pad up and down change the forward limit and cannot be bound</source>
         <translation>Krzyżak w górę i w dół zmienia limit jazdy naprzód, nie można go przypisać</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="38"/>
+        <source>Other gamepad</source>
+        <translation>Inny gamepad</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="47"/>
+        <source>No gamepad connected</source>
+        <translation>Brak podłączonego gamepada</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="54"/>
+        <source>Connect an Xbox or PlayStation gamepad over USB or Bluetooth.</source>
+        <translation>Podłącz gamepad Xbox lub PlayStation przez USB lub Bluetooth.</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="55"/>
+        <source>Connect an Xbox, PlayStation or Steam gamepad over USB or Bluetooth.</source>
+        <translation>Podłącz gamepad Xbox, PlayStation lub Steam przez USB lub Bluetooth.</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="73"/>
+        <source>Bottom button</source>
+        <translation>Dolny przycisk</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="74"/>
+        <source>Right button</source>
+        <translation>Prawy przycisk</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="75"/>
+        <source>Left button</source>
+        <translation>Lewy przycisk</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="76"/>
+        <source>Top button</source>
+        <translation>Górny przycisk</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="95"/>
+        <source>Mic</source>
+        <translation>Mikrofon</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="100"/>
+        <source>Touchpad</source>
+        <translation>Touchpad</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="642"/>
+        <source>Dead zones</source>
+        <translation>Strefy martwe</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="645"/>
+        <source>Sticks</source>
+        <translation>Gałki</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="651"/>
+        <source>Triggers</source>
+        <translation>Spusty</translation>
     </message>
 </context>
 <context>

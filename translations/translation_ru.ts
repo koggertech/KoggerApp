@@ -1398,6 +1398,31 @@
         <source>Controller test and which button does what</source>
         <translation>Проверка контроллера и назначение кнопок</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3117"/>
+        <source>Throttle softness</source>
+        <translation>Плавность газа</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3118"/>
+        <source>Gentler throttle at the start of the travel</source>
+        <translation>Мягче газ в начале хода курка</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3104"/>
+        <source>Max forward throttle; the D-pad changes it on the move</source>
+        <translation>Максимум газа вперёд; крестовина меняет его на ходу</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3111"/>
+        <source>Max reverse throttle</source>
+        <translation>Максимум газа назад</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3125"/>
+        <source>How often commands go to the boat</source>
+        <translation>Как часто команды уходят на лодку</translation>
+    </message>
 </context>
 <context>
     <name>AutopilotPopup</name>
@@ -5208,6 +5233,71 @@ udp://@:1234
         <location filename="../qml/settings/GamepadTestDialog.qml" line="201"/>
         <source>D-pad up and down change the forward limit and cannot be bound</source>
         <translation>Крестовина вверх и вниз меняет предел хода вперёд, назначить её нельзя</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="38"/>
+        <source>Other gamepad</source>
+        <translation>Другой геймпад</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="47"/>
+        <source>No gamepad connected</source>
+        <translation>Геймпад не подключён</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="54"/>
+        <source>Connect an Xbox or PlayStation gamepad over USB or Bluetooth.</source>
+        <translation>Подключите геймпад Xbox или PlayStation по USB или Bluetooth.</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="55"/>
+        <source>Connect an Xbox, PlayStation or Steam gamepad over USB or Bluetooth.</source>
+        <translation>Подключите геймпад Xbox, PlayStation или Steam по USB или Bluetooth.</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="73"/>
+        <source>Bottom button</source>
+        <translation>Нижняя кнопка</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="74"/>
+        <source>Right button</source>
+        <translation>Правая кнопка</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="75"/>
+        <source>Left button</source>
+        <translation>Левая кнопка</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="76"/>
+        <source>Top button</source>
+        <translation>Верхняя кнопка</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="95"/>
+        <source>Mic</source>
+        <translation>Микрофон</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="100"/>
+        <source>Touchpad</source>
+        <translation>Тачпад</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="642"/>
+        <source>Dead zones</source>
+        <translation>Мёртвые зоны</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="645"/>
+        <source>Sticks</source>
+        <translation>Стики</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="651"/>
+        <source>Triggers</source>
+        <translation>Курки</translation>
     </message>
 </context>
 <context>
