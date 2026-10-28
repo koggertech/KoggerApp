@@ -1378,6 +1378,26 @@
         <source>Last vehicle check:</source>
         <translation>Последняя проверка аппарата:</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="27"/>
+        <source>No gamepad connected</source>
+        <translation>Геймпад не подключён</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3076"/>
+        <source>Driving the boat from a gamepad.</source>
+        <translation>Управление лодкой с геймпада.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3087"/>
+        <source>Gamepad layout</source>
+        <translation>Раскладка геймпада</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3093"/>
+        <source>Controller test and which button does what</source>
+        <translation>Проверка контроллера и назначение кнопок</translation>
+    </message>
 </context>
 <context>
     <name>AutopilotPopup</name>
@@ -1711,6 +1731,11 @@
         <location filename="../qml/app/AutopilotPopup.qml" line="690"/>
         <source>Gamepad control</source>
         <translation>Управление с геймпада</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="278"/>
+        <source>Release the throttle before arming</source>
+        <translation>Сбросьте газ перед включением моторов</translation>
     </message>
 </context>
 <context>
@@ -5029,6 +5054,161 @@ udp://@:1234
         <source>Close</source>
         <translation>Закрыть</translation>
     </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="82"/>
+        <source>Throttle forward</source>
+        <translation>Газ вперёд</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="83"/>
+        <source>Throttle reverse</source>
+        <translation>Газ назад</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="84"/>
+        <source>Steering</source>
+        <translation>Руль</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="85"/>
+        <source>Switch Manual / Loiter</source>
+        <translation>Переключить Manual / Loiter</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="86"/>
+        <source>Hold (motors stop)</source>
+        <translation>Hold (моторы стоп)</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="95"/>
+        <source>Left stick X</source>
+        <translation>Левый стик X</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="96"/>
+        <source>Left stick Y</source>
+        <translation>Левый стик Y</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="97"/>
+        <source>Right stick X</source>
+        <translation>Правый стик X</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="98"/>
+        <source>Right stick Y</source>
+        <translation>Правый стик Y</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="104"/>
+        <source>Left stick →</source>
+        <translation>Левый стик →</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="105"/>
+        <source>Left stick ←</source>
+        <translation>Левый стик ←</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="106"/>
+        <source>Left stick ↓</source>
+        <translation>Левый стик ↓</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="107"/>
+        <source>Left stick ↑</source>
+        <translation>Левый стик ↑</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="108"/>
+        <source>Right stick →</source>
+        <translation>Правый стик →</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="109"/>
+        <source>Right stick ←</source>
+        <translation>Правый стик ←</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="110"/>
+        <source>Right stick ↓</source>
+        <translation>Правый стик ↓</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="111"/>
+        <source>Right stick ↑</source>
+        <translation>Правый стик ↑</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="126"/>
+        <source>%1, inverted</source>
+        <translation>%1, инверсия</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="228"/>
+        <source>This input does not fit the action</source>
+        <translation>Эта кнопка или ось не подходит для действия</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="234"/>
+        <source>Swapped with: %1</source>
+        <translation>Поменялось местами с: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="236"/>
+        <source>Left without input: %1</source>
+        <translation>Осталось без назначения: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="245"/>
+        <source>Stop gamepad control to change the layout</source>
+        <translation>Остановите управление с геймпада, чтобы изменить раскладку</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="247"/>
+        <source>Connect a gamepad to change the layout</source>
+        <translation>Подключите геймпад, чтобы изменить раскладку</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="251"/>
+        <source>Press a gamepad button. Tap the row again to cancel.</source>
+        <translation>Нажмите кнопку на геймпаде. Повторное нажатие на строку — отмена.</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="253"/>
+        <source>Push a stick to the right. Tap the row again to cancel.</source>
+        <translation>Отклоните стик вправо. Повторное нажатие на строку — отмена.</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="254"/>
+        <source>Pull a trigger or push a stick the way this action should work. Tap the row again to cancel.</source>
+        <translation>Нажмите курок или отклоните стик в нужную для действия сторону. Повторное нажатие на строку — отмена.</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="258"/>
+        <source>Tap an action, then press the gamepad input for it</source>
+        <translation>Выберите действие, затем нажмите для него кнопку или стик на геймпаде</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="634"/>
+        <source>Driving</source>
+        <translation>Движение</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="641"/>
+        <source>Buttons</source>
+        <translation>Кнопки</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="677"/>
+        <source>Reset to defaults</source>
+        <translation>Сбросить настройки</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="201"/>
+        <source>D-pad up and down change the forward limit and cannot be bound</source>
+        <translation>Крестовина вверх и вниз меняет предел хода вперёд, назначить её нельзя</translation>
+    </message>
 </context>
 <context>
     <name>GlobalPanePopup</name>
@@ -5184,6 +5364,16 @@ udp://@:1234
         <location filename="../src/helm/helm_controller.cpp" line="535"/>
         <source>%1. The vehicle refused Loiter and Hold</source>
         <translation>%1. Аппарат отклонил Loiter и Hold</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="578"/>
+        <source>Gamepad layout: forward throttle or steering has no input</source>
+        <translation>Раскладка геймпада: газу вперёд или рулю ничего не назначено</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="584"/>
+        <source>Release the throttle</source>
+        <translation>Сбросьте газ</translation>
     </message>
 </context>
 <context>

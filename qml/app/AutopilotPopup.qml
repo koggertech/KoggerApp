@@ -275,7 +275,7 @@ BasePanePopup {
         if (_helmActive && _helm.throttle !== 0) {
             _cancelArmConfirm()
             if (typeof notifications !== "undefined" && notifications)
-                notifications.info(qsTr("Release the triggers before arming"))
+                notifications.info(qsTr("Release the throttle before arming"))
             return
         }
         if (!armConfirmPending) {

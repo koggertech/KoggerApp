@@ -1378,6 +1378,26 @@
         <source>Last vehicle check:</source>
         <translation>Ostatnie sprawdzenie pojazdu:</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="27"/>
+        <source>No gamepad connected</source>
+        <translation>Brak podłączonego gamepada</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3076"/>
+        <source>Driving the boat from a gamepad.</source>
+        <translation>Sterowanie łodzią z gamepada.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3087"/>
+        <source>Gamepad layout</source>
+        <translation>Układ gamepada</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3093"/>
+        <source>Controller test and which button does what</source>
+        <translation>Test kontrolera i przypisanie przycisków</translation>
+    </message>
 </context>
 <context>
     <name>AutopilotPopup</name>
@@ -1711,6 +1731,11 @@
         <location filename="../qml/app/AutopilotPopup.qml" line="690"/>
         <source>Gamepad control</source>
         <translation>Sterowanie z gamepada</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="278"/>
+        <source>Release the throttle before arming</source>
+        <translation>Puść gaz przed uzbrojeniem</translation>
     </message>
 </context>
 <context>
@@ -5029,6 +5054,161 @@ udp://@:1234
         <source>Close</source>
         <translation>Zamknij</translation>
     </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="82"/>
+        <source>Throttle forward</source>
+        <translation>Gaz naprzód</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="83"/>
+        <source>Throttle reverse</source>
+        <translation>Gaz wstecz</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="84"/>
+        <source>Steering</source>
+        <translation>Ster</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="85"/>
+        <source>Switch Manual / Loiter</source>
+        <translation>Przełącz Manual / Loiter</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="86"/>
+        <source>Hold (motors stop)</source>
+        <translation>Hold (silniki stop)</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="95"/>
+        <source>Left stick X</source>
+        <translation>Lewa gałka X</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="96"/>
+        <source>Left stick Y</source>
+        <translation>Lewa gałka Y</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="97"/>
+        <source>Right stick X</source>
+        <translation>Prawa gałka X</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="98"/>
+        <source>Right stick Y</source>
+        <translation>Prawa gałka Y</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="104"/>
+        <source>Left stick →</source>
+        <translation>Lewa gałka →</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="105"/>
+        <source>Left stick ←</source>
+        <translation>Lewa gałka ←</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="106"/>
+        <source>Left stick ↓</source>
+        <translation>Lewa gałka ↓</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="107"/>
+        <source>Left stick ↑</source>
+        <translation>Lewa gałka ↑</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="108"/>
+        <source>Right stick →</source>
+        <translation>Prawa gałka →</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="109"/>
+        <source>Right stick ←</source>
+        <translation>Prawa gałka ←</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="110"/>
+        <source>Right stick ↓</source>
+        <translation>Prawa gałka ↓</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="111"/>
+        <source>Right stick ↑</source>
+        <translation>Prawa gałka ↑</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="126"/>
+        <source>%1, inverted</source>
+        <translation>%1, odwrócona</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="228"/>
+        <source>This input does not fit the action</source>
+        <translation>Ten przycisk lub oś nie pasuje do akcji</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="234"/>
+        <source>Swapped with: %1</source>
+        <translation>Zamieniono z: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="236"/>
+        <source>Left without input: %1</source>
+        <translation>Bez przypisania: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="245"/>
+        <source>Stop gamepad control to change the layout</source>
+        <translation>Zatrzymaj sterowanie z gamepada, aby zmienić układ</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="247"/>
+        <source>Connect a gamepad to change the layout</source>
+        <translation>Podłącz gamepad, aby zmienić układ</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="251"/>
+        <source>Press a gamepad button. Tap the row again to cancel.</source>
+        <translation>Naciśnij przycisk na gamepadzie. Ponowne dotknięcie wiersza anuluje.</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="253"/>
+        <source>Push a stick to the right. Tap the row again to cancel.</source>
+        <translation>Wychyl gałkę w prawo. Ponowne dotknięcie wiersza anuluje.</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="254"/>
+        <source>Pull a trigger or push a stick the way this action should work. Tap the row again to cancel.</source>
+        <translation>Naciśnij spust lub wychyl gałkę w kierunku tej akcji. Ponowne dotknięcie wiersza anuluje.</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="258"/>
+        <source>Tap an action, then press the gamepad input for it</source>
+        <translation>Wybierz akcję, a potem naciśnij dla niej przycisk lub gałkę na gamepadzie</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="634"/>
+        <source>Driving</source>
+        <translation>Jazda</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="641"/>
+        <source>Buttons</source>
+        <translation>Przyciski</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="677"/>
+        <source>Reset to defaults</source>
+        <translation>Przywróć domyślne</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="201"/>
+        <source>D-pad up and down change the forward limit and cannot be bound</source>
+        <translation>Krzyżak w górę i w dół zmienia limit jazdy naprzód, nie można go przypisać</translation>
+    </message>
 </context>
 <context>
     <name>GlobalPanePopup</name>
@@ -5184,6 +5364,16 @@ udp://@:1234
         <location filename="../src/helm/helm_controller.cpp" line="535"/>
         <source>%1. The vehicle refused Loiter and Hold</source>
         <translation>%1. Pojazd odrzucił Loiter i Hold</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="578"/>
+        <source>Gamepad layout: forward throttle or steering has no input</source>
+        <translation>Układ gamepada: gaz naprzód lub ster nie ma przypisania</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="584"/>
+        <source>Release the throttle</source>
+        <translation>Puść gaz</translation>
     </message>
 </context>
 <context>

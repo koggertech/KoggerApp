@@ -26,7 +26,7 @@ struct Command
     double throttle = 0.0;
 };
 
-/** X component of a stick after a radial dead zone, rescaled to start from 0 at the zone edge. */
+/** Component @p x of a stick vector (x, y) after a radial dead zone, rescaled to start from 0 at the zone edge. */
 inline double radialDeadzoneX(double x, double y, double deadzone)
 {
     const double zone = std::clamp(deadzone, 0.0, kMaxDeadzone);
@@ -53,25 +53,6 @@ inline double expo(double value, double amount)
 {
     const double a = std::clamp(amount, 0.0, 1.0);
     return (1.0 - a) * value + a * value * value * value;
-}
-
-/** True when neither trigger is past its dead zone. */
-inline bool triggersReleased(double leftTrigger, double rightTrigger, const Tuning& tuning)
-{
-    return triggerDeadzone(leftTrigger, tuning.triggerDeadzone) <= 0.0
-           && triggerDeadzone(rightTrigger, tuning.triggerDeadzone) <= 0.0;
-}
-
-/** Steering from the left stick X, throttle = RT − LT, both shaped and limited. */
-inline Command shape(double leftX, double leftY, double leftTrigger, double rightTrigger, const Tuning& tuning)
-{
-    Command command;
-    command.steering = expo(radialDeadzoneX(leftX, leftY, tuning.stickDeadzone), tuning.steeringExpo);
-    const double net = triggerDeadzone(rightTrigger, tuning.triggerDeadzone) - triggerDeadzone(leftTrigger, tuning.triggerDeadzone);
-    const double shaped = expo(net, tuning.throttleExpo);
-    command.throttle = shaped >= 0.0 ? shaped * std::clamp(tuning.forwardLimit, 0.0, 1.0)
-                                     : shaped * std::clamp(tuning.reverseLimit, 0.0, 1.0);
-    return command;
 }
 
 /** MANUAL_CONTROL value that lands on RCn_TRIM, given the channel's MIN / TRIM / MAX. */

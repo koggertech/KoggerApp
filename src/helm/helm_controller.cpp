@@ -16,11 +16,6 @@ constexpr int kCmdDoSetMode = 176;
 constexpr int kResultAccepted = 0;
 constexpr int kResultInProgress = 5;
 
-constexpr int kButtonEast = 1 << 1;
-constexpr int kButtonRightShoulder = 1 << 10;
-constexpr int kButtonDpadUp = 1 << 11;
-constexpr int kButtonDpadDown = 1 << 12;
-
 constexpr qint64 kSampleTimeoutMs = 250;
 constexpr int kModeTimeoutMs = 3000;
 constexpr int kParamPaceMs = 100;
@@ -42,6 +37,7 @@ constexpr int kGcsSystemId = 255;
 constexpr int kRcOptionsIgnoreOverrides = 1 << 1;
 
 const char kSettingsGroup[] = "main/gamepadHelm";
+const char kBindingsGroup[] = "bindings";
 const char kParamOverrideTime[] = "RC_OVERRIDE_TIME";
 const char kParamRcOptions[] = "RC_OPTIONS";
 const char kParamFsThrottle[] = "FS_THR_ENABLE";
@@ -52,6 +48,46 @@ const char kParamGcsSysidOld[] = "SYSID_MYGCS";
 const char kParamMapSteering[] = "RCMAP_ROLL";
 const char kParamMapThrottle[] = "RCMAP_THROTTLE";
 const char kParamSteerType[] = "PILOT_STEER_TYPE";
+
+const char* bindingKey(int action)
+{
+    switch (action) {
+    case helm::ActionThrottleForward:
+        return "throttleForward";
+    case helm::ActionThrottleReverse:
+        return "throttleReverse";
+    case helm::ActionSteering:
+        return "steering";
+    case helm::ActionToggleLoiter:
+        return "toggleLoiter";
+    case helm::ActionHold:
+        return "hold";
+    default:
+        return "";
+    }
+}
+
+const char* kindName(helm::ActionKind kind)
+{
+    switch (kind) {
+    case helm::ActionKind::Throttle:
+        return "throttle";
+    case helm::ActionKind::Steering:
+        return "steering";
+    case helm::ActionKind::Button:
+        break;
+    }
+    return "button";
+}
+
+QVariantList toVariantList(const std::vector<int>& values)
+{
+    QVariantList list;
+    for (int value : values) {
+        list << value;
+    }
+    return list;
+}
 
 QString rcParam(int channel, const char* suffix)
 {
@@ -76,6 +112,7 @@ HelmController::HelmController(GamepadMonitor* monitor, DeviceManagerWrapper* ve
       modeTimer_(this)
 {
     loadTuning();
+    loadBindings();
     forwardLimit_ = startForwardLimit_;
     clock_.start();
 
@@ -155,6 +192,73 @@ void HelmController::setRateHz(int value)
     rateHz_ = std::clamp(value, kRateMinHz, kRateMaxHz);
     sendTimer_.setInterval(kMsPerSecond / rateHz_);
     saveTuning();
+}
+
+QVariantList HelmController::bindings() const
+{
+    QVariantList list;
+    for (int action = 0; action < helm::ActionCount; ++action) {
+        list << QVariantMap{ { QStringLiteral("action"), action },
+                             { QStringLiteral("key"), QLatin1String(bindingKey(action)) },
+                             { QStringLiteral("kind"), QLatin1String(kindName(helm::actionKind(action))) },
+                             { QStringLiteral("input"), bindings_[action] } };
+    }
+    return list;
+}
+
+QVariantList HelmController::bindingInputs() const
+{
+    QVariantList list;
+    for (int input : bindings_) {
+        list << input;
+    }
+    return list;
+}
+
+void HelmController::setBindingInputs(const QVariantList& inputs)
+{
+    if (state_ != Off || inputs.size() != helm::ActionCount) {
+        return;
+    }
+    helm::Bindings next{};
+    for (int action = 0; action < helm::ActionCount; ++action) {
+        next[action] = inputs.at(action).toInt();
+    }
+    if (!helm::valid(next) || next == bindings_) {
+        return;
+    }
+    bindings_ = next;
+    saveBindings();
+}
+
+QVariantMap HelmController::assignBinding(int action, int input)
+{
+    QVariantMap reply{ { QStringLiteral("ok"), false } };
+    if (state_ != Off) {
+        return reply;
+    }
+    helm::Bindings next = bindings_;
+    const helm::AssignResult result = helm::assign(next, action, input);
+    if (!result.ok) {
+        return reply;
+    }
+    reply.insert(QStringLiteral("ok"), true);
+    reply.insert(QStringLiteral("swapped"), toVariantList(result.swapped));
+    reply.insert(QStringLiteral("cleared"), toVariantList(result.cleared));
+    if (next != bindings_) {
+        bindings_ = next;
+        saveBindings();
+    }
+    return reply;
+}
+
+void HelmController::resetBindings()
+{
+    if (state_ != Off || bindings_ == helm::defaultBindings()) {
+        return;
+    }
+    bindings_ = helm::defaultBindings();
+    saveBindings();
 }
 
 void HelmController::engage()
@@ -254,16 +358,17 @@ void HelmController::onPadState()
         return;
     }
 
-    if (pressed & kButtonEast) {
+    if (pressed & helm::buttonMask(bindings_, helm::ActionHold)) {
         requestMode(kModeHold, ModeIntent::Toggle);
     }
-    else if ((pressed & kButtonRightShoulder) && pendingMode_ < 0) {
+    else if ((pressed & helm::buttonMask(bindings_, helm::ActionToggleLoiter)) && pendingMode_ < 0) {
         requestMode(vehicle_->pilotModeState() == kModeLoiter ? kModeManual : kModeLoiter, ModeIntent::Toggle);
     }
 
-    if (pressed & (kButtonDpadUp | kButtonDpadDown)) {
-        const qreal step = (pressed & kButtonDpadUp) ? kLimitStep : -kLimitStep;
-        forwardLimit_ = std::clamp(forwardLimit_ + step, kLimitMin, 1.0);
+    const bool up = pressed & (1 << helm::kButtonDpadUp);
+    const bool down = pressed & (1 << helm::kButtonDpadDown);
+    if (up != down) {
+        forwardLimit_ = std::clamp(forwardLimit_ + (up ? kLimitStep : -kLimitStep), kLimitMin, 1.0);
         emit commandChanged();
     }
 }
@@ -331,7 +436,7 @@ void HelmController::onSendTick()
     if (state_ == Driving && pendingMode_ < 0 && vehicle_->pilotModeState() == kModeManual) {
         helm::Tuning tuning = tuning_;
         tuning.forwardLimit = forwardLimit_;
-        command = helm::shape(monitor_->leftX(), monitor_->leftY(), monitor_->leftTrigger(), monitor_->rightTrigger(), tuning);
+        command = helm::shape(padState(), bindings_, tuning);
     }
     sendCommand(command);
 }
@@ -465,11 +570,14 @@ void HelmController::finishCheck()
     steeringNeutral_ = neutralFor(kParamMapSteering);
     throttleNeutral_ = neutralFor(kParamMapThrottle);
 
+    if (bindings_[helm::ActionThrottleForward] == helm::kNoInput || bindings_[helm::ActionSteering] == helm::kNoInput) {
+        refusals << tr("Gamepad layout: forward throttle or steering has no input");
+    }
     if (!monitor_->connected()) {
         refusals << tr("Gamepad disconnected");
     }
-    else if (!helm::triggersReleased(monitor_->leftTrigger(), monitor_->rightTrigger(), tuning_)) {
-        refusals << tr("Release the triggers");
+    else if (!helm::throttleReleased(padState(), bindings_, tuning_)) {
+        refusals << tr("Release the throttle");
     }
 
     vehicleStatus_ = (refusals + notes).join(QLatin1Char('\n'));
@@ -640,4 +748,44 @@ void HelmController::saveTuning()
     settings.setValue(QStringLiteral("rateHz"), rateHz_);
     settings.endGroup();
     emit tuningChanged();
+}
+
+void HelmController::loadBindings()
+{
+    QSettings settings(QStringLiteral("KOGGER"), QStringLiteral("KoggerApp"));
+    settings.beginGroup(QLatin1String(kSettingsGroup));
+    settings.beginGroup(QLatin1String(kBindingsGroup));
+    helm::Bindings loaded = helm::defaultBindings();
+    for (int action = 0; action < helm::ActionCount; ++action) {
+        loaded[action] = settings.value(QLatin1String(bindingKey(action)), loaded[action]).toInt();
+    }
+    settings.endGroup();
+    settings.endGroup();
+    bindings_ = helm::valid(loaded) ? loaded : helm::defaultBindings();
+}
+
+void HelmController::saveBindings()
+{
+    QSettings settings(QStringLiteral("KOGGER"), QStringLiteral("KoggerApp"));
+    settings.beginGroup(QLatin1String(kSettingsGroup));
+    settings.beginGroup(QLatin1String(kBindingsGroup));
+    for (int action = 0; action < helm::ActionCount; ++action) {
+        settings.setValue(QLatin1String(bindingKey(action)), bindings_[action]);
+    }
+    settings.endGroup();
+    settings.endGroup();
+    emit bindingsChanged();
+}
+
+helm::PadState HelmController::padState() const
+{
+    helm::PadState pad;
+    pad.buttons = monitor_->buttons();
+    pad.leftX = monitor_->leftX();
+    pad.leftY = monitor_->leftY();
+    pad.rightX = monitor_->rightX();
+    pad.rightY = monitor_->rightY();
+    pad.leftTrigger = monitor_->leftTrigger();
+    pad.rightTrigger = monitor_->rightTrigger();
+    return pad;
 }

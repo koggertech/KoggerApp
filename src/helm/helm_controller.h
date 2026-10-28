@@ -7,8 +7,10 @@
 #include <QString>
 #include <QStringList>
 #include <QTimer>
+#include <QVariantList>
+#include <QVariantMap>
 
-#include "helm_shaping.h"
+#include "helm_bindings.h"
 
 class GamepadMonitor;
 class DeviceManagerWrapper;
@@ -37,6 +39,8 @@ class HelmController : public QObject
     Q_PROPERTY(qreal startForwardLimit READ startForwardLimit WRITE setStartForwardLimit NOTIFY tuningChanged)
     Q_PROPERTY(qreal reverseLimit READ reverseLimit WRITE setReverseLimit NOTIFY tuningChanged)
     Q_PROPERTY(int rateHz READ rateHz WRITE setRateHz NOTIFY tuningChanged)
+    Q_PROPERTY(QVariantList bindings READ bindings NOTIFY bindingsChanged)
+    Q_PROPERTY(QVariantList bindingInputs READ bindingInputs WRITE setBindingInputs NOTIFY bindingsChanged)
 
 public:
     enum State {
@@ -76,6 +80,19 @@ public:
     int rateHz() const { return rateHz_; }
     void setRateHz(int value);
 
+    /** One entry per action in UI order: action (int), key (string), kind ("button", "throttle", "steering"), input (int, −1 = none). */
+    QVariantList bindings() const;
+    /** Input code per action, indexed by action; a write that breaks the binding rules is ignored. */
+    QVariantList bindingInputs() const;
+    void setBindingInputs(const QVariantList& inputs);
+
+    /**
+     * Binds a gamepad input to an action; an action that held it takes the old input or is left without one.
+     * Returns {ok, swapped: [action], cleared: [action]}. Refused while a session is on or when the input does not fit.
+     */
+    Q_INVOKABLE QVariantMap assignBinding(int action, int input);
+    Q_INVOKABLE void resetBindings();
+
     /** Starts a session: parameter check, Manual, then streaming. Refused with a toast when unsafe. */
     Q_INVOKABLE void engage();
     /** Ends the session: Loiter, Hold when Loiter is refused, then the stream stops. */
@@ -88,6 +105,7 @@ signals:
     void commandChanged();
     void vehicleStatusChanged();
     void tuningChanged();
+    void bindingsChanged();
 
 private:
     enum class ModeIntent {
@@ -120,6 +138,9 @@ private:
     void notify(const QString& text);
     void loadTuning();
     void saveTuning();
+    void loadBindings();
+    void saveBindings();
+    helm::PadState padState() const;
 
     GamepadMonitor* monitor_ = nullptr;
     DeviceManagerWrapper* vehicle_ = nullptr;
@@ -129,6 +150,7 @@ private:
     bool available_ = false;
     bool background_ = false;
     helm::Tuning tuning_;
+    helm::Bindings bindings_ = helm::defaultBindings();
     qreal startForwardLimit_ = 1.0;
     qreal forwardLimit_ = 1.0;
     int rateHz_ = 20;

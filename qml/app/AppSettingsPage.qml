@@ -22,6 +22,9 @@ Column {
     readonly property color _bright: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
     readonly property var _helmCtl: (typeof helm !== "undefined") ? helm : null
     readonly property bool _gamepadSupported: typeof gamepadMonitor !== "undefined" && !!gamepadMonitor && gamepadMonitor.supported
+    readonly property string _gamepadCaption: !_gamepadSupported || !gamepadMonitor.running ? ""
+                                            : gamepadMonitor.connected ? gamepadMonitor.name
+                                            : qsTr("No gamepad connected")
     readonly property color _shownFill:    Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.14 : 0.20)
     readonly property color _shownHover:   Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.24 : 0.30)
     readonly property color _shownPressed: Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.32 : 0.38)
@@ -192,6 +195,13 @@ Column {
         }
     }
 
+
+    function openGamepadDialog() {
+        if (gamepadDialogLoader.item)
+            gamepadDialogLoader.item.open()
+        else
+            gamepadDialogLoader.active = true
+    }
 
     // URL helpers (for export/import paths)
     function localPath(value) {
@@ -3063,7 +3073,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Gamepad control")
-        description: qsTr("Driving the boat from a gamepad: RT forward, LT reverse, left stick steers, RB switches Manual and Loiter, B holds, the D-pad changes the forward limit.")
+        description: qsTr("Driving the boat from a gamepad.")
         stateStore: root.store
         stateKey: "app.gamepadhelm"
         collapsedByDefault: true
@@ -3071,6 +3081,30 @@ Column {
         Column {
             width: parent.width
             spacing: Tokens.spaceMd
+
+            KIsland {
+                KIslandRow {
+                    label: qsTr("Gamepad layout")
+                    labelColor: root._bright
+                    caption: root._gamepadCaption
+                    stacked: root._gamepadCaption.length > 0
+                    chevron: true
+                    interactive: true
+                    toolTipText: qsTr("Controller test and which button does what")
+                    onClicked: root.openGamepadDialog()
+                }
+            }
+
+            Loader {
+                id: gamepadDialogLoader
+                visible: false
+                active: false
+                source: "qrc:/qml/settings/GamepadTestDialog.qml"
+                onLoaded: {
+                    item.store = root.store
+                    item.open()
+                }
+            }
 
             KIsland {
                 HelmSliderRow {
