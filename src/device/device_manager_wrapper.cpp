@@ -33,6 +33,7 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     QObject::connect(workerObject_.get(), &DeviceManager::autopilotCommandAcked, this,               &DeviceManagerWrapper::autopilotCommandAcked,  ct);
     QObject::connect(workerObject_.get(), &DeviceManager::autopilotStatusText,  this,                &DeviceManagerWrapper::onAutopilotStatusText,  ct);
     QObject::connect(workerObject_.get(), &DeviceManager::autopilotMissionItemReached, this,         &DeviceManagerWrapper::autopilotMissionItemReached, ct);
+    QObject::connect(workerObject_.get(), &DeviceManager::autopilotParamReceived, this,              &DeviceManagerWrapper::autopilotParamReceived, ct);
     QObject::connect(workerObject_.get(), &DeviceManager::chartLossesChanged,   this,                &DeviceManagerWrapper::calcAverageChartLosses, ct);
     QObject::connect(workerObject_.get(), &DeviceManager::devChanged,           this,                &DeviceManagerWrapper::calcAverageChartLosses, ct);
 
@@ -146,6 +147,16 @@ void DeviceManagerWrapper::autopilotSetMissionCurrent(int seq)
 void DeviceManagerWrapper::autopilotSetSpeed(double speed)
 {
     workerObject_->autopilotSetSpeed(float(speed));
+}
+
+void DeviceManagerWrapper::autopilotManualControl(int steering, int throttle)
+{
+    workerObject_->sendManualControl(steering, throttle);
+}
+
+void DeviceManagerWrapper::autopilotRequestParam(const QString& name)
+{
+    workerObject_->requestAutopilotParam(name);
 }
 
 bool DeviceManagerWrapper::beginMissionTransfer(bool download, bool silent)

@@ -1,6 +1,7 @@
 #include "gamepad_worker.h"
 
 #include <algorithm>
+#include <cmath>
 
 #ifdef KOGGER_SDL3
 #include <SDL3/SDL.h>
@@ -13,6 +14,12 @@
 
 namespace {
 constexpr int kPollIntervalMs = 16;
+#ifdef KOGGER_SDL3
+constexpr qreal kAxisScale = 32767.0;
+constexpr qreal kTriggerSpan = 65535.0;
+constexpr int kTriggerBase = -32768;
+constexpr char kVirtualPadName[] = "KoggerApp virtual gamepad";
+#endif
 
 void setAndroidEventRouting(bool enabled)
 {
@@ -56,7 +63,8 @@ void GamepadWorker::start()
         }
         subsystemUp_ = true;
         sdlUsed_ = true;
-        setAndroidEventRouting(true);
+        applyRouting();
+        emit readyChanged(true);
     }
 
     emit errorChanged(QString());
@@ -72,12 +80,14 @@ void GamepadWorker::stop()
 {
     timer_.stop();
     closePad();
+    detachVirtualPad();
 
 #ifdef KOGGER_SDL3
     if (subsystemUp_) {
         setAndroidEventRouting(false);
         SDL_QuitSubSystem(SDL_INIT_GAMEPAD);
         subsystemUp_ = false;
+        emit readyChanged(false);
     }
 #endif
 }
@@ -96,7 +106,104 @@ void GamepadWorker::poll()
         }
     }
 
-    readState(false);
+    readState(continuous_);
+#endif
+}
+
+void GamepadWorker::setRouting(bool routing)
+{
+    routing_ = routing;
+    applyRouting();
+}
+
+void GamepadWorker::setContinuous(bool continuous)
+{
+    continuous_ = continuous;
+}
+
+void GamepadWorker::applyRouting()
+{
+    if (subsystemUp_) {
+        setAndroidEventRouting(routing_);
+    }
+}
+
+void GamepadWorker::attachVirtualPad()
+{
+#ifdef KOGGER_SDL3
+    if (!subsystemUp_ || virtualPad_) {
+        return;
+    }
+
+    SDL_VirtualJoystickDesc desc;
+    SDL_INIT_INTERFACE(&desc);
+    desc.type = SDL_JOYSTICK_TYPE_GAMEPAD;
+    desc.naxes = SDL_GAMEPAD_AXIS_COUNT;
+    desc.nbuttons = SDL_GAMEPAD_BUTTON_COUNT;
+    desc.axis_mask = (1u << SDL_GAMEPAD_AXIS_COUNT) - 1u;
+    desc.button_mask = (1u << SDL_GAMEPAD_BUTTON_COUNT) - 1u;
+    desc.name = kVirtualPadName;
+
+    const SDL_JoystickID id = SDL_AttachVirtualJoystick(&desc);
+    if (id == 0) {
+        emit errorChanged(QString::fromUtf8(SDL_GetError()));
+        return;
+    }
+    virtualPad_ = SDL_OpenJoystick(id);
+    if (!virtualPad_) {
+        emit errorChanged(QString::fromUtf8(SDL_GetError()));
+        SDL_DetachVirtualJoystick(id);
+        return;
+    }
+    setVirtualInput(0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+#endif
+}
+
+void GamepadWorker::detachVirtualPad()
+{
+#ifdef KOGGER_SDL3
+    if (!virtualPad_) {
+        return;
+    }
+
+    const SDL_JoystickID id = SDL_GetJoystickID(virtualPad_);
+    if (pad_ && SDL_GetGamepadID(pad_) == id) {
+        closePad();
+    }
+    SDL_CloseJoystick(virtualPad_);
+    virtualPad_ = nullptr;
+    SDL_DetachVirtualJoystick(id);
+#endif
+}
+
+void GamepadWorker::setVirtualInput(int buttons, qreal leftX, qreal leftY, qreal rightX, qreal rightY, qreal leftTrigger, qreal rightTrigger)
+{
+#ifdef KOGGER_SDL3
+    if (!virtualPad_) {
+        return;
+    }
+
+    for (int b = 0; b < SDL_GAMEPAD_BUTTON_COUNT; ++b) {
+        SDL_SetJoystickVirtualButton(virtualPad_, b, (buttons & (1 << b)) != 0);
+    }
+
+    const std::array<qreal, 4> sticks{ leftX, leftY, rightX, rightY };
+    for (int a = 0; a < int(sticks.size()); ++a) {
+        SDL_SetJoystickVirtualAxis(virtualPad_, a, Sint16(std::lround(std::clamp(sticks[a], -1.0, 1.0) * kAxisScale)));
+    }
+    const std::array<qreal, 2> triggers{ leftTrigger, rightTrigger };
+    for (int t = 0; t < int(triggers.size()); ++t) {
+        const long value = kTriggerBase + std::lround(std::clamp(triggers[t], 0.0, 1.0) * kTriggerSpan);
+        SDL_SetJoystickVirtualAxis(virtualPad_, SDL_GAMEPAD_AXIS_LEFT_TRIGGER + t, Sint16(value));
+    }
+#else
+    Q_UNUSED(buttons);
+    Q_UNUSED(leftX);
+    Q_UNUSED(leftY);
+    Q_UNUSED(rightX);
+    Q_UNUSED(rightY);
+    Q_UNUSED(leftTrigger);
+    Q_UNUSED(rightTrigger);
 #endif
 }
 
@@ -161,7 +268,7 @@ void GamepadWorker::readState(bool force)
             }
         }
         for (int a = 0; a < SDL_GAMEPAD_AXIS_COUNT; ++a) {
-            const qreal raw = SDL_GetGamepadAxis(pad_, static_cast<SDL_GamepadAxis>(a)) / 32767.0;
+            const qreal raw = SDL_GetGamepadAxis(pad_, static_cast<SDL_GamepadAxis>(a)) / kAxisScale;
             axes[a] = std::clamp(raw, -1.0, 1.0);
         }
     }

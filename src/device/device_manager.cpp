@@ -36,6 +36,7 @@ constexpr uint16_t kGpsHdopUnknown = 0xFFFF;
 constexpr double kGpsHdopScale = 100.0;
 constexpr int kSikSystemId = '3';
 constexpr int kSikComponentId = 'D';
+constexpr int kManualControlRange = 1000;
 
 int radioDbm(int raw, bool sik)
 {
@@ -316,6 +317,39 @@ void DeviceManager::sendAutopilotMessage(quint32 msgId, const QByteArray& payloa
     emit writeMavlinkBytes(autopilot::encodeFrame(vru_.mavlinkVersion, mavlinkSeq_++, msgId, payload, v1Length));
 }
 
+void DeviceManager::sendManualControl(int steering, int throttle)
+{
+    if (!vru_.online || vru_.systemId < 0 || autopilotLink_ == nullptr) {
+        return;
+    }
+
+    MAVLink_MSG_MANUAL_CONTROL control;
+    control.y = int16_t(std::clamp(steering, -kManualControlRange, kManualControlRange));
+    control.z = int16_t(std::clamp(throttle, -kManualControlRange, kManualControlRange));
+    control.target = uint8_t(vru_.systemId);
+    sendAutopilotMessage(MAVLink_MSG_MANUAL_CONTROL::getID(), autopilot::payloadOf(control), MAVLink_MSG_MANUAL_CONTROL::v1Length());
+}
+
+void DeviceManager::requestAutopilotParam(const QString& name)
+{
+    if (!vru_.online || vru_.systemId < 0 || autopilotLink_ == nullptr) {
+        return;
+    }
+
+    MAVLink_MSG_PARAM_REQUEST_READ request;
+    request.target_system = uint8_t(vru_.systemId);
+    request.target_component = uint8_t(vru_.componentId);
+    const QByteArray id = name.toLatin1().left(kMavParamIdLength);
+    std::memcpy(request.param_id, id.constData(), size_t(id.size()));
+    sendAutopilotMessage(MAVLink_MSG_PARAM_REQUEST_READ::getID(), autopilot::payloadOf(request), MAVLink_MSG_PARAM_REQUEST_READ::v1Length());
+}
+
+void DeviceManager::sendGcsHeartbeat()
+{
+    const MAVLink_MSG_GCS_HEARTBEAT heartbeat;
+    sendAutopilotMessage(MAVLink_MSG_GCS_HEARTBEAT::getID(), autopilot::payloadOf(heartbeat), MAVLink_MSG_GCS_HEARTBEAT::v1Length());
+}
+
 void DeviceManager::startMissionUpload(const autopilot::MissionBatches& batches)
 {
     if (!vru_.online || vru_.systemId < 0 || autopilotLink_ == nullptr) {
@@ -404,6 +438,7 @@ void DeviceManager::checkAutopilotOnline()
         publishVru();
         return;
     }
+    sendGcsHeartbeat();
     const qint64 now = heartbeatClock_.elapsed();
     const bool missionCurrentMissing = lastMissionCurrentMs_ < 0 || now - lastMissionCurrentMs_ > kStreamWatchdogMs;
     if (missionCurrentMissing && streamRequests_ < kStreamRequestAttempts && now - streamRequestMs_ > kStreamWatchdogMs) {
@@ -928,6 +963,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                         requestVehicleHome();
                     }
                     if (vru_.online && !wasOnline) {
+                        sendGcsHeartbeat();
                         requestAutopilotStreams();
                     }
                     publishVru();
@@ -961,15 +997,22 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                 }
 
                 const quint32 msgId = mavlink_frame.msgId();
+                QByteArray transferPayload;
                 if (fromAutopilot && vru_.online
                     && (msgId == MAVLink_MSG_MISSION_REQUEST::getID() || msgId == MAVLink_MSG_MISSION_REQUEST_INT::getID()
                         || msgId == MAVLink_MSG_MISSION_ACK::getID() || msgId == MAVLink_MSG_MISSION_COUNT::getID()
                         || msgId == MAVLink_MSG_MISSION_ITEM_INT::getID() || msgId == MAVLink_MSG_PARAM_VALUE::getID())) {
                     const uint16_t length = mavlink_frame.payloadLen();
-                    emit missionFrameReceived(msgId, QByteArray(reinterpret_cast<const char*>(mavlink_frame.read(length)), length));
+                    transferPayload = QByteArray(reinterpret_cast<const char*>(mavlink_frame.read(length)), length);
+                    emit missionFrameReceived(msgId, transferPayload);
                 }
 
                 const bool fromAutopilotComponent = fromAutopilot && vru_.online && int(mavlink_frame.componentID()) == vru_.componentId;
+                if (fromAutopilotComponent && msgId == MAVLink_MSG_PARAM_VALUE::getID()) {
+                    const auto value = autopilot::decodePayload<MAVLink_MSG_PARAM_VALUE>(transferPayload);
+                    emit autopilotParamReceived(QString::fromLatin1(value.param_id, int(qstrnlen(value.param_id, kMavParamIdLength))),
+                                                value.param_value);
+                }
                 if (fromAutopilotComponent && msgId == MAVLink_MSG_MISSION_CURRENT::getID()) {
                     const auto current = mavlink_frame.read<MAVLink_MSG_MISSION_CURRENT>();
                     MissionTelemetry next = missionTelemetry_;

@@ -20,6 +20,8 @@ Column {
     readonly property int instruments: theme ? theme.instrumentsGrade : 0
     readonly property real groupWidth: Math.max(0, width)
     readonly property color _bright: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
+    readonly property var _helmCtl: (typeof helm !== "undefined") ? helm : null
+    readonly property bool _gamepadSupported: typeof gamepadMonitor !== "undefined" && !!gamepadMonitor && gamepadMonitor.supported
     readonly property color _shownFill:    Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.14 : 0.20)
     readonly property color _shownHover:   Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.24 : 0.30)
     readonly property color _shownPressed: Qt.rgba(0.98, 0.80, 0.08, AppPalette.isDark ? 0.32 : 0.38)
@@ -91,6 +93,48 @@ Column {
                     anchors.margins: -Math.round(3 * AppPalette.scale)
                     cursorShape: Qt.PointingHandCursor
                     onClicked: colorRow.picked(parent.modelData)
+                }
+            }
+        }
+    }
+
+    component HelmSliderRow: KIslandRow {
+        id: helmRow
+        property real from: 0
+        property real to: 1
+        property real stepSize: 0.05
+        property real value: 0
+        property real displayScale: 100
+        property string format: "%1%"
+        signal valueMoved(real value)
+        labelColor: root._bright
+        slotWidth: Math.round(200 * AppPalette.scale)
+
+        Item {
+            width: helmRow.slotWidth
+            height: helmRowLayout.implicitHeight
+
+            RowLayout {
+                id: helmRowLayout
+                anchors.fill: parent
+                spacing: Tokens.spaceSm
+
+                KSlider {
+                    id: helmRowSlider
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                    from: helmRow.from
+                    to: helmRow.to
+                    stepSize: helmRow.stepSize
+                    value: helmRow.value
+                    onValueModified: function(val) { helmRow.valueMoved(val) }
+                }
+                Text {
+                    text: helmRow.format.arg(Math.round(helmRowSlider.value * helmRow.displayScale))
+                    color: root._bright
+                    font.pixelSize: Tokens.fontBase
+                    Layout.preferredWidth: Math.round(52 * AppPalette.scale)
+                    horizontalAlignment: Text.AlignRight
                 }
             }
         }
@@ -3010,6 +3054,73 @@ Column {
                         smooth: true
                     }
                 }
+            }
+        }
+    }
+
+    SettingsGroup {
+        visible: instruments >= 1 && root._gamepadSupported && !!root._helmCtl
+        width: root.groupWidth
+        preferredWidth: root.groupWidth
+        title: qsTr("Gamepad control")
+        description: qsTr("Driving the boat from a gamepad: RT forward, LT reverse, left stick steers, RB switches Manual and Loiter, B holds, the D-pad changes the forward limit.")
+        stateStore: root.store
+        stateKey: "app.gamepadhelm"
+        collapsedByDefault: true
+
+        Column {
+            width: parent.width
+            spacing: Tokens.spaceMd
+
+            KIsland {
+                HelmSliderRow {
+                    label: qsTr("Forward limit at start")
+                    from: 0.25; to: 1; stepSize: 0.25
+                    value: root._helmCtl ? root._helmCtl.startForwardLimit : 1
+                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.startForwardLimit = val }
+                }
+                HelmSliderRow {
+                    label: qsTr("Reverse limit")
+                    from: 0; to: 1; stepSize: 0.05
+                    value: root._helmCtl ? root._helmCtl.reverseLimit : 0.5
+                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.reverseLimit = val }
+                }
+                HelmSliderRow {
+                    label: qsTr("Stick dead zone")
+                    from: 0; to: 0.5; stepSize: 0.01
+                    value: root._helmCtl ? root._helmCtl.stickDeadzone : 0.1
+                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.stickDeadzone = val }
+                }
+                HelmSliderRow {
+                    label: qsTr("Trigger dead zone")
+                    from: 0; to: 0.5; stepSize: 0.01
+                    value: root._helmCtl ? root._helmCtl.triggerDeadzone : 0.05
+                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.triggerDeadzone = val }
+                }
+                HelmSliderRow {
+                    label: qsTr("Throttle expo")
+                    from: 0; to: 1; stepSize: 0.05
+                    value: root._helmCtl ? root._helmCtl.throttleExpo : 0.2
+                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.throttleExpo = val }
+                }
+                HelmSliderRow {
+                    label: qsTr("Send rate")
+                    from: 10; to: 25; stepSize: 1
+                    displayScale: 1
+                    format: qsTr("%1 Hz")
+                    value: root._helmCtl ? root._helmCtl.rateHz : 20
+                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.rateHz = Math.round(val) }
+                }
+            }
+
+            Text {
+                width: parent.width
+                visible: !!root._helmCtl && root._helmCtl.vehicleStatus.length > 0
+                text: root._helmCtl ? qsTr("Last vehicle check:") + "\n" + root._helmCtl.vehicleStatus : ""
+                textFormat: Text.PlainText
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
+                wrapMode: Text.WordWrap
             }
         }
     }

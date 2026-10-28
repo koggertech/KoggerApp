@@ -119,6 +119,10 @@ public:
     Q_INVOKABLE void autopilotSetMissionCurrent(int seq);
     /** Sets the vehicle's ground speed in m/s; see DeviceManager::autopilotSetSpeed. */
     void autopilotSetSpeed(double speed);
+    /** Sends one MANUAL_CONTROL frame; see DeviceManager::sendManualControl. */
+    void autopilotManualControl(int steering, int throttle);
+    /** Reads one vehicle parameter; the answer arrives as autopilotParamReceived. */
+    void autopilotRequestParam(const QString& name);
 
     void initStreamList();
 
@@ -210,6 +214,7 @@ signals:
     void autopilotCommandAcked(int command, int result);
     void autopilotStatusText(int severity, const QString& text);
     void autopilotMissionItemReached(int seq);
+    void autopilotParamReceived(const QString& name, float value);
     void autopilotMessagesChanged();
     void missionTransferChanged();
     void restartMissionAfterUploadChanged();

@@ -1328,6 +1328,13 @@ ApplicationWindow {
             siblingIdList: ["btEdit", "profiles"]
         }
 
+        HelmIndicator {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            anchors.topMargin: Math.round(56 * AppPalette.appScale)
+            z: ZOrder.autopilotPopup
+        }
+
         // One delegate per panel, of whichever KIND the def names. The Loader is the branch: a
         // field grid and an acoustic-nodes list are different popups that happen to share the
         // whole of the panel machinery around them — position, scale, z-rank, docking, the

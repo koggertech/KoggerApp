@@ -147,6 +147,7 @@ add_subdirectory(src/control)
 add_subdirectory(src/mission)
 add_subdirectory(src/tutorial)
 add_subdirectory(src/gamepad)
+add_subdirectory(src/helm)
 
 # Optional build flags (off by default)
 if(KOGGER_FLASHER)

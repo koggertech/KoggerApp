@@ -39,6 +39,7 @@
 #endif
 #include "system_battery.h"
 #include "gamepad_monitor.h"
+#include "helm_controller.h"
 #include "mosaic_db.h"
 #include "language_controller.h"
 #include "app_utils.h"
@@ -478,6 +479,7 @@ int main(int argc, char *argv[])
     GamepadMonitor gamepadMonitor;
     core.initAfterApp();
     LinkDiscovery linkDiscovery(core.getLinkManagerWrapperPtr());
+    HelmController helm(&gamepadMonitor, core.getDeviceManagerWrapperPtr(), &notifications);
     Tutorial tutorial;
     tutorial.loadFromDirectory(QStringLiteral(":/tutorial"));
 
@@ -526,6 +528,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("inputDeviceTracker", &inputDeviceTracker);
     engine.rootContext()->setContextProperty("systemBattery", &systemBattery);
     engine.rootContext()->setContextProperty("gamepadMonitor", &gamepadMonitor);
+    engine.rootContext()->setContextProperty("helm", &helm);
     engine.rootContext()->setContextProperty("langController", &langController);
     engine.rootContext()->setContextProperty("appUtils", &appUtils);
     engine.rootContext()->setContextProperty("tutorial", &tutorial);
@@ -635,6 +638,8 @@ int main(int argc, char *argv[])
                 controlServer.registerObject(QStringLiteral("inputDeviceTracker"),   &inputDeviceTracker);
                 controlServer.registerObject(QStringLiteral("systemBattery"),        &systemBattery);
                 controlServer.registerObject(QStringLiteral("gamepadMonitor"),       &gamepadMonitor);
+                controlServer.registerObject(QStringLiteral("helm"),                 &helm);
+                gamepadMonitor.setVirtualPadAllowed(true);
                 controlServer.registerObject(QStringLiteral("langController"),       &langController);
                 controlServer.registerObject(QStringLiteral("appUtils"),             &appUtils);
                 controlServer.registerObject(QStringLiteral("uiProbe"),              &uiProbe);

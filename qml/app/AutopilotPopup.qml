@@ -57,8 +57,12 @@ BasePanePopup {
     readonly property bool _paused: !!_dmw && _dmw.missionState === _missionStatePaused
     readonly property bool _missionKnown: _online && !!_run && _run.known && !_run.vehicleEmpty
     readonly property bool _missionRowVisible: _missionKnown && (_run.running || _paused || (_run.complete && _armed))
+    readonly property var _helm: (typeof helm !== "undefined") ? helm : null
+    readonly property var _gamepad: (typeof gamepadMonitor !== "undefined") ? gamepadMonitor : null
+    readonly property bool _helmActive: !!_helm && _helm.active
+    readonly property bool _helmRowVisible: !!_helm && (_helm.available || _helm.active)
     property bool expanded: false
-    readonly property bool _trayVisible: _online && (expanded || _missionRowVisible)
+    readonly property bool _trayVisible: _online && (expanded || _missionRowVisible || _helmRowVisible)
     readonly property int _rowPad: _trayVisible ? Math.round(6 * _s) : _sidePad
     readonly property int _trayPad: Math.round(10 * _s)
     readonly property int _nextSeq: (_run && _run.running && _run.actionable && _run.targetSeq >= 0) ? _run.nextTargetSeq() : -1
@@ -266,6 +270,12 @@ BasePanePopup {
         if (_armed) {
             _cancelArmConfirm()
             _send(400, function() { root._dmw.autopilotArm(false) })
+            return
+        }
+        if (_helmActive && _helm.throttle !== 0) {
+            _cancelArmConfirm()
+            if (typeof notifications !== "undefined" && notifications)
+                notifications.info(qsTr("Release the triggers before arming"))
             return
         }
         if (!armConfirmPending) {
@@ -645,6 +655,46 @@ BasePanePopup {
                 anchors.rightMargin: root._pad
                 anchors.topMargin: root._trayPad
                 spacing: Math.round(8 * root._s)
+
+                Item {
+                    width: parent.width
+                    height: helmButton.height
+                    visible: root._helmRowVisible
+
+                    Text {
+                        anchors.left: parent.left
+                        anchors.right: helmButton.left
+                        anchors.rightMargin: root._gap
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: {
+                            if (!root._helm) return ""
+                            switch (root._helm.state) {
+                            case 1: return qsTr("Checking vehicle parameters…")
+                            case 2: return qsTr("Switching to Manual…")
+                            case 3: return qsTr("Gamepad control · limit %1%").arg(Math.round(root._helm.forwardLimit * 100))
+                            case 4: return qsTr("Holding position…")
+                            default: return qsTr("Gamepad: %1").arg(root._gamepad ? root._gamepad.name : "")
+                            }
+                        }
+                        color: AppPalette.textStrong
+                        font.pixelSize: Math.round(12 * root._s)
+                        elide: Text.ElideRight
+                    }
+
+                    KButton {
+                        id: helmButton
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        height: Tokens.controlHMd
+                        danger: root._helmActive
+                        text: root._helmActive ? qsTr("Stop gamepad control") : qsTr("Gamepad control")
+                        onClicked: {
+                            if (!root._helm) return
+                            if (root._helmActive) root._helm.disengage()
+                            else root._helm.engage()
+                        }
+                    }
+                }
 
                 Item {
                     width: parent.width

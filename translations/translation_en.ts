@@ -1328,6 +1328,56 @@
         <source>Show the depth colour scale over the 3D scene</source>
         <translation>Show the depth colour scale over the 3D scene</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3065"/>
+        <source>Gamepad control</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3066"/>
+        <source>Driving the boat from a gamepad: RT forward, LT reverse, left stick steers, RB switches Manual and Loiter, B holds, the D-pad changes the forward limit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3077"/>
+        <source>Forward limit at start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3083"/>
+        <source>Reverse limit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3089"/>
+        <source>Stick dead zone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3095"/>
+        <source>Trigger dead zone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3101"/>
+        <source>Throttle expo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3107"/>
+        <source>Send rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3110"/>
+        <source>%1 Hz</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3119"/>
+        <source>Last vehicle check:</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AutopilotPopup</name>
@@ -1621,6 +1671,46 @@
         <location filename="../qml/app/AutopilotPopup.qml" line="602"/>
         <source>Mission editor</source>
         <translation>Mission editor</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="278"/>
+        <source>Release the triggers before arming</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="672"/>
+        <source>Checking vehicle parameters…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="673"/>
+        <source>Switching to Manual…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="674"/>
+        <source>Gamepad control · limit %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="675"/>
+        <source>Holding position…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="676"/>
+        <source>Gamepad: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="690"/>
+        <source>Stop gamepad control</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="690"/>
+        <source>Gamepad control</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2938,6 +3028,21 @@ udp://@:1234
         <location filename="../qml/app/DeveloperSettingsTab.qml" line="104"/>
         <source>Copy path</source>
         <translation>Copy path</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeveloperSettingsTab.qml" line="88"/>
+        <source>Gamepad</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeveloperSettingsTab.qml" line="89"/>
+        <source>Shows a connected game controller and which of its buttons and sticks are pressed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeveloperSettingsTab.qml" line="94"/>
+        <source>Open</source>
+        <translation type="unfinished">Open</translation>
     </message>
 </context>
 <context>
@@ -4857,6 +4962,69 @@ udp://@:1234
     </message>
 </context>
 <context>
+    <name>GamepadTestDialog</name>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="21"/>
+        <source>D-pad up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="21"/>
+        <source>D-pad down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="21"/>
+        <source>D-pad left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="21"/>
+        <source>D-pad right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="31"/>
+        <source>none</source>
+        <translation type="unfinished">none</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="36"/>
+        <source>Gamepad support is not built into this version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="38"/>
+        <source>Gamepad subsystem failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="40"/>
+        <source>No gamepad found. Connect one over USB or Bluetooth.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="191"/>
+        <source>Gamepad</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="282"/>
+        <source>Pressed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="291"/>
+        <source>Dimmed buttons are not reported by this controller or its driver.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="315"/>
+        <source>Close</source>
+        <translation type="unfinished">Close</translation>
+    </message>
+</context>
+<context>
     <name>GlobalPanePopup</name>
     <message>
         <location filename="../qml/app/GlobalPanePopup.qml" line="181"/>
@@ -4887,6 +5055,162 @@ udp://@:1234
         <location filename="../qml/app/GlobalPanePopup.qml" line="191"/>
         <source>3D is already used in another pane</source>
         <translation></translation>
+    </message>
+</context>
+<context>
+    <name>HelmController</name>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="166"/>
+        <source>Gamepad control needs a connected gamepad and an online autopilot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="199"/>
+        <source>Gamepad control cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="202"/>
+        <source>Gamepad control off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="220"/>
+        <source>Link to the vehicle lost — gamepad control off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="229"/>
+        <source>Mode changed to %1 — gamepad control off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="242"/>
+        <source>Gamepad disconnected — holding position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="310"/>
+        <source>App in the background — holding position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="324"/>
+        <source>Gamepad stopped responding — holding position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="412"/>
+        <source>%1: no answer from the vehicle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="416"/>
+        <source>RC_OVERRIDE_TIME is 0: the vehicle ignores gamepad control</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="419"/>
+        <source>RC_OPTIONS bit 1 is set: the vehicle ignores gamepad control</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="422"/>
+        <source>FS_THR_ENABLE and FS_GCS_ENABLE are both 0: after a link loss the boat would keep the last command</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="430"/>
+        <source>MAV_GCS_SYSID does not include %1: the vehicle ignores gamepad control</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="435"/>
+        <source>SYSID_MYGCS is not %1: the vehicle ignores gamepad control</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="439"/>
+        <source>GCS system id: no answer from the vehicle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="449"/>
+        <source>Transmitter switch RC_OVERRIDE_ENABLE: set up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="450"/>
+        <source>Transmitter switch RC_OVERRIDE_ENABLE: not set up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="452"/>
+        <source>PILOT_STEER_TYPE: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="469"/>
+        <source>Gamepad disconnected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="472"/>
+        <source>Release the triggers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="479"/>
+        <source>Gamepad control refused: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="518"/>
+        <source>The vehicle refused Manual — gamepad control off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="523"/>
+        <source>The vehicle refused %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="535"/>
+        <source>%1. The vehicle refused Loiter and Hold</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HelmIndicator</name>
+    <message>
+        <location filename="../qml/app/HelmIndicator.qml" line="20"/>
+        <source>Gamepad: checking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HelmIndicator.qml" line="21"/>
+        <source>Gamepad: starting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HelmIndicator.qml" line="22"/>
+        <source>Gamepad: stopping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HelmIndicator.qml" line="24"/>
+        <source>Gamepad: %1 · background</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HelmIndicator.qml" line="24"/>
+        <source>Gamepad: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/HelmIndicator.qml" line="99"/>
+        <source>%1%</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

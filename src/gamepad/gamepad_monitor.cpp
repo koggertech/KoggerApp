@@ -11,6 +11,7 @@ GamepadMonitor::GamepadMonitor(QObject* parent)
 
     connect(&thread_, &QThread::finished, worker_, &QObject::deleteLater);
     connect(worker_, &GamepadWorker::errorChanged, this, &GamepadMonitor::onWorkerError);
+    connect(worker_, &GamepadWorker::readyChanged, this, &GamepadMonitor::onWorkerReady);
     connect(worker_, &GamepadWorker::connectionChanged, this, &GamepadMonitor::onWorkerConnection);
     connect(worker_, &GamepadWorker::stateChanged, this, &GamepadMonitor::onWorkerState);
 }
@@ -42,7 +43,79 @@ void GamepadMonitor::setActive(bool active)
     }
 
     active_ = active;
-    if (active_) {
+    updateOwners();
+    emit activeChanged();
+}
+
+void GamepadMonitor::setPresenceActive(bool active)
+{
+    if (presenceActive_ == active) {
+        return;
+    }
+
+    presenceActive_ = active;
+    updateOwners();
+}
+
+void GamepadMonitor::setHelmActive(bool active)
+{
+    if (helmActive_ == active) {
+        return;
+    }
+
+    helmActive_ = active;
+    updateOwners();
+}
+
+void GamepadMonitor::attachVirtualPad()
+{
+    if (virtualPadAllowed_) {
+        QMetaObject::invokeMethod(worker_, &GamepadWorker::attachVirtualPad, Qt::QueuedConnection);
+    }
+}
+
+void GamepadMonitor::detachVirtualPad()
+{
+    if (virtualPadAllowed_) {
+        QMetaObject::invokeMethod(worker_, &GamepadWorker::detachVirtualPad, Qt::QueuedConnection);
+    }
+}
+
+void GamepadMonitor::setVirtualInput(int buttons, qreal leftX, qreal leftY, qreal rightX, qreal rightY, qreal leftTrigger, qreal rightTrigger)
+{
+    if (!virtualPadAllowed_) {
+        return;
+    }
+
+    GamepadWorker* worker = worker_;
+    QMetaObject::invokeMethod(worker_, [=] {
+        worker->setVirtualInput(buttons, leftX, leftY, rightX, rightY, leftTrigger, rightTrigger);
+    }, Qt::QueuedConnection);
+}
+
+void GamepadMonitor::updateOwners()
+{
+    GamepadWorker* worker = worker_;
+
+    const bool routing = active_ || helmActive_;
+    if (routing != routing_) {
+        routing_ = routing;
+        QMetaObject::invokeMethod(worker_, [worker, routing] { worker->setRouting(routing); }, Qt::QueuedConnection);
+    }
+
+    const bool continuous = helmActive_;
+    if (continuous != continuous_) {
+        continuous_ = continuous;
+        QMetaObject::invokeMethod(worker_, [worker, continuous] { worker->setContinuous(continuous); }, Qt::QueuedConnection);
+    }
+
+    const bool running = active_ || presenceActive_ || helmActive_;
+    if (running == running_) {
+        return;
+    }
+
+    running_ = running;
+    if (running_) {
         if (!thread_.isRunning()) {
             thread_.start();
         }
@@ -51,7 +124,7 @@ void GamepadMonitor::setActive(bool active)
     else {
         QMetaObject::invokeMethod(worker_, &GamepadWorker::stop, Qt::QueuedConnection);
     }
-    emit activeChanged();
+    emit runningChanged();
 }
 
 void GamepadMonitor::onWorkerError(const QString& error)
@@ -62,6 +135,16 @@ void GamepadMonitor::onWorkerError(const QString& error)
 
     error_ = error;
     emit errorChanged();
+}
+
+void GamepadMonitor::onWorkerReady(bool ready)
+{
+    if (ready_ == ready) {
+        return;
+    }
+
+    ready_ = ready;
+    emit readyChanged();
 }
 
 void GamepadMonitor::onWorkerConnection(bool connected, const QString& name, const QString& typeName, int availableButtons)

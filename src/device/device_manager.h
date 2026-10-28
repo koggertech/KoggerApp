@@ -153,6 +153,10 @@ public slots:
     void startMissionUpload(const autopilot::MissionBatches& batches);
     void startMissionDownload();
     void sendAutopilotMessage(quint32 msgId, const QByteArray& payload, int v1Length);
+    /** Sends one MANUAL_CONTROL frame to the latched vehicle: @p steering into y, @p throttle into z, both −1000…1000; dropped while no vehicle is online. */
+    void sendManualControl(int steering, int throttle);
+    /** Asks the latched vehicle for one parameter by name (PARAM_REQUEST_READ); the answer arrives as autopilotParamReceived. */
+    void requestAutopilotParam(const QString& name);
 
 signals:
     void sendFrameInputToLogger(QUuid uuid, Link* link, Parsers::FrameParser frame);
@@ -160,6 +164,7 @@ signals:
     void autopilotCommandAcked(int command, int result);
     void autopilotStatusText(int severity, const QString& text);
     void autopilotMissionItemReached(int seq);
+    void autopilotParamReceived(const QString& name, float value);
     void missionFrameReceived(quint32 msgId, const QByteArray& payload);
     void missionUploadStart(const autopilot::MissionBatches& batches, int targetSystem, int targetComponent);
     void missionUploadRefused(int result, int missionType);
@@ -243,6 +248,7 @@ private:
     void requestAutopilotStreams();
     void sendDataStreamRequest();
     void sendMissionSetCurrent(int seq);
+    void sendGcsHeartbeat();
     void handleStatusText(const MAVLink_MSG_STATUSTEXT& message);
     void emitStatusText(int severity, const QString& text);
     void flushStatusText();

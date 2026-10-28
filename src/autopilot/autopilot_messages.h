@@ -12,6 +12,9 @@ constexpr float kMavArmForceMagic = 21196.0f;
 constexpr uint8_t kMavDataStreamExtendedStatus = 2;
 constexpr uint8_t kMavParamTypeInt8 = 2;
 constexpr int kMavParamIdLength = 16;
+constexpr int16_t kMavAxisInvalid = INT16_MAX;
+constexpr uint8_t kMavStateActive = 4;
+constexpr uint8_t kMavProtocolVersion = 3;
 
 enum MavCommandId : uint16_t {
     MavCmdDoSetMode = 176,
@@ -299,6 +302,43 @@ struct __attribute__((packed)) MAVLink_MSG_PARAM_SET
     static int v1Length() { return 23; }
 };
 
+struct __attribute__((packed)) MAVLink_MSG_PARAM_REQUEST_READ
+{
+    int16_t param_index = -1;
+    uint8_t target_system = 0;
+    uint8_t target_component = 0;
+    char param_id[kMavParamIdLength] = {};
+
+    static uint32_t getID() { return 20; }
+    static int v1Length() { return 20; }
+};
+
+struct __attribute__((packed)) MAVLink_MSG_MANUAL_CONTROL
+{
+    int16_t x = kMavAxisInvalid;
+    int16_t y = 0;
+    int16_t z = 0;
+    int16_t r = kMavAxisInvalid;
+    uint16_t buttons = 0;
+    uint8_t target = 0;
+
+    static uint32_t getID() { return 69; }
+    static int v1Length() { return 11; }
+};
+
+struct __attribute__((packed)) MAVLink_MSG_GCS_HEARTBEAT
+{
+    uint32_t custom_mode = 0;
+    uint8_t type = kMavTypeGcs;
+    uint8_t autopilot = kMavAutopilotInvalid;
+    uint8_t base_mode = 0;
+    uint8_t system_status = kMavStateActive;
+    uint8_t mavlink_version = kMavProtocolVersion;
+
+    static uint32_t getID() { return 0; }
+    static int v1Length() { return 9; }
+};
+
 static_assert(sizeof(MAVLink_MSG_COMMAND_LONG) == 33);
 static_assert(sizeof(MAVLink_MSG_PARAM_VALUE) == 25);
 static_assert(sizeof(MAVLink_MSG_PARAM_SET) == 23);
@@ -314,3 +354,6 @@ static_assert(sizeof(MAVLink_MSG_MISSION_COUNT) == 5);
 static_assert(sizeof(MAVLink_MSG_MISSION_REQUEST_INT) == 5);
 static_assert(sizeof(MAVLink_MSG_MISSION_ACK) == 8);
 static_assert(sizeof(MAVLink_MSG_MISSION_ITEM_INT) == 38);
+static_assert(sizeof(MAVLink_MSG_PARAM_REQUEST_READ) == 20);
+static_assert(sizeof(MAVLink_MSG_MANUAL_CONTROL) == 11);
+static_assert(sizeof(MAVLink_MSG_GCS_HEARTBEAT) == 9);
