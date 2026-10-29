@@ -18,13 +18,15 @@ enum Action : int {
     ActionHold,
     ActionLoiter,
     ActionAuto,
+    ActionCourseHold,
+    ActionRtl,
     ActionCount
 };
 
 /**
- * What an action accepts: a button, a trigger or stick half, or a stick axis. Reserved buttons are
- * never bindable: LB + RB together arm / disarm, and the OS takes Guide (Game Bar, Home), which on
- * Windows a pad also reports for View + Menu.
+ * What an action accepts: a button, a trigger or stick half, or a stick axis. Guide is never bindable:
+ * the OS takes it (Game Bar, Home), and on Windows a pad also reports it for View + Menu. LB + RB
+ * together arm / disarm, so an action on a bumper acts when that bumper is released without the other.
  */
 enum class ActionKind {
     Button,
@@ -85,6 +87,8 @@ inline Bindings defaultBindings()
     b[ActionHold] = kButtonSouth;
     b[ActionLoiter] = kButtonEast;
     b[ActionAuto] = kButtonNorth;
+    b[ActionCourseHold] = kButtonLeftShoulder;
+    b[ActionRtl] = kButtonRightShoulder;
     return b;
 }
 
@@ -93,7 +97,23 @@ constexpr int kArmComboMask = (1 << kButtonLeftShoulder) | (1 << kButtonRightSho
 
 inline bool isReservedButton(int input)
 {
-    return input == kButtonGuide || input == kButtonLeftShoulder || input == kButtonRightShoulder;
+    return input == kButtonGuide;
+}
+
+/**
+ * Buttons that act this sample: presses off the bumpers, and bumper releases unless both bumpers were
+ * held together since the last time neither was down (@p spent, updated here).
+ */
+inline int firedButtons(int previous, int buttons, bool& spent)
+{
+    if ((buttons & kArmComboMask) == kArmComboMask) {
+        spent = true;
+    }
+    const int fired = (buttons & ~previous & ~kArmComboMask) | (spent ? 0 : previous & ~buttons & kArmComboMask);
+    if ((buttons & kArmComboMask) == 0) {
+        spent = false;
+    }
+    return fired;
 }
 
 inline ActionKind actionKind(int action)

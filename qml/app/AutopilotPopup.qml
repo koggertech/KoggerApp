@@ -183,6 +183,7 @@ BasePanePopup {
 
     readonly property var modes: [
         { mode: 0,  icon: "qrc:/icons/ui/mode-manual.svg", tip: qsTr("Manual") },
+        { mode: 1,  icon: "qrc:/icons/ui/mode-course-hold.svg", tip: qsTr("Course hold (Acro)"), offMode: 0 },
         { mode: 4,  icon: "qrc:/icons/ui/mode-hold.svg",   tip: qsTr("Hold") },
         { mode: 5,  icon: "qrc:/icons/ui/mode-loiter.svg", tip: qsTr("Loiter") },
         { mode: 10, icon: "qrc:/icons/ui/mode-auto.svg",   tip: qsTr("Auto") },
@@ -646,7 +647,7 @@ BasePanePopup {
                         selected: root._online && root._mode === modelData.mode
                         iconSource: modelData.icon
                         toolTipText: modelData.tip
-                        onClicked: root.requestMode(modelData.mode)
+                        onClicked: root.requestMode(modelData.offMode !== undefined && root._mode === modelData.mode ? modelData.offMode : modelData.mode)
                     }
                 }
 

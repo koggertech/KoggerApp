@@ -18,11 +18,14 @@ class DeviceManagerWrapper;
 /**
  * Drives an ArduRover vehicle from the gamepad: streams MANUAL_CONTROL over the autopilot link
  * while a session is on. A session starts only by engage(), checks the vehicle parameters first,
- * switches the vehicle to Manual, and ends in Loiter (Hold when Loiter is refused) on disengage()
- * or pad loss; a link loss or a mode change outside Manual / Loiter / Hold (and Auto asked for from
- * the pad) ends it at once. During a session the pad's bound buttons pick Manual, Hold, Loiter and
- * Auto, and LB + RB together toggle arm / disarm (arming only at zero throttle). The tuning, both
- * throttle limits included, applies to the next frame of a running session.
+ * switches the vehicle to Manual (a vehicle already in Acro stays there), and ends in Loiter (Hold when
+ * Loiter is refused) on disengage() or pad loss; a link loss or a mode change outside Manual / Acro /
+ * Loiter / Hold (and Auto or RTL the pad asked for, until the vehicle next enters one of those four) ends it
+ * at once. The pad drives in Manual and
+ * in Acro, where a released stick holds the heading; other modes get neutral frames. During a session
+ * the pad's bound buttons pick Manual, Hold, Loiter, Auto and RTL and toggle course hold (Acro ↔
+ * Manual), and LB + RB together toggle arm / disarm (arming only at zero throttle). The tuning, the
+ * limits included, applies to the next frame of a running session.
  */
 class HelmController : public QObject
 {
@@ -154,8 +157,8 @@ public:
     /** Starts a session: parameter check, Manual, then streaming. Refused with a toast when unsafe. */
     Q_INVOKABLE void engage();
     /**
-     * Ends the session. A session started in Manual on a boat with an RC receiver, still in Manual, stays in
-     * Manual and releases both channels to the transmitter at once; otherwise Loiter, Hold when Loiter is
+     * Ends the session. A session started in Manual or Acro on a boat with an RC receiver, still in that mode,
+     * stays in it and releases both channels to the transmitter at once; otherwise Loiter, Hold when Loiter is
      * refused, then the stream stops.
      */
     Q_INVOKABLE void disengage();
@@ -252,7 +255,9 @@ private:
     int modeBeforeEngage_ = -1;
     bool configuring_ = false;
     bool holdUntilReleased_ = false;
-    bool autoFromPad_ = false;
+    int padMissionModes_ = 0;
+    int seenMode_ = -1;
+    bool bumpersSpent_ = false;
     int confirmation_ = ConfirmNone;
     bool confirmationBusy_ = false;
     bool transmitterConfirmed_ = false;

@@ -1852,6 +1852,11 @@
         <source>Turn</source>
         <translation>Поворот</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="186"/>
+        <source>Course hold (Acro)</source>
+        <translation>Удержание курса (Acro)</translation>
+    </message>
 </context>
 <context>
     <name>BottomTrackEditPopup</name>
@@ -5413,6 +5418,21 @@ udp://@:1234
         <location filename="../qml/settings/GamepadTestDialog.qml" line="287"/>
         <source>The bumpers are taken by arm / disarm and cannot be bound</source>
         <translation>Бамперы заняты под arm / disarm — назначить их нельзя</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="147"/>
+        <source>Course hold on / off (Acro)</source>
+        <translation>Удержание курса вкл / выкл (Acro)</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="148"/>
+        <source>RTL (return to launch)</source>
+        <translation>RTL (возврат к точке старта)</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="740"/>
+        <source>Arm / disarm (both together); a bumper alone acts on release</source>
+        <translation>Взвести / снять (оба вместе); один бампер срабатывает при отпускании</translation>
     </message>
 </context>
 <context>

@@ -14,7 +14,6 @@ Popup {
     readonly property var faceLabels: connected ? gamepadMonitor.faceLabels : []
     readonly property bool playStation: family === "ps4" || family === "ps5"
     readonly property int guideButton: 5
-    readonly property int reservedMask: (1 << 9) | (1 << 10)
     readonly property int buttonCount: 21
     readonly property int buttons: hasMonitor ? (gamepadMonitor.buttons & ~(1 << guideButton)) : 0
     readonly property int availableButtons: hasMonitor ? gamepadMonitor.availableButtons : 0
@@ -145,6 +144,8 @@ Popup {
             case "hold":            return qsTr("Hold (motors stop)")
             case "loiter":          return qsTr("Loiter (keep position)")
             case "auto":            return qsTr("Auto (run the mission)")
+            case "courseHold":      return qsTr("Course hold on / off (Acro)")
+            case "rtl":             return qsTr("RTL (return to launch)")
             default:                return key
         }
     }
@@ -282,15 +283,7 @@ Popup {
         if (kind === "button") {
             var fresh = buttons & ~prevButtons
             prevButtons = buttons
-            if (fresh !== 0 && (fresh & ~reservedMask) === 0) {
-                listeningAction = -1
-                message = qsTr("The bumpers are taken by arm / disarm and cannot be bound")
-                messageWarn = true
-                return
-            }
             for (var b = 0; b < buttonCount; ++b) {
-                if ((reservedMask & (1 << b)) !== 0)
-                    continue
                 if ((fresh & (1 << b)) !== 0) {
                     commit(b)
                     return
@@ -744,7 +737,7 @@ Popup {
 
                     FixedRow {
                         badge: dialog.playStation ? "L1 + R1" : "LB + RB"
-                        label: qsTr("Arm / disarm (both together)")
+                        label: qsTr("Arm / disarm (both together); a bumper alone acts on release")
                         mask: (1 << 9) | (1 << 10)
                         all: true
                     }

@@ -11,9 +11,11 @@ namespace {
 constexpr int kSeverityWarning = 4;
 constexpr int kSeverityInfo = 6;
 constexpr int kModeManual = 0;
+constexpr int kModeAcro = 1;
 constexpr int kModeHold = 4;
 constexpr int kModeLoiter = 5;
 constexpr int kModeAuto = 10;
+constexpr int kModeRtl = 11;
 constexpr int kCmdDoSetMode = 176;
 constexpr int kCmdRequestMessage = 512;
 constexpr int kMsgRcChannels = 65;
@@ -73,6 +75,10 @@ const char* bindingKey(int action)
         return "loiter";
     case helm::ActionAuto:
         return "auto";
+    case helm::ActionCourseHold:
+        return "courseHold";
+    case helm::ActionRtl:
+        return "rtl";
     default:
         return "";
     }
@@ -107,7 +113,17 @@ QString rcParam(int channel, const char* suffix)
 
 bool modeKeepsSession(int mode)
 {
-    return mode == kModeManual || mode == kModeHold || mode == kModeLoiter;
+    return mode == kModeManual || mode == kModeAcro || mode == kModeHold || mode == kModeLoiter;
+}
+
+bool modeTakesPad(int mode)
+{
+    return mode == kModeManual || mode == kModeAcro;
+}
+
+int modeBit(int mode)
+{
+    return (mode >= 0 && mode < 31) ? (1 << mode) : 0;
 }
 
 }
@@ -343,12 +359,14 @@ void HelmController::engage()
     checkStartMs_ = clock_.elapsed();
     lastSampleMs_ = clock_.elapsed();
     previousButtons_ = monitor_->buttons();
+    bumpersSpent_ = (previousButtons_ & helm::kArmComboMask) != 0;
     steeringNeutral_ = 0.0;
     throttleNeutral_ = 0.0;
     stopReason_.clear();
     rcChannelCount_ = -1;
     modeBeforeEngage_ = vehicle_->pilotModeState();
-    autoFromPad_ = false;
+    seenMode_ = modeBeforeEngage_;
+    padMissionModes_ = 0;
 
     monitor_->setHelmActive(true);
     setState(Checking);
@@ -479,10 +497,13 @@ void HelmController::onVehicleChanged()
     if (pendingMode_ >= 0 && mode == pendingMode_) {
         onModeResult(true);
     }
-    if (pendingMode_ < 0 && mode != kModeAuto) {
-        autoFromPad_ = false;
+    if (mode != seenMode_) {
+        seenMode_ = mode;
+        if (modeKeepsSession(mode)) {
+            padMissionModes_ = 0;
+        }
     }
-    const bool keeps = modeKeepsSession(mode) || (mode == kModeAuto && autoFromPad_);
+    const bool keeps = modeKeepsSession(mode) || (modeBit(mode) & padMissionModes_) != 0;
     if ((state_ == Driving || state_ == Stopping) && pendingMode_ < 0 && !keeps) {
         finish(tr("Mode changed to %1 — gamepad control off").arg(DeviceManagerWrapper::modeNameFor(mode)));
     }
@@ -518,9 +539,13 @@ void HelmController::onPadState()
 
     const int buttons = monitor_->buttons();
     const int previous = previousButtons_;
-    const int pressed = buttons & ~previous;
     previousButtons_ = buttons;
-    if (state_ != Driving || configuring_) {
+    const bool live = state_ == Driving && !configuring_;
+    if (!live && (buttons & helm::kArmComboMask) != 0) {
+        bumpersSpent_ = true;
+    }
+    const int fired = helm::firedButtons(previous, buttons, bumpersSpent_);
+    if (!live) {
         return;
     }
 
@@ -528,18 +553,25 @@ void HelmController::onPadState()
         toggleArm();
     }
 
-    if (pressed & helm::buttonMask(bindings_, helm::ActionHold)) {
+    auto firedFor = [this, fired](helm::Action action) { return (fired & helm::buttonMask(bindings_, action)) != 0; };
+    if (firedFor(helm::ActionHold)) {
         requestPadMode(kModeHold);
     }
     else if (pendingMode_ < 0) {
-        if (pressed & helm::buttonMask(bindings_, helm::ActionManual)) {
+        if (firedFor(helm::ActionManual)) {
             requestPadMode(kModeManual);
         }
-        else if (pressed & helm::buttonMask(bindings_, helm::ActionLoiter)) {
+        else if (firedFor(helm::ActionCourseHold)) {
+            requestPadMode(vehicle_->pilotModeState() == kModeAcro ? kModeManual : kModeAcro);
+        }
+        else if (firedFor(helm::ActionLoiter)) {
             requestPadMode(kModeLoiter);
         }
-        else if (pressed & helm::buttonMask(bindings_, helm::ActionAuto)) {
+        else if (firedFor(helm::ActionAuto)) {
             requestPadMode(kModeAuto);
+        }
+        else if (firedFor(helm::ActionRtl)) {
+            requestPadMode(kModeRtl);
         }
     }
 }
@@ -554,8 +586,8 @@ void HelmController::requestPadMode(int mode)
     if (vehicle_->pilotModeState() == mode) {
         return;
     }
-    if (mode == kModeAuto) {
-        autoFromPad_ = true;
+    if (!modeKeepsSession(mode)) {
+        padMissionModes_ |= modeBit(mode);
     }
     requestMode(mode, ModeIntent::Toggle);
 }
@@ -652,7 +684,7 @@ void HelmController::onSendTick()
     if (holdUntilReleased_ && !configuring_ && helm::throttleReleased(padState(), bindings_, tuning_)) {
         holdUntilReleased_ = false;
     }
-    if (state_ == Driving && !configuring_ && !holdUntilReleased_ && pendingMode_ < 0 && vehicle_->pilotModeState() == kModeManual) {
+    if (state_ == Driving && !configuring_ && !holdUntilReleased_ && pendingMode_ < 0 && modeTakesPad(vehicle_->pilotModeState())) {
         command = helm::shape(padState(), bindings_, tuning_);
     }
     sendCommand(command);
@@ -830,7 +862,7 @@ void HelmController::finishCheck()
     setState(Starting);
     sendTimer_.start();
     onSendTick();
-    if (vehicle_->pilotModeState() == kModeManual) {
+    if (modeTakesPad(vehicle_->pilotModeState())) {
         setState(Driving);
     }
     else {
@@ -867,8 +899,8 @@ void HelmController::onModeResult(bool ok)
         break;
     case ModeIntent::Toggle:
         if (!ok) {
-            if (mode == kModeAuto) {
-                autoFromPad_ = false;
+            if (mode != vehicle_->pilotModeState()) {
+                padMissionModes_ &= ~modeBit(mode);
             }
             notify(mode == kModeLoiter ? tr("The boat refused Loiter — no position (GPS/EKF)")
                                        : tr("The vehicle refused %1").arg(DeviceManagerWrapper::modeNameFor(mode)),
@@ -891,7 +923,7 @@ void HelmController::onModeResult(bool ok)
 
 bool HelmController::handsBackToTransmitter() const
 {
-    return vehicle_->autopilotOnline() && modeBeforeEngage_ == kModeManual && vehicle_->pilotModeState() == kModeManual
+    return vehicle_->autopilotOnline() && modeTakesPad(modeBeforeEngage_) && vehicle_->pilotModeState() == modeBeforeEngage_
            && rcChannelCount_ > 0 && overrideSeconds_ > 0.0;
 }
 
