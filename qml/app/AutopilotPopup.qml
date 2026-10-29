@@ -934,26 +934,42 @@ BasePanePopup {
                         color: root._helmActive ? AppPalette.accent : AppPalette.textStrong
                     }
 
-                    Text {
+                    Column {
+                        id: helmText
+                        readonly property string padName: root._gamepad ? root._gamepad.name : ""
+                        readonly property bool sessionOn: !!root._helm && root._helm.state !== 0
+
                         anchors.left: helmPadIcon.right
                         anchors.leftMargin: root._gap
                         anchors.right: helmBars.visible ? helmBars.left
                                      : helmSettingsButton.visible ? helmSettingsButton.left : helmButton.left
                         anchors.rightMargin: root._gap
                         anchors.verticalCenter: parent.verticalCenter
-                        text: {
-                            if (!root._helm) return ""
-                            switch (root._helm.state) {
-                            case 1: return qsTr("Checking vehicle parameters…")
-                            case 2: return qsTr("Switching to Manual…")
-                            case 3: return root._helm.background ? qsTr("Gamepad control · background") : qsTr("Gamepad control")
-                            case 4: return qsTr("Holding position…")
-                            default: return qsTr("Gamepad: %1").arg(root._gamepad ? root._gamepad.name : "")
+
+                        Text {
+                            width: parent.width
+                            text: {
+                                if (!root._helm) return ""
+                                switch (root._helm.state) {
+                                case 1: return qsTr("Checking vehicle parameters…")
+                                case 2: return qsTr("Switching to Manual…")
+                                case 3: return root._helm.background ? qsTr("Gamepad control · background") : qsTr("Gamepad control")
+                                case 4: return qsTr("Holding position…")
+                                default: return helmText.padName
+                                }
                             }
+                            color: helmText.sessionOn ? AppPalette.textSecond : AppPalette.textStrong
+                            font.pixelSize: Math.round(11 * root._s)
+                            elide: Text.ElideRight
                         }
-                        color: AppPalette.textSecond
-                        font.pixelSize: Math.round(11 * root._s)
-                        elide: Text.ElideRight
+                        Text {
+                            width: parent.width
+                            visible: helmText.sessionOn && helmText.padName.length > 0
+                            text: helmText.padName
+                            color: AppPalette.textMuted
+                            font.pixelSize: Math.round(10 * root._s)
+                            elide: Text.ElideRight
+                        }
                     }
 
                     Row {

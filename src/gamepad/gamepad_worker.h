@@ -25,6 +25,7 @@ public:
     void attachVirtualPad(int vendorId, int productId);
     void detachVirtualPad();
     void setVirtualInput(int buttons, qreal leftX, qreal leftY, qreal rightX, qreal rightY, qreal leftTrigger, qreal rightTrigger);
+    void setRumble(qreal low, qreal high);
 
 signals:
     void errorChanged(const QString& error);

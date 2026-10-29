@@ -83,8 +83,8 @@ inline Bindings defaultBindings()
     b[ActionThrottleForward] = kInputRightTrigger;
     b[ActionThrottleReverse] = kInputLeftTrigger;
     b[ActionSteering] = kInputStickFirst;
-    b[ActionManual] = kButtonWest;
-    b[ActionHold] = kButtonSouth;
+    b[ActionManual] = kButtonSouth;
+    b[ActionHold] = kButtonWest;
     b[ActionLoiter] = kButtonEast;
     b[ActionAuto] = kButtonNorth;
     b[ActionCourseHold] = kButtonLeftShoulder;

@@ -3095,6 +3095,18 @@ Column {
                     toolTipText: qsTr("Controller test and which button does what")
                     onClicked: root.openGamepadDialog()
                 }
+                KIslandRow {
+                    label: qsTr("Vibration")
+                    toolTipText: qsTr("Vibrates with the throttle and steering while armed, and briefly on a mode change or arm / disarm")
+                    interactive: true
+                    onClicked: helmRumbleSwitch.click()
+                    KSwitch {
+                        id: helmRumbleSwitch
+                        flat: true
+                        checked: root._helmCtl ? root._helmCtl.rumble : false
+                        onToggled: if (root._helmCtl) root._helmCtl.rumble = checked
+                    }
+                }
             }
 
             Loader {

@@ -22,6 +22,8 @@ constexpr qreal kTriggerSpan = 65535.0;
 constexpr int kTriggerBase = -32768;
 constexpr char kVirtualPadName[] = "KoggerApp virtual gamepad";
 constexpr Uint16 kVendorValve = 0x28DE;
+constexpr qreal kRumbleSpan = 65535.0;
+constexpr Uint32 kRumbleHoldMs = 250;
 
 QString padFamily(SDL_Gamepad* pad)
 {
@@ -263,6 +265,22 @@ void GamepadWorker::setVirtualInput(int buttons, qreal leftX, qreal leftY, qreal
     Q_UNUSED(rightY);
     Q_UNUSED(leftTrigger);
     Q_UNUSED(rightTrigger);
+#endif
+}
+
+void GamepadWorker::setRumble(qreal low, qreal high)
+{
+#ifdef KOGGER_SDL3
+    if (!pad_) {
+        return;
+    }
+
+    const Uint16 lowLevel = Uint16(std::lround(std::clamp(low, 0.0, 1.0) * kRumbleSpan));
+    const Uint16 highLevel = Uint16(std::lround(std::clamp(high, 0.0, 1.0) * kRumbleSpan));
+    SDL_RumbleGamepad(pad_, lowLevel, highLevel, (lowLevel != 0 || highLevel != 0) ? kRumbleHoldMs : 0);
+#else
+    Q_UNUSED(low);
+    Q_UNUSED(high);
 #endif
 }
 

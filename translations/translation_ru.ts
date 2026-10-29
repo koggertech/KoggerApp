@@ -1443,6 +1443,16 @@
         <source>Max steering</source>
         <translation>Максимальный поворот</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3099"/>
+        <source>Vibration</source>
+        <translation>Вибрация</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3100"/>
+        <source>Vibrates with the throttle and steering while armed, and briefly on a mode change or arm / disarm</source>
+        <translation>Вибрирует в такт газу и рулю на взведённой лодке и коротко — при смене режима и взводе / снятии</translation>
+    </message>
 </context>
 <context>
     <name>AutopilotPopup</name>

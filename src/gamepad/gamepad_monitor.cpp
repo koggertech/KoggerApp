@@ -95,6 +95,21 @@ void GamepadMonitor::setVirtualInput(int buttons, qreal leftX, qreal leftY, qrea
     }, Qt::QueuedConnection);
 }
 
+void GamepadMonitor::setRumble(qreal low, qreal high)
+{
+    const bool changed = low != rumble_[0] || high != rumble_[1];
+    if (!changed && low == 0.0 && high == 0.0) {
+        return;
+    }
+
+    rumble_ = { low, high };
+    GamepadWorker* worker = worker_;
+    QMetaObject::invokeMethod(worker_, [worker, low, high] { worker->setRumble(low, high); }, Qt::QueuedConnection);
+    if (changed) {
+        emit rumbleChanged();
+    }
+}
+
 void GamepadMonitor::updateOwners()
 {
     GamepadWorker* worker = worker_;

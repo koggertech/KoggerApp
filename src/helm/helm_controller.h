@@ -44,6 +44,9 @@ class HelmController : public QObject
     Q_PROPERTY(qreal reverseLimit READ reverseLimit WRITE setReverseLimit NOTIFY tuningChanged)
     Q_PROPERTY(qreal steeringLimit READ steeringLimit WRITE setSteeringLimit NOTIFY tuningChanged)
     Q_PROPERTY(int rateHz READ rateHz WRITE setRateHz NOTIFY tuningChanged)
+    Q_PROPERTY(bool rumble READ rumble WRITE setRumble NOTIFY tuningChanged)
+    Q_PROPERTY(int lastCue READ lastCue NOTIFY cuePlayed)
+    Q_PROPERTY(int cueCount READ cueCount NOTIFY cuePlayed)
     Q_PROPERTY(QString padFamily READ padFamily NOTIFY padFamilyChanged)
     Q_PROPERTY(QVariantList bindings READ bindings NOTIFY bindingsChanged)
     Q_PROPERTY(QVariantList bindingInputs READ bindingInputs WRITE setBindingInputs NOTIFY bindingsChanged)
@@ -70,6 +73,14 @@ public:
         ConfirmLinkLossStop
     };
     Q_ENUM(Confirmation)
+
+    /** Short vibration patterns for events during a driving session. */
+    enum RumbleCue {
+        CueNone = -1,
+        CueMode,
+        CueArm,
+        CueDisarm
+    };
 
     HelmController(GamepadMonitor* monitor, DeviceManagerWrapper* vehicle, QObject* parent = nullptr);
     ~HelmController() override;
@@ -130,6 +141,18 @@ public:
     void setSteeringLimit(qreal value);
     int rateHz() const { return rateHz_; }
     void setRateHz(int value);
+    /**
+     * Vibration feedback, off by default. While driving an armed vehicle the pad's low-frequency motor
+     * follows the sent throttle and the high-frequency one the sent steering, so neutral frames (outside
+     * Manual / Acro, paused, stopping) and a disarmed vehicle are silent. A mode change and arm / disarm
+     * seen during the session play a short pattern over it. Not part of resetTuning().
+     */
+    bool rumble() const { return rumble_; }
+    void setRumble(bool rumble);
+    /** The RumbleCue played last, CueNone before the first; a cue suppressed by `rumble` off is not counted. */
+    int lastCue() const { return lastCue_; }
+    /** Cues played since start: tells a cue that came and went from none, whatever the pad felt. */
+    int cueCount() const { return cueCount_; }
     /** Restores the shared tuning: the throttle and steering limits, throttle expo and send rate; applies to a running session too. */
     Q_INVOKABLE void resetTuning();
 
@@ -175,6 +198,7 @@ signals:
     void confirmationChanged();
     void configuringChanged();
     void layoutEditableChanged();
+    void cuePlayed();
 
 private:
     static constexpr int kDefaultRateHz = 20;
@@ -212,6 +236,10 @@ private:
     void setState(State state);
     void setBackground(bool background);
     void sendCommand(const helm::Command& command);
+    void updateRumble();
+    void playCue(int cue);
+    void playCueStep();
+    void stopCue();
     void notify(const QString& text, int severity);
     void loadTuning();
     void saveTuning();
@@ -231,6 +259,7 @@ private:
     helm::Bindings bindings_ = helm::defaultBindings();
     QString padFamily_;
     int rateHz_ = kDefaultRateHz;
+    bool rumble_ = false;
     helm::Command command_;
     double steeringNeutral_ = 0.0;
     double throttleNeutral_ = 0.0;
@@ -240,6 +269,7 @@ private:
     QTimer checkTimer_;
     QTimer modeTimer_;
     QTimer writeTimer_;
+    QTimer cueTimer_;
     QElapsedTimer clock_;
     qint64 lastSampleMs_ = -1;
     qint64 checkStartMs_ = -1;
@@ -257,6 +287,11 @@ private:
     bool holdUntilReleased_ = false;
     int padMissionModes_ = 0;
     int seenMode_ = -1;
+    int seenArm_ = -1;
+    int cue_ = CueNone;
+    int cueStep_ = 0;
+    int lastCue_ = CueNone;
+    int cueCount_ = 0;
     bool bumpersSpent_ = false;
     int confirmation_ = ConfirmNone;
     bool confirmationBusy_ = false;

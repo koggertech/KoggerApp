@@ -1443,6 +1443,16 @@
         <source>Max steering</source>
         <translation>Maksymalny skręt</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3099"/>
+        <source>Vibration</source>
+        <translation>Wibracje</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3100"/>
+        <source>Vibrates with the throttle and steering while armed, and briefly on a mode change or arm / disarm</source>
+        <translation>Wibruje zgodnie z gazem i sterem przy uzbrojonej łodzi oraz krótko przy zmianie trybu i uzbrojeniu / rozbrojeniu</translation>
+    </message>
 </context>
 <context>
     <name>AutopilotPopup</name>

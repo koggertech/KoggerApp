@@ -1,5 +1,7 @@
 #include "helm_controller.h"
 
+#include <span>
+
 #include <QGuiApplication>
 #include <QSettings>
 
@@ -36,6 +38,19 @@ constexpr qreal kDeadzoneMax = 0.5;
 constexpr int kRateMinHz = 10;
 constexpr int kRateMaxHz = 25;
 constexpr int kMsPerSecond = 1000;
+constexpr qreal kRumbleThrottleMax = 0.6;
+constexpr qreal kRumbleSteeringMax = 0.4;
+constexpr qreal kRumbleFloor = 0.05;
+
+struct RumbleStep {
+    int ms;
+    qreal low;
+    qreal high;
+};
+
+constexpr RumbleStep kCueModeSteps[] = { { 50, 0.7, 1.0 }, { 70, 0.0, 0.0 }, { 50, 0.7, 1.0 } };
+constexpr RumbleStep kCueArmSteps[] = { { 40, 0.2, 0.5 }, { 70, 0.0, 0.0 }, { 60, 1.0, 1.0 } };
+constexpr RumbleStep kCueDisarmSteps[] = { { 60, 1.0, 1.0 }, { 70, 0.0, 0.0 }, { 40, 0.2, 0.5 } };
 
 constexpr int kRcChannels = 16;
 constexpr int kAuxRcOverrideEnable = 46;
@@ -126,6 +141,26 @@ int modeBit(int mode)
     return (mode >= 0 && mode < 31) ? (1 << mode) : 0;
 }
 
+qreal rumbleLevel(qreal command, qreal max)
+{
+    const qreal magnitude = std::min(std::abs(command), 1.0);
+    return magnitude < kRumbleFloor ? 0.0 : magnitude * max;
+}
+
+std::span<const RumbleStep> cueSteps(int cue)
+{
+    switch (cue) {
+    case HelmController::CueMode:
+        return kCueModeSteps;
+    case HelmController::CueArm:
+        return kCueArmSteps;
+    case HelmController::CueDisarm:
+        return kCueDisarmSteps;
+    default:
+        return {};
+    }
+}
+
 }
 
 HelmController::HelmController(GamepadMonitor* monitor, DeviceManagerWrapper* vehicle, QObject* parent)
@@ -136,7 +171,8 @@ HelmController::HelmController(GamepadMonitor* monitor, DeviceManagerWrapper* ve
       paramTimer_(this),
       checkTimer_(this),
       modeTimer_(this),
-      writeTimer_(this)
+      writeTimer_(this),
+      cueTimer_(this)
 {
     {
         QSettings settings(QStringLiteral("KOGGER"), QStringLiteral("KoggerApp"));
@@ -156,12 +192,18 @@ HelmController::HelmController(GamepadMonitor* monitor, DeviceManagerWrapper* ve
     modeTimer_.setInterval(kModeTimeoutMs);
     writeTimer_.setSingleShot(true);
     writeTimer_.setInterval(kWriteDeadlineMs);
+    cueTimer_.setSingleShot(true);
+    cueTimer_.setTimerType(Qt::PreciseTimer);
 
     connect(&sendTimer_, &QTimer::timeout, this, &HelmController::onSendTick);
     connect(&paramTimer_, &QTimer::timeout, this, &HelmController::pumpParams);
     connect(&checkTimer_, &QTimer::timeout, this, &HelmController::onCheckDeadline);
     connect(&modeTimer_, &QTimer::timeout, this, [this] { onModeResult(false); });
     connect(&writeTimer_, &QTimer::timeout, this, &HelmController::onWriteDeadline);
+    connect(&cueTimer_, &QTimer::timeout, this, [this] {
+        ++cueStep_;
+        playCueStep();
+    });
 
     connect(monitor_, &GamepadMonitor::connectionChanged, this, &HelmController::onPadConnection);
     connect(monitor_, &GamepadMonitor::stateChanged, this, &HelmController::onPadState);
@@ -246,6 +288,19 @@ void HelmController::setRateHz(int value)
     rateHz_ = std::clamp(value, kRateMinHz, kRateMaxHz);
     sendTimer_.setInterval(kMsPerSecond / rateHz_);
     saveTuning();
+}
+
+void HelmController::setRumble(bool rumble)
+{
+    if (rumble_ == rumble) {
+        return;
+    }
+    rumble_ = rumble;
+    saveTuning();
+    if (!rumble_) {
+        stopCue();
+    }
+    updateRumble();
 }
 
 QVariantList HelmController::bindings() const
@@ -366,6 +421,7 @@ void HelmController::engage()
     rcChannelCount_ = -1;
     modeBeforeEngage_ = vehicle_->pilotModeState();
     seenMode_ = modeBeforeEngage_;
+    seenArm_ = vehicle_->pilotArmState();
     padMissionModes_ = 0;
 
     monitor_->setHelmActive(true);
@@ -501,6 +557,17 @@ void HelmController::onVehicleChanged()
         seenMode_ = mode;
         if (modeKeepsSession(mode)) {
             padMissionModes_ = 0;
+        }
+        if (state_ == Driving) {
+            playCue(CueMode);
+        }
+    }
+    const int arm = vehicle_->pilotArmState();
+    if (arm != seenArm_) {
+        const bool known = seenArm_ >= 0 && arm >= 0;
+        seenArm_ = arm;
+        if (known && state_ == Driving) {
+            playCue(arm > 0 ? CueArm : CueDisarm);
         }
     }
     const bool keeps = modeKeepsSession(mode) || (modeBit(mode) & padMissionModes_) != 0;
@@ -961,6 +1028,8 @@ void HelmController::finish(const QString& reason)
     paramQueue_.clear();
     pendingMode_ = -1;
     modeIntent_ = ModeIntent::None;
+    stopCue();
+    monitor_->setRumble(0.0, 0.0);
     monitor_->setHelmActive(false);
     if (command_.steering != 0.0 || command_.throttle != 0.0) {
         command_ = helm::Command{};
@@ -1004,6 +1073,49 @@ void HelmController::sendCommand(const helm::Command& command)
     }
     vehicle_->autopilotManualControl(helm::toAxis(command.steering, steeringNeutral_),
                                      helm::toAxis(command.throttle, throttleNeutral_));
+    updateRumble();
+}
+
+void HelmController::updateRumble()
+{
+    if (cue_ != CueNone) {
+        return;
+    }
+    const bool on = rumble_ && state_ == Driving && vehicle_->pilotArmState() > 0;
+    monitor_->setRumble(on ? rumbleLevel(command_.throttle, kRumbleThrottleMax) : 0.0,
+                        on ? rumbleLevel(command_.steering, kRumbleSteeringMax) : 0.0);
+}
+
+void HelmController::playCue(int cue)
+{
+    if (!rumble_) {
+        return;
+    }
+    cue_ = cue;
+    cueStep_ = 0;
+    lastCue_ = cue;
+    ++cueCount_;
+    emit cuePlayed();
+    playCueStep();
+}
+
+void HelmController::playCueStep()
+{
+    const std::span<const RumbleStep> steps = cueSteps(cue_);
+    if (cueStep_ >= int(steps.size())) {
+        cue_ = CueNone;
+        updateRumble();
+        return;
+    }
+    const RumbleStep& step = steps[cueStep_];
+    monitor_->setRumble(step.low, step.high);
+    cueTimer_.start(step.ms);
+}
+
+void HelmController::stopCue()
+{
+    cueTimer_.stop();
+    cue_ = CueNone;
 }
 
 void HelmController::notify(const QString& text, int severity)
@@ -1021,6 +1133,7 @@ void HelmController::loadTuning()
     tuning_.steeringLimit = std::clamp(settings.value(QStringLiteral("steeringLimit"), defaults.steeringLimit).toDouble(), 0.0, 1.0);
     tuning_.forwardLimit = std::clamp(settings.value(QStringLiteral("forwardLimit"), defaults.forwardLimit).toDouble(), 0.0, 1.0);
     rateHz_ = std::clamp(settings.value(QStringLiteral("rateHz"), rateHz_).toInt(), kRateMinHz, kRateMaxHz);
+    rumble_ = settings.value(QStringLiteral("rumble"), false).toBool();
     settings.endGroup();
 }
 
@@ -1033,6 +1146,7 @@ void HelmController::saveTuning()
     settings.setValue(QStringLiteral("steeringLimit"), tuning_.steeringLimit);
     settings.setValue(QStringLiteral("forwardLimit"), tuning_.forwardLimit);
     settings.setValue(QStringLiteral("rateHz"), rateHz_);
+    settings.setValue(QStringLiteral("rumble"), rumble_);
     settings.endGroup();
     emit tuningChanged();
 }

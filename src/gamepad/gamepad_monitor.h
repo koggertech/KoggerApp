@@ -30,6 +30,8 @@ class GamepadMonitor : public QObject
     Q_PROPERTY(qreal rightY READ rightY NOTIFY stateChanged)
     Q_PROPERTY(qreal leftTrigger READ leftTrigger NOTIFY stateChanged)
     Q_PROPERTY(qreal rightTrigger READ rightTrigger NOTIFY stateChanged)
+    Q_PROPERTY(qreal rumbleLow READ rumbleLow NOTIFY rumbleChanged)
+    Q_PROPERTY(qreal rumbleHigh READ rumbleHigh NOTIFY rumbleChanged)
 
 public:
     explicit GamepadMonitor(QObject* parent = nullptr);
@@ -78,6 +80,14 @@ public:
     qreal leftTrigger() const { return axes_[4]; }
     qreal rightTrigger() const { return axes_[5]; }
 
+    /**
+     * Vibrates the open pad: low- and high-frequency motor, 0…1 each. A non-zero request lasts a quarter
+     * of a second, so the caller repeats it while it holds; 0, 0 stops at once and is sent only once.
+     */
+    void setRumble(qreal low, qreal high);
+    qreal rumbleLow() const { return rumble_[0]; }
+    qreal rumbleHigh() const { return rumble_[1]; }
+
 signals:
     void activeChanged();
     void runningChanged();
@@ -85,6 +95,7 @@ signals:
     void errorChanged();
     void connectionChanged();
     void stateChanged();
+    void rumbleChanged();
 
 private:
     void updateOwners();
@@ -113,4 +124,5 @@ private:
     int availableButtons_ = 0;
     int buttons_ = 0;
     std::array<qreal, 6> axes_{};
+    std::array<qreal, 2> rumble_{};
 };
