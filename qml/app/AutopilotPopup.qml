@@ -124,6 +124,16 @@ BasePanePopup {
         return qsTr("%1 h %2 min").arg(Math.floor(minutes / 60)).arg(minutes % 60)
     }
 
+    readonly property int _levelWarnPct: 30
+    readonly property int _levelCriticalPct: 10
+
+    function _levelColor(percent) {
+        if (percent < 0) return AppPalette.textSecond
+        if (percent <= _levelCriticalPct) return AppPalette.dangerText
+        if (percent <= _levelWarnPct) return AppPalette.linkIdleText
+        return AppPalette.textSecond
+    }
+
     function _severityColor(severity) {
         if (severity <= 3) return AppPalette.dangerText
         if (severity === root._severityWarning) return AppPalette.linkIdleText
@@ -491,7 +501,7 @@ BasePanePopup {
     component BatteryGlyph: Item {
         id: battery
         property int percent: -1
-        readonly property color ink: percent >= 0 && percent < 20 ? AppPalette.dangerText : AppPalette.textSecond
+        readonly property color ink: root._levelColor(percent)
         readonly property int stroke: Math.max(1, Math.round(root._s))
         width: Math.round(14 * root._s)
         height: Math.round(8 * root._s)
@@ -542,8 +552,7 @@ BasePanePopup {
                 width: Math.max(2, Math.round(2 * root._s))
                 height: Math.round(signalBars.barH * (index + 1) / 4)
                 radius: 1
-                color: index < signalBars.lit ? (signalBars.lit <= 1 ? AppPalette.linkIdleText : AppPalette.textSecond)
-                                              : AppPalette.border
+                color: index < signalBars.lit ? root._levelColor(signalBars.percent) : AppPalette.border
             }
         }
     }
@@ -723,6 +732,7 @@ BasePanePopup {
                         GlyphSlot { BatteryGlyph { anchors.centerIn: parent; percent: root._batteryPct } }
                         StatValue {
                             text: root._batteryPct >= 0 ? root._batteryPct + " %" : "—"
+                            color: root._levelColor(root._batteryPct)
                         }
                     }
                     StatCell {
@@ -748,6 +758,7 @@ BasePanePopup {
                         StatValue {
                             width: root._statLastValueW
                             text: root._linkQuality >= 0 ? root._linkQuality + " %" : "—"
+                            color: root._levelColor(root._linkQuality)
                         }
                     }
                     StatCell {
