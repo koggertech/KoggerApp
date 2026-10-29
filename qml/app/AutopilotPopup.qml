@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Shapes
+import Qt5Compat.GraphicalEffects
 import kqml_types 1.0
 
 BasePanePopup {
@@ -156,38 +157,19 @@ BasePanePopup {
         _log(_severityInfo, qsTr("Going to %1").arg(_run.labelForSeq(_nextSeq)))
     }
 
-    readonly property string _powerText: {
-        var parts = []
-        if (_batteryPct >= 0) parts.push(qsTr("Bat. %1 %").arg(_batteryPct))
-        if (isFinite(_voltage)) parts.push(_voltage.toFixed(1) + " V")
-        if (isFinite(_current)) parts.push(_current.toFixed(1) + " A")
-        return parts.join(" · ")
-    }
-    property real _powerW: 0
-    readonly property var _modeNamesForWidth: ["Manual", "Hold", "Loiter", "Auto", "RTL", "SmartRTL", "Guided", "Acro", "Steering"]
-    readonly property real _modeSlotW: modeNameProbe.width
-    readonly property real _titleSlotW: _online ? _modeSlotW : titleText.implicitWidth
-
-    readonly property string _statsText: {
-        var parts = []
-        if (_linkQuality >= 0) parts.push(qsTr("Link %1 %").arg(_linkQuality))
-        if (_gpsFix >= 0) {
-            var gps = _gpsSats >= 0 && _gpsFix >= _gpsFix3d ? qsTr("Sat. %1").arg(_gpsSats) : _gpsFixName(_gpsFix)
-            parts.push(_gpsPoor ? "<font color=\"" + AppPalette.linkIdleText + "\">" + gps + "</font>" : gps)
-        }
-        if (isFinite(_speed)) parts.push(_speed.toFixed(1) + " " + qsTr("m/s"))
-        if (_rssiValid) parts.push(qsTr("%1 dBm").arg(_rssi))
-        return parts.join(" · ")
-    }
-    property real _statsW: 0
+    readonly property var _modeNamesForWidth: ["Manual", "Acro", "Hold", "Loiter", "Auto", "RTL"]
+    readonly property real _titleSlotW: Math.max(modeNameProbe.width, titleText.implicitWidth)
+    readonly property var _statTemplates: ["100 %", "88.8 V", "88.8 A", "88.8 " + qsTr("m/s"), "88"]
+    readonly property real _statValueW: Math.ceil(statValueProbe.width)
+    readonly property real _statLastValueW: Math.ceil(statLastValueProbe.width)
 
     readonly property var modes: [
-        { mode: 0,  icon: "qrc:/icons/ui/mode-manual.svg", tip: qsTr("Manual") },
-        { mode: 1,  icon: "qrc:/icons/ui/mode-course-hold.svg", tip: qsTr("Course hold (Acro)"), offMode: 0 },
-        { mode: 4,  icon: "qrc:/icons/ui/mode-hold.svg",   tip: qsTr("Hold") },
-        { mode: 5,  icon: "qrc:/icons/ui/mode-loiter.svg", tip: qsTr("Loiter") },
-        { mode: 10, icon: "qrc:/icons/ui/mode-auto.svg",   tip: qsTr("Auto") },
-        { mode: 11, icon: "qrc:/icons/ui/mode-rtl.svg",    tip: qsTr("RTL") }
+        { mode: 0,  group: 0, icon: "qrc:/icons/ui/mode-manual.svg", tip: qsTr("Manual") },
+        { mode: 1,  group: 0, icon: "qrc:/icons/ui/mode-course-hold.svg", tip: qsTr("Course hold (Acro)"), offMode: 0 },
+        { mode: 4,  group: 1, icon: "qrc:/icons/ui/mode-hold.svg",   tip: qsTr("Hold"), stop: true },
+        { mode: 5,  group: 1, icon: "qrc:/icons/ui/mode-loiter.svg", tip: qsTr("Loiter") },
+        { mode: 10, group: 2, icon: "qrc:/icons/ui/mode-auto.svg",   tip: qsTr("Auto") },
+        { mode: 11, group: 2, icon: "qrc:/icons/ui/mode-rtl.svg",    tip: qsTr("RTL") }
     ]
 
     property bool armConfirmPending: false
@@ -195,7 +177,8 @@ BasePanePopup {
     property int _armFlash: 0
     property int pendingCommand: -1
 
-    readonly property real _pillW: _pad + statusDot.width + Math.round(8 * _s) + infoColumn.width + _gap * 2 + buttonRow.width + _sidePad
+    readonly property real _pillW: _pad + statusDot.width + infoColumn.anchors.leftMargin + infoColumn.width
+                                   + buttonRow.anchors.leftMargin + buttonRow.width + _sidePad
     readonly property real _pillH: _controlH + _rowPad * 2
     readonly property real _wantW: _pillW + contentPadding * 2
     readonly property real _wantH: headerHeight + _pillH + (_trayVisible ? tray.height : 0) + contentPadding
@@ -318,7 +301,7 @@ BasePanePopup {
     on_WantWChanged: _applySize()
     on_WantHChanged: { _applySize(); Qt.callLater(_restorePlacement) }
     onInteractionStarted: _dragging = true
-    on_OnlineChanged: if (!_online) { _cancelArmConfirm(); _cancelNextConfirm(); _statsW = 0; _powerW = 0; expanded = false; _pendingJumpSeq = -1 }
+    on_OnlineChanged: if (!_online) { _cancelArmConfirm(); _cancelNextConfirm(); expanded = false; _pendingJumpSeq = -1 }
     on_NextSeqChanged: _cancelNextConfirm()
     onExpandedChanged: _cancelNextConfirm()
     on_ArmedChanged: _cancelArmConfirm()
@@ -459,6 +442,117 @@ BasePanePopup {
         borderColor:      danger ? AppPalette.dangerBorder : (selected ? AppPalette.accentBorder : AppPalette.border)
         borderHoverColor: danger ? AppPalette.dangerBorder : (selected ? AppPalette.accentBorder : AppPalette.borderHover)
         borderWidth: danger || selected ? 1 : Tokens.cardBorderWidth
+        toolTipOnHold: true
+    }
+
+    component StatCell: Row {
+        spacing: Math.round(2 * root._s)
+    }
+
+    component GlyphSlot: Item {
+        anchors.verticalCenter: parent.verticalCenter
+        width: Math.round(14 * root._s)
+        height: Math.round(13 * root._s)
+    }
+
+    component StatValue: Text {
+        anchors.verticalCenter: parent.verticalCenter
+        width: root._statValueW
+        elide: Text.ElideRight
+        color: AppPalette.textSecond
+        font.pixelSize: Math.round(11 * root._s)
+    }
+
+    component StatIcon: Item {
+        id: statIcon
+        property url source
+        property color tint: AppPalette.textSecond
+        width: Math.round(13 * root._s)
+        height: width
+
+        Image {
+            id: statIconImage
+            anchors.fill: parent
+            source: statIcon.source
+            sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+            sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+            visible: false
+        }
+        ColorOverlay {
+            anchors.fill: statIconImage
+            source: statIconImage
+            color: statIcon.tint
+            smooth: true
+        }
+    }
+
+    component BatteryGlyph: Item {
+        id: battery
+        property int percent: -1
+        readonly property color ink: percent >= 0 && percent < 20 ? AppPalette.dangerText : AppPalette.textSecond
+        readonly property int stroke: Math.max(1, Math.round(root._s))
+        width: Math.round(14 * root._s)
+        height: Math.round(8 * root._s)
+
+        Rectangle {
+            id: batteryBody
+            width: parent.width - batteryCap.width
+            height: parent.height
+            radius: Math.round(2 * root._s)
+            color: "transparent"
+            border.width: battery.stroke
+            border.color: battery.ink
+
+            Rectangle {
+                readonly property int inset: battery.stroke * 2
+                x: inset
+                y: inset
+                height: parent.height - inset * 2
+                width: Math.round((parent.width - inset * 2) * Math.max(0, Math.min(100, battery.percent)) / 100)
+                visible: battery.percent > 0
+                radius: 1
+                color: battery.ink
+            }
+        }
+        Rectangle {
+            id: batteryCap
+            anchors.left: batteryBody.right
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.max(1, Math.round(2 * root._s))
+            height: Math.round(parent.height * 0.45)
+            radius: 1
+            color: battery.ink
+        }
+    }
+
+    component SignalBars: Row {
+        id: signalBars
+        property int percent: -1
+        readonly property int lit: percent <= 0 ? 0 : Math.ceil(percent / 25)
+        readonly property int barH: Math.round(11 * root._s)
+        spacing: Math.max(1, Math.round(1 * root._s))
+
+        Repeater {
+            model: 4
+            delegate: Rectangle {
+                required property int index
+                anchors.bottom: parent.bottom
+                width: Math.max(2, Math.round(2 * root._s))
+                height: Math.round(signalBars.barH * (index + 1) / 4)
+                radius: 1
+                color: index < signalBars.lit ? (signalBars.lit <= 1 ? AppPalette.linkIdleText : AppPalette.textSecond)
+                                              : AppPalette.border
+            }
+        }
+    }
+
+    component PillSeparator: Rectangle {
+        anchors.verticalCenter: parent.verticalCenter
+        width: 1
+        height: Math.round(root._controlH * 0.6)
+        color: AppPalette.border
     }
 
     Item {
@@ -490,15 +584,72 @@ BasePanePopup {
                 onClicked: root.expanded = !root.expanded
             }
 
-            Rectangle {
+            Item {
                 id: statusDot
                 x: root._pad
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.round(8 * root._s)
+                width: Math.round(20 * root._s)
                 height: width
-                radius: width / 2
-                color: !root._online ? AppPalette.textMuted
-                     : root._armed ? AppPalette.dangerBorder : AppPalette.missionRally
+
+                Image {
+                    id: statusIcon
+                    anchors.fill: parent
+                    source: root._online ? "qrc:/icons/ui/autopilot-link.svg" : "qrc:/icons/ui/autopilot-link-off.svg"
+                    sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+                    sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    visible: false
+                }
+                ColorOverlay {
+                    anchors.fill: statusIcon
+                    source: statusIcon
+                    color: !root._online ? AppPalette.textMuted
+                         : root._armed ? AppPalette.dangerBorder : AppPalette.missionRally
+                    smooth: true
+                }
+
+                MouseArea {
+                    id: statusTipArea
+                    anchors.fill: parent
+                    anchors.margins: -Math.round(6 * root._s)
+                    enabled: !root._online
+                    hoverEnabled: true
+                    onClicked: statusTipTimer.restart()
+                }
+                Timer {
+                    id: statusTipTimer
+                    interval: 2000
+                }
+                KToolTip {
+                    text: qsTr("No autopilot")
+                    targetItem: statusDot
+                    delay: statusTipTimer.running ? 0 : 520
+                    shown: !root._online && (statusTipArea.containsMouse || statusTipTimer.running)
+                }
+            }
+
+            Column {
+                id: statValueProbe
+                opacity: 0
+                enabled: false
+
+                Repeater {
+                    model: root._statTemplates
+                    delegate: Text {
+                        required property string modelData
+                        text: modelData
+                        font.pixelSize: Math.round(11 * root._s)
+                    }
+                }
+            }
+
+            Text {
+                id: statLastValueProbe
+                opacity: 0
+                enabled: false
+                text: "100 %"
+                font.pixelSize: Math.round(11 * root._s)
             }
 
             Column {
@@ -516,72 +667,110 @@ BasePanePopup {
                 }
             }
 
-            Column {
+            Row {
                 id: infoColumn
                 anchors.left: statusDot.right
-                anchors.leftMargin: Math.round(8 * root._s)
+                anchors.leftMargin: root._online ? Math.round(8 * root._s) : 0
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(Math.round(300 * root._s),
-                                Math.ceil(Math.max(Math.round(84 * root._s),
-                                                   root._titleSlotW
-                                                   + (chevron.visible ? titleRow.spacing + chevron.width : 0)
-                                                   + (powerText.visible ? titleRow.spacing + powerText.leftPadding + root._powerW : 0),
-                                                   root._statsW)))
+                visible: root._online
+                width: root._online ? implicitWidth : 0
+                spacing: Math.round(8 * root._s)
 
-                Row {
-                    id: titleRow
-                    width: parent.width
-                    spacing: Math.round(4 * root._s)
+                Item {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: root._titleSlotW + titleRow.spacing + chevron.width
+                    height: titleRow.height
 
-                    Text {
-                        id: titleText
-                        width: Math.min(root._titleSlotW, titleRow.width - (chevron.visible ? titleRow.spacing + chevron.width : 0))
-                        text: !root._online ? qsTr("No autopilot") : root._modeName
-                        color: AppPalette.textStrong
-                        font.pixelSize: Math.round(13 * root._s)
-                        font.bold: true
-                        elide: Text.ElideRight
-                    }
-                    Text {
-                        id: chevron
-                        anchors.verticalCenter: titleText.verticalCenter
-                        visible: root._online
-                        text: root.expanded ? "▴" : "▾"
-                        color: AppPalette.textMuted
-                        font.pixelSize: Math.round(11 * root._s)
-                    }
-                    Text {
-                        id: powerText
-                        anchors.baseline: titleText.baseline
-                        visible: root._online && text.length > 0
-                        width: Math.max(0, Math.min(implicitWidth, titleRow.width - titleText.width
-                                                    - (chevron.visible ? titleRow.spacing + chevron.width : 0) - titleRow.spacing))
-                        leftPadding: Math.round(4 * root._s)
-                        text: root._powerText
-                        color: AppPalette.textSecond
-                        font.pixelSize: Math.round(11 * root._s)
-                        elide: Text.ElideRight
-                        onImplicitWidthChanged: if (visible) root._powerW = Math.max(root._powerW, implicitWidth - leftPadding)
-                        onVisibleChanged: if (visible) root._powerW = Math.max(root._powerW, implicitWidth - leftPadding)
+                    Row {
+                        id: titleRow
+                        spacing: Math.round(6 * root._s)
+
+                        Text {
+                            id: titleText
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root._modeName
+                            color: AppPalette.textStrong
+                            font.pixelSize: Math.round(13 * root._s)
+                            font.bold: true
+                        }
+                        KCircleIconButton {
+                            id: chevron
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Math.round(24 * root._s)
+                            height: width
+                            iconSource: "qrc:/icons/ui/chevron-down.svg"
+                            iconRotation: root.expanded ? 180 : 0
+                            iconTintColor: AppPalette.text
+                            fillColor: AppPalette.card
+                            fillHoverColor: AppPalette.cardHover
+                            fillPressedColor: AppPalette.bgDeep
+                            borderColor: AppPalette.border
+                            borderHoverColor: AppPalette.borderHover
+                            onClicked: root.expanded = !root.expanded
+                        }
                     }
                 }
-                Text {
-                    width: parent.width
-                    visible: root._online && text.length > 0
-                    text: root._statsText
-                    textFormat: Text.StyledText
-                    color: AppPalette.textSecond
-                    font.pixelSize: Math.round(11 * root._s)
-                    elide: Text.ElideRight
-                    onImplicitWidthChanged: if (visible) root._statsW = Math.max(root._statsW, implicitWidth)
-                    onVisibleChanged: if (visible) root._statsW = Math.max(root._statsW, implicitWidth)
+
+                Grid {
+                    anchors.verticalCenter: parent.verticalCenter
+                    rows: 2
+                    flow: Grid.TopToBottom
+                    columnSpacing: Math.round(6 * root._s)
+                    rowSpacing: Math.round(3 * root._s)
+                    verticalItemAlignment: Grid.AlignVCenter
+
+                    StatCell {
+                        GlyphSlot { BatteryGlyph { anchors.centerIn: parent; percent: root._batteryPct } }
+                        StatValue {
+                            text: root._batteryPct >= 0 ? root._batteryPct + " %" : "—"
+                        }
+                    }
+                    StatCell {
+                        GlyphSlot { StatIcon { anchors.centerIn: parent; source: "qrc:/icons/ui/stat-speed.svg" } }
+                        StatValue {
+                            text: isFinite(root._speed) ? root._speed.toFixed(1) + " " + qsTr("m/s") : "—"
+                        }
+                    }
+                    StatCell {
+                        GlyphSlot { StatIcon { anchors.centerIn: parent; source: "qrc:/icons/ui/stat-voltage.svg" } }
+                        StatValue {
+                            text: isFinite(root._voltage) ? root._voltage.toFixed(1) + " V" : "—"
+                        }
+                    }
+                    StatCell {
+                        GlyphSlot { StatIcon { anchors.centerIn: parent; source: "qrc:/icons/ui/stat-current.svg" } }
+                        StatValue {
+                            text: isFinite(root._current) ? root._current.toFixed(1) + " A" : "—"
+                        }
+                    }
+                    StatCell {
+                        GlyphSlot { SignalBars { anchors.centerIn: parent; percent: root._linkQuality } }
+                        StatValue {
+                            width: root._statLastValueW
+                            text: root._linkQuality >= 0 ? root._linkQuality + " %" : "—"
+                        }
+                    }
+                    StatCell {
+                        GlyphSlot {
+                            StatIcon {
+                                anchors.centerIn: parent
+                                source: "qrc:/icons/ui/satellite.svg"
+                                tint: root._gpsPoor ? AppPalette.linkIdleText : AppPalette.textSecond
+                            }
+                        }
+                        StatValue {
+                            width: root._statLastValueW
+                            text: root._gpsSats >= 0 ? String(root._gpsSats) : "—"
+                            color: root._gpsPoor ? AppPalette.linkIdleText : AppPalette.textSecond
+                        }
+                    }
                 }
             }
 
             Row {
                 id: buttonRow
                 anchors.left: infoColumn.right
-                anchors.leftMargin: root._gap * 2
+                anchors.leftMargin: Math.round(10 * root._s)
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: root._gap
 
@@ -633,34 +822,38 @@ BasePanePopup {
                     }
                 }
 
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 1
-                    height: Math.round(root._controlH * 0.6)
-                    color: AppPalette.border
-                }
+                PillSeparator {}
 
                 Repeater {
                     model: root.modes
-                    delegate: PillButton {
+                    delegate: Row {
+                        id: modeCell
                         required property var modelData
-                        selected: root._online && root._mode === modelData.mode
-                        iconSource: modelData.icon
-                        toolTipText: modelData.tip
-                        onClicked: root.requestMode(modelData.offMode !== undefined && root._mode === modelData.mode ? modelData.offMode : modelData.mode)
+                        required property int index
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: root._gap
+
+                        PillSeparator {
+                            visible: modeCell.index > 0 && root.modes[modeCell.index - 1].group !== modeCell.modelData.group
+                        }
+
+                        PillButton {
+                            selected: root._online && root._mode === modeCell.modelData.mode
+                            toolTipOnHold: modeCell.modelData.stop !== true
+                            iconSource: modeCell.modelData.icon
+                            toolTipText: modeCell.modelData.tip
+                            onClicked: root.requestMode(modeCell.modelData.offMode !== undefined && root._mode === modeCell.modelData.mode
+                                                        ? modeCell.modelData.offMode : modeCell.modelData.mode)
+                        }
                     }
                 }
 
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 1
-                    height: Math.round(root._controlH * 0.6)
-                    color: AppPalette.border
-                }
+                PillSeparator {}
 
                 KCircleIconButton {
                     width: root._controlH
                     height: root._controlH
+                    toolTipOnHold: true
                     iconSource: "qrc:/icons/ui/map_route.svg"
                     iconTintColor: AppPalette.text
                     fillColor: AppPalette.card
@@ -805,6 +998,7 @@ BasePanePopup {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
                         danger: root._helmActive
+                        toolTipOnHold: false
                         iconSource: root._helmActive ? "qrc:/icons/ui/helm-release.svg" : "qrc:/icons/ui/helm-take.svg"
                         toolTipText: root._helmActive ? qsTr("Release control") : qsTr("Take control")
                         onClicked: {
@@ -961,6 +1155,11 @@ BasePanePopup {
                         InfoCell {
                             key: qsTr("To home")
                             value: root._fmtDist(root._homeDistance)
+                        }
+                        InfoCell {
+                            visible: root._rssiValid
+                            key: "RSSI"
+                            value: qsTr("%1 dBm").arg(root._rssi)
                         }
                     }
 
