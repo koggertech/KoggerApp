@@ -1423,6 +1423,26 @@
         <source>How often commands go to the boat</source>
         <translation>Как часто команды уходят на лодку</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3109"/>
+        <source>Forward limit</source>
+        <translation>Предел вперёд</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3110"/>
+        <source>Max forward throttle</source>
+        <translation>Максимальный газ вперёд</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3129"/>
+        <source>Steering limit</source>
+        <translation>Предел поворота</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3130"/>
+        <source>Max steering</source>
+        <translation>Максимальный поворот</translation>
+    </message>
 </context>
 <context>
     <name>AutopilotPopup</name>
@@ -1761,6 +1781,76 @@
         <location filename="../qml/app/AutopilotPopup.qml" line="278"/>
         <source>Release the throttle before arming</source>
         <translation>Сбросьте газ перед включением моторов</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="708"/>
+        <source>If the link drops, the transmitter takes over</source>
+        <translation>При обрыве связи управление перейдёт к пульту</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="709"/>
+        <source>The boat does not stop when the link drops</source>
+        <translation>Лодка не остановится при потере связи</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="719"/>
+        <source>%1 s after the last gamepad command the boat follows the transmitter sticks again. Keep the transmitter on.</source>
+        <translation>Через %1 с после последней команды с геймпада лодка снова слушается стиков пульта. Не выключайте пульт.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="721"/>
+        <source>Without a transmitter the boat would keep the last gamepad command. Turn on stopping on link loss? The boat holds; missions in Auto go on. The setting is saved on the boat.</source>
+        <translation>Без пульта лодка продолжит выполнять последнюю команду с геймпада. Включить остановку при потере связи? Лодка встанет (Hold), миссии в Auto продолжатся. Настройка сохранится на лодке.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="737"/>
+        <source>Transmitter is on — start</source>
+        <translation>Пульт включён — начать</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="738"/>
+        <source>Saving…</source>
+        <translation>Сохранение…</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="739"/>
+        <source>Turn on and start</source>
+        <translation>Включить и начать</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="748"/>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="703"/>
+        <source>Gamepad settings</source>
+        <translation>Настройки геймпада</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="757"/>
+        <source>Take control</source>
+        <translation>Взять управление</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="757"/>
+        <source>Release control</source>
+        <translation>Отдать управление</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="701"/>
+        <source>Gamepad control · background</source>
+        <translation>Управление с геймпада · фон</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="725"/>
+        <source>Throttle</source>
+        <translation>Газ</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="735"/>
+        <source>Turn</source>
+        <translation>Поворот</translation>
     </message>
 </context>
 <context>
@@ -5299,6 +5389,31 @@ udp://@:1234
         <source>Triggers</source>
         <translation>Курки</translation>
     </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="144"/>
+        <source>Manual</source>
+        <translation>Manual</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="146"/>
+        <source>Loiter (keep position)</source>
+        <translation>Loiter (удержание точки)</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="147"/>
+        <source>Auto (run the mission)</source>
+        <translation>Auto (выполнение миссии)</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="747"/>
+        <source>Arm / disarm (both together)</source>
+        <translation>Arm / disarm (обе вместе)</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="287"/>
+        <source>The bumpers are taken by arm / disarm and cannot be bound</source>
+        <translation>Бамперы заняты под arm / disarm — назначить их нельзя</translation>
+    </message>
 </context>
 <context>
     <name>GlobalPanePopup</name>
@@ -5464,6 +5579,101 @@ udp://@:1234
         <location filename="../src/helm/helm_controller.cpp" line="584"/>
         <source>Release the throttle</source>
         <translation>Сбросьте газ</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="371"/>
+        <source>The boat did not confirm the setting — gamepad control not started</source>
+        <translation>Лодка не подтвердила настройку — управление с геймпада не запущено</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="488"/>
+        <source>The boat now stops when the link drops</source>
+        <translation>Теперь лодка остановится при потере связи</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="657"/>
+        <source>Stop on link loss (FS_THR_ENABLE, FS_GCS_ENABLE): off</source>
+        <translation>Остановка при потере связи (FS_THR_ENABLE, FS_GCS_ENABLE): выключена</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="658"/>
+        <source>RC receiver: %1 channels</source>
+        <translation>Приёмник пульта: каналов %1</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="658"/>
+        <source>RC receiver: none</source>
+        <translation>Приёмник пульта: нет</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="661"/>
+        <source>RC_OVERRIDE_TIME is negative: the transmitter never takes over from the gamepad</source>
+        <translation>RC_OVERRIDE_TIME отрицательный: пульт никогда не перехватит управление у геймпада</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="771"/>
+        <source>The boat refused Loiter — no position (GPS/EKF)</source>
+        <translation>Лодка отклонила Loiter — нет позиции (GPS/EKF)</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="402"/>
+        <source>Gamepad control off — the transmitter has the boat</source>
+        <translation>Управление с геймпада выключено — лодкой управляет пульт</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="446"/>
+        <source>Gamepad disconnected — the transmitter has the boat</source>
+        <translation>Геймпад отключён — лодкой управляет пульт</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="537"/>
+        <source>App in the background — the transmitter has the boat</source>
+        <translation>Приложение в фоне — лодкой управляет пульт</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="551"/>
+        <source>Gamepad stopped responding — the transmitter has the boat</source>
+        <translation>Геймпад перестал отвечать — лодкой управляет пульт</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="305"/>
+        <source>Close the gamepad settings to take control</source>
+        <translation>Закройте настройки геймпада, чтобы взять управление</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="351"/>
+        <source>Gamepad settings opened — gamepad control off</source>
+        <translation>Открыты настройки геймпада — управление с геймпада выключено</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="352"/>
+        <source>Gamepad settings opened — the transmitter has the boat</source>
+        <translation>Открыты настройки геймпада — лодкой управляет пульт</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="548"/>
+        <source>Disarm from the gamepad</source>
+        <translation>Disarm с геймпада</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="556"/>
+        <source>Arm from the gamepad</source>
+        <translation>Arm с геймпада</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="552"/>
+        <source>Release the throttle before arming</source>
+        <translation>Сбросьте газ перед включением моторов</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="796"/>
+        <source>Vehicle check: %1</source>
+        <translation>Проверка аппарата: %1</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="371"/>
+        <source>Release the throttle to drive again</source>
+        <translation>Отпустите газ, чтобы продолжить управление</translation>
     </message>
 </context>
 <context>

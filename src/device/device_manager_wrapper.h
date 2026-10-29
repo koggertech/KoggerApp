@@ -102,6 +102,11 @@ public:
     double               vehicleLat() const { return autopilotState_.latitude; }
     double               vehicleLon() const { return autopilotState_.longitude; }
     QVariantList         autopilotMessages() const { return autopilotMessages_; }
+    /**
+     * Adds an app event (helm, card command results) to the autopilot message log next to the vehicle's
+     * STATUSTEXT; the entry carries `app: true`. Emits autopilotAppMessage.
+     */
+    Q_INVOKABLE void logAutopilotEvent(int severity, const QString& text);
     const AutopilotState& autopilotState() const { return autopilotState_; }
     bool                 missionTransferActive() const { return missionTransferActive_; }
     bool                 missionDownloading() const { return missionDownloading_; }
@@ -121,8 +126,14 @@ public:
     void autopilotSetSpeed(double speed);
     /** Sends one MANUAL_CONTROL frame; see DeviceManager::sendManualControl. */
     void autopilotManualControl(int steering, int throttle);
+    /** Hands steering and throttle back to the transmitter; see DeviceManager::releaseManualControl. */
+    void autopilotReleaseManualControl();
     /** Reads one vehicle parameter; the answer arrives as autopilotParamReceived. */
     void autopilotRequestParam(const QString& name);
+    /** Writes one vehicle parameter; see DeviceManager::setAutopilotParam. */
+    void autopilotSetParam(const QString& name, float value);
+    /** Asks the vehicle to send one message now; see DeviceManager::requestAutopilotMessage. */
+    void autopilotRequestMessage(int msgId);
 
     void initStreamList();
 
@@ -213,8 +224,10 @@ signals:
     void vruChanged();
     void autopilotCommandAcked(int command, int result);
     void autopilotStatusText(int severity, const QString& text);
+    void autopilotAppMessage(int severity, const QString& text);
     void autopilotMissionItemReached(int seq);
     void autopilotParamReceived(const QString& name, float value);
+    void autopilotRcChannelCount(int count);
     void autopilotMessagesChanged();
     void missionTransferChanged();
     void restartMissionAfterUploadChanged();
@@ -232,6 +245,7 @@ signals:
 private:
     void onAutopilotState(const AutopilotState& state);
     void onAutopilotStatusText(int severity, const QString& text);
+    void appendAutopilotMessage(int severity, const QString& text, bool fromApp);
     void onMissionTransferProgress(int done, int total);
     void onMissionUploadFinished(bool ok, int result, int missionType);
     void onMissionDownloadFinished(bool ok, int result, int missionType, const autopilot::MissionBatches& batches);

@@ -17,6 +17,7 @@ struct Tuning
     double steeringExpo = 0.0;
     double forwardLimit = 1.0;
     double reverseLimit = 0.5;
+    double steeringLimit = 1.0;
 };
 
 /** One helm output: steering and throttle in −1…1, positive = right / forward. */

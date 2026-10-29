@@ -9,6 +9,7 @@ qt_add_qml_module(kogger_app
         BasePanePopup.qml
         AutopilotPopup.qml
         HelmIndicator.qml
+        HelmBar.qml
         BottomTrackEditPopup.qml
         AimPanelSettingsTab.qml
         ConnectionsSettingsPage.qml

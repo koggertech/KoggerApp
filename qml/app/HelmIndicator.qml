@@ -12,8 +12,7 @@ Item {
     readonly property bool _driving: _state === 3
     readonly property bool _stopping: _state === 4
     readonly property bool _manual: _driving && _mode === 0
-    readonly property int _barW: Math.round(84 * _s)
-    readonly property int _barH: Math.round(6 * _s)
+    property bool cardOpen: false
 
     readonly property string _label: {
         if (!_helm) return ""
@@ -25,34 +24,9 @@ Item {
     }
     readonly property color _tone: _manual ? AppPalette.linkOkBorder : (_stopping ? AppPalette.dangerBorder : AppPalette.linkIdleBorder)
 
-    visible: !!_helm && _helm.active
+    visible: !!_helm && _helm.active && !cardOpen
     width: chip.width
     height: chip.height
-
-    component CenterBar: Item {
-        property real value: 0
-        width: root._barW
-        height: root._barH
-
-        Rectangle {
-            anchors.fill: parent
-            radius: height / 2
-            color: AppPalette.trackOff
-        }
-        Rectangle {
-            x: parent.width / 2 + Math.min(0, parent.value) * parent.width / 2
-            width: Math.abs(parent.value) * parent.width / 2
-            height: parent.height
-            radius: height / 2
-            color: AppPalette.accentBar
-        }
-        Rectangle {
-            x: parent.width / 2 - width / 2
-            width: Math.max(1, Math.round(root._s))
-            height: parent.height
-            color: AppPalette.textMuted
-        }
-    }
 
     Rectangle {
         id: chip
@@ -89,17 +63,8 @@ Item {
                 spacing: Math.round(4 * root._s)
                 visible: root._driving
 
-                CenterBar { value: root._helm ? root._helm.throttle : 0 }
-                CenterBar { value: root._helm ? root._helm.steering : 0 }
-            }
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                visible: root._driving
-                text: qsTr("%1%").arg(root._helm ? Math.round(root._helm.forwardLimit * 100) : 0)
-                color: AppPalette.textSecond
-                font.pixelSize: Math.round(12 * root._s)
-                font.bold: true
+                HelmBar { value: root._helm ? root._helm.throttle : 0 }
+                HelmBar { value: root._helm ? root._helm.steering : 0 }
             }
         }
     }

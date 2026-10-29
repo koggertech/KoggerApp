@@ -5,14 +5,20 @@
 
 #include "device_manager_wrapper.h"
 #include "gamepad_monitor.h"
-#include "notifications.h"
 
 namespace {
 
+constexpr int kSeverityWarning = 4;
+constexpr int kSeverityInfo = 6;
 constexpr int kModeManual = 0;
 constexpr int kModeHold = 4;
 constexpr int kModeLoiter = 5;
+constexpr int kModeAuto = 10;
 constexpr int kCmdDoSetMode = 176;
+constexpr int kCmdRequestMessage = 512;
+constexpr int kMsgRcChannels = 65;
+constexpr int kFsGcsStopKeepAuto = 2;
+constexpr int kWriteDeadlineMs = 1500;
 constexpr int kResultAccepted = 0;
 constexpr int kResultInProgress = 5;
 
@@ -24,8 +30,6 @@ constexpr int kCheckPollMs = 100;
 constexpr qint64 kCheckRetryMs = 2000;
 constexpr qint64 kCheckDeadlineMs = 4000;
 
-constexpr qreal kLimitStep = 0.25;
-constexpr qreal kLimitMin = 0.25;
 constexpr qreal kDeadzoneMax = 0.5;
 constexpr int kRateMinHz = 10;
 constexpr int kRateMaxHz = 25;
@@ -40,6 +44,7 @@ const char kSettingsGroup[] = "main/gamepadHelm";
 const char kBindingsGroup[] = "bindings";
 const char kPadsGroup[] = "pads";
 const char kDefaultFamily[] = "generic";
+const char kLastFamilyKey[] = "lastFamily";
 const char kParamOverrideTime[] = "RC_OVERRIDE_TIME";
 const char kParamRcOptions[] = "RC_OPTIONS";
 const char kParamFsThrottle[] = "FS_THR_ENABLE";
@@ -60,10 +65,14 @@ const char* bindingKey(int action)
         return "throttleReverse";
     case helm::ActionSteering:
         return "steering";
-    case helm::ActionToggleLoiter:
-        return "toggleLoiter";
+    case helm::ActionManual:
+        return "manual";
     case helm::ActionHold:
         return "hold";
+    case helm::ActionLoiter:
+        return "loiter";
+    case helm::ActionAuto:
+        return "auto";
     default:
         return "";
     }
@@ -103,20 +112,24 @@ bool modeKeepsSession(int mode)
 
 }
 
-HelmController::HelmController(GamepadMonitor* monitor, DeviceManagerWrapper* vehicle, Notifications* notifications, QObject* parent)
+HelmController::HelmController(GamepadMonitor* monitor, DeviceManagerWrapper* vehicle, QObject* parent)
     : QObject(parent),
       monitor_(monitor),
       vehicle_(vehicle),
-      notifications_(notifications),
       sendTimer_(this),
       paramTimer_(this),
       checkTimer_(this),
-      modeTimer_(this)
+      modeTimer_(this),
+      writeTimer_(this)
 {
-    padFamily_ = monitor_->family().isEmpty() ? QLatin1String(kDefaultFamily) : monitor_->family();
+    {
+        QSettings settings(QStringLiteral("KOGGER"), QStringLiteral("KoggerApp"));
+        const QString last = settings.value(QStringLiteral("%1/%2").arg(QLatin1String(kSettingsGroup), QLatin1String(kLastFamilyKey)),
+                                            QLatin1String(kDefaultFamily)).toString();
+        padFamily_ = monitor_->family().isEmpty() ? last : monitor_->family();
+    }
     loadTuning();
     loadProfile();
-    forwardLimit_ = startForwardLimit_;
     clock_.start();
 
     sendTimer_.setTimerType(Qt::PreciseTimer);
@@ -125,16 +138,20 @@ HelmController::HelmController(GamepadMonitor* monitor, DeviceManagerWrapper* ve
     checkTimer_.setInterval(kCheckPollMs);
     modeTimer_.setSingleShot(true);
     modeTimer_.setInterval(kModeTimeoutMs);
+    writeTimer_.setSingleShot(true);
+    writeTimer_.setInterval(kWriteDeadlineMs);
 
     connect(&sendTimer_, &QTimer::timeout, this, &HelmController::onSendTick);
     connect(&paramTimer_, &QTimer::timeout, this, &HelmController::pumpParams);
     connect(&checkTimer_, &QTimer::timeout, this, &HelmController::onCheckDeadline);
     connect(&modeTimer_, &QTimer::timeout, this, [this] { onModeResult(false); });
+    connect(&writeTimer_, &QTimer::timeout, this, &HelmController::onWriteDeadline);
 
     connect(monitor_, &GamepadMonitor::connectionChanged, this, &HelmController::onPadConnection);
     connect(monitor_, &GamepadMonitor::stateChanged, this, &HelmController::onPadState);
     connect(vehicle_, &DeviceManagerWrapper::vruChanged, this, &HelmController::onVehicleChanged);
     connect(vehicle_, &DeviceManagerWrapper::autopilotParamReceived, this, &HelmController::onParam);
+    connect(vehicle_, &DeviceManagerWrapper::autopilotRcChannelCount, this, &HelmController::onRcChannelCount);
     connect(vehicle_, &DeviceManagerWrapper::autopilotCommandAcked, this, &HelmController::onCommandAcked);
     if (auto* app = qobject_cast<QGuiApplication*>(QCoreApplication::instance())) {
         connect(app, &QGuiApplication::applicationStateChanged, this, &HelmController::onApplicationStateChanged);
@@ -180,15 +197,31 @@ void HelmController::setThrottleExpo(qreal value)
     saveTuning();
 }
 
-void HelmController::setStartForwardLimit(qreal value)
+void HelmController::setForwardLimit(qreal value)
 {
-    startForwardLimit_ = std::clamp(value, kLimitMin, 1.0);
+    tuning_.forwardLimit = std::clamp(value, 0.0, 1.0);
     saveTuning();
 }
 
 void HelmController::setReverseLimit(qreal value)
 {
     tuning_.reverseLimit = std::clamp(value, 0.0, 1.0);
+    saveTuning();
+}
+
+void HelmController::resetTuning()
+{
+    const helm::Tuning defaults;
+    tuning_.forwardLimit = defaults.forwardLimit;
+    tuning_.reverseLimit = defaults.reverseLimit;
+    tuning_.steeringLimit = defaults.steeringLimit;
+    tuning_.throttleExpo = defaults.throttleExpo;
+    setRateHz(kDefaultRateHz);
+}
+
+void HelmController::setSteeringLimit(qreal value)
+{
+    tuning_.steeringLimit = std::clamp(value, 0.0, 1.0);
     saveTuning();
 }
 
@@ -222,7 +255,7 @@ QVariantList HelmController::bindingInputs() const
 
 void HelmController::setBindingInputs(const QVariantList& inputs)
 {
-    if (state_ != Off || inputs.size() != helm::ActionCount) {
+    if (!layoutEditable() || inputs.size() != helm::ActionCount) {
         return;
     }
     helm::Bindings next{};
@@ -239,7 +272,7 @@ void HelmController::setBindingInputs(const QVariantList& inputs)
 QVariantMap HelmController::assignBinding(int action, int input)
 {
     QVariantMap reply{ { QStringLiteral("ok"), false } };
-    if (state_ != Off) {
+    if (!layoutEditable()) {
         return reply;
     }
     helm::Bindings next = bindings_;
@@ -259,7 +292,7 @@ QVariantMap HelmController::assignBinding(int action, int input)
 
 void HelmController::resetBindings()
 {
-    if (state_ != Off || bindings_ == helm::defaultBindings()) {
+    if (!layoutEditable() || bindings_ == helm::defaultBindings()) {
         return;
     }
     bindings_ = helm::defaultBindings();
@@ -268,7 +301,7 @@ void HelmController::resetBindings()
 
 void HelmController::resetPadSettings()
 {
-    if (state_ != Off) {
+    if (!layoutEditable()) {
         return;
     }
     const helm::Tuning defaults;
@@ -282,11 +315,16 @@ void HelmController::resetPadSettings()
 
 void HelmController::engage()
 {
-    if (state_ != Off) {
+    if (state_ != Off || confirmationBusy_) {
+        return;
+    }
+    setConfirmation(ConfirmNone, false);
+    if (configuring_) {
+        notify(tr("Close the gamepad settings to take control"), kSeverityWarning);
         return;
     }
     if (!available()) {
-        notify(tr("Gamepad control needs a connected gamepad and an online autopilot"));
+        notify(tr("Gamepad control needs a connected gamepad and an online autopilot"), kSeverityWarning);
         return;
     }
 
@@ -305,15 +343,105 @@ void HelmController::engage()
     checkStartMs_ = clock_.elapsed();
     lastSampleMs_ = clock_.elapsed();
     previousButtons_ = monitor_->buttons();
-    forwardLimit_ = startForwardLimit_;
     steeringNeutral_ = 0.0;
     throttleNeutral_ = 0.0;
     stopReason_.clear();
+    rcChannelCount_ = -1;
+    modeBeforeEngage_ = vehicle_->pilotModeState();
+    autoFromPad_ = false;
 
     monitor_->setHelmActive(true);
     setState(Checking);
     requestParams(names);
+    vehicle_->autopilotRequestMessage(kMsgRcChannels);
     checkTimer_.start();
+}
+
+void HelmController::setConfiguring(bool configuring)
+{
+    if (configuring_ == configuring) {
+        return;
+    }
+    configuring_ = configuring;
+    emit configuringChanged();
+    emit layoutEditableChanged();
+    if (configuring_) {
+        cancelConfirmation();
+        if (state_ != Off && state_ != Driving) {
+            safeStop(tr("Gamepad settings opened — gamepad control off"),
+                     tr("Gamepad settings opened — the transmitter has the boat"));
+        }
+    }
+    else if (state_ == Driving) {
+        holdUntilReleased_ = true;
+        if (!helm::throttleReleased(padState(), bindings_, tuning_)) {
+            notify(tr("Release the throttle to drive again"), kSeverityWarning);
+        }
+    }
+}
+
+void HelmController::confirm()
+{
+    if (confirmation_ == ConfirmTransmitter) {
+        transmitterConfirmed_ = true;
+        setConfirmation(ConfirmNone, false);
+        engage();
+        return;
+    }
+    if (confirmation_ != ConfirmLinkLossStop || confirmationBusy_) {
+        return;
+    }
+    if (!vehicle_->autopilotOnline()) {
+        setConfirmation(ConfirmNone, false);
+        return;
+    }
+    setConfirmation(ConfirmLinkLossStop, true);
+    writeRetried_ = false;
+    vehicle_->autopilotSetParam(QLatin1String(kParamFsGcs), float(kFsGcsStopKeepAuto));
+    vehicle_->autopilotRequestParam(QLatin1String(kParamFsGcs));
+    writeTimer_.start();
+}
+
+void HelmController::cancelConfirmation()
+{
+    writeTimer_.stop();
+    setConfirmation(ConfirmNone, false);
+}
+
+void HelmController::onWriteDeadline()
+{
+    if (!confirmationBusy_) {
+        return;
+    }
+    if (!writeRetried_) {
+        writeRetried_ = true;
+        vehicle_->autopilotRequestParam(QLatin1String(kParamFsGcs));
+        writeTimer_.start();
+        return;
+    }
+    setConfirmation(ConfirmNone, false);
+    notify(tr("The boat did not confirm the setting — gamepad control not started"), kSeverityWarning);
+}
+
+void HelmController::setConfirmation(int confirmation, bool busy)
+{
+    if (confirmation_ == confirmation && confirmationBusy_ == busy) {
+        return;
+    }
+    confirmation_ = confirmation;
+    confirmationBusy_ = busy;
+    emit confirmationChanged();
+}
+
+void HelmController::onRcChannelCount(int count)
+{
+    if (state_ == Off) {
+        return;
+    }
+    rcChannelCount_ = count;
+    if (state_ == Checking && checkComplete()) {
+        finishCheck();
+    }
 }
 
 void HelmController::disengage()
@@ -322,13 +450,16 @@ void HelmController::disengage()
         finish(tr("Gamepad control cancelled"));
         return;
     }
-    safeStop(tr("Gamepad control off"));
+    safeStop(tr("Gamepad control off"), tr("Gamepad control off — the transmitter has the boat"));
 }
 
 void HelmController::onVehicleChanged()
 {
     const bool online = vehicle_->autopilotOnline();
     monitor_->setPresenceActive(online);
+    if (!online) {
+        cancelConfirmation();
+    }
 
     const bool available = this->available();
     if (available != available_) {
@@ -348,7 +479,11 @@ void HelmController::onVehicleChanged()
     if (pendingMode_ >= 0 && mode == pendingMode_) {
         onModeResult(true);
     }
-    if ((state_ == Driving || state_ == Stopping) && pendingMode_ < 0 && !modeKeepsSession(mode)) {
+    if (pendingMode_ < 0 && mode != kModeAuto) {
+        autoFromPad_ = false;
+    }
+    const bool keeps = modeKeepsSession(mode) || (mode == kModeAuto && autoFromPad_);
+    if ((state_ == Driving || state_ == Stopping) && pendingMode_ < 0 && !keeps) {
         finish(tr("Mode changed to %1 — gamepad control off").arg(DeviceManagerWrapper::modeNameFor(mode)));
     }
 }
@@ -362,11 +497,14 @@ void HelmController::onPadConnection()
     }
 
     if (!monitor_->connected()) {
-        safeStop(tr("Gamepad disconnected — holding position"));
+        cancelConfirmation();
+        safeStop(tr("Gamepad disconnected — holding position"), tr("Gamepad disconnected — the transmitter has the boat"));
         return;
     }
     if (state_ == Off && monitor_->family() != padFamily_) {
         padFamily_ = monitor_->family();
+        QSettings(QStringLiteral("KOGGER"), QStringLiteral("KoggerApp"))
+            .setValue(QStringLiteral("%1/%2").arg(QLatin1String(kSettingsGroup), QLatin1String(kLastFamilyKey)), padFamily_);
         loadProfile();
         emit padFamilyChanged();
         emit tuningChanged();
@@ -379,29 +517,73 @@ void HelmController::onPadState()
     lastSampleMs_ = clock_.elapsed();
 
     const int buttons = monitor_->buttons();
-    const int pressed = buttons & ~previousButtons_;
+    const int previous = previousButtons_;
+    const int pressed = buttons & ~previous;
     previousButtons_ = buttons;
-    if (state_ != Driving) {
+    if (state_ != Driving || configuring_) {
         return;
     }
 
-    if (pressed & helm::buttonMask(bindings_, helm::ActionHold)) {
-        requestMode(kModeHold, ModeIntent::Toggle);
-    }
-    else if ((pressed & helm::buttonMask(bindings_, helm::ActionToggleLoiter)) && pendingMode_ < 0) {
-        requestMode(vehicle_->pilotModeState() == kModeLoiter ? kModeManual : kModeLoiter, ModeIntent::Toggle);
+    if ((buttons & helm::kArmComboMask) == helm::kArmComboMask && (previous & helm::kArmComboMask) != helm::kArmComboMask) {
+        toggleArm();
     }
 
-    const bool up = pressed & (1 << helm::kButtonDpadUp);
-    const bool down = pressed & (1 << helm::kButtonDpadDown);
-    if (up != down) {
-        forwardLimit_ = std::clamp(forwardLimit_ + (up ? kLimitStep : -kLimitStep), kLimitMin, 1.0);
-        emit commandChanged();
+    if (pressed & helm::buttonMask(bindings_, helm::ActionHold)) {
+        requestPadMode(kModeHold);
     }
+    else if (pendingMode_ < 0) {
+        if (pressed & helm::buttonMask(bindings_, helm::ActionManual)) {
+            requestPadMode(kModeManual);
+        }
+        else if (pressed & helm::buttonMask(bindings_, helm::ActionLoiter)) {
+            requestPadMode(kModeLoiter);
+        }
+        else if (pressed & helm::buttonMask(bindings_, helm::ActionAuto)) {
+            requestPadMode(kModeAuto);
+        }
+    }
+}
+
+bool HelmController::throttleHeld() const
+{
+    return state_ != Off && !helm::throttleReleased(padState(), bindings_, tuning_);
+}
+
+void HelmController::requestPadMode(int mode)
+{
+    if (vehicle_->pilotModeState() == mode) {
+        return;
+    }
+    if (mode == kModeAuto) {
+        autoFromPad_ = true;
+    }
+    requestMode(mode, ModeIntent::Toggle);
+}
+
+void HelmController::toggleArm()
+{
+    if (vehicle_->pilotArmState() > 0) {
+        vehicle_->autopilotArm(false);
+        notify(tr("Disarm from the gamepad"), kSeverityInfo);
+        return;
+    }
+    if (throttleHeld()) {
+        notify(tr("Release the throttle before arming"), kSeverityWarning);
+        return;
+    }
+    vehicle_->autopilotArm(true);
+    notify(tr("Arm from the gamepad"), kSeverityInfo);
 }
 
 void HelmController::onParam(const QString& name, float value)
 {
+    if (confirmationBusy_ && name == QLatin1String(kParamFsGcs) && int(value) == kFsGcsStopKeepAuto) {
+        writeTimer_.stop();
+        setConfirmation(ConfirmNone, false);
+        notify(tr("The boat now stops when the link drops"), kSeverityInfo);
+        engage();
+        return;
+    }
     if (state_ != Checking || !wantedParams_.contains(name)) {
         return;
     }
@@ -425,6 +607,13 @@ void HelmController::onParam(const QString& name, float value)
 
 void HelmController::onCommandAcked(int command, int result)
 {
+    if (command == kCmdRequestMessage && state_ == Checking && result != kResultAccepted && rcChannelCount_ < 0) {
+        rcChannelCount_ = 0;
+        if (checkComplete()) {
+            finishCheck();
+        }
+        return;
+    }
     if (command != kCmdDoSetMode || pendingMode_ < 0) {
         return;
     }
@@ -439,7 +628,7 @@ void HelmController::onApplicationStateChanged(Qt::ApplicationState appState)
 {
 #ifdef Q_OS_ANDROID
     if (appState != Qt::ApplicationActive) {
-        safeStop(tr("App in the background — holding position"));
+        safeStop(tr("App in the background — holding position"), tr("App in the background — the transmitter has the boat"));
     }
 #else
     setBackground(active() && appState != Qt::ApplicationActive);
@@ -453,17 +642,18 @@ void HelmController::onSendTick()
     }
 
     if ((state_ == Starting || state_ == Driving) && clock_.elapsed() - lastSampleMs_ > kSampleTimeoutMs) {
-        safeStop(tr("Gamepad stopped responding — holding position"));
+        safeStop(tr("Gamepad stopped responding — holding position"), tr("Gamepad stopped responding — the transmitter has the boat"));
         if (state_ == Off) {
             return;
         }
     }
 
     helm::Command command;
-    if (state_ == Driving && pendingMode_ < 0 && vehicle_->pilotModeState() == kModeManual) {
-        helm::Tuning tuning = tuning_;
-        tuning.forwardLimit = forwardLimit_;
-        command = helm::shape(padState(), bindings_, tuning);
+    if (holdUntilReleased_ && !configuring_ && helm::throttleReleased(padState(), bindings_, tuning_)) {
+        holdUntilReleased_ = false;
+    }
+    if (state_ == Driving && !configuring_ && !holdUntilReleased_ && pendingMode_ < 0 && vehicle_->pilotModeState() == kModeManual) {
+        command = helm::shape(padState(), bindings_, tuning_);
     }
     sendCommand(command);
 }
@@ -521,6 +711,11 @@ bool HelmController::checkComplete() const
             return false;
         }
     }
+    const bool failsafesOff = int(params_.value(QLatin1String(kParamFsThrottle), 1.0)) == 0
+                              && int(params_.value(QLatin1String(kParamFsGcs), 1.0)) == 0;
+    if (failsafesOff && rcChannelCount_ < 0) {
+        return false;
+    }
     return params_.contains(QLatin1String(kParamGcsSysid)) || params_.contains(QLatin1String(kParamGcsSysidOld));
 }
 
@@ -550,8 +745,16 @@ void HelmController::finishCheck()
     if (has(kParamRcOptions) && (int(value(kParamRcOptions)) & kRcOptionsIgnoreOverrides)) {
         refusals << tr("RC_OPTIONS bit 1 is set: the vehicle ignores gamepad control");
     }
-    if (has(kParamFsThrottle) && has(kParamFsGcs) && int(value(kParamFsThrottle)) == 0 && int(value(kParamFsGcs)) == 0) {
-        refusals << tr("FS_THR_ENABLE and FS_GCS_ENABLE are both 0: after a link loss the boat would keep the last command");
+    const bool failsafesOff = has(kParamFsThrottle) && has(kParamFsGcs)
+                              && int(value(kParamFsThrottle)) == 0 && int(value(kParamFsGcs)) == 0;
+    overrideSeconds_ = has(kParamOverrideTime) ? value(kParamOverrideTime) : 0.0;
+    const bool transmitterTakesOver = rcChannelCount_ > 0 && overrideSeconds_ > 0.0;
+    if (failsafesOff) {
+        notes << tr("Stop on link loss (FS_THR_ENABLE, FS_GCS_ENABLE): off");
+        notes << (rcChannelCount_ > 0 ? tr("RC receiver: %1 channels").arg(rcChannelCount_) : tr("RC receiver: none"));
+    }
+    if (overrideSeconds_ < 0.0) {
+        notes << tr("RC_OVERRIDE_TIME is negative: the transmitter never takes over from the gamepad");
     }
 
     if (has(kParamGcsSysid)) {
@@ -609,9 +812,18 @@ void HelmController::finishCheck()
 
     vehicleStatus_ = (refusals + notes).join(QLatin1Char('\n'));
     emit vehicleStatusChanged();
+    if (!notes.isEmpty()) {
+        notify(tr("Vehicle check: %1").arg(notes.join(QStringLiteral("; "))), kSeverityInfo);
+    }
 
     if (!refusals.isEmpty()) {
         finish(tr("Gamepad control refused: %1").arg(refusals.join(QStringLiteral("; "))));
+        return;
+    }
+
+    if (failsafesOff && !(transmitterTakesOver && transmitterConfirmed_)) {
+        finish(QString());
+        setConfirmation(transmitterTakesOver ? ConfirmTransmitter : ConfirmLinkLossStop, false);
         return;
     }
 
@@ -655,7 +867,12 @@ void HelmController::onModeResult(bool ok)
         break;
     case ModeIntent::Toggle:
         if (!ok) {
-            notify(tr("The vehicle refused %1").arg(DeviceManagerWrapper::modeNameFor(mode)));
+            if (mode == kModeAuto) {
+                autoFromPad_ = false;
+            }
+            notify(mode == kModeLoiter ? tr("The boat refused Loiter — no position (GPS/EKF)")
+                                       : tr("The vehicle refused %1").arg(DeviceManagerWrapper::modeNameFor(mode)),
+                   kSeverityWarning);
         }
         break;
     case ModeIntent::StopLoiter:
@@ -672,13 +889,24 @@ void HelmController::onModeResult(bool ok)
     }
 }
 
-void HelmController::safeStop(const QString& reason)
+bool HelmController::handsBackToTransmitter() const
+{
+    return vehicle_->autopilotOnline() && modeBeforeEngage_ == kModeManual && vehicle_->pilotModeState() == kModeManual
+           && rcChannelCount_ > 0 && overrideSeconds_ > 0.0;
+}
+
+void HelmController::safeStop(const QString& reason, const QString& handBackReason)
 {
     if (state_ == Off || state_ == Stopping) {
         return;
     }
     if (state_ == Checking) {
         finish(reason);
+        return;
+    }
+    if (handsBackToTransmitter()) {
+        vehicle_->autopilotReleaseManualControl();
+        finish(handBackReason);
         return;
     }
 
@@ -710,7 +938,7 @@ void HelmController::finish(const QString& reason)
     const bool wasActive = state_ != Off;
     setState(Off);
     if (wasActive && !reason.isEmpty()) {
-        notify(reason);
+        notify(reason, kSeverityWarning);
     }
 }
 
@@ -720,7 +948,11 @@ void HelmController::setState(State state)
         return;
     }
     state_ = state;
+    if (state_ != Driving) {
+        holdUntilReleased_ = false;
+    }
     emit stateChanged();
+    emit layoutEditableChanged();
 }
 
 void HelmController::setBackground(bool background)
@@ -742,11 +974,9 @@ void HelmController::sendCommand(const helm::Command& command)
                                      helm::toAxis(command.throttle, throttleNeutral_));
 }
 
-void HelmController::notify(const QString& text)
+void HelmController::notify(const QString& text, int severity)
 {
-    if (notifications_) {
-        notifications_->info(text);
-    }
+    vehicle_->logAutopilotEvent(severity, text);
 }
 
 void HelmController::loadTuning()
@@ -756,7 +986,8 @@ void HelmController::loadTuning()
     const helm::Tuning defaults;
     tuning_.throttleExpo = std::clamp(settings.value(QStringLiteral("throttleExpo"), defaults.throttleExpo).toDouble(), 0.0, 1.0);
     tuning_.reverseLimit = std::clamp(settings.value(QStringLiteral("reverseLimit"), defaults.reverseLimit).toDouble(), 0.0, 1.0);
-    startForwardLimit_ = std::clamp(settings.value(QStringLiteral("forwardLimit"), defaults.forwardLimit).toDouble(), kLimitMin, 1.0);
+    tuning_.steeringLimit = std::clamp(settings.value(QStringLiteral("steeringLimit"), defaults.steeringLimit).toDouble(), 0.0, 1.0);
+    tuning_.forwardLimit = std::clamp(settings.value(QStringLiteral("forwardLimit"), defaults.forwardLimit).toDouble(), 0.0, 1.0);
     rateHz_ = std::clamp(settings.value(QStringLiteral("rateHz"), rateHz_).toInt(), kRateMinHz, kRateMaxHz);
     settings.endGroup();
 }
@@ -767,7 +998,8 @@ void HelmController::saveTuning()
     settings.beginGroup(QLatin1String(kSettingsGroup));
     settings.setValue(QStringLiteral("throttleExpo"), tuning_.throttleExpo);
     settings.setValue(QStringLiteral("reverseLimit"), tuning_.reverseLimit);
-    settings.setValue(QStringLiteral("forwardLimit"), startForwardLimit_);
+    settings.setValue(QStringLiteral("steeringLimit"), tuning_.steeringLimit);
+    settings.setValue(QStringLiteral("forwardLimit"), tuning_.forwardLimit);
     settings.setValue(QStringLiteral("rateHz"), rateHz_);
     settings.endGroup();
     emit tuningChanged();

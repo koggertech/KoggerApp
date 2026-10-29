@@ -123,8 +123,13 @@ Column {
                 from: helmRow.from
                 to: helmRow.to
                 stepSize: helmRow.stepSize
-                value: helmRow.value
                 onValueModified: function(val) { helmRow.valueMoved(val) }
+
+                Binding {
+                    target: helmRowSlider
+                    property: "value"
+                    value: helmRow.value
+                }
             }
             Text {
                 id: helmRowValue
@@ -2976,10 +2981,9 @@ Column {
             }
 
             KButton {
-                x: parent.width - width
+                width: parent.width
+                fontPixelSize: Tokens.fontLg
                 text: qsTr("Defaults")
-                height: Tokens.controlHMd
-                enabled: !!root.store && !root.store.missionRunViewIsDefault
                 onClicked: if (root.store) root.store.resetMissionRunView()
             }
 
@@ -3080,6 +3084,12 @@ Column {
                 KIslandRow {
                     label: qsTr("Gamepad layout")
                     labelColor: root._bright
+                    leading: KGamepadIcon {
+                        width: Math.round(22 * AppPalette.scale)
+                        height: width
+                        family: root._helmCtl ? root._helmCtl.padFamily : ""
+                        color: root._bright
+                    }
                     chevron: true
                     interactive: true
                     toolTipText: qsTr("Controller test and which button does what")
@@ -3100,11 +3110,11 @@ Column {
 
             KIsland {
                 HelmSliderRow {
-                    label: qsTr("Forward limit at start")
-                    toolTipText: qsTr("Max forward throttle; the D-pad changes it on the move")
-                    from: 0.25; to: 1; stepSize: 0.25
-                    value: root._helmCtl ? root._helmCtl.startForwardLimit : 1
-                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.startForwardLimit = val }
+                    label: qsTr("Forward limit")
+                    toolTipText: qsTr("Max forward throttle")
+                    from: 0; to: 1; stepSize: 0.05
+                    value: root._helmCtl ? root._helmCtl.forwardLimit : 1
+                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.forwardLimit = val }
                 }
                 HelmSliderRow {
                     label: qsTr("Reverse limit")
@@ -3112,6 +3122,13 @@ Column {
                     from: 0; to: 1; stepSize: 0.05
                     value: root._helmCtl ? root._helmCtl.reverseLimit : 0.5
                     onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.reverseLimit = val }
+                }
+                HelmSliderRow {
+                    label: qsTr("Steering limit")
+                    toolTipText: qsTr("Max steering")
+                    from: 0; to: 1; stepSize: 0.05
+                    value: root._helmCtl ? root._helmCtl.steeringLimit : 1
+                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.steeringLimit = val }
                 }
                 HelmSliderRow {
                     label: qsTr("Throttle softness")
@@ -3131,14 +3148,11 @@ Column {
                 }
             }
 
-            Text {
+            KButton {
                 width: parent.width
-                visible: !!root._helmCtl && root._helmCtl.vehicleStatus.length > 0
-                text: root._helmCtl ? qsTr("Last vehicle check:") + "\n" + root._helmCtl.vehicleStatus : ""
-                textFormat: Text.PlainText
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontBase
-                wrapMode: Text.WordWrap
+                fontPixelSize: Tokens.fontLg
+                text: qsTr("Defaults")
+                onClicked: if (root._helmCtl) root._helmCtl.resetTuning()
             }
         }
     }

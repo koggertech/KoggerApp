@@ -14,15 +14,17 @@ enum Action : int {
     ActionThrottleForward,
     ActionThrottleReverse,
     ActionSteering,
-    ActionToggleLoiter,
+    ActionManual,
     ActionHold,
+    ActionLoiter,
+    ActionAuto,
     ActionCount
 };
 
 /**
  * What an action accepts: a button, a trigger or stick half, or a stick axis. Reserved buttons are
- * never bindable: D-pad up / down step the forward limit, and the OS takes Guide (Game Bar, Home),
- * which on Windows a pad also reports for View + Menu.
+ * never bindable: LB + RB together arm / disarm, and the OS takes Guide (Game Bar, Home), which on
+ * Windows a pad also reports for View + Menu.
  */
 enum class ActionKind {
     Button,
@@ -43,11 +45,13 @@ constexpr int kInputStickLast = kInputStickFirst + 2 * kStickAxes - 1;
 constexpr int kInputLeftTrigger = 110;
 constexpr int kInputRightTrigger = 111;
 
+constexpr int kButtonSouth = 0;
 constexpr int kButtonEast = 1;
+constexpr int kButtonWest = 2;
+constexpr int kButtonNorth = 3;
 constexpr int kButtonGuide = 5;
+constexpr int kButtonLeftShoulder = 9;
 constexpr int kButtonRightShoulder = 10;
-constexpr int kButtonDpadUp = 11;
-constexpr int kButtonDpadDown = 12;
 
 using Bindings = std::array<int, ActionCount>;
 
@@ -77,14 +81,19 @@ inline Bindings defaultBindings()
     b[ActionThrottleForward] = kInputRightTrigger;
     b[ActionThrottleReverse] = kInputLeftTrigger;
     b[ActionSteering] = kInputStickFirst;
-    b[ActionToggleLoiter] = kButtonRightShoulder;
-    b[ActionHold] = kButtonEast;
+    b[ActionManual] = kButtonWest;
+    b[ActionHold] = kButtonSouth;
+    b[ActionLoiter] = kButtonEast;
+    b[ActionAuto] = kButtonNorth;
     return b;
 }
 
+/** Bits of the fixed arm / disarm combination: both bumpers held together. */
+constexpr int kArmComboMask = (1 << kButtonLeftShoulder) | (1 << kButtonRightShoulder);
+
 inline bool isReservedButton(int input)
 {
-    return input == kButtonGuide || input == kButtonDpadUp || input == kButtonDpadDown;
+    return input == kButtonGuide || input == kButtonLeftShoulder || input == kButtonRightShoulder;
 }
 
 inline ActionKind actionKind(int action)
@@ -265,7 +274,8 @@ inline bool throttleReleased(const PadState& pad, const Bindings& bindings, cons
 inline Command shape(const PadState& pad, const Bindings& bindings, const Tuning& tuning)
 {
     Command command;
-    command.steering = expo(steeringValue(pad, bindings[ActionSteering], tuning), tuning.steeringExpo);
+    command.steering = expo(steeringValue(pad, bindings[ActionSteering], tuning), tuning.steeringExpo)
+                       * std::clamp(tuning.steeringLimit, 0.0, 1.0);
     const double net = halfValue(pad, bindings[ActionThrottleForward], tuning) - halfValue(pad, bindings[ActionThrottleReverse], tuning);
     const double shaped = expo(net, tuning.throttleExpo);
     command.throttle = shaped >= 0.0 ? shaped * std::clamp(tuning.forwardLimit, 0.0, 1.0)

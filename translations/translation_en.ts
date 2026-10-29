@@ -1423,6 +1423,26 @@
         <source>How often commands go to the boat</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3109"/>
+        <source>Forward limit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3110"/>
+        <source>Max forward throttle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3129"/>
+        <source>Steering limit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3130"/>
+        <source>Max steering</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AutopilotPopup</name>
@@ -1760,6 +1780,76 @@
     <message>
         <location filename="../qml/app/AutopilotPopup.qml" line="278"/>
         <source>Release the throttle before arming</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="708"/>
+        <source>If the link drops, the transmitter takes over</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="709"/>
+        <source>The boat does not stop when the link drops</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="719"/>
+        <source>%1 s after the last gamepad command the boat follows the transmitter sticks again. Keep the transmitter on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="721"/>
+        <source>Without a transmitter the boat would keep the last gamepad command. Turn on stopping on link loss? The boat holds; missions in Auto go on. The setting is saved on the boat.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="737"/>
+        <source>Transmitter is on — start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="738"/>
+        <source>Saving…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="739"/>
+        <source>Turn on and start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="748"/>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="703"/>
+        <source>Gamepad settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="757"/>
+        <source>Take control</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="757"/>
+        <source>Release control</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="701"/>
+        <source>Gamepad control · background</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="725"/>
+        <source>Throttle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="735"/>
+        <source>Turn</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -5293,6 +5383,31 @@ udp://@:1234
         <source>Triggers</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="144"/>
+        <source>Manual</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="146"/>
+        <source>Loiter (keep position)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="147"/>
+        <source>Auto (run the mission)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="747"/>
+        <source>Arm / disarm (both together)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="287"/>
+        <source>The bumpers are taken by arm / disarm and cannot be bound</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>GlobalPanePopup</name>
@@ -5457,6 +5572,101 @@ udp://@:1234
     <message>
         <location filename="../src/helm/helm_controller.cpp" line="584"/>
         <source>Release the throttle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="371"/>
+        <source>The boat did not confirm the setting — gamepad control not started</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="488"/>
+        <source>The boat now stops when the link drops</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="657"/>
+        <source>Stop on link loss (FS_THR_ENABLE, FS_GCS_ENABLE): off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="658"/>
+        <source>RC receiver: %1 channels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="658"/>
+        <source>RC receiver: none</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="661"/>
+        <source>RC_OVERRIDE_TIME is negative: the transmitter never takes over from the gamepad</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="771"/>
+        <source>The boat refused Loiter — no position (GPS/EKF)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="402"/>
+        <source>Gamepad control off — the transmitter has the boat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="446"/>
+        <source>Gamepad disconnected — the transmitter has the boat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="537"/>
+        <source>App in the background — the transmitter has the boat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="551"/>
+        <source>Gamepad stopped responding — the transmitter has the boat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="305"/>
+        <source>Close the gamepad settings to take control</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="351"/>
+        <source>Gamepad settings opened — gamepad control off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="352"/>
+        <source>Gamepad settings opened — the transmitter has the boat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="548"/>
+        <source>Disarm from the gamepad</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="556"/>
+        <source>Arm from the gamepad</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="552"/>
+        <source>Release the throttle before arming</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="796"/>
+        <source>Vehicle check: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="371"/>
+        <source>Release the throttle to drive again</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

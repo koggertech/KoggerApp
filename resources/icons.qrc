@@ -65,6 +65,13 @@
         <file>icons/ui/satellite.svg</file>
         <file>icons/ui/separator_horizontal.svg</file>
         <file>icons/ui/settings.svg</file>
+        <file>icons/ui/gamepad-xbox.svg</file>
+        <file>icons/ui/gamepad-ps4.svg</file>
+        <file>icons/ui/gamepad-ps5.svg</file>
+        <file>icons/ui/gamepad-steam.svg</file>
+        <file>icons/ui/gamepad-generic.svg</file>
+        <file>icons/ui/helm-take.svg</file>
+        <file>icons/ui/helm-release.svg</file>
         <file>icons/ui/side_scan.svg</file>
         <file>icons/ui/speedboat.svg</file>
         <file>icons/ui/stack.svg</file>

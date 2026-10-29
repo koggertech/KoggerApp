@@ -330,6 +330,19 @@ void DeviceManager::sendManualControl(int steering, int throttle)
     sendAutopilotMessage(MAVLink_MSG_MANUAL_CONTROL::getID(), autopilot::payloadOf(control), MAVLink_MSG_MANUAL_CONTROL::v1Length());
 }
 
+void DeviceManager::releaseManualControl()
+{
+    if (!vru_.online || vru_.systemId < 0 || autopilotLink_ == nullptr) {
+        return;
+    }
+
+    MAVLink_MSG_MANUAL_CONTROL control;
+    control.y = kMavAxisInvalid;
+    control.z = kMavAxisInvalid;
+    control.target = uint8_t(vru_.systemId);
+    sendAutopilotMessage(MAVLink_MSG_MANUAL_CONTROL::getID(), autopilot::payloadOf(control), MAVLink_MSG_MANUAL_CONTROL::v1Length());
+}
+
 void DeviceManager::requestAutopilotParam(const QString& name)
 {
     if (!vru_.online || vru_.systemId < 0 || autopilotLink_ == nullptr) {
@@ -342,6 +355,31 @@ void DeviceManager::requestAutopilotParam(const QString& name)
     const QByteArray id = name.toLatin1().left(kMavParamIdLength);
     std::memcpy(request.param_id, id.constData(), size_t(id.size()));
     sendAutopilotMessage(MAVLink_MSG_PARAM_REQUEST_READ::getID(), autopilot::payloadOf(request), MAVLink_MSG_PARAM_REQUEST_READ::v1Length());
+}
+
+void DeviceManager::setAutopilotParam(const QString& name, float value)
+{
+    if (!vru_.online || vru_.systemId < 0 || autopilotLink_ == nullptr) {
+        return;
+    }
+
+    MAVLink_MSG_PARAM_SET set;
+    set.param_value = value;
+    set.target_system = uint8_t(vru_.systemId);
+    set.target_component = uint8_t(vru_.componentId);
+    const QByteArray id = name.toLatin1().left(kMavParamIdLength);
+    std::memcpy(set.param_id, id.constData(), size_t(id.size()));
+    set.param_type = kMavParamTypeInt8;
+    sendAutopilotMessage(MAVLink_MSG_PARAM_SET::getID(), autopilot::payloadOf(set), MAVLink_MSG_PARAM_SET::v1Length());
+    core.consoleInfo(QString("<< MAVLink: PARAM_SET %1 = %2").arg(name).arg(value));
+}
+
+void DeviceManager::requestAutopilotMessage(int msgId)
+{
+    if (!vru_.online || vru_.systemId < 0 || autopilotLink_ == nullptr) {
+        return;
+    }
+    sendCommandLong(MavCmdRequestMessage, float(msgId));
 }
 
 void DeviceManager::sendGcsHeartbeat()
@@ -1012,6 +1050,12 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     const auto value = autopilot::decodePayload<MAVLink_MSG_PARAM_VALUE>(transferPayload);
                     emit autopilotParamReceived(QString::fromLatin1(value.param_id, int(qstrnlen(value.param_id, kMavParamIdLength))),
                                                 value.param_value);
+                }
+                if (fromAutopilotComponent && msgId == MAVLink_MSG_RC_CHANNELS::getID()) {
+                    const uint16_t length = mavlink_frame.payloadLen();
+                    const auto channels = autopilot::decodePayload<MAVLink_MSG_RC_CHANNELS>(
+                        QByteArray(reinterpret_cast<const char*>(mavlink_frame.read(length)), length));
+                    emit autopilotRcChannelCount(int(channels.chancount));
                 }
                 if (fromAutopilotComponent && msgId == MAVLink_MSG_MISSION_CURRENT::getID()) {
                     const auto current = mavlink_frame.read<MAVLink_MSG_MISSION_CURRENT>();

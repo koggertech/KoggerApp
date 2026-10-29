@@ -14,7 +14,7 @@ Popup {
     readonly property var faceLabels: connected ? gamepadMonitor.faceLabels : []
     readonly property bool playStation: family === "ps4" || family === "ps5"
     readonly property int guideButton: 5
-    readonly property int reservedMask: (1 << 11) | (1 << 12)
+    readonly property int reservedMask: (1 << 9) | (1 << 10)
     readonly property int buttonCount: 21
     readonly property int buttons: hasMonitor ? (gamepadMonitor.buttons & ~(1 << guideButton)) : 0
     readonly property int availableButtons: hasMonitor ? gamepadMonitor.availableButtons : 0
@@ -115,13 +115,15 @@ Popup {
     function setMonitoring(on) {
         if (hasMonitor)
             gamepadMonitor.active = on
+        if (hasHelm)
+            helm.configuring = on
     }
 
     readonly property bool hasHelm: typeof helm !== "undefined" && helm !== null
     readonly property var bindings: hasHelm ? helm.bindings : []
     readonly property var drivingBindings: bindings.filter(function(b) { return b.kind !== "button" })
     readonly property var buttonBindings: bindings.filter(function(b) { return b.kind === "button" })
-    readonly property bool editable: hasHelm && connected && !helm.active
+    readonly property bool editable: hasHelm && connected && helm.layoutEditable
     readonly property int stickFirst: 100
     readonly property int leftTriggerInput: 110
     readonly property int rightTriggerInput: 111
@@ -139,8 +141,10 @@ Popup {
             case "throttleForward": return qsTr("Throttle forward")
             case "throttleReverse": return qsTr("Throttle reverse")
             case "steering":        return qsTr("Steering")
-            case "toggleLoiter":    return qsTr("Switch Manual / Loiter")
+            case "manual":          return qsTr("Manual")
             case "hold":            return qsTr("Hold (motors stop)")
+            case "loiter":          return qsTr("Loiter (keep position)")
+            case "auto":            return qsTr("Auto (run the mission)")
             default:                return key
         }
     }
@@ -280,7 +284,7 @@ Popup {
             prevButtons = buttons
             if (fresh !== 0 && (fresh & ~reservedMask) === 0) {
                 listeningAction = -1
-                message = qsTr("D-pad up and down change the forward limit and cannot be bound")
+                message = qsTr("The bumpers are taken by arm / disarm and cannot be bound")
                 messageWarn = true
                 return
             }
@@ -329,7 +333,7 @@ Popup {
     readonly property string footerText: {
         if (!hasHelm || !connected)
             return ""
-        if (helm.active)
+        if (!helm.layoutEditable)
             return qsTr("Stop gamepad control to change the layout")
         if (listeningAction >= 0) {
             var kind = kindOf(listeningAction)
@@ -482,6 +486,57 @@ Popup {
         }
     }
 
+    component FixedRow: Item {
+        id: fixedRow
+        property string badge: ""
+        property string label: ""
+        property int mask: 0
+        property bool all: false
+        readonly property bool live: dialog.connected && (all ? (dialog.buttons & mask) === mask : (dialog.buttons & mask) !== 0)
+
+        width: parent ? parent.width : 0
+        height: Math.max(Tokens.controlHMd + Tokens.spaceMd, fixedText.implicitHeight + Tokens.spaceMd)
+
+        Rectangle {
+            anchors.fill: parent
+            radius: Tokens.radiusMd
+            color: fixedRow.live ? Qt.rgba(AppPalette.accent.r, AppPalette.accent.g, AppPalette.accent.b, 0.18) : "transparent"
+        }
+
+        Rectangle {
+            x: Tokens.spaceSm
+            anchors.verticalCenter: parent.verticalCenter
+            width: dialog.colInput - 2 * Tokens.spaceSm
+            height: Tokens.controlHMd
+            radius: Tokens.radiusMd
+            color: "transparent"
+            border.color: AppPalette.border
+            border.width: Tokens.cardBorderWidth
+
+            Text {
+                anchors.centerIn: parent
+                width: parent.width - 2 * Tokens.spaceSm
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+                text: fixedRow.badge
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontMd
+                font.bold: true
+            }
+        }
+
+        Text {
+            id: fixedText
+            x: dialog.colInput + Tokens.spaceSm
+            width: parent.width - x - Tokens.spaceSm
+            anchors.verticalCenter: parent.verticalCenter
+            text: fixedRow.label
+            color: AppPalette.textSecond
+            font.pixelSize: Tokens.fontBase
+            wrapMode: Text.WordWrap
+        }
+    }
+
     component DeadzoneRow: Item {
         id: deadzoneRow
         property string label: ""
@@ -508,7 +563,7 @@ Popup {
             from: 0
             to: 0.5
             stepSize: 0.01
-            enabled: dialog.hasHelm && !helm.active
+            enabled: dialog.hasHelm && helm.layoutEditable
             value: deadzoneRow.value
             onValueModified: function(val) { deadzoneRow.moved(val) }
         }
@@ -539,11 +594,23 @@ Popup {
             font.bold: true
         }
 
+        KGamepadIcon {
+            id: padIcon
+            anchors.verticalCenter: padText.verticalCenter
+            width: Math.round(22 * AppPalette.scale)
+            height: width
+            visible: dialog.connected
+            family: dialog.family
+            color: AppPalette.text
+        }
+
         Text {
             id: padText
             anchors.top: titleText.bottom
             anchors.topMargin: Tokens.spaceSm
-            width: parent.width
+            anchors.left: padIcon.right
+            anchors.leftMargin: Tokens.spaceSm
+            anchors.right: parent.right
             visible: dialog.connected
             text: dialog.connected ? gamepadMonitor.name + "  ·  " + dialog.familyName : ""
             color: AppPalette.text
@@ -675,6 +742,13 @@ Popup {
                         delegate: BindingRow {}
                     }
 
+                    FixedRow {
+                        badge: dialog.playStation ? "L1 + R1" : "LB + RB"
+                        label: qsTr("Arm / disarm (both together)")
+                        mask: (1 << 9) | (1 << 10)
+                        all: true
+                    }
+
                     SectionHeader { text: qsTr("Dead zones") }
 
                     DeadzoneRow {
@@ -736,7 +810,7 @@ Popup {
                 width: Math.max(Math.round(124 * AppPalette.scale), Math.ceil(resetMetrics.advanceWidth) + 4 * Tokens.spaceLg)
                 height: Tokens.controlHMd
                 visible: dialog.hasHelm && dialog.connected
-                enabled: dialog.hasHelm && !helm.active
+                enabled: dialog.hasHelm && helm.layoutEditable
                 fontPixelSize: Tokens.fontMd
                 text: qsTr("Reset to defaults")
                 onClicked: {

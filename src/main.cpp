@@ -479,7 +479,7 @@ int main(int argc, char *argv[])
     GamepadMonitor gamepadMonitor;
     core.initAfterApp();
     LinkDiscovery linkDiscovery(core.getLinkManagerWrapperPtr());
-    HelmController helm(&gamepadMonitor, core.getDeviceManagerWrapperPtr(), &notifications);
+    HelmController helm(&gamepadMonitor, core.getDeviceManagerWrapperPtr());
     Tutorial tutorial;
     tutorial.loadFromDirectory(QStringLiteral(":/tutorial"));
 

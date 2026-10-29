@@ -313,6 +313,16 @@ struct __attribute__((packed)) MAVLink_MSG_PARAM_REQUEST_READ
     static int v1Length() { return 20; }
 };
 
+struct __attribute__((packed)) MAVLink_MSG_RC_CHANNELS
+{
+    uint32_t time_boot_ms = 0;
+    uint16_t chan[18] = {};
+    uint8_t chancount = 0;
+    uint8_t rssi = 0;
+
+    static uint32_t getID() { return 65; }
+};
+
 struct __attribute__((packed)) MAVLink_MSG_MANUAL_CONTROL
 {
     int16_t x = kMavAxisInvalid;
@@ -355,5 +365,6 @@ static_assert(sizeof(MAVLink_MSG_MISSION_REQUEST_INT) == 5);
 static_assert(sizeof(MAVLink_MSG_MISSION_ACK) == 8);
 static_assert(sizeof(MAVLink_MSG_MISSION_ITEM_INT) == 38);
 static_assert(sizeof(MAVLink_MSG_PARAM_REQUEST_READ) == 20);
+static_assert(sizeof(MAVLink_MSG_RC_CHANNELS) == 42);
 static_assert(sizeof(MAVLink_MSG_MANUAL_CONTROL) == 11);
 static_assert(sizeof(MAVLink_MSG_GCS_HEARTBEAT) == 9);

@@ -1329,6 +1329,7 @@ ApplicationWindow {
         }
 
         HelmIndicator {
+            cardOpen: workspaceStore.autopilotPopupOpen
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top
             anchors.topMargin: Math.round(56 * AppPalette.appScale)
