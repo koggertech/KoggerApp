@@ -10,6 +10,8 @@
 #include <SDL3/SDL_main.h>
 #endif
 
+#include <QVariantMap>
+
 #ifdef Q_OS_ANDROID
 #include <QJniObject>
 #endif
@@ -114,6 +116,7 @@ void GamepadWorker::start()
 
     emit errorChanged(QString());
     selectLatestPad();
+    emitPads();
     readState(true);
     timer_.start();
 #else
@@ -132,6 +135,7 @@ void GamepadWorker::stop()
         setAndroidEventRouting(false);
         SDL_QuitSubSystem(SDL_INIT_GAMEPAD);
         subsystemUp_ = false;
+        emit padsChanged(QVariantList());
         emit readyChanged(false);
     }
 #endif
@@ -142,13 +146,22 @@ void GamepadWorker::poll()
 #ifdef KOGGER_SDL3
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
-        if (event.type == SDL_EVENT_GAMEPAD_ADDED && !continuous_) {
-            selectLatestPad();
-        }
-        else if (event.type == SDL_EVENT_GAMEPAD_REMOVED && pad_ && event.gdevice.which == SDL_GetGamepadID(pad_)) {
-            closePad();
+        if (event.type == SDL_EVENT_GAMEPAD_ADDED) {
+            emitPads();
             if (!continuous_) {
                 selectLatestPad();
+            }
+        }
+        else if (event.type == SDL_EVENT_GAMEPAD_REMOVED) {
+            if (int(event.gdevice.which) == preferredId_) {
+                preferredId_ = 0;
+            }
+            emitPads();
+            if (pad_ && event.gdevice.which == SDL_GetGamepadID(pad_)) {
+                closePad();
+                if (!continuous_) {
+                    selectLatestPad();
+                }
             }
         }
     }
@@ -168,6 +181,16 @@ void GamepadWorker::setContinuous(bool continuous)
     continuous_ = continuous;
 #ifdef KOGGER_SDL3
     if (!continuous_ && subsystemUp_) {
+        selectLatestPad();
+    }
+#endif
+}
+
+void GamepadWorker::setPreferredPad(int id)
+{
+    preferredId_ = id;
+#ifdef KOGGER_SDL3
+    if (subsystemUp_ && !continuous_) {
         selectLatestPad();
     }
 #endif
@@ -292,6 +315,10 @@ void GamepadWorker::selectLatestPad()
     std::vector<SDL_JoystickID> order(ids, ids + (ids ? count : 0));
     SDL_free(ids);
     std::sort(order.begin(), order.end(), std::greater<>());
+    const auto preferred = std::find(order.begin(), order.end(), SDL_JoystickID(preferredId_));
+    if (preferred != order.end()) {
+        std::rotate(order.begin(), preferred, preferred + 1);
+    }
 
     const SDL_JoystickID current = pad_ ? SDL_GetGamepadID(pad_) : 0;
     for (SDL_JoystickID id : order) {
@@ -326,12 +353,29 @@ void GamepadWorker::emitConnection()
                              faceLabel(pad_, SDL_GAMEPAD_BUTTON_WEST), faceLabel(pad_, SDL_GAMEPAD_BUTTON_NORTH) };
 
     emit connectionChanged(true,
+                           int(SDL_GetGamepadID(pad_)),
                            name ? QString::fromUtf8(name) : QString(),
                            type ? QString::fromUtf8(type) : QString(),
                            padFamily(pad_),
                            faces,
                            available);
 #endif
+}
+
+void GamepadWorker::emitPads()
+{
+    QVariantList pads;
+#ifdef KOGGER_SDL3
+    int count = 0;
+    SDL_JoystickID* ids = SDL_GetGamepads(&count);
+    for (int i = 0; ids && i < count; ++i) {
+        const char* name = SDL_GetGamepadNameForID(ids[i]);
+        pads << QVariantMap{ { QStringLiteral("id"), int(ids[i]) },
+                             { QStringLiteral("name"), name ? QString::fromUtf8(name) : QString() } };
+    }
+    SDL_free(ids);
+#endif
+    emit padsChanged(pads);
 }
 
 void GamepadWorker::closePad()
@@ -343,7 +387,7 @@ void GamepadWorker::closePad()
 
     SDL_CloseGamepad(pad_);
     pad_ = nullptr;
-    emit connectionChanged(false, QString(), QString(), QString(), QStringList(), 0);
+    emit connectionChanged(false, 0, QString(), QString(), QString(), QStringList(), 0);
     readState(false);
 #endif
 }

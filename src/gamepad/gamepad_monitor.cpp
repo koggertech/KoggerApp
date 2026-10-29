@@ -2,6 +2,9 @@
 
 #include "gamepad_worker.h"
 
+#include <QHash>
+#include <QVariantMap>
+
 GamepadMonitor::GamepadMonitor(QObject* parent)
     : QObject(parent),
       worker_(new GamepadWorker)
@@ -13,6 +16,7 @@ GamepadMonitor::GamepadMonitor(QObject* parent)
     connect(worker_, &GamepadWorker::errorChanged, this, &GamepadMonitor::onWorkerError);
     connect(worker_, &GamepadWorker::readyChanged, this, &GamepadMonitor::onWorkerReady);
     connect(worker_, &GamepadWorker::connectionChanged, this, &GamepadMonitor::onWorkerConnection);
+    connect(worker_, &GamepadWorker::padsChanged, this, &GamepadMonitor::onWorkerPads);
     connect(worker_, &GamepadWorker::stateChanged, this, &GamepadMonitor::onWorkerState);
 }
 
@@ -95,6 +99,12 @@ void GamepadMonitor::setVirtualInput(int buttons, qreal leftX, qreal leftY, qrea
     }, Qt::QueuedConnection);
 }
 
+void GamepadMonitor::selectPad(int id)
+{
+    GamepadWorker* worker = worker_;
+    QMetaObject::invokeMethod(worker_, [worker, id] { worker->setPreferredPad(id); }, Qt::QueuedConnection);
+}
+
 void GamepadMonitor::setRumble(qreal low, qreal high)
 {
     const bool changed = low != rumble_[0] || high != rumble_[1];
@@ -164,16 +174,42 @@ void GamepadMonitor::onWorkerReady(bool ready)
     emit readyChanged();
 }
 
-void GamepadMonitor::onWorkerConnection(bool connected, const QString& name, const QString& typeName, const QString& family,
+void GamepadMonitor::onWorkerConnection(bool connected, int id, const QString& name, const QString& typeName, const QString& family,
                                         const QStringList& faceLabels, int availableButtons)
 {
     connected_ = connected;
+    padId_ = id;
     name_ = name;
     typeName_ = typeName;
     family_ = family;
     faceLabels_ = faceLabels;
     availableButtons_ = availableButtons;
     emit connectionChanged();
+}
+
+void GamepadMonitor::onWorkerPads(const QVariantList& pads)
+{
+    QHash<QString, int> total;
+    for (const QVariant& pad : pads) {
+        ++total[pad.toMap().value(QStringLiteral("name")).toString()];
+    }
+
+    QHash<QString, int> seen;
+    QVariantList labelled;
+    for (const QVariant& pad : pads) {
+        QVariantMap entry = pad.toMap();
+        const QString name = entry.value(QStringLiteral("name")).toString();
+        const int nth = ++seen[name];
+        entry.insert(QStringLiteral("label"), total.value(name) > 1 ? QStringLiteral("%1 %2").arg(name).arg(nth) : name);
+        labelled << entry;
+    }
+
+    if (pads_ == labelled) {
+        return;
+    }
+
+    pads_ = labelled;
+    emit padsChanged();
 }
 
 void GamepadMonitor::onWorkerState(int buttons, qreal leftX, qreal leftY, qreal rightX, qreal rightY, qreal leftTrigger, qreal rightTrigger)

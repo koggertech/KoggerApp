@@ -6,6 +6,7 @@
 #include <QString>
 #include <QStringList>
 #include <QThread>
+#include <QVariantList>
 
 class GamepadWorker;
 
@@ -18,6 +19,8 @@ class GamepadMonitor : public QObject
     Q_PROPERTY(bool ready READ ready NOTIFY readyChanged)
     Q_PROPERTY(QString error READ error NOTIFY errorChanged)
     Q_PROPERTY(bool connected READ connected NOTIFY connectionChanged)
+    Q_PROPERTY(int padId READ padId NOTIFY connectionChanged)
+    Q_PROPERTY(QVariantList pads READ pads NOTIFY padsChanged)
     Q_PROPERTY(QString name READ name NOTIFY connectionChanged)
     Q_PROPERTY(QString typeName READ typeName NOTIFY connectionChanged)
     Q_PROPERTY(QString family READ family NOTIFY connectionChanged)
@@ -64,6 +67,19 @@ public:
     Q_INVOKABLE void setVirtualInput(int buttons, qreal leftX, qreal leftY, qreal rightX, qreal rightY, qreal leftTrigger, qreal rightTrigger);
 
     bool connected() const { return connected_; }
+    /** SDL instance id of the open pad; 0 while none is open. */
+    int padId() const { return padId_; }
+    /**
+     * Every gamepad SDL sees, in connection order: {id, name, label}; `label` is the name, numbered
+     * ("Xbox Controller 1", "… 2") when several pads share it. Empty while the subsystem is down.
+     */
+    QVariantList pads() const { return pads_; }
+    /**
+     * Makes @p id the pad to open while no session holds the current one; 0 restores "the newest pad wins".
+     * Kept for this app run until that pad disconnects; a session in progress keeps its pad and the choice
+     * applies once it ends.
+     */
+    Q_INVOKABLE void selectPad(int id);
     QString name() const { return name_; }
     QString typeName() const { return typeName_; }
     /** Layout family of the open pad: "xbox", "ps4", "ps5", "steam" or "generic"; empty while none is open. */
@@ -96,13 +112,15 @@ signals:
     void connectionChanged();
     void stateChanged();
     void rumbleChanged();
+    void padsChanged();
 
 private:
     void updateOwners();
     void onWorkerError(const QString& error);
     void onWorkerReady(bool ready);
-    void onWorkerConnection(bool connected, const QString& name, const QString& typeName, const QString& family,
+    void onWorkerConnection(bool connected, int id, const QString& name, const QString& typeName, const QString& family,
                             const QStringList& faceLabels, int availableButtons);
+    void onWorkerPads(const QVariantList& pads);
     void onWorkerState(int buttons, qreal leftX, qreal leftY, qreal rightX, qreal rightY, qreal leftTrigger, qreal rightTrigger);
 
     QThread thread_;
@@ -117,6 +135,8 @@ private:
     bool virtualPadAllowed_ = false;
     QString error_;
     bool connected_ = false;
+    int padId_ = 0;
+    QVariantList pads_;
     QString name_;
     QString typeName_;
     QString family_;

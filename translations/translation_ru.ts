@@ -1867,6 +1867,16 @@
         <source>Course hold (Acro)</source>
         <translation>Удержание курса (Acro)</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="976"/>
+        <source>Gamepad that drives the boat</source>
+        <translation>Геймпад, которым управляется лодка</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="967"/>
+        <source>Gamepad ready</source>
+        <translation>Геймпад готов</translation>
+    </message>
 </context>
 <context>
     <name>BottomTrackEditPopup</name>
@@ -5443,6 +5453,16 @@ udp://@:1234
         <location filename="../qml/settings/GamepadTestDialog.qml" line="740"/>
         <source>Arm / disarm (both together); a bumper alone acts on release</source>
         <translation>Взвести / снять (оба вместе); один бампер срабатывает при отпускании</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="627"/>
+        <source>Gamepad to test and set up</source>
+        <translation>Геймпад для проверки и настройки</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="670"/>
+        <source>Switch gamepads after gamepad control ends</source>
+        <translation>Сменить геймпад можно после окончания управления</translation>
     </message>
 </context>
 <context>

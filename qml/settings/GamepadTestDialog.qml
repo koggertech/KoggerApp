@@ -597,23 +597,87 @@ Popup {
             color: AppPalette.text
         }
 
-        Text {
+        Item {
             id: padText
+            readonly property var pads: dialog.hasMonitor ? gamepadMonitor.pads : []
+            readonly property bool locked: pads.length > 1 && dialog.hasHelm && helm.active
+            readonly property bool picking: pads.length > 1 && !locked
+            readonly property int padIndex: {
+                var id = dialog.hasMonitor ? gamepadMonitor.padId : 0
+                for (var i = 0; i < pads.length; ++i)
+                    if (pads[i].id === id) return i
+                return -1
+            }
+
             anchors.top: titleText.bottom
             anchors.topMargin: Tokens.spaceSm
             anchors.left: padIcon.right
             anchors.leftMargin: Tokens.spaceSm
             anchors.right: parent.right
+            height: picking ? padPicker.height : padName.implicitHeight
             visible: dialog.connected
-            text: dialog.connected ? gamepadMonitor.name + "  ·  " + dialog.familyName : ""
-            color: AppPalette.text
-            font.pixelSize: Tokens.fontBase
-            elide: Text.ElideRight
+
+            KCombo {
+                id: padPicker
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.min(implicitWidth, parent.width - padFamilyText.implicitWidth - Tokens.spaceSm)
+                visible: padText.picking
+                fontPixelSize: Tokens.fontBase
+                fillColor: AppPalette.card
+                indicatorColor: AppPalette.textStrong
+                model: padText.pads.map(function(pad) { return pad.label })
+                toolTipText: qsTr("Gamepad to test and set up")
+                onActivated: function(index) {
+                    if (dialog.hasMonitor && index >= 0 && index < padText.pads.length)
+                        gamepadMonitor.selectPad(padText.pads[index].id)
+                }
+
+                Binding {
+                    target: padPicker
+                    property: "currentIndex"
+                    value: Math.max(0, padText.padIndex)
+                }
+            }
+            Text {
+                id: padName
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                visible: !padText.picking
+                text: dialog.connected ? gamepadMonitor.name + "  ·  " + dialog.familyName : ""
+                color: AppPalette.text
+                font.pixelSize: Tokens.fontBase
+                elide: Text.ElideRight
+            }
+            Text {
+                id: padFamilyText
+                anchors.left: padPicker.right
+                anchors.leftMargin: Tokens.spaceSm
+                anchors.verticalCenter: parent.verticalCenter
+                visible: padText.picking
+                text: dialog.familyName
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
+            }
+        }
+
+        Text {
+            id: padLockNote
+            anchors.top: padText.bottom
+            anchors.topMargin: Tokens.spaceXs
+            anchors.left: padText.left
+            anchors.right: parent.right
+            visible: dialog.connected && padText.locked
+            text: qsTr("Switch gamepads after gamepad control ends")
+            color: AppPalette.linkIdleText
+            font.pixelSize: Tokens.fontSm
+            wrapMode: Text.WordWrap
         }
 
         Item {
             id: body
-            anchors.top: dialog.connected ? padText.bottom : titleText.bottom
+            anchors.top: padLockNote.visible ? padLockNote.bottom : dialog.connected ? padText.bottom : titleText.bottom
             anchors.topMargin: Tokens.spaceLg
             anchors.bottom: footerRule.top
             anchors.bottomMargin: Tokens.spaceLg

@@ -653,12 +653,19 @@ BasePanePopup {
                 }
             }
 
-            Text {
+            Column {
                 id: statLastValueProbe
                 opacity: 0
                 enabled: false
-                text: "100 %"
-                font.pixelSize: Math.round(11 * root._s)
+
+                Repeater {
+                    model: ["88.8 V", "88.8 A"]
+                    delegate: Text {
+                        required property string modelData
+                        text: modelData
+                        font.pixelSize: Math.round(11 * root._s)
+                    }
+                }
             }
 
             Column {
@@ -742,21 +749,8 @@ BasePanePopup {
                         }
                     }
                     StatCell {
-                        GlyphSlot { StatIcon { anchors.centerIn: parent; source: "qrc:/icons/ui/stat-voltage.svg" } }
-                        StatValue {
-                            text: isFinite(root._voltage) ? root._voltage.toFixed(1) + " V" : "—"
-                        }
-                    }
-                    StatCell {
-                        GlyphSlot { StatIcon { anchors.centerIn: parent; source: "qrc:/icons/ui/stat-current.svg" } }
-                        StatValue {
-                            text: isFinite(root._current) ? root._current.toFixed(1) + " A" : "—"
-                        }
-                    }
-                    StatCell {
                         GlyphSlot { SignalBars { anchors.centerIn: parent; percent: root._linkQuality } }
                         StatValue {
-                            width: root._statLastValueW
                             text: root._linkQuality >= 0 ? root._linkQuality + " %" : "—"
                             color: root._levelColor(root._linkQuality)
                         }
@@ -770,9 +764,20 @@ BasePanePopup {
                             }
                         }
                         StatValue {
-                            width: root._statLastValueW
                             text: root._gpsSats >= 0 ? String(root._gpsSats) : "—"
                             color: root._gpsPoor ? AppPalette.linkIdleText : AppPalette.textSecond
+                        }
+                    }
+                    StatCell {
+                        StatValue {
+                            width: root._statLastValueW
+                            text: isFinite(root._voltage) ? root._voltage.toFixed(1) + " V" : "—"
+                        }
+                    }
+                    StatCell {
+                        StatValue {
+                            width: root._statLastValueW
+                            text: isFinite(root._current) ? root._current.toFixed(1) + " A" : "—"
                         }
                     }
                 }
@@ -938,6 +943,15 @@ BasePanePopup {
                         id: helmText
                         readonly property string padName: root._gamepad ? root._gamepad.name : ""
                         readonly property bool sessionOn: !!root._helm && root._helm.state !== 0
+                        readonly property var pads: root._gamepad ? root._gamepad.pads : []
+                        readonly property bool picking: !sessionOn && pads.length > 1
+                        readonly property var padLabels: pads.map(function(pad) { return pad.label })
+                        readonly property int padIndex: {
+                            var id = root._gamepad ? root._gamepad.padId : 0
+                            for (var i = 0; i < pads.length; ++i)
+                                if (pads[i].id === id) return i
+                            return -1
+                        }
 
                         anchors.left: helmPadIcon.right
                         anchors.leftMargin: root._gap
@@ -955,20 +969,45 @@ BasePanePopup {
                                 case 2: return qsTr("Switching to Manual…")
                                 case 3: return root._helm.background ? qsTr("Gamepad control · background") : qsTr("Gamepad control")
                                 case 4: return qsTr("Holding position…")
-                                default: return helmText.padName
+                                default: return qsTr("Gamepad ready")
                                 }
                             }
-                            color: helmText.sessionOn ? AppPalette.textSecond : AppPalette.textStrong
+                            color: AppPalette.textSecond
                             font.pixelSize: Math.round(11 * root._s)
                             elide: Text.ElideRight
                         }
                         Text {
                             width: parent.width
-                            visible: helmText.sessionOn && helmText.padName.length > 0
+                            visible: !helmText.picking && helmText.padName.length > 0
                             text: helmText.padName
                             color: AppPalette.textMuted
                             font.pixelSize: Math.round(10 * root._s)
                             elide: Text.ElideRight
+                        }
+                        KCombo {
+                            id: padPicker
+                            width: Math.min(parent.width, contentWidth)
+                            height: Math.round(16 * root._s)
+                            visible: helmText.picking
+                            fontPixelSize: Math.round(10 * root._s)
+                            bold: false
+                            fillColor: "transparent"
+                            textColor: AppPalette.textMuted
+                            textInset: 0
+                            indicatorColor: AppPalette.textSecond
+                            focusHighlight: false
+                            model: helmText.padLabels
+                            toolTipText: qsTr("Gamepad that drives the boat")
+                            onActivated: function(index) {
+                                if (root._gamepad && index >= 0 && index < helmText.pads.length)
+                                    root._gamepad.selectPad(helmText.pads[index].id)
+                            }
+
+                            Binding {
+                                target: padPicker
+                                property: "currentIndex"
+                                value: Math.max(0, helmText.padIndex)
+                            }
                         }
                     }
 
