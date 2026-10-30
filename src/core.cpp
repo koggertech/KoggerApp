@@ -2408,6 +2408,10 @@ void Core::registerPlot2D(QObject* plotObj)
     const bool alreadyRegistered = plot2dList_.contains(plot);
     if (!alreadyRegistered) {
         plot2dList_.append(plot);
+        connect(plot, &QObject::destroyed, this, [this, plot]() {
+            plot2dList_.removeAll(plot);
+            updateLiveHoldPause();
+        });
     }
 
     bindPlot2D(plot);

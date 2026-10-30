@@ -22,6 +22,7 @@
 #include <QDebug>
 #include <algorithm>
 #if defined(Q_OS_WIN)
+#include <QAccessible>
 #include <windows.h>
 #endif
 #include "qPlot2D.h"
@@ -169,6 +170,21 @@ void registerQmlMetaTypes()
 }
 
 #if defined(Q_OS_WIN)
+void filterAccessibilityUpdate(QAccessibleEvent* event)
+{
+    if (event->type() == QAccessible::TableModelChanged) {
+        return;
+    }
+    if (event->type() == QAccessible::StateChanged
+        && static_cast<QAccessibleStateChangeEvent*>(event)->changedStates().checked) {
+        return;
+    }
+
+    QAccessible::installUpdateHandler(nullptr);
+    QAccessible::updateAccessibility(event);
+    QAccessible::installUpdateHandler(filterAccessibilityUpdate);
+}
+
 constexpr DWORD kDwmwaUseImmersiveDarkMode = 20;
 constexpr DWORD kDwmwaUseImmersiveDarkModeLegacy = 19;
 constexpr DWORD kDwmwaCaptionColor = 35;
@@ -458,6 +474,10 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     QGuiApplication app(argc, argv);
+
+#if defined(Q_OS_WIN)
+    QAccessible::installUpdateHandler(filterAccessibilityUpdate);
+#endif
 
     app.styleHints()->setMouseDoubleClickInterval(320);
 
