@@ -36,7 +36,8 @@ Item {
     readonly property int _stripMaxW: Math.max(root.controlHeight,
                                                   root.maxExpandedWidth - 2 * root.panelPaddingX - root._arrowSlotW)
     readonly property int _stripFadeW: Math.round(controlHeight / 2) + panelPaddingX
-    readonly property real _stripLiveW: Math.max(0, Math.min(strip.width, panel.width - strip.x - panelPaddingX))
+    readonly property int _stripInset: panelPaddingX
+    readonly property real _stripLiveW: Math.max(0, Math.min(strip.width, panel.width - strip.x - panelPaddingX + _stripInset))
     readonly property int _comboPad: Math.round(3 * root._s)
     readonly property color _stripBgClear: Qt.rgba(hotkeysLayerColor.r, hotkeysLayerColor.g, hotkeysLayerColor.b, 0)
     readonly property bool _stripCanBack: strip.contentX > 0.5
@@ -601,7 +602,7 @@ Item {
     function _showInStrip(item) {
         if (!item || !strip.interactive || !_isStripItem(item))
             return
-        var left = item.mapToItem(topRow, 0, 0).x - _stripFadeW
+        var left = item.mapToItem(strip.contentItem, 0, 0).x - _stripFadeW
         var right = left + item.width + 2 * _stripFadeW
         var target = _stripTargetX()
         if (right > target + strip.width)
@@ -2357,11 +2358,11 @@ Item {
 
         Flickable {
             id: strip
-            x: root.panelPaddingX + root._arrowSlotW
+            x: root.panelPaddingX + root._arrowSlotW - root._stripInset
             y: 0
-            width: Math.min(topRow.implicitWidth, root._stripMaxW)
+            width: Math.min(topRow.implicitWidth, root._stripMaxW) + 2 * root._stripInset
             height: root.panelHeight
-            contentWidth: topRow.implicitWidth
+            contentWidth: topRow.implicitWidth + 2 * root._stripInset
             contentHeight: root.panelHeight
             interactive: contentWidth > width + 0.5
             flickableDirection: Flickable.HorizontalFlick
@@ -2392,6 +2393,7 @@ Item {
 
             Row {
                 id: topRow
+                x: root._stripInset
                 y: root.panelPaddingX
                 spacing: root.quickActionSpacing
 
@@ -2482,7 +2484,7 @@ Item {
                                             || backing.height > root.controlHeight + layoutsCombo.sidePad * 2 + 1
             visible: root.hasFavoriteLayouts && panel.opacity > 0.01
             opacity: panel.opacity         // fade in/out together with the pill
-            x: (root._favSlot && root._favSlot.parent ? root._favSlot.parent.x : 0) - strip.contentX
+            x: topRow.x + (root._favSlot && root._favSlot.parent ? root._favSlot.parent.x : 0) - strip.contentX
             y: panel.y + strip.y + topRow.y + (root._favSlot && root._favSlot.parent ? root._favSlot.parent.y : 0) - layoutsCombo.sidePad
             width: comboW + layoutsCombo.sidePad * 2
             height: backing.height
@@ -2550,7 +2552,7 @@ Item {
             readonly property int sidePad: root._comboPad
             visible: root.showBtEdit && panel.opacity > 0.01
             opacity: panel.opacity
-            x: (root._btSlot && root._btSlot.parent ? root._btSlot.parent.x : 0) - strip.contentX
+            x: topRow.x + (root._btSlot && root._btSlot.parent ? root._btSlot.parent.x : 0) - strip.contentX
             y: panel.y + strip.y + topRow.y + (root._btSlot && root._btSlot.parent ? root._btSlot.parent.y : 0) - btEditCombo.sidePad
             width: root.controlHeight + btEditCombo.sidePad * 2
             height: root.controlHeight + btEditCombo.sidePad * 2
@@ -2600,7 +2602,7 @@ Item {
                                             || widgetsBacking.height > root.controlHeight + widgetsCombo.sidePad * 2 + 1
             visible: root.showWidgets && panel.opacity > 0.01
             opacity: panel.opacity
-            x: (root._widgetsSlot && root._widgetsSlot.parent ? root._widgetsSlot.parent.x : 0) - strip.contentX
+            x: topRow.x + (root._widgetsSlot && root._widgetsSlot.parent ? root._widgetsSlot.parent.x : 0) - strip.contentX
             y: panel.y + strip.y + topRow.y + (root._widgetsSlot && root._widgetsSlot.parent ? root._widgetsSlot.parent.y : 0) - widgetsCombo.sidePad
             width: comboW + widgetsCombo.sidePad * 2
             height: widgetsBacking.height
