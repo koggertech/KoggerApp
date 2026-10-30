@@ -258,6 +258,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Export")
+        iconSource: "qrc:/icons/ui/file_export.svg"
         description: qsTr("Export plot data as XTF, CSV (regular or complex) or USBL.")
         stateStore: root.store
         stateKey: "app.export"
@@ -456,6 +457,7 @@ Column {
         preferredWidth: root.groupWidth
         id: interfaceGroup
         title: qsTr("Interface")
+        iconSource: "qrc:/icons/ui/adjustments_horizontal.svg"
         description: qsTr("Language, theme, UI scale and panel visibility.")
         stateStore: root.store
         stateKey: "app.preference"
@@ -774,6 +776,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Workspace")
+        iconSource: "qrc:/icons/ui/layout.svg"
         description: qsTr("Workspace layouts and pane editing.")
         stateStore: root.store
         stateKey: "app.layoutPlacement"
@@ -859,6 +862,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Widget panels")
+        iconSource: "qrc:/icons/ui/stat-speed.svg"
         description: qsTr("On-scene data panels: grid size and drag-in widgets.")
         stateStore: root.store
         stateKey: "app.widgets"
@@ -1029,6 +1033,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Dataset")
+        iconSource: "qrc:/icons/ui/stack.svg"
         description: qsTr("Black-stripe filtering and sonar mount-point offset.")
         stateStore: root.store
         stateKey: "app.dataset"
@@ -1207,6 +1212,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Boat track")
+        iconSource: "qrc:/icons/ui/route.svg"
         description: qsTr("Vessel track displayed in the 3D scene.")
         stateStore: root.store
         stateKey: "app.boattrack"
@@ -1226,6 +1232,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Bottom Track")
+        iconSource: "qrc:/icons/ui/double_route.svg"
         description: qsTr("Bottom detection presets, thresholds and search window.")
         stateStore: root.store
         stateKey: "app.bottomtrack"
@@ -1541,6 +1548,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Isobaths")
+        iconSource: "qrc:/icons/ui/isobaths.svg"
         description: qsTr("Equal-depth contour lines on the surface.")
         stateStore: root.store
         stateKey: "app.isobaths"
@@ -1857,6 +1865,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Mosaic")
+        iconSource: "qrc:/icons/ui/side_scan.svg"
         description: qsTr("Side-scan mosaic visualisation.")
         stateStore: root.store
         stateKey: "app.mosaic"
@@ -2283,6 +2292,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("USBL")
+        iconSource: "qrc:/icons/ui/device-usbl.svg"
         description: qsTr("Acoustic nodes and their tracks displayed in the 3D scene.")
         stateStore: root.store
         stateKey: "app.usbl"
@@ -2567,6 +2577,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Video")
+        iconSource: "qrc:/icons/ui/photo.svg"
         description: videoGroup.surfaces.length > 0 ? qsTr("Per-window video settings.") : ""
         stateStore: root.store
         stateKey: "app.video"
@@ -2618,6 +2629,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Echograms")
+        iconSource: "qrc:/icons/ui/ripple.svg"
         description: qsTr("Per-echogram display settings.")
         stateStore: root.store
         stateKey: "app.echograms"
@@ -2784,6 +2796,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("3D scene")
+        iconSource: "qrc:/icons/ui/3dcube.svg"
         description: qsTr("3D scene settings, map provider switching.")
         stateStore: root.store
         stateKey: "app.scene3d"
@@ -3566,6 +3579,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Vehicle mission")
+        iconSource: "qrc:/icons/ui/map_route.svg"
         description: qsTr("The mission read from the autopilot, followed in the 3D scene while it runs.")
         stateStore: root.store
         stateKey: "app.missionrun"
@@ -3851,6 +3865,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Gamepad")
+        iconSource: "qrc:/icons/ui/gamepad-generic.svg"
         description: qsTr("Driving the boat from a gamepad.")
         stateStore: root.store
         stateKey: "app.gamepadhelm"
@@ -3947,6 +3962,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Test")
+        iconSource: "qrc:/icons/ui/code-working.svg"
         description: qsTr("Developer knobs — visible only in MANUAL_TESTING builds.")
         stateStore: root.store
         stateKey: "app.test"

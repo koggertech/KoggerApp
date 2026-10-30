@@ -17,6 +17,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Files")
+        iconSource: "qrc:/icons/ui/folders.svg"
         description: qsTr("Open log files and reopen recent ones.")
         stateStore: root.store
         stateKey: "app.files"

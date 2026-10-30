@@ -24,6 +24,7 @@ SettingsGroup {
 
     preferredWidth: width
     title: qsTr("Factory")
+    iconSource: "qrc:/icons/ui/tool.svg"
     description: qsTr("Factory setup for new devices.")
     stateStore: store
     stateKey: "app.factory"

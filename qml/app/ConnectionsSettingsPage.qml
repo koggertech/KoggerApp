@@ -49,6 +49,7 @@ Column {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("Connections")
+        iconSource: "qrc:/icons/ui/plug.svg"
         description: qsTr("Connections and logging.")
         stateStore: root.store
         stateKey: "app.connections"

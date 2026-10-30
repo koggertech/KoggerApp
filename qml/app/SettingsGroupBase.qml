@@ -1,4 +1,6 @@
 import QtQuick 2.15
+import QtQuick.Window 2.15
+import Qt5Compat.GraphicalEffects
 import kqml_types 1.0
 
 Item {
@@ -25,6 +27,8 @@ Item {
     property bool confirmed: true
     property color headerTint: "transparent"
     property bool showAccentBar: true
+    property url iconSource: ""
+    readonly property bool _hasIcon: iconSource.toString() !== ""
     property bool uniformBody: false
     property bool scrollIntoViewOnExpand: true
     default property alias contentData: contentColumn.data
@@ -446,8 +450,38 @@ Item {
 
             KFocusRing { id: focusRing; radius: Tokens.radiusLg }
 
+            Item {
+                visible: root._hasIcon
+                width: Tokens.iconLg
+                height: Tokens.iconLg
+                anchors.left: parent.left
+                anchors.leftMargin: Tokens.spaceMd
+                anchors.verticalCenter: parent.verticalCenter
+
+                Image {
+                    id: headerIconImage
+                    anchors.fill: parent
+                    source: root.iconSource
+                    sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+                    sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    visible: false
+                }
+
+                ColorOverlay {
+                    anchors.fill: headerIconImage
+                    source: headerIconImage
+                    smooth: true
+                    color: !root.confirmed
+                           ? AppPalette.dangerBorder
+                           : (root.expanded ? AppPalette.accentBar : (headerMouse.containsMouse ? AppPalette.text : AppPalette.textSecond))
+                    Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
+                }
+            }
+
             Rectangle {
-                visible: root.showAccentBar
+                visible: root.showAccentBar && !root._hasIcon
                 width: Math.round(4 * AppPalette.scale)
                 height: parent.height - Math.round(10 * AppPalette.scale)
                 radius: Math.round(2 * AppPalette.scale)
@@ -462,11 +496,13 @@ Item {
             Row {
                 id: headerTitleRow
                 anchors.fill: parent
-                anchors.leftMargin: root.showAccentBar ? Tokens.spaceXl : Tokens.spaceMd
+                anchors.leftMargin: root._hasIcon
+                                    ? Tokens.spaceMd + Tokens.iconLg + Tokens.spaceMd
+                                    : (root.showAccentBar ? Tokens.spaceXl : Tokens.spaceMd)
                 // Reserve room on the right for the header action buttons so the title never runs under them.
                 anchors.rightMargin: Tokens.spaceLg
                                      + (headerActionsRow.width > 0 ? headerActionsRow.width + Tokens.spaceMd : 0)
-                spacing: root.showAccentBar ? Tokens.spaceMd : Tokens.spaceSm
+                spacing: (root.showAccentBar || root._hasIcon) ? Tokens.spaceMd : Tokens.spaceSm
 
                 DisclosureIndicator {
                     anchors.verticalCenter: parent.verticalCenter

@@ -15,6 +15,7 @@ SettingsGroup {
     preferredWidth: width
 
     title: qsTr("Pipeline status")
+    iconSource: "qrc:/icons/ui/list-details.svg"
     contentSpacing: 0
     collapsedByDefault: true
     scrollIntoViewOnExpand: false
