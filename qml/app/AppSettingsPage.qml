@@ -3874,6 +3874,14 @@ Column {
                     interactive: true
                     toolTipText: qsTr("Controller test and which button does what")
                     onClicked: root.openGamepadDialog()
+
+                    KBatteryLevel {
+                        readonly property var pad: root._gamepadSupported ? gamepadMonitor : null
+                        visible: !!pad && pad.connected && known
+                        percent: pad ? pad.batteryPercent : -1
+                        powerState: pad ? pad.batteryState : ""
+                        fontPixelSize: Tokens.fontBase
+                    }
                 }
             }
 

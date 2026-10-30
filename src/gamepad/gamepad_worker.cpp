@@ -43,6 +43,22 @@ QString padFamily(SDL_Gamepad* pad)
     return SDL_GetGamepadVendor(pad) == kVendorValve ? QStringLiteral("steam") : QStringLiteral("generic");
 }
 
+QString powerStateName(SDL_PowerState state)
+{
+    switch (state) {
+    case SDL_POWERSTATE_ON_BATTERY:
+        return QStringLiteral("battery");
+    case SDL_POWERSTATE_CHARGING:
+        return QStringLiteral("charging");
+    case SDL_POWERSTATE_CHARGED:
+        return QStringLiteral("charged");
+    case SDL_POWERSTATE_NO_BATTERY:
+        return QStringLiteral("wired");
+    default:
+        return QString();
+    }
+}
+
 QString faceLabel(SDL_Gamepad* pad, SDL_GamepadButton button)
 {
     switch (SDL_GetGamepadButtonLabel(pad, button)) {
@@ -162,6 +178,11 @@ void GamepadWorker::poll()
                 if (!continuous_) {
                     selectLatestPad();
                 }
+            }
+        }
+        else if (event.type == SDL_EVENT_JOYSTICK_BATTERY_UPDATED) {
+            if (pad_ && event.jbattery.which == SDL_GetGamepadID(pad_)) {
+                emitBattery();
             }
         }
     }
@@ -359,6 +380,16 @@ void GamepadWorker::emitConnection()
                            padFamily(pad_),
                            faces,
                            available);
+    emitBattery();
+#endif
+}
+
+void GamepadWorker::emitBattery()
+{
+#ifdef KOGGER_SDL3
+    int percent = -1;
+    const SDL_PowerState state = pad_ ? SDL_GetGamepadPowerInfo(pad_, &percent) : SDL_POWERSTATE_UNKNOWN;
+    emit batteryChanged(percent, powerStateName(state));
 #endif
 }
 
@@ -388,6 +419,7 @@ void GamepadWorker::closePad()
     SDL_CloseGamepad(pad_);
     pad_ = nullptr;
     emit connectionChanged(false, 0, QString(), QString(), QString(), QStringList(), 0);
+    emitBattery();
     readState(false);
 #endif
 }

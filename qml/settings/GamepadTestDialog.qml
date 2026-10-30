@@ -622,6 +622,7 @@ Popup {
             readonly property var pads: dialog.hasMonitor ? gamepadMonitor.pads : []
             readonly property bool locked: pads.length > 1 && dialog.hasHelm && helm.active
             readonly property bool picking: pads.length > 1 && !locked
+            readonly property real batteryRoom: padBattery.visible ? padBattery.width + Tokens.spaceMd : 0
             readonly property int padIndex: {
                 var id = dialog.hasMonitor ? gamepadMonitor.padId : 0
                 for (var i = 0; i < pads.length; ++i)
@@ -641,7 +642,7 @@ Popup {
                 id: padPicker
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(implicitWidth, parent.width - padFamilyText.implicitWidth - Tokens.spaceSm)
+                width: Math.min(implicitWidth, parent.width - padFamilyText.implicitWidth - Tokens.spaceSm - padText.batteryRoom)
                 visible: padText.picking
                 fontPixelSize: Tokens.fontBase
                 fillColor: AppPalette.card
@@ -662,8 +663,8 @@ Popup {
             Text {
                 id: padName
                 anchors.left: parent.left
-                anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
+                width: Math.min(implicitWidth, parent.width - padText.batteryRoom)
                 visible: !padText.picking
                 text: dialog.connected ? gamepadMonitor.name + "  ·  " + dialog.familyName : ""
                 color: AppPalette.text
@@ -679,6 +680,16 @@ Popup {
                 text: dialog.familyName
                 color: AppPalette.textSecond
                 font.pixelSize: Tokens.fontBase
+            }
+            KBatteryLevel {
+                id: padBattery
+                anchors.left: padText.picking ? padFamilyText.right : padName.right
+                anchors.leftMargin: Tokens.spaceMd
+                anchors.verticalCenter: parent.verticalCenter
+                visible: known
+                percent: dialog.hasMonitor ? gamepadMonitor.batteryPercent : -1
+                powerState: dialog.hasMonitor ? gamepadMonitor.batteryState : ""
+                fontPixelSize: Tokens.fontBase
             }
         }
 

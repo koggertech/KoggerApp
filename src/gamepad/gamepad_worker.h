@@ -35,6 +35,7 @@ signals:
     void connectionChanged(bool connected, int id, const QString& name, const QString& typeName, const QString& family,
                            const QStringList& faceLabels, int availableButtons);
     void padsChanged(const QVariantList& pads);
+    void batteryChanged(int percent, const QString& state);
     void stateChanged(int buttons, qreal leftX, qreal leftY, qreal rightX, qreal rightY, qreal leftTrigger, qreal rightTrigger);
 
 private:
@@ -42,6 +43,7 @@ private:
     void selectLatestPad();
     void emitConnection();
     void emitPads();
+    void emitBattery();
     void closePad();
     void readState(bool force);
     void applyRouting();

@@ -26,6 +26,8 @@ class GamepadMonitor : public QObject
     Q_PROPERTY(QString family READ family NOTIFY connectionChanged)
     Q_PROPERTY(QStringList faceLabels READ faceLabels NOTIFY connectionChanged)
     Q_PROPERTY(int availableButtons READ availableButtons NOTIFY connectionChanged)
+    Q_PROPERTY(int batteryPercent READ batteryPercent NOTIFY batteryChanged)
+    Q_PROPERTY(QString batteryState READ batteryState NOTIFY batteryChanged)
     Q_PROPERTY(int buttons READ buttons NOTIFY stateChanged)
     Q_PROPERTY(qreal leftX READ leftX NOTIFY stateChanged)
     Q_PROPERTY(qreal leftY READ leftY NOTIFY stateChanged)
@@ -87,6 +89,10 @@ public:
     /** SDL labels of the south, east, west and north buttons: "A"…"Y", "cross", "circle", "square", "triangle" or empty. */
     QStringList faceLabels() const { return faceLabels_; }
     int availableButtons() const { return availableButtons_; }
+    /** Charge left in the open pad, 0…100, as SDL estimates it; −1 when unknown, wired-only or no pad is open. */
+    int batteryPercent() const { return batteryPercent_; }
+    /** Power source of the open pad: "battery", "charging", "charged", "wired" (no battery) or empty when unknown. */
+    QString batteryState() const { return batteryState_; }
 
     int buttons() const { return buttons_; }
     qreal leftX() const { return axes_[0]; }
@@ -113,6 +119,7 @@ signals:
     void stateChanged();
     void rumbleChanged();
     void padsChanged();
+    void batteryChanged();
 
 private:
     void updateOwners();
@@ -121,6 +128,7 @@ private:
     void onWorkerConnection(bool connected, int id, const QString& name, const QString& typeName, const QString& family,
                             const QStringList& faceLabels, int availableButtons);
     void onWorkerPads(const QVariantList& pads);
+    void onWorkerBattery(int percent, const QString& state);
     void onWorkerState(int buttons, qreal leftX, qreal leftY, qreal rightX, qreal rightY, qreal leftTrigger, qreal rightTrigger);
 
     QThread thread_;
@@ -142,6 +150,8 @@ private:
     QString family_;
     QStringList faceLabels_;
     int availableButtons_ = 0;
+    int batteryPercent_ = -1;
+    QString batteryState_;
     int buttons_ = 0;
     std::array<qreal, 6> axes_{};
     std::array<qreal, 2> rumble_{};

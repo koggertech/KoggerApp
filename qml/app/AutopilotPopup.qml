@@ -498,45 +498,6 @@ BasePanePopup {
         }
     }
 
-    component BatteryGlyph: Item {
-        id: battery
-        property int percent: -1
-        readonly property color ink: root._levelColor(percent)
-        readonly property int stroke: Math.max(1, Math.round(root._s))
-        width: Math.round(14 * root._s)
-        height: Math.round(8 * root._s)
-
-        Rectangle {
-            id: batteryBody
-            width: parent.width - batteryCap.width
-            height: parent.height
-            radius: Math.round(2 * root._s)
-            color: "transparent"
-            border.width: battery.stroke
-            border.color: battery.ink
-
-            Rectangle {
-                readonly property int inset: battery.stroke * 2
-                x: inset
-                y: inset
-                height: parent.height - inset * 2
-                width: Math.round((parent.width - inset * 2) * Math.max(0, Math.min(100, battery.percent)) / 100)
-                visible: battery.percent > 0
-                radius: 1
-                color: battery.ink
-            }
-        }
-        Rectangle {
-            id: batteryCap
-            anchors.left: batteryBody.right
-            anchors.verticalCenter: parent.verticalCenter
-            width: Math.max(1, Math.round(2 * root._s))
-            height: Math.round(parent.height * 0.45)
-            radius: 1
-            color: battery.ink
-        }
-    }
-
     component SignalBars: Row {
         id: signalBars
         property int percent: -1
@@ -736,7 +697,14 @@ BasePanePopup {
                     verticalItemAlignment: Grid.AlignVCenter
 
                     StatCell {
-                        GlyphSlot { BatteryGlyph { anchors.centerIn: parent; percent: root._batteryPct } }
+                        GlyphSlot {
+                            KBatteryGlyph {
+                                anchors.centerIn: parent
+                                unit: root._s
+                                percent: root._batteryPct
+                                ink: root._levelColor(root._batteryPct)
+                            }
+                        }
                         StatValue {
                             text: root._batteryPct >= 0 ? root._batteryPct + " %" : "—"
                             color: root._levelColor(root._batteryPct)
@@ -1012,37 +980,56 @@ BasePanePopup {
                             font.pixelSize: Math.round(11 * root._s)
                             elide: Text.ElideRight
                         }
-                        Text {
+                        Row {
+                            id: padLine
+                            readonly property real nameRoom: width - (padBattery.visible ? padBattery.width + spacing : 0)
                             width: parent.width
-                            visible: !helmText.picking && helmText.padName.length > 0
-                            text: helmText.padName
-                            color: AppPalette.textMuted
-                            font.pixelSize: Math.round(10 * root._s)
-                            elide: Text.ElideRight
-                        }
-                        KCombo {
-                            id: padPicker
-                            width: Math.min(parent.width, contentWidth)
-                            height: Math.round(16 * root._s)
-                            visible: helmText.picking
-                            fontPixelSize: Math.round(10 * root._s)
-                            bold: false
-                            fillColor: "transparent"
-                            textColor: AppPalette.textMuted
-                            textInset: 0
-                            indicatorColor: AppPalette.textSecond
-                            focusHighlight: false
-                            model: helmText.padLabels
-                            toolTipText: qsTr("Gamepad that drives the boat")
-                            onActivated: function(index) {
-                                if (root._gamepad && index >= 0 && index < helmText.pads.length)
-                                    root._gamepad.selectPad(helmText.pads[index].id)
-                            }
+                            spacing: root._gap
+                            visible: helmText.picking || helmText.padName.length > 0
 
-                            Binding {
-                                target: padPicker
-                                property: "currentIndex"
-                                value: Math.max(0, helmText.padIndex)
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: Math.min(implicitWidth, padLine.nameRoom)
+                                visible: !helmText.picking
+                                text: helmText.padName
+                                color: AppPalette.textMuted
+                                font.pixelSize: Math.round(10 * root._s)
+                                elide: Text.ElideRight
+                            }
+                            KCombo {
+                                id: padPicker
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: Math.min(padLine.nameRoom, contentWidth)
+                                height: Math.round(16 * root._s)
+                                visible: helmText.picking
+                                fontPixelSize: Math.round(10 * root._s)
+                                bold: false
+                                fillColor: "transparent"
+                                textColor: AppPalette.textMuted
+                                textInset: 0
+                                indicatorColor: AppPalette.textSecond
+                                focusHighlight: false
+                                model: helmText.padLabels
+                                toolTipText: qsTr("Gamepad that drives the boat")
+                                onActivated: function(index) {
+                                    if (root._gamepad && index >= 0 && index < helmText.pads.length)
+                                        root._gamepad.selectPad(helmText.pads[index].id)
+                                }
+
+                                Binding {
+                                    target: padPicker
+                                    property: "currentIndex"
+                                    value: Math.max(0, helmText.padIndex)
+                                }
+                            }
+                            KBatteryLevel {
+                                id: padBattery
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: known
+                                percent: root._gamepad ? root._gamepad.batteryPercent : -1
+                                powerState: root._gamepad ? root._gamepad.batteryState : ""
+                                unit: root._s
+                                fontPixelSize: Math.round(10 * root._s)
                             }
                         }
                     }
