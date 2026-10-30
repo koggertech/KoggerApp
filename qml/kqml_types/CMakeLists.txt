@@ -11,6 +11,8 @@ qt_add_qml_module(kogger_kqml_types
         DataFieldCatalog.qml
         DeviceParamCatalog.qml
         IdleFade.qml
+        KBatteryGlyph.qml
+        KBatteryLevel.qml
         KButton.qml
         KCheckBox.qml
         KCircleIconButton.qml
@@ -21,6 +23,7 @@ qt_add_qml_module(kogger_kqml_types
         KCountdownButton.qml
         KDragBar.qml
         KFocusRing.qml
+        KGamepadIcon.qml
         KIsland.qml
         KIslandRow.qml
         KIslandSection.qml

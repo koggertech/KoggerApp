@@ -1,4 +1,6 @@
 import QtQuick 2.15
+import QtQuick.Shapes
+import Qt5Compat.GraphicalEffects
 import kqml_types 1.0
 
 BasePanePopup {
@@ -12,7 +14,11 @@ BasePanePopup {
     readonly property int _gap: Math.round(6 * _s)
     readonly property int _pad: Math.round(12 * _s)
     readonly property int _armConfirmMinMs: 400
+    readonly property int _armConfirmMs: 3000
+    property real _armCountdown: 0
+    readonly property int _severityCritical: 2
     readonly property int _severityWarning: 4
+    readonly property int _severityInfo: 6
 
     readonly property var _dmw: (typeof deviceManagerWrapper !== "undefined") ? deviceManagerWrapper : null
     readonly property bool _online: _dmw ? _dmw.autopilotOnline : false
@@ -57,10 +63,14 @@ BasePanePopup {
     readonly property bool _paused: !!_dmw && _dmw.missionState === _missionStatePaused
     readonly property bool _missionKnown: _online && !!_run && _run.known && !_run.vehicleEmpty
     readonly property bool _missionRowVisible: _missionKnown && (_run.running || _paused || (_run.complete && _armed))
+    readonly property var _helm: (typeof helm !== "undefined") ? helm : null
+    readonly property var _gamepad: (typeof gamepadMonitor !== "undefined") ? gamepadMonitor : null
+    readonly property bool _helmActive: !!_helm && _helm.active
+    readonly property bool _helmRowVisible: !!_helm && (_helm.available || _helm.active)
+    readonly property int _helmConfirmation: _helm ? _helm.confirmation : 0
     property bool expanded: false
-    readonly property bool _trayVisible: _online && (expanded || _missionRowVisible)
+    readonly property bool _trayVisible: _online && (expanded || _missionRowVisible || _helmRowVisible)
     readonly property int _rowPad: _trayVisible ? Math.round(6 * _s) : _sidePad
-    readonly property int _trayPad: Math.round(10 * _s)
     readonly property int _nextSeq: (_run && _run.running && _run.actionable && _run.targetSeq >= 0) ? _run.nextTargetSeq() : -1
     property bool _dragging: false
 
@@ -114,6 +124,16 @@ BasePanePopup {
         return qsTr("%1 h %2 min").arg(Math.floor(minutes / 60)).arg(minutes % 60)
     }
 
+    readonly property int _levelWarnPct: 30
+    readonly property int _levelCriticalPct: 10
+
+    function _levelColor(percent) {
+        if (percent < 0) return AppPalette.textSecond
+        if (percent <= _levelCriticalPct) return AppPalette.dangerText
+        if (percent <= _levelWarnPct) return AppPalette.linkIdleText
+        return AppPalette.textSecond
+    }
+
     function _severityColor(severity) {
         if (severity <= 3) return AppPalette.dangerText
         if (severity === root._severityWarning) return AppPalette.linkIdleText
@@ -144,41 +164,22 @@ BasePanePopup {
         _pendingJumpSeq = seq
         _seqAtSend = _dmw.missionCurrentSeq
         _send(_cmdSetMissionCurrent, function() { root._dmw.autopilotSetMissionCurrent(seq) })
-        if (typeof notifications !== "undefined" && notifications)
-            notifications.info(qsTr("Going to %1").arg(_run.labelForSeq(_nextSeq)))
+        _log(_severityInfo, qsTr("Going to %1").arg(_run.labelForSeq(_nextSeq)))
     }
 
-    readonly property string _powerText: {
-        var parts = []
-        if (_batteryPct >= 0) parts.push(qsTr("Bat. %1 %").arg(_batteryPct))
-        if (isFinite(_voltage)) parts.push(_voltage.toFixed(1) + " V")
-        if (isFinite(_current)) parts.push(_current.toFixed(1) + " A")
-        return parts.join(" · ")
-    }
-    property real _powerW: 0
-    readonly property var _modeNamesForWidth: ["Manual", "Hold", "Loiter", "Auto", "RTL", "SmartRTL", "Guided", "Acro", "Steering"]
-    readonly property real _modeSlotW: modeNameProbe.width
-    readonly property real _titleSlotW: _online ? _modeSlotW : titleText.implicitWidth
-
-    readonly property string _statsText: {
-        var parts = []
-        if (_linkQuality >= 0) parts.push(qsTr("Link %1 %").arg(_linkQuality))
-        if (_gpsFix >= 0) {
-            var gps = _gpsSats >= 0 && _gpsFix >= _gpsFix3d ? qsTr("Sat. %1").arg(_gpsSats) : _gpsFixName(_gpsFix)
-            parts.push(_gpsPoor ? "<font color=\"" + AppPalette.linkIdleText + "\">" + gps + "</font>" : gps)
-        }
-        if (isFinite(_speed)) parts.push(_speed.toFixed(1) + " " + qsTr("m/s"))
-        if (_rssiValid) parts.push(qsTr("%1 dBm").arg(_rssi))
-        return parts.join(" · ")
-    }
-    property real _statsW: 0
+    readonly property var _modeNamesForWidth: ["Manual", "Acro", "Hold", "Loiter", "Auto", "RTL"]
+    readonly property real _titleSlotW: Math.max(modeNameProbe.width, titleText.implicitWidth)
+    readonly property var _statTemplates: ["100 %", "88.8 V", "88.8 A", "88.8 " + qsTr("m/s"), "88"]
+    readonly property real _statValueW: Math.ceil(statValueProbe.width)
+    readonly property real _statLastValueW: Math.ceil(statLastValueProbe.width)
 
     readonly property var modes: [
-        { mode: 0,  icon: "qrc:/icons/ui/mode-manual.svg", tip: qsTr("Manual") },
-        { mode: 4,  icon: "qrc:/icons/ui/mode-hold.svg",   tip: qsTr("Hold") },
-        { mode: 5,  icon: "qrc:/icons/ui/mode-loiter.svg", tip: qsTr("Loiter") },
-        { mode: 10, icon: "qrc:/icons/ui/mode-auto.svg",   tip: qsTr("Auto") },
-        { mode: 11, icon: "qrc:/icons/ui/mode-rtl.svg",    tip: qsTr("RTL") }
+        { mode: 0,  group: 0, icon: "qrc:/icons/ui/mode-manual.svg", tip: qsTr("Manual") },
+        { mode: 1,  group: 0, icon: "qrc:/icons/ui/mode-course-hold.svg", tip: qsTr("Course hold (Acro)"), offMode: 0 },
+        { mode: 4,  group: 1, icon: "qrc:/icons/ui/mode-hold.svg",   tip: qsTr("Hold"), stop: true },
+        { mode: 5,  group: 1, icon: "qrc:/icons/ui/mode-loiter.svg", tip: qsTr("Loiter") },
+        { mode: 10, group: 2, icon: "qrc:/icons/ui/mode-auto.svg",   tip: qsTr("Auto") },
+        { mode: 11, group: 2, icon: "qrc:/icons/ui/mode-rtl.svg",    tip: qsTr("RTL") }
     ]
 
     property bool armConfirmPending: false
@@ -186,7 +187,8 @@ BasePanePopup {
     property int _armFlash: 0
     property int pendingCommand: -1
 
-    readonly property real _pillW: _pad + statusDot.width + Math.round(8 * _s) + infoColumn.width + _gap * 2 + buttonRow.width + _sidePad
+    readonly property real _pillW: _pad + statusDot.width + infoColumn.anchors.leftMargin + infoColumn.width
+                                   + buttonRow.anchors.leftMargin + buttonRow.width + _sidePad
     readonly property real _pillH: _controlH + _rowPad * 2
     readonly property real _wantW: _pillW + contentPadding * 2
     readonly property real _wantH: headerHeight + _pillH + (_trayVisible ? tray.height : 0) + contentPadding
@@ -268,6 +270,11 @@ BasePanePopup {
             _send(400, function() { root._dmw.autopilotArm(false) })
             return
         }
+        if (_helmActive && _helm.throttleHeld()) {
+            _cancelArmConfirm()
+            _log(_severityWarning, qsTr("Release the throttle before arming"))
+            return
+        }
         if (!armConfirmPending) {
             armConfirmPending = true
             _armFirstTapMs = Date.now()
@@ -287,18 +294,36 @@ BasePanePopup {
     }
 
     function _warnFailure(command, result) {
-        if (typeof notifications === "undefined" || !notifications) return
-        notifications.info(qsTr("%1: %2").arg(commandText(command)).arg(resultText(result)))
+        _log(_severityWarning, qsTr("%1: %2").arg(commandText(command)).arg(resultText(result)))
     }
+
+    function _log(severity, text) {
+        if (_dmw)
+            _dmw.logAutopilotEvent(severity, text)
+    }
+
+    function _toast(text) {
+        if (typeof notifications !== "undefined" && notifications)
+            notifications.info(text)
+    }
+
 
     on_WantWChanged: _applySize()
     on_WantHChanged: { _applySize(); Qt.callLater(_restorePlacement) }
     onInteractionStarted: _dragging = true
-    on_OnlineChanged: if (!_online) { _cancelArmConfirm(); _cancelNextConfirm(); _statsW = 0; _powerW = 0; expanded = false; _pendingJumpSeq = -1 }
+    on_OnlineChanged: if (!_online) { _cancelArmConfirm(); _cancelNextConfirm(); expanded = false; _pendingJumpSeq = -1 }
     on_NextSeqChanged: _cancelNextConfirm()
     onExpandedChanged: _cancelNextConfirm()
     on_ArmedChanged: _cancelArmConfirm()
-    onArmConfirmPendingChanged: if (armConfirmPending) _armFlash += 1
+    onArmConfirmPendingChanged: {
+        if (armConfirmPending) {
+            _armFlash += 1
+            armCountdownAnim.restart()
+        } else {
+            armCountdownAnim.stop()
+            _armCountdown = 0
+        }
+    }
 
     Component.onCompleted: {
         _applySize()
@@ -332,8 +357,17 @@ BasePanePopup {
 
     Timer {
         id: confirmTimer
-        interval: 4000
+        interval: root._armConfirmMs
         onTriggered: root.armConfirmPending = false
+    }
+
+    NumberAnimation {
+        id: armCountdownAnim
+        target: root
+        property: "_armCountdown"
+        from: 1
+        to: 0
+        duration: root._armConfirmMs
     }
 
     Timer {
@@ -377,8 +411,12 @@ BasePanePopup {
             ackTimer.stop()
         }
         function onAutopilotStatusText(severity, text) {
-            if (severity <= root._severityWarning && typeof notifications !== "undefined" && notifications)
-                notifications.info(qsTr("Vehicle: %1").arg(String(text).replace(/</g, "‹").replace(/>/g, "›")))
+            if (!root.popupVisible && severity <= root._severityCritical)
+                root._toast(qsTr("Vehicle: %1").arg(String(text).replace(/</g, "‹").replace(/>/g, "›")))
+        }
+        function onAutopilotAppMessage(severity, text) {
+            if (!root.popupVisible)
+                root._toast(text)
         }
     }
 
@@ -414,6 +452,77 @@ BasePanePopup {
         borderColor:      danger ? AppPalette.dangerBorder : (selected ? AppPalette.accentBorder : AppPalette.border)
         borderHoverColor: danger ? AppPalette.dangerBorder : (selected ? AppPalette.accentBorder : AppPalette.borderHover)
         borderWidth: danger || selected ? 1 : Tokens.cardBorderWidth
+        toolTipOnHold: true
+    }
+
+    component StatCell: Row {
+        spacing: Math.round(2 * root._s)
+    }
+
+    component GlyphSlot: Item {
+        anchors.verticalCenter: parent.verticalCenter
+        width: Math.round(14 * root._s)
+        height: Math.round(13 * root._s)
+    }
+
+    component StatValue: Text {
+        anchors.verticalCenter: parent.verticalCenter
+        width: root._statValueW
+        elide: Text.ElideRight
+        color: AppPalette.textSecond
+        font.pixelSize: Math.round(11 * root._s)
+    }
+
+    component StatIcon: Item {
+        id: statIcon
+        property url source
+        property color tint: AppPalette.textSecond
+        width: Math.round(13 * root._s)
+        height: width
+
+        Image {
+            id: statIconImage
+            anchors.fill: parent
+            source: statIcon.source
+            sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+            sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+            visible: false
+        }
+        ColorOverlay {
+            anchors.fill: statIconImage
+            source: statIconImage
+            color: statIcon.tint
+            smooth: true
+        }
+    }
+
+    component SignalBars: Row {
+        id: signalBars
+        property int percent: -1
+        readonly property int lit: percent <= 0 ? 0 : Math.ceil(percent / 25)
+        readonly property int barH: Math.round(11 * root._s)
+        spacing: Math.max(1, Math.round(1 * root._s))
+
+        Repeater {
+            model: 4
+            delegate: Rectangle {
+                required property int index
+                anchors.bottom: parent.bottom
+                width: Math.max(2, Math.round(2 * root._s))
+                height: Math.round(signalBars.barH * (index + 1) / 4)
+                radius: 1
+                color: index < signalBars.lit ? root._levelColor(signalBars.percent) : AppPalette.border
+            }
+        }
+    }
+
+    component PillSeparator: Rectangle {
+        anchors.verticalCenter: parent.verticalCenter
+        width: 1
+        height: Math.round(root._controlH * 0.6)
+        color: AppPalette.border
     }
 
     Item {
@@ -445,15 +554,79 @@ BasePanePopup {
                 onClicked: root.expanded = !root.expanded
             }
 
-            Rectangle {
+            Item {
                 id: statusDot
                 x: root._pad
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.round(8 * root._s)
+                width: Math.round(20 * root._s)
                 height: width
-                radius: width / 2
-                color: !root._online ? AppPalette.textMuted
-                     : root._armed ? AppPalette.dangerBorder : AppPalette.missionRally
+
+                Image {
+                    id: statusIcon
+                    anchors.fill: parent
+                    source: root._online ? "qrc:/icons/ui/autopilot-link.svg" : "qrc:/icons/ui/autopilot-link-off.svg"
+                    sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+                    sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    visible: false
+                }
+                ColorOverlay {
+                    anchors.fill: statusIcon
+                    source: statusIcon
+                    color: !root._online ? AppPalette.textMuted
+                         : root._armed ? AppPalette.dangerBorder : AppPalette.missionRally
+                    smooth: true
+                }
+
+                MouseArea {
+                    id: statusTipArea
+                    anchors.fill: parent
+                    anchors.margins: -Math.round(6 * root._s)
+                    enabled: !root._online
+                    hoverEnabled: true
+                    onClicked: statusTipTimer.restart()
+                }
+                Timer {
+                    id: statusTipTimer
+                    interval: 2000
+                }
+                KToolTip {
+                    text: qsTr("No autopilot")
+                    targetItem: statusDot
+                    delay: statusTipTimer.running ? 0 : 520
+                    shown: !root._online && (statusTipArea.containsMouse || statusTipTimer.running)
+                }
+            }
+
+            Column {
+                id: statValueProbe
+                opacity: 0
+                enabled: false
+
+                Repeater {
+                    model: root._statTemplates
+                    delegate: Text {
+                        required property string modelData
+                        text: modelData
+                        font.pixelSize: Math.round(11 * root._s)
+                    }
+                }
+            }
+
+            Column {
+                id: statLastValueProbe
+                opacity: 0
+                enabled: false
+
+                Repeater {
+                    model: ["88.8 V", "88.8 A"]
+                    delegate: Text {
+                        required property string modelData
+                        text: modelData
+                        font.pixelSize: Math.round(11 * root._s)
+                    }
+                }
             }
 
             Column {
@@ -471,74 +644,117 @@ BasePanePopup {
                 }
             }
 
-            Column {
+            Row {
                 id: infoColumn
                 anchors.left: statusDot.right
-                anchors.leftMargin: Math.round(8 * root._s)
+                anchors.leftMargin: root._online ? Math.round(8 * root._s) : 0
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(Math.round(300 * root._s),
-                                Math.ceil(Math.max(Math.round(84 * root._s),
-                                                   root._titleSlotW
-                                                   + (chevron.visible ? titleRow.spacing + chevron.width : 0)
-                                                   + (powerText.visible ? titleRow.spacing + powerText.leftPadding + root._powerW : 0),
-                                                   root._statsW)))
+                visible: root._online
+                width: root._online ? implicitWidth : 0
+                spacing: Math.round(8 * root._s)
 
-                Row {
-                    id: titleRow
-                    width: parent.width
-                    spacing: Math.round(4 * root._s)
+                Item {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: root._titleSlotW + titleRow.spacing + chevron.width
+                    height: titleRow.height
 
-                    Text {
-                        id: titleText
-                        width: Math.min(root._titleSlotW, titleRow.width - (chevron.visible ? titleRow.spacing + chevron.width : 0))
-                        text: root.armConfirmPending ? qsTr("Tap again to arm")
-                            : !root._online ? qsTr("No autopilot")
-                            : root._modeName
-                        color: root.armConfirmPending ? AppPalette.dangerText : AppPalette.textStrong
-                        font.pixelSize: Math.round(13 * root._s)
-                        font.bold: true
-                        elide: Text.ElideRight
-                    }
-                    Text {
-                        id: chevron
-                        anchors.verticalCenter: titleText.verticalCenter
-                        visible: root._online
-                        text: root.expanded ? "▴" : "▾"
-                        color: AppPalette.textMuted
-                        font.pixelSize: Math.round(11 * root._s)
-                    }
-                    Text {
-                        id: powerText
-                        anchors.baseline: titleText.baseline
-                        visible: root._online && text.length > 0
-                        width: Math.max(0, Math.min(implicitWidth, titleRow.width - titleText.width
-                                                    - (chevron.visible ? titleRow.spacing + chevron.width : 0) - titleRow.spacing))
-                        leftPadding: Math.round(4 * root._s)
-                        text: root._powerText
-                        color: AppPalette.textSecond
-                        font.pixelSize: Math.round(11 * root._s)
-                        elide: Text.ElideRight
-                        onImplicitWidthChanged: if (visible) root._powerW = Math.max(root._powerW, implicitWidth - leftPadding)
-                        onVisibleChanged: if (visible) root._powerW = Math.max(root._powerW, implicitWidth - leftPadding)
+                    Row {
+                        id: titleRow
+                        spacing: Math.round(6 * root._s)
+
+                        Text {
+                            id: titleText
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root._modeName
+                            color: AppPalette.textStrong
+                            font.pixelSize: Math.round(13 * root._s)
+                            font.bold: true
+                        }
+                        KCircleIconButton {
+                            id: chevron
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Math.round(24 * root._s)
+                            height: width
+                            iconSource: "qrc:/icons/ui/chevron-down.svg"
+                            iconRotation: root.expanded ? 180 : 0
+                            iconTintColor: AppPalette.text
+                            fillColor: AppPalette.card
+                            fillHoverColor: AppPalette.cardHover
+                            fillPressedColor: AppPalette.bgDeep
+                            borderColor: AppPalette.border
+                            borderHoverColor: AppPalette.borderHover
+                            onClicked: root.expanded = !root.expanded
+                        }
                     }
                 }
-                Text {
-                    width: parent.width
-                    visible: root._online && text.length > 0
-                    text: root._statsText
-                    textFormat: Text.StyledText
-                    color: AppPalette.textSecond
-                    font.pixelSize: Math.round(11 * root._s)
-                    elide: Text.ElideRight
-                    onImplicitWidthChanged: if (visible) root._statsW = Math.max(root._statsW, implicitWidth)
-                    onVisibleChanged: if (visible) root._statsW = Math.max(root._statsW, implicitWidth)
+
+                Grid {
+                    anchors.verticalCenter: parent.verticalCenter
+                    rows: 2
+                    flow: Grid.TopToBottom
+                    columnSpacing: Math.round(6 * root._s)
+                    rowSpacing: Math.round(3 * root._s)
+                    verticalItemAlignment: Grid.AlignVCenter
+
+                    StatCell {
+                        GlyphSlot {
+                            KBatteryGlyph {
+                                anchors.centerIn: parent
+                                unit: root._s
+                                percent: root._batteryPct
+                                ink: root._levelColor(root._batteryPct)
+                            }
+                        }
+                        StatValue {
+                            text: root._batteryPct >= 0 ? root._batteryPct + " %" : "—"
+                            color: root._levelColor(root._batteryPct)
+                        }
+                    }
+                    StatCell {
+                        GlyphSlot { StatIcon { anchors.centerIn: parent; source: "qrc:/icons/ui/stat-speed.svg" } }
+                        StatValue {
+                            text: isFinite(root._speed) ? root._speed.toFixed(1) + " " + qsTr("m/s") : "—"
+                        }
+                    }
+                    StatCell {
+                        GlyphSlot { SignalBars { anchors.centerIn: parent; percent: root._linkQuality } }
+                        StatValue {
+                            text: root._linkQuality >= 0 ? root._linkQuality + " %" : "—"
+                            color: root._levelColor(root._linkQuality)
+                        }
+                    }
+                    StatCell {
+                        GlyphSlot {
+                            StatIcon {
+                                anchors.centerIn: parent
+                                source: "qrc:/icons/ui/satellite.svg"
+                                tint: root._gpsPoor ? AppPalette.linkIdleText : AppPalette.textSecond
+                            }
+                        }
+                        StatValue {
+                            text: root._gpsSats >= 0 ? String(root._gpsSats) : "—"
+                            color: root._gpsPoor ? AppPalette.linkIdleText : AppPalette.textSecond
+                        }
+                    }
+                    StatCell {
+                        StatValue {
+                            width: root._statLastValueW
+                            text: isFinite(root._voltage) ? root._voltage.toFixed(1) + " V" : "—"
+                        }
+                    }
+                    StatCell {
+                        StatValue {
+                            width: root._statLastValueW
+                            text: isFinite(root._current) ? root._current.toFixed(1) + " A" : "—"
+                        }
+                    }
                 }
             }
 
             Row {
                 id: buttonRow
                 anchors.left: infoColumn.right
-                anchors.leftMargin: root._gap * 2
+                anchors.leftMargin: Math.round(10 * root._s)
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: root._gap
 
@@ -548,50 +764,116 @@ BasePanePopup {
                     highlighted: root.armConfirmPending
                     flashToken: root._armFlash
                     highlightBorderColor: AppPalette.dangerBorder
-                    toolTipText: root._armed ? qsTr("Disarm") : qsTr("Arm (tap twice)")
+                    autoToolTip: false
                     onClicked: root.requestArm()
 
-                    Text {
-                        anchors.centerIn: parent
+                    Item {
+                        id: armLabel
+                        readonly property bool twoLines: root.armConfirmPending || root._armed
+                        readonly property string topLine: root._armed && !root.armConfirmPending ? "DIS" : "ARM"
+                        readonly property string bottomLine: root.armConfirmPending
+                                                         ? String(Math.max(1, Math.ceil(root._armCountdown * root._armConfirmMs / 1000)))
+                                                         : "ARM"
+                        readonly property color ink: armBtn.danger ? AppPalette.dangerText : AppPalette.textStrong
+                        readonly property int pixelSize: Math.round((twoLines ? 10 : 12) * root._s)
+                        readonly property real gap: Math.max(2, Math.round(3 * root._s))
+                        readonly property real inkHeight: topMetrics.tightBoundingRect.height
+                                                          + (twoLines ? gap + bottomMetrics.tightBoundingRect.height : 0)
+                        readonly property real inkTop: Math.round((height - inkHeight) / 2) + (root.armConfirmPending ? Math.round(2 * root._s) : 0)
+
+                        anchors.fill: parent
                         scale: armBtn.contentScale
-                        text: root.armConfirmPending ? "ARM?" : root._armed ? "DIS\nARM" : "ARM"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        lineHeight: 0.85
-                        color: armBtn.danger ? AppPalette.dangerText : AppPalette.textStrong
-                        font.pixelSize: Math.round((root._armed ? 10 : 12) * root._s)
-                        font.weight: Font.Black
+
+                        Text {
+                            id: armTopText
+                            x: Math.round(armLabel.width / 2 - (topMetrics.tightBoundingRect.x + topMetrics.tightBoundingRect.width / 2))
+                            y: armLabel.inkTop - (baselineOffset + topMetrics.tightBoundingRect.y)
+                            text: armLabel.topLine
+                            color: armLabel.ink
+                            font.pixelSize: armLabel.pixelSize
+                            font.weight: Font.Bold
+                        }
+                        Text {
+                            id: armBottomText
+                            visible: armLabel.twoLines
+                            x: Math.round(armLabel.width / 2 - (bottomMetrics.tightBoundingRect.x + bottomMetrics.tightBoundingRect.width / 2))
+                            y: armLabel.inkTop + topMetrics.tightBoundingRect.height + armLabel.gap
+                               - (baselineOffset + bottomMetrics.tightBoundingRect.y)
+                            text: armLabel.bottomLine
+                            color: armLabel.ink
+                            font.pixelSize: armLabel.pixelSize
+                            font.weight: Font.Bold
+                        }
+                        TextMetrics {
+                            id: topMetrics
+                            font: armTopText.font
+                            text: armTopText.text
+                        }
+                        TextMetrics {
+                            id: bottomMetrics
+                            font: armBottomText.font
+                            text: armBottomText.text
+                        }
+                    }
+
+                    Shape {
+                        id: armCountdownRing
+                        readonly property real stroke: Math.max(2, Math.round(3 * root._s))
+                        anchors.fill: parent
+                        scale: armBtn.backgroundScale
+                        visible: root.armConfirmPending && root._armCountdown > 0.001
+                        preferredRendererType: Shape.CurveRenderer
+
+                        ShapePath {
+                            strokeColor: AppPalette.dangerText
+                            strokeWidth: armCountdownRing.stroke
+                            fillColor: "transparent"
+                            capStyle: ShapePath.RoundCap
+
+                            PathAngleArc {
+                                centerX: armBtn.width / 2
+                                centerY: armBtn.height / 2
+                                radiusX: (Math.min(armBtn.width, armBtn.height) - armCountdownRing.stroke) / 2
+                                radiusY: radiusX
+                                startAngle: -90
+                                sweepAngle: 360 * root._armCountdown
+                            }
+                        }
                     }
                 }
 
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 1
-                    height: Math.round(root._controlH * 0.6)
-                    color: AppPalette.border
-                }
+                PillSeparator {}
 
                 Repeater {
                     model: root.modes
-                    delegate: PillButton {
+                    delegate: Row {
+                        id: modeCell
                         required property var modelData
-                        selected: root._online && root._mode === modelData.mode
-                        iconSource: modelData.icon
-                        toolTipText: modelData.tip
-                        onClicked: root.requestMode(modelData.mode)
+                        required property int index
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: root._gap
+
+                        PillSeparator {
+                            visible: modeCell.index > 0 && root.modes[modeCell.index - 1].group !== modeCell.modelData.group
+                        }
+
+                        PillButton {
+                            selected: root._online && root._mode === modeCell.modelData.mode
+                            toolTipOnHold: modeCell.modelData.stop !== true
+                            iconSource: modeCell.modelData.icon
+                            toolTipText: modeCell.modelData.tip
+                            onClicked: root.requestMode(modeCell.modelData.offMode !== undefined && root._mode === modeCell.modelData.mode
+                                                        ? modeCell.modelData.offMode : modeCell.modelData.mode)
+                        }
                     }
                 }
 
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 1
-                    height: Math.round(root._controlH * 0.6)
-                    color: AppPalette.border
-                }
+                PillSeparator {}
 
                 KCircleIconButton {
                     width: root._controlH
                     height: root._controlH
+                    toolTipOnHold: true
                     iconSource: "qrc:/icons/ui/map_route.svg"
                     iconTintColor: AppPalette.text
                     fillColor: AppPalette.card
@@ -623,7 +905,7 @@ BasePanePopup {
             visible: root._trayVisible
             anchors.top: pill.bottom
             width: parent.width
-            height: trayColumn.implicitHeight + root._trayPad * 2
+            height: trayColumn.implicitHeight + root._rowPad * 2
             color: "transparent"
 
             Rectangle {
@@ -643,8 +925,232 @@ BasePanePopup {
                 anchors.top: parent.top
                 anchors.leftMargin: root._pad
                 anchors.rightMargin: root._pad
-                anchors.topMargin: root._trayPad
+                anchors.topMargin: root._rowPad
                 spacing: Math.round(8 * root._s)
+
+                Item {
+                    width: parent.width + root._pad - root._sidePad
+                    height: root._controlH
+                    visible: root._helmRowVisible
+
+                    KGamepadIcon {
+                        id: helmPadIcon
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.round(30 * root._s)
+                        height: width
+                        family: root._gamepad ? root._gamepad.family : ""
+                        color: root._helmActive ? AppPalette.accent : AppPalette.textStrong
+                    }
+
+                    Column {
+                        id: helmText
+                        readonly property string padName: root._gamepad ? root._gamepad.name : ""
+                        readonly property bool sessionOn: !!root._helm && root._helm.state !== 0
+                        readonly property var pads: root._gamepad ? root._gamepad.pads : []
+                        readonly property bool picking: !sessionOn && pads.length > 1
+                        readonly property var padLabels: pads.map(function(pad) { return pad.label })
+                        readonly property int padIndex: {
+                            var id = root._gamepad ? root._gamepad.padId : 0
+                            for (var i = 0; i < pads.length; ++i)
+                                if (pads[i].id === id) return i
+                            return -1
+                        }
+
+                        anchors.left: helmPadIcon.right
+                        anchors.leftMargin: root._gap
+                        anchors.right: helmBars.visible ? helmBars.left
+                                     : helmSettingsButton.visible ? helmSettingsButton.left : helmButton.left
+                        anchors.rightMargin: root._gap
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        Text {
+                            width: parent.width
+                            text: {
+                                if (!root._helm) return ""
+                                switch (root._helm.state) {
+                                case 1: return qsTr("Checking vehicle parameters…")
+                                case 2: return qsTr("Switching to Manual…")
+                                case 3: return root._helm.background ? qsTr("Gamepad control · background") : qsTr("Gamepad control")
+                                case 4: return qsTr("Holding position…")
+                                default: return qsTr("Gamepad ready")
+                                }
+                            }
+                            color: AppPalette.textSecond
+                            font.pixelSize: Math.round(11 * root._s)
+                            elide: Text.ElideRight
+                        }
+                        Row {
+                            id: padLine
+                            readonly property real nameRoom: width - (padBattery.visible ? padBattery.width + spacing : 0)
+                            width: parent.width
+                            spacing: root._gap
+                            visible: helmText.picking || helmText.padName.length > 0
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: Math.min(implicitWidth, padLine.nameRoom)
+                                visible: !helmText.picking
+                                text: helmText.padName
+                                color: AppPalette.textMuted
+                                font.pixelSize: Math.round(10 * root._s)
+                                elide: Text.ElideRight
+                            }
+                            KCombo {
+                                id: padPicker
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: Math.min(padLine.nameRoom, contentWidth)
+                                height: Math.round(16 * root._s)
+                                visible: helmText.picking
+                                fontPixelSize: Math.round(10 * root._s)
+                                bold: false
+                                fillColor: "transparent"
+                                textColor: AppPalette.textMuted
+                                textInset: 0
+                                indicatorColor: AppPalette.textSecond
+                                focusHighlight: false
+                                model: helmText.padLabels
+                                toolTipText: qsTr("Gamepad that drives the boat")
+                                onActivated: function(index) {
+                                    if (root._gamepad && index >= 0 && index < helmText.pads.length)
+                                        root._gamepad.selectPad(helmText.pads[index].id)
+                                }
+
+                                Binding {
+                                    target: padPicker
+                                    property: "currentIndex"
+                                    value: Math.max(0, helmText.padIndex)
+                                }
+                            }
+                            KBatteryLevel {
+                                id: padBattery
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: known
+                                percent: root._gamepad ? root._gamepad.batteryPercent : -1
+                                powerState: root._gamepad ? root._gamepad.batteryState : ""
+                                unit: root._s
+                                fontPixelSize: Math.round(10 * root._s)
+                            }
+                        }
+                    }
+
+                    Row {
+                        id: helmBars
+                        anchors.right: helmSettingsButton.visible ? helmSettingsButton.left : helmButton.left
+                        anchors.rightMargin: root._gap
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: !!root._helm && root._helm.state === 3
+
+                        Grid {
+                            anchors.verticalCenter: parent.verticalCenter
+                            columns: 2
+                            columnSpacing: Math.round(6 * root._s)
+                            rowSpacing: Math.round(5 * root._s)
+                            verticalItemAlignment: Grid.AlignVCenter
+
+                            Text {
+                                text: qsTr("Throttle")
+                                color: AppPalette.textSecond
+                                font.pixelSize: Math.round(11 * root._s)
+                            }
+                            HelmBar {
+                                width: Math.round(110 * root._s)
+                                height: Math.round(9 * root._s)
+                                value: root._helm ? root._helm.throttle : 0
+                            }
+                            Text {
+                                text: qsTr("Turn")
+                                color: AppPalette.textSecond
+                                font.pixelSize: Math.round(11 * root._s)
+                            }
+                            HelmBar {
+                                width: Math.round(110 * root._s)
+                                height: Math.round(9 * root._s)
+                                value: root._helm ? root._helm.steering : 0
+                            }
+                        }
+                    }
+
+                    PillButton {
+                        id: helmSettingsButton
+                        anchors.right: helmButton.left
+                        anchors.rightMargin: root._gap
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: typeof theme !== "undefined" && !!theme && theme.instrumentsGrade >= 1
+                        iconSource: "qrc:/icons/ui/settings.svg"
+                        toolTipText: qsTr("Gamepad settings")
+                        onClicked: if (root.store) root.store.openAppSettingsAtGroup("app.gamepadhelm")
+                    }
+
+                    PillButton {
+                        id: helmButton
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        danger: root._helmActive
+                        toolTipOnHold: false
+                        iconSource: root._helmActive ? "qrc:/icons/ui/helm-release.svg" : "qrc:/icons/ui/helm-take.svg"
+                        toolTipText: root._helmActive ? qsTr("Release control") : qsTr("Take control")
+                        onClicked: {
+                            if (!root._helm) return
+                            if (root._helmActive) root._helm.disengage()
+                            else root._helm.engage()
+                        }
+                    }
+                }
+
+                Column {
+                    width: parent.width
+                    visible: root._helmRowVisible && root._helmConfirmation !== 0
+                    spacing: Math.round(6 * root._s)
+
+                    Text {
+                        width: parent.width
+                        text: root._helmConfirmation === 1
+                              ? qsTr("If the link drops, the transmitter takes over")
+                              : qsTr("The boat does not stop when the link drops")
+                        color: AppPalette.textStrong
+                        font.pixelSize: Math.round(12 * root._s)
+                        font.bold: true
+                        wrapMode: Text.WordWrap
+                    }
+
+                    Text {
+                        width: parent.width
+                        text: root._helmConfirmation === 1
+                              ? qsTr("%1 s after the last gamepad command the boat follows the transmitter sticks again. Keep the transmitter on.")
+                                    .arg(root._helm ? root._helm.overrideSeconds : 3)
+                              : qsTr("Without a transmitter the boat would keep the last gamepad command. Turn on stopping on link loss? The boat holds; missions in Auto go on. The setting is saved on the boat.")
+                        color: AppPalette.textSecond
+                        font.pixelSize: Math.round(12 * root._s)
+                        wrapMode: Text.WordWrap
+                    }
+
+                    Item {
+                        width: parent.width
+                        height: Tokens.controlHMd
+
+                        KButton {
+                            id: helmConfirmButton
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            height: Tokens.controlHMd
+                            enabled: !!root._helm && !root._helm.confirmationBusy
+                            text: root._helmConfirmation === 1 ? qsTr("Transmitter is on — start")
+                                : (root._helm && root._helm.confirmationBusy) ? qsTr("Saving…")
+                                : qsTr("Turn on and start")
+                            onClicked: if (root._helm) root._helm.confirm()
+                        }
+
+                        KButton {
+                            anchors.right: helmConfirmButton.left
+                            anchors.rightMargin: root._gap
+                            anchors.verticalCenter: parent.verticalCenter
+                            height: Tokens.controlHMd
+                            text: qsTr("Cancel")
+                            onClicked: if (root._helm) root._helm.cancelConfirmation()
+                        }
+                    }
+                }
 
                 Item {
                     width: parent.width
@@ -738,6 +1244,11 @@ BasePanePopup {
                         InfoCell {
                             key: qsTr("To home")
                             value: root._fmtDist(root._homeDistance)
+                        }
+                        InfoCell {
+                            visible: root._rssiValid
+                            key: "RSSI"
+                            value: qsTr("%1 dBm").arg(root._rssi)
                         }
                     }
 

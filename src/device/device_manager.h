@@ -153,6 +153,16 @@ public slots:
     void startMissionUpload(const autopilot::MissionBatches& batches);
     void startMissionDownload();
     void sendAutopilotMessage(quint32 msgId, const QByteArray& payload, int v1Length);
+    /** Sends one MANUAL_CONTROL frame to the latched vehicle: @p steering into y, @p throttle into z, both −1000…1000; dropped while no vehicle is online. */
+    void sendManualControl(int steering, int throttle);
+    /** Sends one MANUAL_CONTROL frame with y and z = INT16_MAX: ArduPilot drops both overrides and the transmitter drives again. */
+    void releaseManualControl();
+    /** Asks the latched vehicle for one parameter by name (PARAM_REQUEST_READ); the answer arrives as autopilotParamReceived. */
+    void requestAutopilotParam(const QString& name);
+    /** Writes one vehicle parameter by name (PARAM_SET); ArduPilot saves it, read it back to confirm. */
+    void setAutopilotParam(const QString& name, float value);
+    /** Asks the latched vehicle to send message @p msgId once (MAV_CMD_REQUEST_MESSAGE). */
+    void requestAutopilotMessage(int msgId);
 
 signals:
     void sendFrameInputToLogger(QUuid uuid, Link* link, Parsers::FrameParser frame);
@@ -160,6 +170,9 @@ signals:
     void autopilotCommandAcked(int command, int result);
     void autopilotStatusText(int severity, const QString& text);
     void autopilotMissionItemReached(int seq);
+    void autopilotParamReceived(const QString& name, float value);
+    /** RC_CHANNELS from the latched autopilot: the receiver channel count (0 = no RC receiver has delivered since boot). */
+    void autopilotRcChannelCount(int count);
     void missionFrameReceived(quint32 msgId, const QByteArray& payload);
     void missionUploadStart(const autopilot::MissionBatches& batches, int targetSystem, int targetComponent);
     void missionUploadRefused(int result, int missionType);
@@ -243,6 +256,7 @@ private:
     void requestAutopilotStreams();
     void sendDataStreamRequest();
     void sendMissionSetCurrent(int seq);
+    void sendGcsHeartbeat();
     void handleStatusText(const MAVLink_MSG_STATUSTEXT& message);
     void emitStatusText(int severity, const QString& text);
     void flushStatusText();

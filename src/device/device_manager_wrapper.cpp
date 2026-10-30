@@ -33,6 +33,8 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     QObject::connect(workerObject_.get(), &DeviceManager::autopilotCommandAcked, this,               &DeviceManagerWrapper::autopilotCommandAcked,  ct);
     QObject::connect(workerObject_.get(), &DeviceManager::autopilotStatusText,  this,                &DeviceManagerWrapper::onAutopilotStatusText,  ct);
     QObject::connect(workerObject_.get(), &DeviceManager::autopilotMissionItemReached, this,         &DeviceManagerWrapper::autopilotMissionItemReached, ct);
+    QObject::connect(workerObject_.get(), &DeviceManager::autopilotParamReceived, this,              &DeviceManagerWrapper::autopilotParamReceived, ct);
+    QObject::connect(workerObject_.get(), &DeviceManager::autopilotRcChannelCount, this,             &DeviceManagerWrapper::autopilotRcChannelCount, ct);
     QObject::connect(workerObject_.get(), &DeviceManager::chartLossesChanged,   this,                &DeviceManagerWrapper::calcAverageChartLosses, ct);
     QObject::connect(workerObject_.get(), &DeviceManager::devChanged,           this,                &DeviceManagerWrapper::calcAverageChartLosses, ct);
 
@@ -55,7 +57,13 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     QObject::connect(missionTransfer_, &autopilot::MissionTransfer::downloadFinished, this, &DeviceManagerWrapper::onMissionDownloadFinished);
     QObject::connect(dm, &DeviceManager::missionUploadRefused, this, [this](int result, int missionType) { onMissionUploadFinished(false, result, missionType); });
     QObject::connect(dm, &DeviceManager::missionDownloadRefused, this, [this](int result) { onMissionDownloadFinished(false, result, 0, {}); });
-    missionThread_->start();
+}
+
+void DeviceManagerWrapper::startMissionThread()
+{
+    if (missionThread_ && !missionThread_->isRunning()) {
+        missionThread_->start();
+    }
 }
 
 DeviceManagerWrapper::~DeviceManagerWrapper()
@@ -148,6 +156,31 @@ void DeviceManagerWrapper::autopilotSetSpeed(double speed)
     workerObject_->autopilotSetSpeed(float(speed));
 }
 
+void DeviceManagerWrapper::autopilotManualControl(int steering, int throttle)
+{
+    workerObject_->sendManualControl(steering, throttle);
+}
+
+void DeviceManagerWrapper::autopilotReleaseManualControl()
+{
+    workerObject_->releaseManualControl();
+}
+
+void DeviceManagerWrapper::autopilotRequestParam(const QString& name)
+{
+    workerObject_->requestAutopilotParam(name);
+}
+
+void DeviceManagerWrapper::autopilotSetParam(const QString& name, float value)
+{
+    workerObject_->setAutopilotParam(name, value);
+}
+
+void DeviceManagerWrapper::autopilotRequestMessage(int msgId)
+{
+    workerObject_->requestAutopilotMessage(msgId);
+}
+
 bool DeviceManagerWrapper::beginMissionTransfer(bool download, bool silent)
 {
     if (missionTransferActive_) {
@@ -235,16 +268,28 @@ void DeviceManagerWrapper::onAutopilotState(const AutopilotState& state)
 
 void DeviceManagerWrapper::onAutopilotStatusText(int severity, const QString& text)
 {
+    appendAutopilotMessage(severity, text, false);
+    emit autopilotStatusText(severity, text);
+}
+
+void DeviceManagerWrapper::logAutopilotEvent(int severity, const QString& text)
+{
+    appendAutopilotMessage(severity, text, true);
+    emit autopilotAppMessage(severity, text);
+}
+
+void DeviceManagerWrapper::appendAutopilotMessage(int severity, const QString& text, bool fromApp)
+{
     QVariantMap entry;
     entry.insert(QStringLiteral("severity"), severity);
     entry.insert(QStringLiteral("text"), text);
     entry.insert(QStringLiteral("time"), QDateTime::currentMSecsSinceEpoch());
+    entry.insert(QStringLiteral("app"), fromApp);
     autopilotMessages_.prepend(entry);
     while (autopilotMessages_.size() > kAutopilotMessagesKept) {
         autopilotMessages_.removeLast();
     }
     emit autopilotMessagesChanged();
-    emit autopilotStatusText(severity, text);
 }
 
 void DeviceManagerWrapper::onMissionTransferProgress(int done, int total)

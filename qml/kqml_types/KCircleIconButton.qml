@@ -42,6 +42,7 @@ Item {
     property string toolTipText: ""
     property bool autoToolTip: true
     property bool toolTipSuppressed: false   // external gate (e.g. hide while a pill/popup is open)
+    property bool toolTipOnHold: false
     property real hoverWhiteness: 0.12
     // External "look here" pulse — bumped via flashToken when highlighted.
     property bool highlighted: false
@@ -52,6 +53,8 @@ Item {
     readonly property bool pressed: hitArea.pressed
 
     property bool _tipSuppressed: false
+    property bool _holdTip: false
+    property bool _holdSwallowsClick: false
     onPressedChanged: if (pressed) { _tipSuppressed = true; focusRing.suppress() }
     onHoveredChanged: if (!hovered) _tipSuppressed = false
     property bool scaleOnHover: true
@@ -329,16 +332,40 @@ Item {
         enabled: root.enabled
         hoverEnabled: true
         cursorShape: root.enabled ? root.cursorShape : Qt.ArrowCursor
-        onPressed: function(mouse) { root.pressStarted(mouse.x, mouse.y) }
+        onPressed: function(mouse) {
+            holdTipTimer.stop()
+            root._holdTip = false
+            root._holdSwallowsClick = false
+            root.pressStarted(mouse.x, mouse.y)
+        }
         onPositionChanged: function(mouse) { root.pointerMoved(mouse.x, mouse.y) }
-        onReleased: root.pressEnded()
-        onCanceled: root.pressCanceled()
-        onClicked: { root.forceActiveFocus(); root.clicked() }
+        onPressAndHold: {
+            if (!root.toolTipOnHold || root.resolvedToolTipText === "")
+                return
+            root._holdTip = true
+            root._holdSwallowsClick = true
+        }
+        onReleased: { if (root._holdTip) holdTipTimer.restart(); root.pressEnded() }
+        onCanceled: { root._holdTip = false; root.pressCanceled() }
+        onClicked: {
+            if (root._holdSwallowsClick)
+                return
+            root.forceActiveFocus()
+            root.clicked()
+        }
+    }
+
+    Timer {
+        id: holdTipTimer
+        interval: 1500
+        onTriggered: root._holdTip = false
     }
 
     KToolTip {
         text: root.resolvedToolTipText
         targetItem: root
-        shown: root.hovered && root.enabled && !root._tipSuppressed && !root.toolTipSuppressed
+        delay: root._holdTip ? 0 : 520
+        shown: root._holdTip
+               || (root.hovered && root.enabled && !root._tipSuppressed && !root.toolTipSuppressed)
     }
 }

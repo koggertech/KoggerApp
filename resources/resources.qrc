@@ -9,5 +9,6 @@
         <file>licenses/COPYING.LGPLv3</file>
         <file alias="licenses/COPYING.LGPLv2.1">../third_party/ffmpeg/COPYING.LGPLv2.1</file>
         <file alias="licenses/FTL.TXT">../third_party/freetype/FTL.TXT</file>
+        <file alias="licenses/SDL3-LICENSE.txt">../third_party/sdl3/LICENSE.txt</file>
     </qresource>
 </RCC>
