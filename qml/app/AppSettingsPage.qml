@@ -3875,18 +3875,6 @@ Column {
                     toolTipText: qsTr("Controller test and which button does what")
                     onClicked: root.openGamepadDialog()
                 }
-                KIslandRow {
-                    label: qsTr("Vibration")
-                    toolTipText: qsTr("Vibrates with the throttle and steering while armed, and briefly on a mode change or arm / disarm")
-                    interactive: true
-                    onClicked: helmRumbleSwitch.click()
-                    KSwitch {
-                        id: helmRumbleSwitch
-                        flat: true
-                        checked: root._helmCtl ? root._helmCtl.rumble : false
-                        onToggled: if (root._helmCtl) root._helmCtl.rumble = checked
-                    }
-                }
             }
 
             Loader {
@@ -3903,35 +3891,30 @@ Column {
             KIsland {
                 HelmSliderRow {
                     label: qsTr("Forward limit")
-                    toolTipText: qsTr("Max forward throttle")
                     from: 0; to: 1; stepSize: 0.05
                     value: root._helmCtl ? root._helmCtl.forwardLimit : 1
                     onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.forwardLimit = val }
                 }
                 HelmSliderRow {
                     label: qsTr("Reverse limit")
-                    toolTipText: qsTr("Max reverse throttle")
                     from: 0; to: 1; stepSize: 0.05
                     value: root._helmCtl ? root._helmCtl.reverseLimit : 0.5
                     onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.reverseLimit = val }
                 }
                 HelmSliderRow {
                     label: qsTr("Steering limit")
-                    toolTipText: qsTr("Max steering")
                     from: 0; to: 1; stepSize: 0.05
                     value: root._helmCtl ? root._helmCtl.steeringLimit : 1
                     onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.steeringLimit = val }
                 }
                 HelmSliderRow {
                     label: qsTr("Throttle softness")
-                    toolTipText: qsTr("Gentler throttle at the start of the travel")
                     from: 0; to: 1; stepSize: 0.05
                     value: root._helmCtl ? root._helmCtl.throttleExpo : 0.2
                     onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.throttleExpo = val }
                 }
                 HelmSliderRow {
                     label: qsTr("Send rate")
-                    toolTipText: qsTr("How often commands go to the boat")
                     from: 10; to: 25; stepSize: 1
                     displayScale: 1
                     format: qsTr("%1 Hz")

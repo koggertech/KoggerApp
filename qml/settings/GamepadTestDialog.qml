@@ -145,12 +145,12 @@ Popup {
             case "throttleForward": return qsTr("Throttle forward")
             case "throttleReverse": return qsTr("Throttle reverse")
             case "steering":        return qsTr("Steering")
-            case "manual":          return qsTr("Manual")
-            case "hold":            return qsTr("Hold (motors stop)")
-            case "loiter":          return qsTr("Loiter (keep position)")
-            case "auto":            return qsTr("Auto (run the mission)")
-            case "courseHold":      return qsTr("Course hold on / off (Acro)")
-            case "rtl":             return qsTr("RTL (return to launch)")
+            case "manual":          return "Manual"
+            case "hold":            return "Hold"
+            case "loiter":          return "Loiter"
+            case "auto":            return "Auto"
+            case "courseHold":      return qsTr("Course hold")
+            case "rtl":             return "RTL"
             default:                return key
         }
     }
@@ -742,6 +742,70 @@ Popup {
                     width: parent.width
                     spacing: Tokens.spaceSm
 
+                    KIsland {
+                        width: parent.width
+                        visible: dialog.hasHelm
+
+                        KIslandRow {
+                            label: qsTr("Vibration")
+                            interactive: true
+                            onClicked: rumbleSwitch.click()
+
+                            KSwitch {
+                                id: rumbleSwitch
+                                flat: true
+                                checked: dialog.hasHelm ? helm.rumble : false
+                                onToggled: {
+                                    if (dialog.hasHelm)
+                                        helm.rumble = checked
+                                    checked = Qt.binding(function() { return dialog.hasHelm ? helm.rumble : false })
+                                }
+                            }
+                        }
+
+                        KIslandRow {
+                            id: strengthRow
+                            label: qsTr("Strength")
+                            slotWidth: Math.round(220 * AppPalette.scale)
+                            open: dialog.hasHelm && helm.rumble
+
+                            Item {
+                                width: strengthRow.slotWidth
+                                height: Tokens.controlHMd
+
+                                KSlider {
+                                    id: strengthSlider
+                                    anchors.left: parent.left
+                                    anchors.right: strengthValue.left
+                                    anchors.rightMargin: Tokens.spaceSm
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    from: 0.1
+                                    to: 1
+                                    stepSize: 0.05
+                                    enabled: dialog.hasHelm && helm.rumble
+                                    onValueModified: function(val) { if (dialog.hasHelm) helm.rumbleStrength = val }
+
+                                    Binding {
+                                        target: strengthSlider
+                                        property: "value"
+                                        value: dialog.hasHelm ? helm.rumbleStrength : 0.5
+                                    }
+                                }
+
+                                Text {
+                                    id: strengthValue
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: Math.round(48 * AppPalette.scale)
+                                    horizontalAlignment: Text.AlignRight
+                                    text: Math.round(strengthSlider.value * 100) + "%"
+                                    color: AppPalette.text
+                                    font.pixelSize: Tokens.fontBase
+                                }
+                            }
+                        }
+                    }
+
                     Flow {
                         id: pressedLine
                         readonly property var parts: qsTr("Pressed: %1").split("%1")
@@ -843,7 +907,7 @@ Popup {
 
                     FixedRow {
                         badge: dialog.playStation ? "L1 + R1" : "LB + RB"
-                        label: qsTr("Arm / disarm (both together); a bumper alone acts on release")
+                        label: "ARM / DISARM"
                         mask: (1 << 9) | (1 << 10)
                         all: true
                     }

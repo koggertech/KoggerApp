@@ -5492,6 +5492,21 @@ udp://@:1234
         <source>Switch gamepads after gamepad control ends</source>
         <translation>Сменить геймпад можно после окончания управления</translation>
     </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="749"/>
+        <source>Vibration</source>
+        <translation>Вибрация</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="767"/>
+        <source>Strength</source>
+        <translation>Сила</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadTestDialog.qml" line="152"/>
+        <source>Course hold</source>
+        <translation>Удержание курса</translation>
+    </message>
 </context>
 <context>
     <name>GlobalPanePopup</name>

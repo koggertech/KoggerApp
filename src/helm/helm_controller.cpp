@@ -41,6 +41,9 @@ constexpr int kMsPerSecond = 1000;
 constexpr qreal kRumbleThrottleMax = 0.6;
 constexpr qreal kRumbleSteeringMax = 0.4;
 constexpr qreal kRumbleFloor = 0.05;
+constexpr int kRumblePreviewMs = 100;
+constexpr qreal kRumbleStrengthDefault = 0.5;
+constexpr qreal kRumbleStrengthMin = 0.1;
 
 struct RumbleStep {
     int ms;
@@ -51,6 +54,7 @@ struct RumbleStep {
 constexpr RumbleStep kCueModeSteps[] = { { 50, 0.7, 1.0 }, { 70, 0.0, 0.0 }, { 50, 0.7, 1.0 } };
 constexpr RumbleStep kCueArmSteps[] = { { 40, 0.2, 0.5 }, { 70, 0.0, 0.0 }, { 60, 1.0, 1.0 } };
 constexpr RumbleStep kCueDisarmSteps[] = { { 60, 1.0, 1.0 }, { 70, 0.0, 0.0 }, { 40, 0.2, 0.5 } };
+constexpr RumbleStep kCueTapSteps[] = { { 45, 0.5, 0.9 } };
 
 constexpr int kRcChannels = 16;
 constexpr int kAuxRcOverrideEnable = 46;
@@ -156,6 +160,8 @@ std::span<const RumbleStep> cueSteps(int cue)
         return kCueArmSteps;
     case HelmController::CueDisarm:
         return kCueDisarmSteps;
+    case HelmController::CueTap:
+        return kCueTapSteps;
     default:
         return {};
     }
@@ -172,7 +178,8 @@ HelmController::HelmController(GamepadMonitor* monitor, DeviceManagerWrapper* ve
       checkTimer_(this),
       modeTimer_(this),
       writeTimer_(this),
-      cueTimer_(this)
+      cueTimer_(this),
+      rumblePreviewTimer_(this)
 {
     {
         QSettings settings(QStringLiteral("KOGGER"), QStringLiteral("KoggerApp"));
@@ -194,12 +201,14 @@ HelmController::HelmController(GamepadMonitor* monitor, DeviceManagerWrapper* ve
     writeTimer_.setInterval(kWriteDeadlineMs);
     cueTimer_.setSingleShot(true);
     cueTimer_.setTimerType(Qt::PreciseTimer);
+    rumblePreviewTimer_.setInterval(kRumblePreviewMs);
 
     connect(&sendTimer_, &QTimer::timeout, this, &HelmController::onSendTick);
     connect(&paramTimer_, &QTimer::timeout, this, &HelmController::pumpParams);
     connect(&checkTimer_, &QTimer::timeout, this, &HelmController::onCheckDeadline);
     connect(&modeTimer_, &QTimer::timeout, this, [this] { onModeResult(false); });
     connect(&writeTimer_, &QTimer::timeout, this, &HelmController::onWriteDeadline);
+    connect(&rumblePreviewTimer_, &QTimer::timeout, this, &HelmController::updateRumble);
     connect(&cueTimer_, &QTimer::timeout, this, [this] {
         ++cueStep_;
         playCueStep();
@@ -290,6 +299,13 @@ void HelmController::setRateHz(int value)
     saveTuning();
 }
 
+void HelmController::setRumbleStrength(qreal value)
+{
+    rumbleStrength_ = std::clamp(value, kRumbleStrengthMin, 1.0);
+    saveTuning();
+    updateRumble();
+}
+
 void HelmController::setRumble(bool rumble)
 {
     if (rumble_ == rumble) {
@@ -300,7 +316,7 @@ void HelmController::setRumble(bool rumble)
     if (!rumble_) {
         stopCue();
     }
-    updateRumble();
+    syncRumblePreview();
 }
 
 QVariantList HelmController::bindings() const
@@ -380,7 +396,11 @@ void HelmController::resetPadSettings()
     tuning_.triggerDeadzone = defaults.triggerDeadzone;
     bindings_ = helm::defaultBindings();
     saveProfile();
-    emit tuningChanged();
+    rumble_ = false;
+    rumbleStrength_ = kRumbleStrengthDefault;
+    stopCue();
+    saveTuning();
+    syncRumblePreview();
     emit bindingsChanged();
 }
 
@@ -439,6 +459,7 @@ void HelmController::setConfiguring(bool configuring)
     configuring_ = configuring;
     emit configuringChanged();
     emit layoutEditableChanged();
+    syncRumblePreview();
     if (configuring_) {
         cancelConfirmation();
         if (state_ != Off && state_ != Driving) {
@@ -612,6 +633,9 @@ void HelmController::onPadState()
         bumpersSpent_ = true;
     }
     const int fired = helm::firedButtons(previous, buttons, bumpersSpent_);
+    if (configuring_ && rumble_ && (buttons & ~previous) != 0) {
+        playCue(CueTap);
+    }
     if (!live) {
         return;
     }
@@ -1076,14 +1100,36 @@ void HelmController::sendCommand(const helm::Command& command)
     updateRumble();
 }
 
+qreal HelmController::scaledRumble(qreal level) const
+{
+    return std::min(1.0, level * rumbleStrength_ / kRumbleStrengthDefault);
+}
+
+void HelmController::syncRumblePreview()
+{
+    if (configuring_ && rumble_) {
+        rumblePreviewTimer_.start();
+    }
+    else {
+        rumblePreviewTimer_.stop();
+    }
+    updateRumble();
+}
+
 void HelmController::updateRumble()
 {
     if (cue_ != CueNone) {
         return;
     }
+    if (configuring_) {
+        const helm::Command preview = rumble_ ? helm::shape(padState(), bindings_, tuning_) : helm::Command{};
+        monitor_->setRumble(scaledRumble(rumbleLevel(preview.throttle, kRumbleThrottleMax)),
+                            scaledRumble(rumbleLevel(preview.steering, kRumbleSteeringMax)));
+        return;
+    }
     const bool on = rumble_ && state_ == Driving && vehicle_->pilotArmState() > 0;
-    monitor_->setRumble(on ? rumbleLevel(command_.throttle, kRumbleThrottleMax) : 0.0,
-                        on ? rumbleLevel(command_.steering, kRumbleSteeringMax) : 0.0);
+    monitor_->setRumble(on ? scaledRumble(rumbleLevel(command_.throttle, kRumbleThrottleMax)) : 0.0,
+                        on ? scaledRumble(rumbleLevel(command_.steering, kRumbleSteeringMax)) : 0.0);
 }
 
 void HelmController::playCue(int cue)
@@ -1108,7 +1154,7 @@ void HelmController::playCueStep()
         return;
     }
     const RumbleStep& step = steps[cueStep_];
-    monitor_->setRumble(step.low, step.high);
+    monitor_->setRumble(scaledRumble(step.low), scaledRumble(step.high));
     cueTimer_.start(step.ms);
 }
 
@@ -1134,6 +1180,8 @@ void HelmController::loadTuning()
     tuning_.forwardLimit = std::clamp(settings.value(QStringLiteral("forwardLimit"), defaults.forwardLimit).toDouble(), 0.0, 1.0);
     rateHz_ = std::clamp(settings.value(QStringLiteral("rateHz"), rateHz_).toInt(), kRateMinHz, kRateMaxHz);
     rumble_ = settings.value(QStringLiteral("rumble"), false).toBool();
+    rumbleStrength_ = std::clamp(settings.value(QStringLiteral("rumbleStrength"), kRumbleStrengthDefault).toDouble(),
+                                 kRumbleStrengthMin, 1.0);
     settings.endGroup();
 }
 
@@ -1147,6 +1195,7 @@ void HelmController::saveTuning()
     settings.setValue(QStringLiteral("forwardLimit"), tuning_.forwardLimit);
     settings.setValue(QStringLiteral("rateHz"), rateHz_);
     settings.setValue(QStringLiteral("rumble"), rumble_);
+    settings.setValue(QStringLiteral("rumbleStrength"), rumbleStrength_);
     settings.endGroup();
     emit tuningChanged();
 }

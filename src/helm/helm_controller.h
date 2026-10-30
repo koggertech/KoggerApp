@@ -45,6 +45,7 @@ class HelmController : public QObject
     Q_PROPERTY(qreal steeringLimit READ steeringLimit WRITE setSteeringLimit NOTIFY tuningChanged)
     Q_PROPERTY(int rateHz READ rateHz WRITE setRateHz NOTIFY tuningChanged)
     Q_PROPERTY(bool rumble READ rumble WRITE setRumble NOTIFY tuningChanged)
+    Q_PROPERTY(qreal rumbleStrength READ rumbleStrength WRITE setRumbleStrength NOTIFY tuningChanged)
     Q_PROPERTY(int lastCue READ lastCue NOTIFY cuePlayed)
     Q_PROPERTY(int cueCount READ cueCount NOTIFY cuePlayed)
     Q_PROPERTY(QString padFamily READ padFamily NOTIFY padFamilyChanged)
@@ -74,12 +75,13 @@ public:
     };
     Q_ENUM(Confirmation)
 
-    /** Short vibration patterns for events during a driving session. */
+    /** Short vibration patterns: mode and arm changes during a driving session, a button press while configuring. */
     enum RumbleCue {
         CueNone = -1,
         CueMode,
         CueArm,
-        CueDisarm
+        CueDisarm,
+        CueTap
     };
 
     HelmController(GamepadMonitor* monitor, DeviceManagerWrapper* vehicle, QObject* parent = nullptr);
@@ -144,11 +146,19 @@ public:
     /**
      * Vibration feedback, off by default. While driving an armed vehicle the pad's low-frequency motor
      * follows the sent throttle and the high-frequency one the sent steering, so neutral frames (outside
-     * Manual / Acro, paused, stopping) and a disarmed vehicle are silent. A mode change and arm / disarm
-     * seen during the session play a short pattern over it. Not part of resetTuning().
+     * Manual / Acro, stopping) and a disarmed vehicle are silent. A mode change and arm / disarm seen during
+     * the session play a short pattern over it. While the gamepad settings dialog is open (configuring) the
+     * pad vibrates from its own shaped input instead, so the setting can be felt; the vehicle still gets
+     * neutral frames. resetPadSettings() turns it off.
      */
     bool rumble() const { return rumble_; }
     void setRumble(bool rumble);
+    /**
+     * Vibration strength 0.1…1, default 0.5: scales the continuous rumble and the cues against their 0.5
+     * levels (1 doubles them, clipped at full); saved, resetPadSettings() restores 0.5.
+     */
+    qreal rumbleStrength() const { return rumbleStrength_; }
+    void setRumbleStrength(qreal value);
     /** The RumbleCue played last, CueNone before the first; a cue suppressed by `rumble` off is not counted. */
     int lastCue() const { return lastCue_; }
     /** Cues played since start: tells a cue that came and went from none, whatever the pad felt. */
@@ -174,7 +184,10 @@ public:
      */
     Q_INVOKABLE QVariantMap assignBinding(int action, int input);
     Q_INVOKABLE void resetBindings();
-    /** Resets the layout and both dead zones of the current pad family; refused while a session is on. */
+    /**
+     * The gamepad dialog's reset: the layout and both dead zones of the current pad family, and vibration (off,
+     * strength 0.5); refused while the layout is not editable.
+     */
     Q_INVOKABLE void resetPadSettings();
 
     /** Starts a session: parameter check, Manual, then streaming. Refused with a toast when unsafe. */
@@ -240,6 +253,8 @@ private:
     void playCue(int cue);
     void playCueStep();
     void stopCue();
+    void syncRumblePreview();
+    qreal scaledRumble(qreal level) const;
     void notify(const QString& text, int severity);
     void loadTuning();
     void saveTuning();
@@ -260,6 +275,7 @@ private:
     QString padFamily_;
     int rateHz_ = kDefaultRateHz;
     bool rumble_ = false;
+    qreal rumbleStrength_ = 0.5;
     helm::Command command_;
     double steeringNeutral_ = 0.0;
     double throttleNeutral_ = 0.0;
@@ -270,6 +286,7 @@ private:
     QTimer modeTimer_;
     QTimer writeTimer_;
     QTimer cueTimer_;
+    QTimer rumblePreviewTimer_;
     QElapsedTimer clock_;
     qint64 lastSampleMs_ = -1;
     qint64 checkStartMs_ = -1;
