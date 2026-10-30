@@ -3215,6 +3215,16 @@ udp://@:1234
         <source>Open</source>
         <translation>Открыть</translation>
     </message>
+    <message>
+        <location filename="../qml/app/DeveloperSettingsTab.qml" line="88"/>
+        <source>Gamepad drawings</source>
+        <translation>Рисунки геймпадов</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/DeveloperSettingsTab.qml" line="89"/>
+        <source>Every gamepad drawing the app has, side by side</source>
+        <translation>Все рисунки геймпадов в приложении рядом</translation>
+    </message>
 </context>
 <context>
     <name>DeviceItem</name>
@@ -5130,6 +5140,19 @@ udp://@:1234
         <location filename="../qml/legacy_qml/devices/FlashBox.qml" line="49"/>
         <source>Reboot</source>
         <translation>Перезагрузить</translation>
+    </message>
+</context>
+<context>
+    <name>GamepadGallery</name>
+    <message>
+        <location filename="../qml/settings/GamepadGallery.qml" line="13"/>
+        <source>Other gamepad</source>
+        <translation>Другой геймпад</translation>
+    </message>
+    <message>
+        <location filename="../qml/settings/GamepadGallery.qml" line="39"/>
+        <source>Gamepad drawings</source>
+        <translation>Рисунки геймпадов</translation>
     </message>
 </context>
 <context>

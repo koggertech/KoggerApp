@@ -6,12 +6,24 @@ GamepadPad {
     id: root
 
     readonly property bool dualSense: !!view && view.family === "ps5"
+    readonly property real padWidth: dualSense ? 176 : 164
+    readonly property real padLeft: 280 - padWidth / 2
+    readonly property real sideGap: 8
+    readonly property real sideKeyWidth: 12
+    readonly property real sideLeftX: padLeft - sideGap - sideKeyWidth / 2
+    readonly property real sideRightX: padLeft + padWidth + sideGap + sideKeyWidth / 2
+    readonly property color lightColor: "#4C7FD9"
+    readonly property real lightThickness: 4
+    readonly property real padTop: dualSense ? 78 : 86
+    readonly property real padBottom: padTop + (dualSense ? 92 : 78)
+    readonly property real dpadX: 110
+    readonly property real faceX: 450
 
     GamepadTrigger { x: 70;  y: 0; label: "L2"; value: root.trigger(110); deadzone: root.triggerZone }
     GamepadTrigger { x: 400; y: 0; label: "R2"; value: root.trigger(111); deadzone: root.triggerZone }
 
-    GamepadKey { pad: root; x: 60;  y: 38; width: 130; height: 28; radius: 12; bit: 9;  label: "L1" }
-    GamepadKey { pad: root; x: 370; y: 38; width: 130; height: 28; radius: 12; bit: 10; label: "R1" }
+    GamepadKey { pad: root; x: 64;  y: 40; width: 124; height: 22; radius: 9; bit: 9;  label: "L1" }
+    GamepadKey { pad: root; x: 372; y: 40; width: 124; height: 22; radius: 9; bit: 10; label: "R1" }
 
     Shape {
         anchors.fill: parent
@@ -21,43 +33,68 @@ GamepadPad {
             fillColor: AppPalette.card
             strokeColor: AppPalette.borderHover
             strokeWidth: 2
-            startX: 140; startY: 74
-            PathLine { x: 420; y: 74 }
-            PathCubic { control1X: 480; control1Y: 74;  control2X: 512; control2Y: 100; x: 522; y: 160 }
-            PathCubic { control1X: 534; control1Y: 230; control2X: 548; control2Y: 320; x: 512; y: 352 }
-            PathCubic { control1X: 484; control1Y: 376; control2X: 446; control2Y: 360; x: 428; y: 322 }
-            PathCubic { control1X: 410; control1Y: 290; control2X: 396; control2Y: 282; x: 372; y: 282 }
-            PathLine { x: 188; y: 282 }
-            PathCubic { control1X: 164; control1Y: 282; control2X: 150; control2Y: 290; x: 132; y: 322 }
-            PathCubic { control1X: 114; control1Y: 360; control2X: 76;  control2Y: 376; x: 48;  y: 352 }
-            PathCubic { control1X: 12;  control1Y: 320; control2X: 26;  control2Y: 230; x: 38;  y: 160 }
-            PathCubic { control1X: 48;  control1Y: 100; control2X: 80;  control2Y: 74;  x: 140; y: 74 }
+            joinStyle: ShapePath.RoundJoin
+            startX: 150; startY: 72
+            PathLine { x: 410; y: 72 }
+            PathCubic { control1X: 458; control1Y: 70;  control2X: 494; control2Y: 80;  x: 512; y: 112 }
+            PathCubic { control1X: 532; control1Y: 150; control2X: 540; control2Y: 196; x: 544; y: 240 }
+            PathCubic { control1X: 550; control1Y: 286; control2X: 554; control2Y: 328; x: 530; y: 346 }
+            PathCubic { control1X: 506; control1Y: 364; control2X: 468; control2Y: 354; x: 456; y: 320 }
+            PathCubic { control1X: 446; control1Y: 290; control2X: 424; control2Y: 270; x: 392; y: 268 }
+            PathLine { x: 168; y: 268 }
+            PathCubic { control1X: 136; control1Y: 270; control2X: 114; control2Y: 290; x: 104; y: 320 }
+            PathCubic { control1X: 92;  control1Y: 354; control2X: 54;  control2Y: 364; x: 30;  y: 346 }
+            PathCubic { control1X: 6;   control1Y: 328; control2X: 10;  control2Y: 286; x: 16;  y: 240 }
+            PathCubic { control1X: 20;  control1Y: 196; control2X: 28;  control2Y: 150; x: 48;  y: 112 }
+            PathCubic { control1X: 66;  control1Y: 80;  control2X: 102; control2Y: 70;  x: 150; y: 72 }
         }
     }
+
+    Rectangle {
+        visible: !root.dualSense
+        x: root.padLeft + 6
+        y: 77
+        width: root.padWidth - 12
+        height: root.lightThickness
+        radius: root.lightThickness / 2
+        color: root.lightColor
+        opacity: 0.8
+    }
+    component SideLight: Rectangle {
+        width: root.lightThickness
+        height: root.padBottom - y
+        radius: root.lightThickness / 2
+        color: root.lightColor
+        opacity: 0.8
+        visible: root.dualSense
+    }
+
+    SideLight { x: root.sideLeftX - width / 2; y: 124 }
+    SideLight { x: root.sideRightX - width / 2; y: 124 }
 
     GamepadKey {
         pad: root
         bit: 20
-        x: root.dualSense ? 186 : 196
-        y: 82
-        width: root.dualSense ? 188 : 168
-        height: root.dualSense ? 86 : 74
-        radius: 10
+        x: root.padLeft
+        y: root.padTop
+        width: root.padWidth
+        height: root.padBottom - root.padTop
+        radius: 12
     }
 
-    GamepadDpad { pad: root; x: 128 - width / 2; y: 158 - height / 2 }
+    GamepadDpad { pad: root; split: true; key: 26; x: root.dpadX - width / 2; y: 168 - height / 2 }
 
-    GamepadKey { pad: root; bit: 0; x: 432 - 18; y: 192 - 18; width: 36; height: 36; tinted: true; label: "cross";    tint: "#7EB2F2" }
-    GamepadKey { pad: root; bit: 1; x: 466 - 18; y: 158 - 18; width: 36; height: 36; tinted: true; label: "circle";   tint: "#F06A6A" }
-    GamepadKey { pad: root; bit: 2; x: 398 - 18; y: 158 - 18; width: 36; height: 36; tinted: true; label: "square";   tint: "#E68CC8" }
-    GamepadKey { pad: root; bit: 3; x: 432 - 18; y: 124 - 18; width: 36; height: 36; tinted: true; label: "triangle"; tint: "#4FD1A5" }
+    GamepadKey { pad: root; bit: 0; x: root.faceX - 18;      y: 202 - 18; width: 36; height: 36; tinted: true; label: "cross";    tint: "#7EB2F2" }
+    GamepadKey { pad: root; bit: 1; x: root.faceX + 36 - 18; y: 166 - 18; width: 36; height: 36; tinted: true; label: "circle";   tint: "#F06A6A" }
+    GamepadKey { pad: root; bit: 2; x: root.faceX - 36 - 18; y: 166 - 18; width: 36; height: 36; tinted: true; label: "square";   tint: "#E68CC8" }
+    GamepadKey { pad: root; bit: 3; x: root.faceX - 18;      y: 130 - 18; width: 36; height: 36; tinted: true; label: "triangle"; tint: "#4FD1A5" }
 
-    GamepadKey { pad: root; bit: 4; x: (root.dualSense ? 170 : 178) - 8; y: 92; width: 16; height: 30 }
-    GamepadKey { pad: root; bit: 6; x: (root.dualSense ? 390 : 382) - 8; y: 92; width: 16; height: 30 }
+    GamepadKey { pad: root; bit: 4; x: root.sideLeftX - width / 2; y: 92; width: root.sideKeyWidth; height: 26 }
+    GamepadKey { pad: root; bit: 6; x: root.sideRightX - width / 2; y: 92; width: root.sideKeyWidth; height: 26 }
 
-    GamepadStick { pad: root; bit: 7; x: 206 - width / 2; y: 236 - height / 2; axisX: root.axis(0); axisY: root.axis(1); deadzone: root.stickZone }
-    GamepadStick { pad: root; bit: 8; x: 354 - width / 2; y: 236 - height / 2; axisX: root.axis(2); axisY: root.axis(3); deadzone: root.stickZone }
+    GamepadStick { pad: root; bit: 7; x: 206 - width / 2; y: 222 - height / 2; axisX: root.axis(0); axisY: root.axis(1); deadzone: root.stickZone }
+    GamepadStick { pad: root; bit: 8; x: 354 - width / 2; y: 222 - height / 2; axisX: root.axis(2); axisY: root.axis(3); deadzone: root.stickZone }
 
-    GamepadKey { pad: root; bit: 5;  x: 280 - 14; y: 236 - 14; width: 28; height: 28 }
-    GamepadKey { pad: root; bit: 15; x: 280 - 14; y: 264 - 5;  width: 28; height: 10; visible: root.dualSense }
+    GamepadKey { pad: root; bit: 5;  x: 280 - 13; y: root.dualSense ? 201 : 209; width: 26; height: 26 }
+    GamepadKey { pad: root; bit: 15; x: 280 - 13; y: 236; width: 26; height: 8; visible: root.dualSense }
 }

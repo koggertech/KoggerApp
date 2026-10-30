@@ -9,6 +9,9 @@ qt_add_qml_module(kogger_settings
         GamepadTrigger.qml
         GamepadStick.qml
         GamepadDpad.qml
+        GamepadArrowKey.qml
+        GamepadSymbol.qml
         GamepadXbox.qml
         GamepadDualShock.qml
-        GamepadSteam.qml)
+        GamepadSteam.qml
+        GamepadGallery.qml)

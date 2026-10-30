@@ -57,7 +57,7 @@ Rectangle {
         anchors.centerIn: parent
         text: trigger.label
         color: AppPalette.text
-        font.pixelSize: 13
+        font.pixelSize: 15
         font.bold: true
     }
 }

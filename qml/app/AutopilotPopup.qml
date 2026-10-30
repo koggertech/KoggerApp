@@ -799,17 +799,53 @@ BasePanePopup {
                     autoToolTip: false
                     onClicked: root.requestArm()
 
-                    Text {
-                        anchors.centerIn: parent
+                    Item {
+                        id: armLabel
+                        readonly property bool twoLines: root.armConfirmPending || root._armed
+                        readonly property string topLine: root._armed && !root.armConfirmPending ? "DIS" : "ARM"
+                        readonly property string bottomLine: root.armConfirmPending
+                                                         ? String(Math.max(1, Math.ceil(root._armCountdown * root._armConfirmMs / 1000)))
+                                                         : "ARM"
+                        readonly property color ink: armBtn.danger ? AppPalette.dangerText : AppPalette.textStrong
+                        readonly property int pixelSize: Math.round((twoLines ? 10 : 12) * root._s)
+                        readonly property real gap: Math.max(2, Math.round(3 * root._s))
+                        readonly property real inkHeight: topMetrics.tightBoundingRect.height
+                                                          + (twoLines ? gap + bottomMetrics.tightBoundingRect.height : 0)
+                        readonly property real inkTop: Math.round((height - inkHeight) / 2) + (root.armConfirmPending ? Math.round(2 * root._s) : 0)
+
+                        anchors.fill: parent
                         scale: armBtn.contentScale
-                        text: root.armConfirmPending ? "ARM\n" + Math.max(1, Math.ceil(root._armCountdown * root._armConfirmMs / 1000))
-                                                     : root._armed ? "DIS\nARM" : "ARM"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        lineHeight: 0.85
-                        color: armBtn.danger ? AppPalette.dangerText : AppPalette.textStrong
-                        font.pixelSize: Math.round((root._armed || root.armConfirmPending ? 10 : 12) * root._s)
-                        font.weight: Font.Black
+
+                        Text {
+                            id: armTopText
+                            x: Math.round(armLabel.width / 2 - (topMetrics.tightBoundingRect.x + topMetrics.tightBoundingRect.width / 2))
+                            y: armLabel.inkTop - (baselineOffset + topMetrics.tightBoundingRect.y)
+                            text: armLabel.topLine
+                            color: armLabel.ink
+                            font.pixelSize: armLabel.pixelSize
+                            font.weight: Font.Bold
+                        }
+                        Text {
+                            id: armBottomText
+                            visible: armLabel.twoLines
+                            x: Math.round(armLabel.width / 2 - (bottomMetrics.tightBoundingRect.x + bottomMetrics.tightBoundingRect.width / 2))
+                            y: armLabel.inkTop + topMetrics.tightBoundingRect.height + armLabel.gap
+                               - (baselineOffset + bottomMetrics.tightBoundingRect.y)
+                            text: armLabel.bottomLine
+                            color: armLabel.ink
+                            font.pixelSize: armLabel.pixelSize
+                            font.weight: Font.Bold
+                        }
+                        TextMetrics {
+                            id: topMetrics
+                            font: armTopText.font
+                            text: armTopText.text
+                        }
+                        TextMetrics {
+                            id: bottomMetrics
+                            font: armBottomText.font
+                            text: armBottomText.text
+                        }
                     }
 
                     Shape {

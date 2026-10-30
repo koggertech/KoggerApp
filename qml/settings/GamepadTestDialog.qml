@@ -18,13 +18,13 @@ Popup {
     readonly property int buttons: hasMonitor ? (gamepadMonitor.buttons & ~(1 << guideButton)) : 0
     readonly property int availableButtons: hasMonitor ? gamepadMonitor.availableButtons : 0
 
-    readonly property string pressedText: {
-        var names = []
+    readonly property var pressedItems: {
+        var items = []
         for (var i = 0; i < buttonCount; ++i) {
             if ((buttons & (1 << i)) !== 0)
-                names.push(buttonName(i))
+                items.push({ symbol: buttonSymbol(i), text: buttonName(i) })
         }
-        return names.length ? names.join(", ") : "—"
+        return items
     }
 
     readonly property string familyName: {
@@ -61,6 +61,11 @@ Popup {
             case "triangle": return "△"
             default:         return label
         }
+    }
+
+    function buttonSymbol(bit) {
+        var label = bit <= 3 && faceLabels.length > bit ? faceLabels[bit] : ""
+        return label === "cross" || label === "circle" || label === "square" || label === "triangle" ? label : ""
     }
 
     function faceName(index) {
@@ -386,6 +391,11 @@ Popup {
         radius: 10
     }
 
+    component PressedText: Text {
+        color: AppPalette.text
+        font.pixelSize: Tokens.fontBase
+    }
+
     component SectionHeader: Item {
         id: sectionHeader
         property string text: ""
@@ -447,8 +457,10 @@ Popup {
             border.width: bindingRow.listening ? 1 : Tokens.cardBorderWidth
 
             Text {
+                id: inputText
                 anchors.centerIn: parent
                 width: parent.width - 2 * Tokens.spaceSm
+                visible: !inputSymbol.visible
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
                 text: bindingRow.listening ? "…" : dialog.inputName(bindingRow.kind, bindingRow.input)
@@ -457,6 +469,14 @@ Popup {
                      : dialog.editable ? AppPalette.text : AppPalette.textSecond
                 font.pixelSize: Tokens.fontMd
                 font.bold: true
+            }
+            GamepadSymbol {
+                id: inputSymbol
+                anchors.centerIn: parent
+                width: Math.round(Tokens.fontMd * 0.9)
+                visible: !bindingRow.listening && bindingRow.kind === "button" && label.length > 0
+                label: bindingRow.input >= 0 ? dialog.buttonSymbol(bindingRow.input) : ""
+                color: inputText.color
             }
         }
 
@@ -722,12 +742,34 @@ Popup {
                     width: parent.width
                     spacing: Tokens.spaceSm
 
-                    Text {
+                    Flow {
+                        id: pressedLine
+                        readonly property var parts: qsTr("Pressed: %1").split("%1")
+
                         width: parent.width
-                        text: qsTr("Pressed: %1").arg(dialog.pressedText)
-                        color: AppPalette.text
-                        font.pixelSize: Tokens.fontBase
-                        wrapMode: Text.Wrap
+
+                        PressedText { text: pressedLine.parts[0] }
+                        Repeater {
+                            model: dialog.pressedItems
+                            delegate: Row {
+                                id: pressedItem
+                                required property var modelData
+                                required property int index
+                                height: pressedSample.implicitHeight
+
+                                PressedText { text: pressedItem.index > 0 ? ", " : "" }
+                                PressedText { visible: !pressedItem.modelData.symbol; text: pressedItem.modelData.text }
+                                GamepadSymbol {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: Math.round(Tokens.fontBase * 0.8)
+                                    visible: pressedItem.modelData.symbol.length > 0
+                                    label: pressedItem.modelData.symbol
+                                    color: AppPalette.text
+                                }
+                            }
+                        }
+                        PressedText { id: pressedSample; text: dialog.pressedItems.length ? "" : "—" }
+                        PressedText { text: pressedLine.parts.length > 1 ? pressedLine.parts[1] : "" }
                     }
 
                     Text {

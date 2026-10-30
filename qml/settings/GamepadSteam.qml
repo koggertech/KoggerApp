@@ -23,29 +23,29 @@ GamepadPad {
             PathLine { x: 440; y: 74 }
             PathCubic { control1X: 500; control1Y: 74;  control2X: 530; control2Y: 110; x: 536; y: 170 }
             PathCubic { control1X: 544; control1Y: 250; control2X: 550; control2Y: 330; x: 516; y: 356 }
-            PathCubic { control1X: 486; control1Y: 378; control2X: 452; control2Y: 362; x: 440; y: 330 }
-            PathLine { x: 120; y: 330 }
-            PathCubic { control1X: 108; control1Y: 362; control2X: 74;  control2Y: 378; x: 44;  y: 356 }
+            PathCubic { control1X: 490; control1Y: 376; control2X: 458; control2Y: 366; x: 446; y: 342 }
+            PathCubic { control1X: 440; control1Y: 328; control2X: 430; control2Y: 320; x: 410; y: 320 }
+            PathLine { x: 150; y: 320 }
+            PathCubic { control1X: 130; control1Y: 320; control2X: 120; control2Y: 328; x: 114; y: 342 }
+            PathCubic { control1X: 102; control1Y: 366; control2X: 70;  control2Y: 376; x: 44;  y: 356 }
             PathCubic { control1X: 10;  control1Y: 330; control2X: 16;  control2Y: 250; x: 24;  y: 170 }
             PathCubic { control1X: 30;  control1Y: 110; control2X: 60;  control2Y: 74;  x: 120; y: 74 }
         }
-
-        ShapePath {
-            fillColor: AppPalette.controlRaised
-            strokeColor: AppPalette.borderHover
-            strokeWidth: 2
-            startX: 140; startY: 212
-            PathLine { x: 226; y: 212 }
-            PathLine { x: 226; y: 298 }
-            PathLine { x: 140; y: 298 }
-            PathLine { x: 140; y: 212 }
-            PathMove { x: 334; y: 212 }
-            PathLine { x: 420; y: 212 }
-            PathLine { x: 420; y: 298 }
-            PathLine { x: 334; y: 298 }
-            PathLine { x: 334; y: 212 }
-        }
     }
+
+    component Trackpad: Rectangle {
+        y: 212
+        width: 86
+        height: 86
+        radius: 16
+        antialiasing: true
+        color: AppPalette.controlRaised
+        border.color: AppPalette.borderHover
+        border.width: 2
+    }
+
+    Trackpad { x: 140; rotation: 10 }
+    Trackpad { x: 334; rotation: -10 }
 
     GamepadDpad { pad: root; x: 108 - width / 2; y: 140 - height / 2 }
 
@@ -60,10 +60,28 @@ GamepadPad {
     GamepadKey { pad: root; bit: 4;  x: 190 - 14; y: 88; width: 28; height: 16 }
     GamepadKey { pad: root; bit: 6;  x: 370 - 14; y: 88; width: 28; height: 16 }
     GamepadKey { pad: root; bit: 5;  x: 280 - 16; y: 84; width: 32; height: 32 }
-    GamepadKey { pad: root; bit: 15; x: 280 - 16; y: 250; width: 32; height: 16; label: "…"; labelSize: 12 }
+    GamepadKey {
+        id: dotsKey
+        pad: root; bit: 15; x: 280 - 16; y: 250; width: 32; height: 16
 
-    GamepadKey { pad: root; bit: 17; x: 62;  y: 296; width: 34; height: 18; label: "L4"; labelSize: 11 }
-    GamepadKey { pad: root; bit: 19; x: 78;  y: 322; width: 34; height: 18; label: "L5"; labelSize: 11 }
-    GamepadKey { pad: root; bit: 16; x: 464; y: 296; width: 34; height: 18; label: "R4"; labelSize: 11 }
-    GamepadKey { pad: root; bit: 18; x: 448; y: 322; width: 34; height: 18; label: "R5"; labelSize: 11 }
+        Row {
+            anchors.centerIn: parent
+            spacing: 3
+
+            Repeater {
+                model: 3
+                delegate: Rectangle {
+                    width: 4
+                    height: 4
+                    radius: 2
+                    color: dotsKey.down ? "#FFFFFF" : AppPalette.text
+                }
+            }
+        }
+    }
+
+    GamepadKey { pad: root; bit: 17; x: 66 - width / 2;  y: 236; width: 34; height: 18; label: "L4"; labelSize: 13 }
+    GamepadKey { pad: root; bit: 19; x: 66 - width / 2;  y: 262; width: 34; height: 18; label: "L5"; labelSize: 13 }
+    GamepadKey { pad: root; bit: 16; x: 494 - width / 2; y: 236; width: 34; height: 18; label: "R4"; labelSize: 13 }
+    GamepadKey { pad: root; bit: 18; x: 494 - width / 2; y: 262; width: 34; height: 18; label: "R5"; labelSize: 13 }
 }
