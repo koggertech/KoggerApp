@@ -16,7 +16,7 @@ Item {
     readonly property real _s: AppPalette.appScale
     readonly property int _windowW: store ? store.windowWidth : 1440
     readonly property int _leadOffset: showToggleButton ? toggleButtonSize + Math.round(8 * root._s) : 0
-    property real maxExpandedWidth: Math.max(240,
+    readonly property real maxExpandedWidth: Math.max(2 * panelPaddingX + _arrowSlotW + 2 * controlHeight + quickActionSpacing,
                                              Math.min(620 * root._s,
                                                       _windowW - root.x - _leadOffset - Math.round(16 * root._s)))
     property int controlHeight: Math.round(36 * root._s)
@@ -33,8 +33,14 @@ Item {
     readonly property color buttonHoverBorderColor: AppPalette.borderHover
     readonly property int panelHeight: controlHeight + panelPaddingX * 2
     readonly property int _arrowSlotW: showToggleButton ? toggleButtonSize + Math.round(8 * root._s) : 0
-    readonly property int _flowContentW: Math.max(root.controlHeight,
+    readonly property int _stripMaxW: Math.max(root.controlHeight,
                                                   root.maxExpandedWidth - 2 * root.panelPaddingX - root._arrowSlotW)
+    readonly property int _stripFadeW: Math.round(controlHeight / 2) + panelPaddingX
+    readonly property real _stripLiveW: Math.max(0, Math.min(strip.width, panel.width - strip.x - panelPaddingX))
+    readonly property int _comboPad: Math.round(3 * root._s)
+    readonly property color _stripBgClear: Qt.rgba(hotkeysLayerColor.r, hotkeysLayerColor.g, hotkeysLayerColor.b, 0)
+    readonly property bool _stripCanBack: strip.contentX > 0.5
+    readonly property bool _stripCanForward: strip.contentX < strip.contentWidth - strip.width - 0.5
     readonly property int _bgAdjustMs: 190
     // While the "layouts" reveal sequence is active we keep showing the icons
     // even if the user just disabled them — so they're visible during the
@@ -118,6 +124,7 @@ Item {
         && (typeof manualTesting !== "undefined" && manualTesting === true)
     readonly property int inputDeviceBadgeWidth: inputDeviceBadgeVisible ? inputDeviceBadge.implicitWidth : 0
 
+    signal stripUserScrolled()
     signal settingsTriggered()
     signal connectionsTriggered()
     signal loggingIndicatorTriggered()
@@ -523,6 +530,7 @@ Item {
             return
         highlightedQuickActionKey = _revealActiveKey
         highlightPulseToken += 1
+        _showInStrip(_stripItemForKey(_revealActiveKey))
     }
 
     function clearQuickActionReveal() {
@@ -531,6 +539,93 @@ Item {
         // (while the panel is still open). Panel closure follows a moment
         // later via the close timer in MainWindow.
         _revealActiveKey = ""
+    }
+
+    function _clampStripX(x) {
+        return Math.max(0, Math.min(x, strip.contentWidth - strip.width))
+    }
+
+    function _stripTargetX() {
+        return stripScrollAnim.running ? stripScrollAnim.to : strip.contentX
+    }
+
+    function _scrollStripTo(x) {
+        stripScrollAnim.to = _clampStripX(x)
+        stripScrollAnim.restart()
+    }
+
+    function _reclampStrip() {
+        stripScrollAnim.stop()
+        strip.contentX = _clampStripX(strip.contentX)
+    }
+
+    function _userScrollsStrip() {
+        layoutsMenuOpen = false
+        widgetsMenuOpen = false
+        stripUserScrolled()
+    }
+
+    function _wheelStrip(event) {
+        _userScrollsStrip()
+        var px = event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.pixelDelta.x
+        if (px !== 0) {
+            stripScrollAnim.stop()
+            strip.contentX = _clampStripX(strip.contentX - px)
+            return
+        }
+        var d = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x
+        _scrollStripTo(_stripTargetX() - d)
+    }
+
+    function _pageStrip(direction) {
+        _userScrollsStrip()
+        _scrollStripTo(_stripTargetX() + direction * Math.max(controlHeight, strip.width - 2 * controlHeight))
+    }
+
+    function _isStripItem(item) {
+        for (var p = item; p; p = p.parent)
+            if (p === topRow)
+                return true
+        return false
+    }
+
+    function _stripItemForKey(key) {
+        for (var i = 0; i < topRow.children.length; ++i) {
+            var c = topRow.children[i]
+            if (c.key === key && c.visible)
+                return c
+        }
+        return null
+    }
+
+    function _showInStrip(item) {
+        if (!item || !strip.interactive || !_isStripItem(item))
+            return
+        var left = item.mapToItem(topRow, 0, 0).x - _stripFadeW
+        var right = left + item.width + 2 * _stripFadeW
+        var target = _stripTargetX()
+        if (right > target + strip.width)
+            target = right - strip.width
+        if (left < target)
+            target = left
+        if (target !== _stripTargetX())
+            _scrollStripTo(target)
+    }
+
+    Connections {
+        target: root.Window.window
+        function onActiveFocusItemChanged() { root._showInStrip(root.Window.activeFocusItem) }
+    }
+
+    onLayoutsMenuOpenChanged: if (layoutsMenuOpen) _showInStrip(_favSlot)
+    onWidgetsMenuOpenChanged: if (widgetsMenuOpen) _showInStrip(_widgetsSlot)
+
+    NumberAnimation {
+        id: stripScrollAnim
+        target: strip
+        property: "contentX"
+        duration: 220
+        easing.type: Easing.OutCubic
     }
 
     onExpandedChanged: {
@@ -853,6 +948,7 @@ Item {
         Connections {
             target: root
             function onExpandedChanged() { if (pill.opened) pill.close() }   // collapse menu → close record pill
+            function onStripUserScrolled() { if (pill.opened) pill.close() }
         }
 
         Rectangle {
@@ -1034,6 +1130,7 @@ Item {
             width: logBadge.width + 2 * pad
             padding: pad
             closePolicy: Popup.CloseOnEscape   // stays open independently of other pills
+            onAboutToShow: root._showInStrip(logBadge)
 
             property int sizeB: 0
             property int secs: 0
@@ -1446,6 +1543,67 @@ Item {
         }
     }
 
+    component StripEdge: Item {
+        id: edge
+
+        property bool active: false
+        property bool forward: true
+
+        width: Math.min(root._stripFadeW, Math.round(strip.width / 4))
+        height: strip.height
+        visible: active || fade.opacity > 0.01
+
+        Rectangle {
+            id: fade
+            anchors.fill: parent
+            opacity: edge.active ? 1 : 0
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0.0; color: edge.forward ? root._stripBgClear : root.hotkeysLayerColor }
+                GradientStop { position: 1.0; color: edge.forward ? root.hotkeysLayerColor : root._stripBgClear }
+            }
+            Behavior on opacity { NumberAnimation { duration: 120 } }
+        }
+
+        Item {
+            width: Math.round(root.controlHeight * 0.4)
+            height: width
+            x: Math.round((edge.width - width) / 2)
+            y: Math.round((edge.height - height) / 2)
+            rotation: edge.forward ? 0 : 180
+            opacity: edge.active ? (edgeMouse.containsMouse ? 0.95 : 0.6) : 0.0
+            Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+
+            Image {
+                id: edgeArrow
+                anchors.fill: parent
+                source: "qrc:/icons/ui/chevron-right.svg"
+                fillMode: Image.PreserveAspectFit
+                sourceSize.width: width
+                sourceSize.height: height
+                visible: false
+            }
+            ColorOverlay {
+                anchors.fill: edgeArrow
+                source: edgeArrow
+                color: AppPalette.text
+            }
+        }
+
+        MouseArea {
+            id: edgeMouse
+            anchors.fill: parent
+            enabled: edge.active
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root._pageStrip(edge.forward ? 1 : -1)
+            onWheel: function(wheel) {
+                root._wheelStrip(wheel)
+                wheel.accepted = true
+            }
+        }
+    }
+
     Component {
         id: deviceShortcutDelegate
 
@@ -1528,6 +1686,7 @@ Item {
                 Connections {
                     target: root
                     function onExpandedChanged() { if (devPill.opened) devPill.close() }
+                    function onStripUserScrolled() { if (devPill.opened) devPill.close() }
                 }
 
                 KCircleIconButton {
@@ -1573,6 +1732,7 @@ Item {
                     width: devBadge.width + 2 * pad
                     padding: pad
                     closePolicy: Popup.CloseOnEscape
+                    onAboutToShow: root._showInStrip(devBadge)
 
                     background: Rectangle {
                         color: AppPalette.bg
@@ -2159,23 +2319,14 @@ Item {
         width: root.expanded ? Math.min(root.maxExpandedWidth,
                                         2 * root.panelPaddingX + root._arrowSlotW + topRow.implicitWidth)
                              : 0
-        height: root.expanded
-                ? Math.max(root.panelHeight, 2 * root.panelPaddingX + topRow.implicitHeight)
-                : root.panelHeight
-        radius: Math.min(height, root.panelHeight) / 2
+        height: root.panelHeight
+        radius: height / 2
         clip: true
         color: root.hotkeysLayerColor
         border.width: 0
         opacity: root.expanded ? 1 : 0
 
         Behavior on width {
-            NumberAnimation {
-                duration: root._bgAdjustMs
-                easing.type: Easing.OutCubic
-            }
-        }
-
-        Behavior on height {
             NumberAnimation {
                 duration: root._bgAdjustMs
                 easing.type: Easing.OutCubic
@@ -2198,253 +2349,353 @@ Item {
                 if (typeof core !== "undefined" && core) core.setActiveTransientUi(root)
                 mouse.accepted = true
             }
-            onWheel: function(wheel) { wheel.accepted = true }
+            onWheel: function(wheel) {
+                root._wheelStrip(wheel)
+                wheel.accepted = true
+            }
         }
 
-        Flow {
-            id: topRow
-            anchors.left: parent.left
-            anchors.leftMargin: root.panelPaddingX + root._arrowSlotW
-            anchors.top: parent.top
-            anchors.topMargin: root.panelPaddingX
-            width: root._flowContentW
-            spacing: root.quickActionSpacing   // Flow applies this to BOTH axes → equal H/V gaps
+        Flickable {
+            id: strip
+            x: root.panelPaddingX + root._arrowSlotW
+            y: 0
+            width: Math.min(topRow.implicitWidth, root._stripMaxW)
+            height: root.panelHeight
+            contentWidth: topRow.implicitWidth
+            contentHeight: root.panelHeight
+            interactive: contentWidth > width + 0.5
+            flickableDirection: Flickable.HorizontalFlick
+            boundsBehavior: Flickable.StopAtBounds
             enabled: root.expanded
-
-            move: Transition {
-                SequentialAnimation {
-                    PauseAnimation { duration: root._bgAdjustMs }
-                    NumberAnimation { properties: "x,y"; duration: 200; easing.type: Easing.OutCubic }
+            onMovementStarted: {
+                stripScrollAnim.stop()
+                root._userScrollsStrip()
+            }
+            onContentWidthChanged: root._reclampStrip()
+            onWidthChanged: root._reclampStrip()
+            layer.enabled: strip.interactive && panel.opacity > 0.01
+            layer.effect: OpacityMask {
+                maskSource: ShaderEffectSource {
+                    hideSource: true
+                    sourceItem: Rectangle {
+                        width: strip.width
+                        height: strip.height
+                        radius: strip.height / 2
+                    }
                 }
             }
 
-            Repeater {
-                model: root.store ? root.store.quickActionOrderModel : 0
-                delegate: Loader {
-                    required property string key
-                    height: root.controlHeight
-                    visible: key === "connections" ? ((root.connectionStatusToolVisible || root._revealActiveKey === "connections") && (root._hasConnectedDevice || root.layoutEditing))
-                           : key === "logging"     ? root._loggingBadgeVisibleExpanded
-                           : key === "layouts"   ? root.hasFavoriteLayouts
-                           : key === "bottomTrack" ? root.showBtEdit
-                           : key === "contact"     ? root.showContact
-                           : key === "mission"     ? root.showMission
-                           : key === "autopilot"   ? root.showAutopilot
-                           : key === "widgets"     ? root.showWidgets
-                           : key === "console"      ? root.showConsole
-                           : key === "profiles"     ? root.showProfiles
-                           : key === "nodes"        ? root.showNodes
-                           : key === "inputLock"    ? root._showInputLock
-                           : key === "secondWindow" ? root._showSecondWindow
-                           : key === "powerOff"     ? root._showPowerOff
-                           : false
-                    active: visible
-                    sourceComponent: key === "connections" ? qaConnectionsComp
-                                   : key === "logging"      ? qaLoggingComp
-                                   : key === "layouts"    ? qaFavoritesComp
-                                   : key === "bottomTrack"  ? qaBottomTrackComp
-                                   : key === "contact"      ? qaContactComp
-                                   : key === "mission"      ? qaMissionComp
-                                   : key === "autopilot"    ? qaAutopilotComp
-                                   : key === "widgets"      ? qaWidgetsComp
-                                   : key === "console"      ? qaConsoleComp
-                                   : key === "profiles"     ? qaProfilesComp
-                                   : key === "nodes"        ? qaNodesComp
-                                   : key === "inputLock"    ? qaInputLockComp
-                                   : key === "secondWindow" ? qaSecondWindowComp
-                                   : key === "powerOff"     ? qaPowerOffComp
-                                   : null
+            WheelHandler {
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                onWheel: function(event) { root._wheelStrip(event) }
+            }
+
+            Row {
+                id: topRow
+                y: root.panelPaddingX
+                spacing: root.quickActionSpacing
+
+                move: Transition {
+                    SequentialAnimation {
+                        PauseAnimation { duration: root._bgAdjustMs }
+                        NumberAnimation { properties: "x"; duration: 200; easing.type: Easing.OutCubic }
+                    }
+                }
+
+                Repeater {
+                    model: root.store ? root.store.quickActionOrderModel : 0
+                    delegate: Loader {
+                        required property string key
+                        height: root.controlHeight
+                        visible: key === "connections" ? ((root.connectionStatusToolVisible || root._revealActiveKey === "connections") && (root._hasConnectedDevice || root.layoutEditing))
+                               : key === "logging"     ? root._loggingBadgeVisibleExpanded
+                               : key === "layouts"   ? root.hasFavoriteLayouts
+                               : key === "bottomTrack" ? root.showBtEdit
+                               : key === "contact"     ? root.showContact
+                               : key === "mission"     ? root.showMission
+                               : key === "autopilot"   ? root.showAutopilot
+                               : key === "widgets"     ? root.showWidgets
+                               : key === "console"      ? root.showConsole
+                               : key === "profiles"     ? root.showProfiles
+                               : key === "nodes"        ? root.showNodes
+                               : key === "inputLock"    ? root._showInputLock
+                               : key === "secondWindow" ? root._showSecondWindow
+                               : key === "powerOff"     ? root._showPowerOff
+                               : false
+                        active: visible
+                        sourceComponent: key === "connections" ? qaConnectionsComp
+                                       : key === "logging"      ? qaLoggingComp
+                                       : key === "layouts"    ? qaFavoritesComp
+                                       : key === "bottomTrack"  ? qaBottomTrackComp
+                                       : key === "contact"      ? qaContactComp
+                                       : key === "mission"      ? qaMissionComp
+                                       : key === "autopilot"    ? qaAutopilotComp
+                                       : key === "widgets"      ? qaWidgetsComp
+                                       : key === "console"      ? qaConsoleComp
+                                       : key === "profiles"     ? qaProfilesComp
+                                       : key === "nodes"        ? qaNodesComp
+                                       : key === "inputLock"    ? qaInputLockComp
+                                       : key === "secondWindow" ? qaSecondWindowComp
+                                       : key === "powerOff"     ? qaPowerOffComp
+                                       : null
+                    }
+                }
+
+            }
+        }
+    }
+
+    Item {
+        id: comboViewport
+        x: panel.x + strip.x - root._comboPad
+        y: 0
+        width: root._stripLiveW + 2 * root._comboPad
+        height: root.height
+        z: panel.z + 1
+        clip: true
+        layer.enabled: strip.interactive && panel.opacity > 0.01
+                       && !layoutsCombo.dropped && !widgetsCombo.dropped
+        layer.effect: OpacityMask {
+            maskSource: ShaderEffectSource {
+                hideSource: true
+                sourceItem: Item {
+                    width: comboViewport.width
+                    height: comboViewport.height
+                    Rectangle {
+                        x: root._comboPad
+                        width: root._stripLiveW
+                        height: root.panelHeight
+                        radius: root.panelHeight / 2
+                    }
+                }
+            }
+        }
+
+        Item {
+            id: layoutsCombo
+            readonly property int comboW: root.triggerButtonWidth
+            readonly property int gap: Math.round(6 * root._s)
+            readonly property int sidePad: root._comboPad
+            readonly property int dropBodyH: root.favoriteListViewportHeight
+                                             + root.controlHeight + Math.round(22 * root._s)
+            readonly property bool dropped: root.layoutsMenuOpen
+                                            || backing.height > root.controlHeight + layoutsCombo.sidePad * 2 + 1
+            visible: root.hasFavoriteLayouts && panel.opacity > 0.01
+            opacity: panel.opacity         // fade in/out together with the pill
+            x: (root._favSlot && root._favSlot.parent ? root._favSlot.parent.x : 0) - strip.contentX
+            y: panel.y + strip.y + topRow.y + (root._favSlot && root._favSlot.parent ? root._favSlot.parent.y : 0) - layoutsCombo.sidePad
+            width: comboW + layoutsCombo.sidePad * 2
+            height: backing.height
+
+            Rectangle {
+                id: backing
+                width: parent.width
+                y: 0
+                height: layoutsCombo.sidePad + root.controlHeight
+                        + (root.layoutsMenuOpen ? layoutsCombo.gap + layoutsCombo.dropBodyH : layoutsCombo.sidePad)
+                radius: btEditCombo.width / 2   // не больше скругления задника bottom-track
+                color: layoutsCombo.dropped ? root.hotkeysLayerColor : "transparent"
+                border.width: layoutsCombo.dropped ? 1 : 0
+                border.color: AppPalette.border
+                clip: true
+
+                Behavior on height {
+                    NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    acceptedButtons: Qt.AllButtons
+                    onPressed: function(mouse) { mouse.accepted = true }
+                    onClicked: function(mouse) { mouse.accepted = true }
+                    onWheel: function(wheel) {
+                        if (wheel.y < layoutsCombo.sidePad + root.controlHeight)
+                            root._wheelStrip(wheel)
+                        wheel.accepted = true
+                    }
+                }
+
+                Loader {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.topMargin: layoutsCombo.sidePad + root.controlHeight + layoutsCombo.gap   // below the head
+                    sourceComponent: layoutsPopupContentComponent
                 }
             }
 
-        }
-    }
-
-    Item {
-        id: layoutsCombo
-        readonly property int comboW: root.triggerButtonWidth
-        readonly property int gap: Math.round(6 * root._s)
-        readonly property int sidePad: Math.round(3 * root._s)
-        readonly property int dropBodyH: root.favoriteListViewportHeight
-                                         + root.controlHeight + Math.round(22 * root._s)
-        readonly property bool dropped: root.layoutsMenuOpen
-                                        || backing.height > root.controlHeight + layoutsCombo.sidePad * 2 + 1
-        visible: root.hasFavoriteLayouts && panel.opacity > 0.01
-        opacity: panel.opacity         // fade in/out together with the pill
-        x: panel.x + topRow.x + (root._favSlot && root._favSlot.parent ? root._favSlot.parent.x : 0) - layoutsCombo.sidePad
-        y: panel.y + topRow.y + (root._favSlot && root._favSlot.parent ? root._favSlot.parent.y : 0) - layoutsCombo.sidePad
-        width: comboW + layoutsCombo.sidePad * 2
-        z: panel.z + 1                 // above the toolbar; the button is the head
-        height: backing.height
-
-        Rectangle {
-            id: backing
-            width: parent.width
-            y: 0
-            height: layoutsCombo.sidePad + root.controlHeight
-                    + (root.layoutsMenuOpen ? layoutsCombo.gap + layoutsCombo.dropBodyH : layoutsCombo.sidePad)
-            radius: btEditCombo.width / 2   // не больше скругления задника bottom-track
-            color: layoutsCombo.dropped ? root.hotkeysLayerColor : "transparent"
-            border.width: layoutsCombo.dropped ? 1 : 0
-            border.color: AppPalette.border
-            clip: true
-
-            Behavior on height {
-                NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                acceptedButtons: Qt.AllButtons
-                onPressed: function(mouse) { mouse.accepted = true }
-                onClicked: function(mouse) { mouse.accepted = true }
-                onWheel: function(wheel) { wheel.accepted = true }
-            }
-
-            Loader {
-                anchors.left: parent.left
-                anchors.right: parent.right
+            LayoutsTriggerButton {
+                id: layoutsTrigger
                 anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                anchors.topMargin: layoutsCombo.sidePad + root.controlHeight + layoutsCombo.gap   // below the head
-                sourceComponent: layoutsPopupContentComponent
+                anchors.topMargin: layoutsCombo.sidePad
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: layoutsCombo.comboW
+                height: root.controlHeight
+                open: root.layoutsMenuOpen
+                dropped: layoutsCombo.dropped
+                highlighted: root.highlightedQuickActionKey === "layouts"
+                flashToken: root.highlightPulseToken
+                highlightHold: root.draggingKey === "layouts"
+                onClicked: {
+                    if (root._favSlot && root._favSlot._grab) root._favSlot._grab()
+                    root.layoutsMenuOpen = !root.layoutsMenuOpen
+                }
             }
         }
 
-        LayoutsTriggerButton {
-            id: layoutsTrigger
-            anchors.top: parent.top
-            anchors.topMargin: layoutsCombo.sidePad
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: layoutsCombo.comboW
-            height: root.controlHeight
-            open: root.layoutsMenuOpen
-            dropped: layoutsCombo.dropped
-            highlighted: root.highlightedQuickActionKey === "layouts"
-            flashToken: root.highlightPulseToken
-            highlightHold: root.draggingKey === "layouts"
-            onClicked: {
-                if (root._favSlot && root._favSlot._grab) root._favSlot._grab()
-                root.layoutsMenuOpen = !root.layoutsMenuOpen
+        Item {
+            id: btEditCombo
+            readonly property int sidePad: root._comboPad
+            visible: root.showBtEdit && panel.opacity > 0.01
+            opacity: panel.opacity
+            x: (root._btSlot && root._btSlot.parent ? root._btSlot.parent.x : 0) - strip.contentX
+            y: panel.y + strip.y + topRow.y + (root._btSlot && root._btSlot.parent ? root._btSlot.parent.y : 0) - btEditCombo.sidePad
+            width: root.controlHeight + btEditCombo.sidePad * 2
+            height: root.controlHeight + btEditCombo.sidePad * 2
+
+            KCircleIconButton {
+                id: btEditTrigger
+                anchors.centerIn: parent
+                width: root.controlHeight
+                height: root.controlHeight
+                activeFocusOnTab: false
+                readonly property bool _open: root.store && root.store.bottomTrackEditorOpen
+                readonly property bool _accent: root.btTool !== 0 || _open
+                iconSource: "qrc:/icons/ui/pencil.svg"
+                iconTintColor: AppPalette.text
+                toolTipText: _open ? qsTr("Close bottom track editing")
+                                   : qsTr("Bottom track editing")
+                fillColor:        _accent ? AppPalette.accentBgStrong : root.buttonFillColor
+                fillHoverColor:   _accent ? AppPalette.accentBorder : root.buttonHoverColor
+                fillPressedColor: root.buttonPressedColor
+                borderColor:      _accent ? AppPalette.accentBorder : root.buttonBorderColor
+                borderHoverColor: _accent ? AppPalette.accentBorder : root.buttonHoverBorderColor
+                highlighted: root.highlightedQuickActionKey === "bottomTrack"
+                flashToken: root.highlightPulseToken
+                highlightHold: root.draggingKey === "bottomTrack"
+                onClicked: {
+                    if (root._btSlot && root._btSlot._grab) root._btSlot._grab()
+                    if (!root.store) return
+                    root.store.bottomTrackEditorOpen = !root.store.bottomTrackEditorOpen   // keep the menu open
+                }
+
+                KCloseBadge { visible: btEditTrigger._open }
             }
         }
-    }
 
-    Item {
-        id: btEditCombo
-        readonly property int sidePad: Math.round(3 * root._s)
-        visible: root.showBtEdit && panel.opacity > 0.01
-        opacity: panel.opacity
-        x: panel.x + topRow.x + (root._btSlot && root._btSlot.parent ? root._btSlot.parent.x : 0) - btEditCombo.sidePad
-        y: panel.y + topRow.y + (root._btSlot && root._btSlot.parent ? root._btSlot.parent.y : 0) - btEditCombo.sidePad
-        width: root.controlHeight + btEditCombo.sidePad * 2
-        height: root.controlHeight + btEditCombo.sidePad * 2
-        z: panel.z + 1
+        Item {
+            id: widgetsCombo
+            readonly property int comboW: root.triggerButtonWidth
+            readonly property int gap: Math.round(6 * root._s)
+            readonly property int sidePad: root._comboPad
+            readonly property int _listContentH: root.widgetCardCount * root.favoriteItemHeight
+                + Math.max(0, root.widgetCardCount - 1) * root.favoriteItemSpacing
+            readonly property int _bodyContentH: Math.min(root.favoriteListMaxHeight, _listContentH)
+            readonly property int dropBodyH: (widgetsBodyLoader.item ? widgetsBodyLoader.item.implicitHeight
+                                                                      : _bodyContentH + root.controlHeight)
+                                             + Math.round(14 * root._s)
+            readonly property bool dropped: root.widgetsMenuOpen
+                                            || widgetsBacking.height > root.controlHeight + widgetsCombo.sidePad * 2 + 1
+            visible: root.showWidgets && panel.opacity > 0.01
+            opacity: panel.opacity
+            x: (root._widgetsSlot && root._widgetsSlot.parent ? root._widgetsSlot.parent.x : 0) - strip.contentX
+            y: panel.y + strip.y + topRow.y + (root._widgetsSlot && root._widgetsSlot.parent ? root._widgetsSlot.parent.y : 0) - widgetsCombo.sidePad
+            width: comboW + widgetsCombo.sidePad * 2
+            height: widgetsBacking.height
 
-        KCircleIconButton {
-            id: btEditTrigger
-            anchors.centerIn: parent
-            width: root.controlHeight
-            height: root.controlHeight
-            activeFocusOnTab: false
-            readonly property bool _open: root.store && root.store.bottomTrackEditorOpen
-            readonly property bool _accent: root.btTool !== 0 || _open
-            iconSource: "qrc:/icons/ui/pencil.svg"
-            iconTintColor: AppPalette.text
-            toolTipText: _open ? qsTr("Close bottom track editing")
-                               : qsTr("Bottom track editing")
-            fillColor:        _accent ? AppPalette.accentBgStrong : root.buttonFillColor
-            fillHoverColor:   _accent ? AppPalette.accentBorder : root.buttonHoverColor
-            fillPressedColor: root.buttonPressedColor
-            borderColor:      _accent ? AppPalette.accentBorder : root.buttonBorderColor
-            borderHoverColor: _accent ? AppPalette.accentBorder : root.buttonHoverBorderColor
-            highlighted: root.highlightedQuickActionKey === "bottomTrack"
-            flashToken: root.highlightPulseToken
-            highlightHold: root.draggingKey === "bottomTrack"
-            onClicked: {
-                if (root._btSlot && root._btSlot._grab) root._btSlot._grab()
-                if (!root.store) return
-                root.store.bottomTrackEditorOpen = !root.store.bottomTrackEditorOpen   // keep the menu open
+            Rectangle {
+                id: widgetsBacking
+                width: parent.width
+                y: 0
+                height: widgetsCombo.sidePad + root.controlHeight
+                        + (root.widgetsMenuOpen ? widgetsCombo.gap + widgetsCombo.dropBodyH : widgetsCombo.sidePad)
+                radius: btEditCombo.width / 2
+                color: widgetsCombo.dropped ? root.hotkeysLayerColor : "transparent"
+                border.width: widgetsCombo.dropped ? 1 : 0
+                border.color: AppPalette.border
+                clip: true
+
+                Behavior on height {
+                    NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    acceptedButtons: Qt.AllButtons
+                    onPressed: function(mouse) { mouse.accepted = true }
+                    onClicked: function(mouse) { mouse.accepted = true }
+                    onWheel: function(wheel) {
+                        if (wheel.y < widgetsCombo.sidePad + root.controlHeight)
+                            root._wheelStrip(wheel)
+                        wheel.accepted = true
+                    }
+                }
+
+                Loader {
+                    id: widgetsBodyLoader
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.topMargin: widgetsCombo.sidePad + root.controlHeight + widgetsCombo.gap
+                    sourceComponent: widgetsPopupContentComponent
+                }
             }
 
-            KCloseBadge { visible: btEditTrigger._open }
-        }
-    }
-
-    Item {
-        id: widgetsCombo
-        readonly property int comboW: root.triggerButtonWidth
-        readonly property int gap: Math.round(6 * root._s)
-        readonly property int sidePad: Math.round(3 * root._s)
-        readonly property int _listContentH: root.widgetCardCount * root.favoriteItemHeight
-            + Math.max(0, root.widgetCardCount - 1) * root.favoriteItemSpacing
-        readonly property int _bodyContentH: Math.min(root.favoriteListMaxHeight, _listContentH)
-        readonly property int dropBodyH: (widgetsBodyLoader.item ? widgetsBodyLoader.item.implicitHeight
-                                                                  : _bodyContentH + root.controlHeight)
-                                         + Math.round(14 * root._s)
-        readonly property bool dropped: root.widgetsMenuOpen
-                                        || widgetsBacking.height > root.controlHeight + widgetsCombo.sidePad * 2 + 1
-        visible: root.showWidgets && panel.opacity > 0.01
-        opacity: panel.opacity
-        x: panel.x + topRow.x + (root._widgetsSlot && root._widgetsSlot.parent ? root._widgetsSlot.parent.x : 0) - widgetsCombo.sidePad
-        y: panel.y + topRow.y + (root._widgetsSlot && root._widgetsSlot.parent ? root._widgetsSlot.parent.y : 0) - widgetsCombo.sidePad
-        width: comboW + widgetsCombo.sidePad * 2
-        z: panel.z + 1
-        height: widgetsBacking.height
-
-        Rectangle {
-            id: widgetsBacking
-            width: parent.width
-            y: 0
-            height: widgetsCombo.sidePad + root.controlHeight
-                    + (root.widgetsMenuOpen ? widgetsCombo.gap + widgetsCombo.dropBodyH : widgetsCombo.sidePad)
-            radius: btEditCombo.width / 2
-            color: widgetsCombo.dropped ? root.hotkeysLayerColor : "transparent"
-            border.width: widgetsCombo.dropped ? 1 : 0
-            border.color: AppPalette.border
-            clip: true
-
-            Behavior on height {
-                NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                acceptedButtons: Qt.AllButtons
-                onPressed: function(mouse) { mouse.accepted = true }
-                onClicked: function(mouse) { mouse.accepted = true }
-                onWheel: function(wheel) { wheel.accepted = true }
-            }
-
-            Loader {
-                id: widgetsBodyLoader
-                anchors.left: parent.left
-                anchors.right: parent.right
+            WidgetsTriggerButton {
+                id: widgetsTrigger
                 anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                anchors.topMargin: widgetsCombo.sidePad + root.controlHeight + widgetsCombo.gap
-                sourceComponent: widgetsPopupContentComponent
+                anchors.topMargin: widgetsCombo.sidePad
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: widgetsCombo.comboW
+                height: root.controlHeight
+                open: root.widgetsMenuOpen
+                dropped: widgetsCombo.dropped
+                highlighted: root.highlightedQuickActionKey === "widgets"
+                flashToken: root.highlightPulseToken
+                highlightHold: root.draggingKey === "widgets"
+                onClicked: {
+                    if (root._widgetsSlot && root._widgetsSlot._grab) root._widgetsSlot._grab()
+                    root.widgetsMenuOpen = !root.widgetsMenuOpen
+                }
+            }
+        }
+    }
+
+    Item {
+        id: stripEdges
+        x: panel.x + strip.x
+        y: panel.y + strip.y
+        width: root._stripLiveW
+        height: strip.height
+        z: panel.z + 2
+        opacity: panel.opacity
+        visible: strip.interactive && opacity > 0.01
+        layer.enabled: visible
+        layer.effect: OpacityMask {
+            maskSource: ShaderEffectSource {
+                hideSource: true
+                sourceItem: Rectangle {
+                    width: stripEdges.width
+                    height: stripEdges.height
+                    radius: stripEdges.height / 2
+                }
             }
         }
 
-        WidgetsTriggerButton {
-            id: widgetsTrigger
-            anchors.top: parent.top
-            anchors.topMargin: widgetsCombo.sidePad
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: widgetsCombo.comboW
-            height: root.controlHeight
-            open: root.widgetsMenuOpen
-            dropped: widgetsCombo.dropped
-            highlighted: root.highlightedQuickActionKey === "widgets"
-            flashToken: root.highlightPulseToken
-            highlightHold: root.draggingKey === "widgets"
-            onClicked: {
-                if (root._widgetsSlot && root._widgetsSlot._grab) root._widgetsSlot._grab()
-                root.widgetsMenuOpen = !root.widgetsMenuOpen
-            }
+        StripEdge {
+            anchors.left: parent.left
+            forward: false
+            active: root.expanded && root._stripCanBack
+        }
+
+        StripEdge {
+            anchors.right: parent.right
+            forward: true
+            active: root.expanded && root._stripCanForward
         }
     }
 
