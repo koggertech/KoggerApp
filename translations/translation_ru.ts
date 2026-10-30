@@ -4,6 +4,11 @@
 <context>
     <name>AboutPage</name>
     <message>
+        <location filename="../qml/app/AboutPage.qml" line="35"/>
+        <source>Revision copied to clipboard</source>
+        <translation>Ревизия скопирована в буфер обмена</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AboutPage.qml" line="47"/>
         <source>Full notices, component provenance and where to obtain the sources are in THIRD_PARTY_NOTICES.md in the source tree.</source>
         <translation>Полные уведомления, происхождение компонентов и адреса исходников — в файле THIRD_PARTY_NOTICES.md в дереве исходников.</translation>

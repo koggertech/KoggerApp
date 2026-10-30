@@ -27,6 +27,14 @@ Column {
         text: qsTr("Revision %1").arg(appUtils.gitRevision)
         color: AppPalette.textSecond
         font.pixelSize: Tokens.fontXs
+
+        KTapArea {
+            anchors.margins: -Tokens.spaceSm
+            onTapped: {
+                core.copyToClipboard(appUtils.gitRevision)
+                notifications.info(qsTr("Revision copied to clipboard"))
+            }
+        }
     }
 
     KIsland {
