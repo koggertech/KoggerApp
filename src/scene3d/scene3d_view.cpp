@@ -99,7 +99,6 @@ static bool resolvePerspectiveByGround(float distToGround, float edge, bool wasP
 
 GraphicsScene3dView::GraphicsScene3dView() :
     QQuickFramebufferObject(),
-    m_camera(std::make_shared<Camera>(this)),
     m_axesThumbnailCamera(std::make_shared<Camera>()),
     m_rayCaster(std::make_shared<RayCaster>()),
     //isobathsView_(std::make_shared<IsobathsView>()),
@@ -125,7 +124,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     qmlRootObject_(nullptr),
     switchedToBottomTrackVertexComboSelectionMode_(false),
     needToResetStartPos_(false),
-    lastCameraDist_(m_camera->distForMapView()),
+    lastCameraDist_(0.0f),
     trackLastData_(false),
     gridVisibility_(true),
     useAngleLocation_(false),
@@ -150,6 +149,10 @@ GraphicsScene3dView::GraphicsScene3dView() :
     isUpdateMosaic_(false),
     isUpdateSurface_(false)
 {
+    m_camera = std::make_shared<Camera>(this);
+    lastCameraDist_ = m_camera->distForMapView();
+    refreshSceneContentVisible();
+
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
     setAcceptedMouseButtons(Qt::AllButtons);
