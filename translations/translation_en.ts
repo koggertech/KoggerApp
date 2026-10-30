@@ -1453,6 +1453,11 @@
         <source>Vibrates with the throttle and steering while armed, and briefly on a mode change or arm / disarm</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3853"/>
+        <source>Gamepad</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AutopilotPopup</name>

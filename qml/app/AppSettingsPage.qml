@@ -2781,395 +2781,6 @@ Column {
     }
 
     SettingsGroup {
-        id: missionRunGroup
-        visible: instruments >= 1
-        width: root.groupWidth
-        preferredWidth: root.groupWidth
-        title: qsTr("Vehicle mission")
-        description: qsTr("The mission read from the autopilot, followed in the 3D scene while it runs.")
-        stateStore: root.store
-        stateKey: "app.missionrun"
-        headerActions: ShowIn3DAction {
-            active: root.store ? root.store.missionRunVisible : false
-            onClicked: if (root.store) root.store.missionRunVisible = !root.store.missionRunVisible
-        }
-        collapsedByDefault: true
-
-        Column {
-            width: parent.width
-            spacing: Tokens.spaceMd
-
-            Text {
-                width: parent.width
-                text: qsTr("In the 3D scene") + ":"
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontBase
-                topPadding: Tokens.spaceXs
-            }
-
-            KIsland {
-                KIslandRow {
-                    label: qsTr("Geofence")
-                    labelColor: root._bright
-                    interactive: true
-                    onClicked: missionRunFenceSwitch.click()
-
-                    KSwitch {
-                        id: missionRunFenceSwitch
-                        flat: true
-                        checked: root.store ? root.store.missionRunShowFence : true
-                        onToggled: if (root.store) root.store.missionRunShowFence = checked
-                    }
-                }
-                KIslandRow {
-                    label: qsTr("Rally points")
-                    labelColor: root._bright
-                    interactive: true
-                    onClicked: missionRunRallySwitch.click()
-
-                    KSwitch {
-                        id: missionRunRallySwitch
-                        flat: true
-                        checked: root.store ? root.store.missionRunShowRally : true
-                        onToggled: if (root.store) root.store.missionRunShowRally = checked
-                    }
-                }
-                KIslandRow {
-                    label: qsTr("Vehicle home (H)")
-                    labelColor: root._bright
-                    interactive: true
-                    onClicked: missionRunHomeSwitch.click()
-
-                    KSwitch {
-                        id: missionRunHomeSwitch
-                        flat: true
-                        checked: root.store ? root.store.missionRunShowHome : true
-                        onToggled: if (root.store) root.store.missionRunShowHome = checked
-                    }
-                }
-                KIslandRow {
-                    label: qsTr("Line from the boat to the target")
-                    labelColor: root._bright
-                    interactive: true
-                    onClicked: missionRunLineSwitch.click()
-
-                    KSwitch {
-                        id: missionRunLineSwitch
-                        flat: true
-                        checked: root.store ? root.store.missionRunShowVehicleLine : true
-                        onToggled: if (root.store) root.store.missionRunShowVehicleLine = checked
-                    }
-                }
-                KIslandRow {
-                    label: qsTr("Point numbers")
-                    labelColor: root._bright
-                    interactive: true
-                    onClicked: missionRunLabelsSwitch.click()
-
-                    KSwitch {
-                        id: missionRunLabelsSwitch
-                        flat: true
-                        checked: root.store ? root.store.missionRunShowLabels : true
-                        onToggled: if (root.store) root.store.missionRunShowLabels = checked
-                    }
-                }
-            }
-
-            Text {
-                width: parent.width
-                text: qsTr("Route lines") + ":"
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontBase
-                topPadding: Tokens.spaceXs
-            }
-
-            KIsland {
-                KIslandRow {
-                    label: qsTr("Ahead")
-                    labelColor: root._bright
-                    stacked: true
-
-                    RouteColorRow {
-                        current: root.store ? root.store.missionRunAheadColor : ""
-                        onPicked: function(color) { if (root.store) root.store.missionRunAheadColor = color }
-                    }
-                }
-                KIslandRow {
-                    label: qsTr("Current leg")
-                    labelColor: root._bright
-                    stacked: true
-
-                    RouteColorRow {
-                        current: root.store ? root.store.missionRunCurrentColor : ""
-                        onPicked: function(color) { if (root.store) root.store.missionRunCurrentColor = color }
-                    }
-                }
-                KIslandRow {
-                    label: qsTr("Flown")
-                    labelColor: root._bright
-                    stacked: true
-
-                    RouteColorRow {
-                        current: root.store ? root.store.missionRunDoneColor : ""
-                        onPicked: function(color) { if (root.store) root.store.missionRunDoneColor = color }
-                    }
-                }
-                KIslandRow {
-                    id: missionRunRouteWidthSliderRow
-                    label: qsTr("Line width")
-                    labelColor: root._bright
-                    slotWidth: Math.round(200 * AppPalette.scale)
-
-                    Item {
-                        width: missionRunRouteWidthSliderRow.slotWidth
-                        height: Tokens.controlHMd
-
-                        KSlider {
-                            id: missionRunRouteWidthSlider
-                            anchors.left: parent.left
-                            anchors.right: missionRunRouteWidthValue.left
-                            anchors.rightMargin: Tokens.spaceSm
-                            anchors.verticalCenter: parent.verticalCenter
-                            from: 1; to: 8; stepSize: 0.5
-                            value: root.store ? root.store.missionRunRouteWidth : 2.5
-                            onValueModified: function(val) { if (root.store) root.store.missionRunRouteWidth = val }
-                        }
-                        Text {
-                            id: missionRunRouteWidthValue
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: Math.round(44 * AppPalette.scale)
-                            text: qsTr("%1 px").arg(missionRunRouteWidthSlider.value.toFixed(1))
-                            color: root._bright
-                            font.pixelSize: Tokens.fontBase
-                            horizontalAlignment: Text.AlignRight
-                        }
-                    }
-                }
-                KIslandRow {
-                    id: missionRunCurrentWidthSliderRow
-                    label: qsTr("Current leg width")
-                    labelColor: root._bright
-                    slotWidth: Math.round(200 * AppPalette.scale)
-
-                    Item {
-                        width: missionRunCurrentWidthSliderRow.slotWidth
-                        height: Tokens.controlHMd
-
-                        KSlider {
-                            id: missionRunCurrentWidthSlider
-                            anchors.left: parent.left
-                            anchors.right: missionRunCurrentWidthValue.left
-                            anchors.rightMargin: Tokens.spaceSm
-                            anchors.verticalCenter: parent.verticalCenter
-                            from: 1; to: 8; stepSize: 0.5
-                            value: root.store ? root.store.missionRunCurrentWidth : 3.5
-                            onValueModified: function(val) { if (root.store) root.store.missionRunCurrentWidth = val }
-                        }
-                        Text {
-                            id: missionRunCurrentWidthValue
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: Math.round(44 * AppPalette.scale)
-                            text: qsTr("%1 px").arg(missionRunCurrentWidthSlider.value.toFixed(1))
-                            color: root._bright
-                            font.pixelSize: Tokens.fontBase
-                            horizontalAlignment: Text.AlignRight
-                        }
-                    }
-                }
-            }
-
-            KButton {
-                width: parent.width
-                fontPixelSize: Tokens.fontLg
-                text: qsTr("Defaults")
-                onClicked: if (root.store) root.store.resetMissionRunView()
-            }
-
-            Text {
-                width: parent.width
-                text: qsTr("Behaviour") + ":"
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontBase
-                topPadding: Tokens.spaceXs
-            }
-
-            KIsland {
-                KIslandRow {
-                    label: qsTr("Read the mission automatically")
-                    caption: qsTr("When the vehicle connects and when its mission changes. Off: read it by hand from the editor or the autopilot card")
-                    labelColor: root._bright
-                    interactive: true
-                    onClicked: missionRunReadSwitch.click()
-
-                    KSwitch {
-                        id: missionRunReadSwitch
-                        flat: true
-                        checked: root.store ? root.store.missionRunReadAutomatically : true
-                        onToggled: if (root.store) root.store.missionRunReadAutomatically = checked
-                    }
-                }
-                KIslandRow {
-                    label: qsTr("Start an uploaded mission from its beginning")
-                    caption: qsTr("After an upload outside Auto the vehicle's current item is reset, so Auto starts at the first point instead of the item number left from an earlier run")
-                    labelColor: root._bright
-                    interactive: true
-                    onClicked: missionRunRestartSwitch.click()
-
-                    KSwitch {
-                        id: missionRunRestartSwitch
-                        flat: true
-                        checked: root.store ? root.store.missionRunRestartAfterUpload : true
-                        onToggled: if (root.store) root.store.missionRunRestartAfterUpload = checked
-                    }
-                }
-            }
-
-            KButton {
-                id: missionEditorButton
-                readonly property int _iconSize: Tokens.iconSm
-                text: qsTr("Mission editor")
-                height: Tokens.controlHMd
-                rightPadding: horizontalPadding + _iconSize + Tokens.spaceSm
-                implicitWidth: contentItem.implicitWidth + leftPadding + rightPadding
-                onClicked: {
-                    if (root.store) root.store.settingsPanelOpen = false
-                    if (typeof core !== "undefined" && core) core.setMissionEditorActive(true)
-                }
-
-                Item {
-                    anchors.right: parent.right
-                    anchors.rightMargin: missionEditorButton.horizontalPadding
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: missionEditorButton._iconSize
-                    height: width
-
-                    Image {
-                        id: missionEditorIcon
-                        anchors.fill: parent
-                        source: "qrc:/icons/ui/external-link.svg"
-                        sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
-                        sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
-                        fillMode: Image.PreserveAspectFit
-                        smooth: true
-                        visible: false
-                    }
-                    ColorOverlay {
-                        anchors.fill: missionEditorIcon
-                        source: missionEditorIcon
-                        color: missionEditorButton.contentItem.color
-                        smooth: true
-                    }
-                }
-            }
-        }
-    }
-
-    SettingsGroup {
-        visible: instruments >= 1 && root._gamepadSupported && !!root._helmCtl
-        width: root.groupWidth
-        preferredWidth: root.groupWidth
-        title: qsTr("Gamepad control")
-        description: qsTr("Driving the boat from a gamepad.")
-        stateStore: root.store
-        stateKey: "app.gamepadhelm"
-        collapsedByDefault: true
-
-        Column {
-            width: parent.width
-            spacing: Tokens.spaceMd
-
-            KIsland {
-                KIslandRow {
-                    label: qsTr("Gamepad layout")
-                    labelColor: root._bright
-                    leading: KGamepadIcon {
-                        width: Math.round(22 * AppPalette.scale)
-                        height: width
-                        family: root._helmCtl ? root._helmCtl.padFamily : ""
-                        color: root._bright
-                    }
-                    chevron: true
-                    interactive: true
-                    toolTipText: qsTr("Controller test and which button does what")
-                    onClicked: root.openGamepadDialog()
-                }
-                KIslandRow {
-                    label: qsTr("Vibration")
-                    toolTipText: qsTr("Vibrates with the throttle and steering while armed, and briefly on a mode change or arm / disarm")
-                    interactive: true
-                    onClicked: helmRumbleSwitch.click()
-                    KSwitch {
-                        id: helmRumbleSwitch
-                        flat: true
-                        checked: root._helmCtl ? root._helmCtl.rumble : false
-                        onToggled: if (root._helmCtl) root._helmCtl.rumble = checked
-                    }
-                }
-            }
-
-            Loader {
-                id: gamepadDialogLoader
-                visible: false
-                active: false
-                source: "qrc:/qml/settings/GamepadTestDialog.qml"
-                onLoaded: {
-                    item.store = root.store
-                    item.open()
-                }
-            }
-
-            KIsland {
-                HelmSliderRow {
-                    label: qsTr("Forward limit")
-                    toolTipText: qsTr("Max forward throttle")
-                    from: 0; to: 1; stepSize: 0.05
-                    value: root._helmCtl ? root._helmCtl.forwardLimit : 1
-                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.forwardLimit = val }
-                }
-                HelmSliderRow {
-                    label: qsTr("Reverse limit")
-                    toolTipText: qsTr("Max reverse throttle")
-                    from: 0; to: 1; stepSize: 0.05
-                    value: root._helmCtl ? root._helmCtl.reverseLimit : 0.5
-                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.reverseLimit = val }
-                }
-                HelmSliderRow {
-                    label: qsTr("Steering limit")
-                    toolTipText: qsTr("Max steering")
-                    from: 0; to: 1; stepSize: 0.05
-                    value: root._helmCtl ? root._helmCtl.steeringLimit : 1
-                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.steeringLimit = val }
-                }
-                HelmSliderRow {
-                    label: qsTr("Throttle softness")
-                    toolTipText: qsTr("Gentler throttle at the start of the travel")
-                    from: 0; to: 1; stepSize: 0.05
-                    value: root._helmCtl ? root._helmCtl.throttleExpo : 0.2
-                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.throttleExpo = val }
-                }
-                HelmSliderRow {
-                    label: qsTr("Send rate")
-                    toolTipText: qsTr("How often commands go to the boat")
-                    from: 10; to: 25; stepSize: 1
-                    displayScale: 1
-                    format: qsTr("%1 Hz")
-                    value: root._helmCtl ? root._helmCtl.rateHz : 20
-                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.rateHz = Math.round(val) }
-                }
-            }
-
-            KButton {
-                width: parent.width
-                fontPixelSize: Tokens.fontLg
-                text: qsTr("Defaults")
-                onClicked: if (root._helmCtl) root._helmCtl.resetTuning()
-            }
-        }
-    }
-
-    SettingsGroup {
         width: root.groupWidth
         preferredWidth: root.groupWidth
         title: qsTr("3D scene")
@@ -3945,6 +3556,395 @@ Column {
                     NavigationArrowControlMenuController.onSizeSpinBoxValueChanged(navigationArrowSizeSpinBox.value)
                     NavigationArrowControlMenuController.onRepresentationChanged(navigationArrowShapeCombo.currentIndex)
                 }
+            }
+        }
+    }
+
+    SettingsGroup {
+        id: missionRunGroup
+        visible: instruments >= 1
+        width: root.groupWidth
+        preferredWidth: root.groupWidth
+        title: qsTr("Vehicle mission")
+        description: qsTr("The mission read from the autopilot, followed in the 3D scene while it runs.")
+        stateStore: root.store
+        stateKey: "app.missionrun"
+        headerActions: ShowIn3DAction {
+            active: root.store ? root.store.missionRunVisible : false
+            onClicked: if (root.store) root.store.missionRunVisible = !root.store.missionRunVisible
+        }
+        collapsedByDefault: true
+
+        Column {
+            width: parent.width
+            spacing: Tokens.spaceMd
+
+            Text {
+                width: parent.width
+                text: qsTr("In the 3D scene") + ":"
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
+                topPadding: Tokens.spaceXs
+            }
+
+            KIsland {
+                KIslandRow {
+                    label: qsTr("Geofence")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: missionRunFenceSwitch.click()
+
+                    KSwitch {
+                        id: missionRunFenceSwitch
+                        flat: true
+                        checked: root.store ? root.store.missionRunShowFence : true
+                        onToggled: if (root.store) root.store.missionRunShowFence = checked
+                    }
+                }
+                KIslandRow {
+                    label: qsTr("Rally points")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: missionRunRallySwitch.click()
+
+                    KSwitch {
+                        id: missionRunRallySwitch
+                        flat: true
+                        checked: root.store ? root.store.missionRunShowRally : true
+                        onToggled: if (root.store) root.store.missionRunShowRally = checked
+                    }
+                }
+                KIslandRow {
+                    label: qsTr("Vehicle home (H)")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: missionRunHomeSwitch.click()
+
+                    KSwitch {
+                        id: missionRunHomeSwitch
+                        flat: true
+                        checked: root.store ? root.store.missionRunShowHome : true
+                        onToggled: if (root.store) root.store.missionRunShowHome = checked
+                    }
+                }
+                KIslandRow {
+                    label: qsTr("Line from the boat to the target")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: missionRunLineSwitch.click()
+
+                    KSwitch {
+                        id: missionRunLineSwitch
+                        flat: true
+                        checked: root.store ? root.store.missionRunShowVehicleLine : true
+                        onToggled: if (root.store) root.store.missionRunShowVehicleLine = checked
+                    }
+                }
+                KIslandRow {
+                    label: qsTr("Point numbers")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: missionRunLabelsSwitch.click()
+
+                    KSwitch {
+                        id: missionRunLabelsSwitch
+                        flat: true
+                        checked: root.store ? root.store.missionRunShowLabels : true
+                        onToggled: if (root.store) root.store.missionRunShowLabels = checked
+                    }
+                }
+            }
+
+            Text {
+                width: parent.width
+                text: qsTr("Route lines") + ":"
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
+                topPadding: Tokens.spaceXs
+            }
+
+            KIsland {
+                KIslandRow {
+                    label: qsTr("Ahead")
+                    labelColor: root._bright
+                    stacked: true
+
+                    RouteColorRow {
+                        current: root.store ? root.store.missionRunAheadColor : ""
+                        onPicked: function(color) { if (root.store) root.store.missionRunAheadColor = color }
+                    }
+                }
+                KIslandRow {
+                    label: qsTr("Current leg")
+                    labelColor: root._bright
+                    stacked: true
+
+                    RouteColorRow {
+                        current: root.store ? root.store.missionRunCurrentColor : ""
+                        onPicked: function(color) { if (root.store) root.store.missionRunCurrentColor = color }
+                    }
+                }
+                KIslandRow {
+                    label: qsTr("Flown")
+                    labelColor: root._bright
+                    stacked: true
+
+                    RouteColorRow {
+                        current: root.store ? root.store.missionRunDoneColor : ""
+                        onPicked: function(color) { if (root.store) root.store.missionRunDoneColor = color }
+                    }
+                }
+                KIslandRow {
+                    id: missionRunRouteWidthSliderRow
+                    label: qsTr("Line width")
+                    labelColor: root._bright
+                    slotWidth: Math.round(200 * AppPalette.scale)
+
+                    Item {
+                        width: missionRunRouteWidthSliderRow.slotWidth
+                        height: Tokens.controlHMd
+
+                        KSlider {
+                            id: missionRunRouteWidthSlider
+                            anchors.left: parent.left
+                            anchors.right: missionRunRouteWidthValue.left
+                            anchors.rightMargin: Tokens.spaceSm
+                            anchors.verticalCenter: parent.verticalCenter
+                            from: 1; to: 8; stepSize: 0.5
+                            value: root.store ? root.store.missionRunRouteWidth : 2.5
+                            onValueModified: function(val) { if (root.store) root.store.missionRunRouteWidth = val }
+                        }
+                        Text {
+                            id: missionRunRouteWidthValue
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Math.round(44 * AppPalette.scale)
+                            text: qsTr("%1 px").arg(missionRunRouteWidthSlider.value.toFixed(1))
+                            color: root._bright
+                            font.pixelSize: Tokens.fontBase
+                            horizontalAlignment: Text.AlignRight
+                        }
+                    }
+                }
+                KIslandRow {
+                    id: missionRunCurrentWidthSliderRow
+                    label: qsTr("Current leg width")
+                    labelColor: root._bright
+                    slotWidth: Math.round(200 * AppPalette.scale)
+
+                    Item {
+                        width: missionRunCurrentWidthSliderRow.slotWidth
+                        height: Tokens.controlHMd
+
+                        KSlider {
+                            id: missionRunCurrentWidthSlider
+                            anchors.left: parent.left
+                            anchors.right: missionRunCurrentWidthValue.left
+                            anchors.rightMargin: Tokens.spaceSm
+                            anchors.verticalCenter: parent.verticalCenter
+                            from: 1; to: 8; stepSize: 0.5
+                            value: root.store ? root.store.missionRunCurrentWidth : 3.5
+                            onValueModified: function(val) { if (root.store) root.store.missionRunCurrentWidth = val }
+                        }
+                        Text {
+                            id: missionRunCurrentWidthValue
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Math.round(44 * AppPalette.scale)
+                            text: qsTr("%1 px").arg(missionRunCurrentWidthSlider.value.toFixed(1))
+                            color: root._bright
+                            font.pixelSize: Tokens.fontBase
+                            horizontalAlignment: Text.AlignRight
+                        }
+                    }
+                }
+            }
+
+            KButton {
+                width: parent.width
+                fontPixelSize: Tokens.fontLg
+                text: qsTr("Defaults")
+                onClicked: if (root.store) root.store.resetMissionRunView()
+            }
+
+            Text {
+                width: parent.width
+                text: qsTr("Behaviour") + ":"
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
+                topPadding: Tokens.spaceXs
+            }
+
+            KIsland {
+                KIslandRow {
+                    label: qsTr("Read the mission automatically")
+                    caption: qsTr("When the vehicle connects and when its mission changes. Off: read it by hand from the editor or the autopilot card")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: missionRunReadSwitch.click()
+
+                    KSwitch {
+                        id: missionRunReadSwitch
+                        flat: true
+                        checked: root.store ? root.store.missionRunReadAutomatically : true
+                        onToggled: if (root.store) root.store.missionRunReadAutomatically = checked
+                    }
+                }
+                KIslandRow {
+                    label: qsTr("Start an uploaded mission from its beginning")
+                    caption: qsTr("After an upload outside Auto the vehicle's current item is reset, so Auto starts at the first point instead of the item number left from an earlier run")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: missionRunRestartSwitch.click()
+
+                    KSwitch {
+                        id: missionRunRestartSwitch
+                        flat: true
+                        checked: root.store ? root.store.missionRunRestartAfterUpload : true
+                        onToggled: if (root.store) root.store.missionRunRestartAfterUpload = checked
+                    }
+                }
+            }
+
+            KButton {
+                id: missionEditorButton
+                readonly property int _iconSize: Tokens.iconSm
+                text: qsTr("Mission editor")
+                height: Tokens.controlHMd
+                rightPadding: horizontalPadding + _iconSize + Tokens.spaceSm
+                implicitWidth: contentItem.implicitWidth + leftPadding + rightPadding
+                onClicked: {
+                    if (root.store) root.store.settingsPanelOpen = false
+                    if (typeof core !== "undefined" && core) core.setMissionEditorActive(true)
+                }
+
+                Item {
+                    anchors.right: parent.right
+                    anchors.rightMargin: missionEditorButton.horizontalPadding
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: missionEditorButton._iconSize
+                    height: width
+
+                    Image {
+                        id: missionEditorIcon
+                        anchors.fill: parent
+                        source: "qrc:/icons/ui/external-link.svg"
+                        sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+                        sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+                        fillMode: Image.PreserveAspectFit
+                        smooth: true
+                        visible: false
+                    }
+                    ColorOverlay {
+                        anchors.fill: missionEditorIcon
+                        source: missionEditorIcon
+                        color: missionEditorButton.contentItem.color
+                        smooth: true
+                    }
+                }
+            }
+        }
+    }
+
+    SettingsGroup {
+        visible: instruments >= 1 && root._gamepadSupported && !!root._helmCtl
+        width: root.groupWidth
+        preferredWidth: root.groupWidth
+        title: qsTr("Gamepad")
+        description: qsTr("Driving the boat from a gamepad.")
+        stateStore: root.store
+        stateKey: "app.gamepadhelm"
+        collapsedByDefault: true
+
+        Column {
+            width: parent.width
+            spacing: Tokens.spaceMd
+
+            KIsland {
+                KIslandRow {
+                    label: qsTr("Gamepad layout")
+                    labelColor: root._bright
+                    leading: KGamepadIcon {
+                        width: Math.round(22 * AppPalette.scale)
+                        height: width
+                        family: root._helmCtl ? root._helmCtl.padFamily : ""
+                        color: root._bright
+                    }
+                    chevron: true
+                    interactive: true
+                    toolTipText: qsTr("Controller test and which button does what")
+                    onClicked: root.openGamepadDialog()
+                }
+                KIslandRow {
+                    label: qsTr("Vibration")
+                    toolTipText: qsTr("Vibrates with the throttle and steering while armed, and briefly on a mode change or arm / disarm")
+                    interactive: true
+                    onClicked: helmRumbleSwitch.click()
+                    KSwitch {
+                        id: helmRumbleSwitch
+                        flat: true
+                        checked: root._helmCtl ? root._helmCtl.rumble : false
+                        onToggled: if (root._helmCtl) root._helmCtl.rumble = checked
+                    }
+                }
+            }
+
+            Loader {
+                id: gamepadDialogLoader
+                visible: false
+                active: false
+                source: "qrc:/qml/settings/GamepadTestDialog.qml"
+                onLoaded: {
+                    item.store = root.store
+                    item.open()
+                }
+            }
+
+            KIsland {
+                HelmSliderRow {
+                    label: qsTr("Forward limit")
+                    toolTipText: qsTr("Max forward throttle")
+                    from: 0; to: 1; stepSize: 0.05
+                    value: root._helmCtl ? root._helmCtl.forwardLimit : 1
+                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.forwardLimit = val }
+                }
+                HelmSliderRow {
+                    label: qsTr("Reverse limit")
+                    toolTipText: qsTr("Max reverse throttle")
+                    from: 0; to: 1; stepSize: 0.05
+                    value: root._helmCtl ? root._helmCtl.reverseLimit : 0.5
+                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.reverseLimit = val }
+                }
+                HelmSliderRow {
+                    label: qsTr("Steering limit")
+                    toolTipText: qsTr("Max steering")
+                    from: 0; to: 1; stepSize: 0.05
+                    value: root._helmCtl ? root._helmCtl.steeringLimit : 1
+                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.steeringLimit = val }
+                }
+                HelmSliderRow {
+                    label: qsTr("Throttle softness")
+                    toolTipText: qsTr("Gentler throttle at the start of the travel")
+                    from: 0; to: 1; stepSize: 0.05
+                    value: root._helmCtl ? root._helmCtl.throttleExpo : 0.2
+                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.throttleExpo = val }
+                }
+                HelmSliderRow {
+                    label: qsTr("Send rate")
+                    toolTipText: qsTr("How often commands go to the boat")
+                    from: 10; to: 25; stepSize: 1
+                    displayScale: 1
+                    format: qsTr("%1 Hz")
+                    value: root._helmCtl ? root._helmCtl.rateHz : 20
+                    onValueMoved: function(val) { if (root._helmCtl) root._helmCtl.rateHz = Math.round(val) }
+                }
+            }
+
+            KButton {
+                width: parent.width
+                fontPixelSize: Tokens.fontLg
+                text: qsTr("Defaults")
+                onClicked: if (root._helmCtl) root._helmCtl.resetTuning()
             }
         }
     }

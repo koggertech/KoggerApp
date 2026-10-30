@@ -1453,6 +1453,11 @@
         <source>Vibrates with the throttle and steering while armed, and briefly on a mode change or arm / disarm</source>
         <translation>Вибрирует в такт газу и рулю на взведённой лодке и коротко — при смене режима и взводе / снятии</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3853"/>
+        <source>Gamepad</source>
+        <translation>Геймпад</translation>
+    </message>
 </context>
 <context>
     <name>AutopilotPopup</name>
