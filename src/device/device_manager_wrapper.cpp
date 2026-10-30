@@ -57,7 +57,13 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     QObject::connect(missionTransfer_, &autopilot::MissionTransfer::downloadFinished, this, &DeviceManagerWrapper::onMissionDownloadFinished);
     QObject::connect(dm, &DeviceManager::missionUploadRefused, this, [this](int result, int missionType) { onMissionUploadFinished(false, result, missionType); });
     QObject::connect(dm, &DeviceManager::missionDownloadRefused, this, [this](int result) { onMissionDownloadFinished(false, result, 0, {}); });
-    missionThread_->start();
+}
+
+void DeviceManagerWrapper::startMissionThread()
+{
+    if (missionThread_ && !missionThread_->isRunning()) {
+        missionThread_->start();
+    }
 }
 
 DeviceManagerWrapper::~DeviceManagerWrapper()

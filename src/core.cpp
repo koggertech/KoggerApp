@@ -3653,6 +3653,9 @@ void Core::initAfterApp()
     if (linkManagerWrapperPtr_) {
         linkManagerWrapperPtr_->startWorkerThread();
     }
+    if (deviceManagerWrapperPtr_) {
+        deviceManagerWrapperPtr_->startMissionThread();
+    }
 
     createDataProcessor();
 }

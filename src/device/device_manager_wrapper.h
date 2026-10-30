@@ -136,6 +136,8 @@ public:
     void autopilotRequestMessage(int msgId);
 
     void initStreamList();
+    /** Starts the mission-transfer thread; call once QGuiApplication exists. */
+    void startMissionThread();
 
     bool getProtoBinConsoled() const { return protoBinConsoledState_; };
     bool getNmeaConsoled() const { return nmeaConsoledState_; };
