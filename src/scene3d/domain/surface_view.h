@@ -106,9 +106,6 @@ public:
     std::vector<uint8_t>                              takeSurfaceColorTableToAppend();
     GLuint                                            takeSurfaceColorTableToDelete();
 
-    void setLlaRef(LLARef llaRef);
-    bool saveVerticesToFile(const QString& path);
-
     bool trySetMosaicTextureId(const TileKey& key, GLuint texId);
     bool hasTile(const TileKey& key) const;
 
@@ -145,5 +142,4 @@ private:
     QVector<GLuint>                                 mosaicTileTextureToDelete_;
     std::vector<uint8_t>                            surfaceColorTableToAppend_;
     GLuint                                          surfaceColorTableToDelete_;
-    LLARef llaRef_;
 };

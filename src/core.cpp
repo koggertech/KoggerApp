@@ -11,6 +11,7 @@
 #include <QUrl>
 #include <QStandardPaths>
 #include <QDateTime>
+#include <QRegularExpression>
 #include <QTimeZone>
 #include <QProcess>
 #include <QDesktopServices>
@@ -105,6 +106,36 @@ QString Core::defaultExportDirectory() const
 {
     return QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)
            + QStringLiteral("/KoggerApp/exports");
+}
+
+QString Core::exportFileStem() const
+{
+    return buildExportFileStem(openedfilePath_);
+}
+
+QString Core::exportSourceName() const
+{
+    if (isOpenedFile()) {
+        return buildExportFileStem(openedfilePath_);
+    }
+
+    const QString links = getFileTitle();
+    if (links.isEmpty()) {
+        return QString();
+    }
+
+    QString name = QDateTime::currentDateTime().toString("yyyy.MM.dd_hh.mm.ss") + "_" + links;
+    static const QRegularExpression unsafe(QStringLiteral("[^\\w.\\-]+"), QRegularExpression::UseUnicodePropertiesOption);
+    name.replace(unsafe, QStringLiteral("_"));
+    while (name.endsWith('_')) {
+        name.chop(1);
+    }
+    return name;
+}
+
+QString Core::exportFilePath(const QString& folder, const QString& fileName) const
+{
+    return resolveExportBasePath(folder) + "/" + fileName;
 }
 
 QString Core::resolveExportBasePath(const QString& basePath) const
@@ -2351,6 +2382,7 @@ void Core::UILoad(QObject* object, const QUrl& url)
 
     isobathsViewControlMenuController_->setQmlEngine(object);
     isobathsViewControlMenuController_->setDataProcessorPtr(dataProcessor_);
+    isobathsViewControlMenuController_->setDatasetPtr(datasetPtr_);
     isobathsViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
     mosaicViewControlMenuController_->setQmlEngine(object);

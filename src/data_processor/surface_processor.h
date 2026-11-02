@@ -10,6 +10,7 @@
 #include "delaunay.h"
 #include "math_defs.h"
 #include "isobaths_defs.h"
+#include "surface_export_snapshot.h"
 #include "surface_tile.h"
 
 
@@ -48,8 +49,11 @@ public:
     int getColorIntervalsCount() const;
     float getMinZ() const;
     float getMaxZ() const;
+    SurfaceExportSnapshotPtr makeExportSnapshot(quint64 knownRevision) const;
 
 private:
+    quint64 exportRevision() const;
+    bool isTriangleInWork(const delaunay::Triangle& t) const;
     void writeTriangleToMesh(const QVector3D& A, const QVector3D& B, const QVector3D& C, QSet<SurfaceTile*>& updatedTiles);
     void ensureTileInited(SurfaceTile* tile, int tileSidePix);
     void ensureTilesInitedBatch(const QHash<TileKey, SurfaceTile*>& tiles, int tileSidePix);

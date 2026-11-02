@@ -7,7 +7,7 @@
 
 namespace {
 
-constexpr int kCurrentSchemaVersion = 8;
+constexpr int kCurrentSchemaVersion = 9;
 
 void migrateSettingsGroup(QSettings& settings, const QString& from, const QString& to)
 {
@@ -282,6 +282,12 @@ void migrateToV8(QSettings& settings)
     }
 }
 
+void migrateToV9(QSettings& settings)
+{
+    settings.remove(QStringLiteral("main/export/exportSurfaceFolder"));
+    settings.remove(QStringLiteral("main/export/exportSurfaceFolderText"));
+}
+
 }
 
 void migrateSettingsSchema()
@@ -315,6 +321,9 @@ void migrateSettingsSchema()
     }
     if (version < 8) {
         migrateToV8(settings);
+    }
+    if (version < 9) {
+        migrateToV9(settings);
     }
 
     settings.setValue(QStringLiteral("schemaVersion"), kCurrentSchemaVersion);

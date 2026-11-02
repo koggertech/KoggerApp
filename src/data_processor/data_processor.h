@@ -129,6 +129,8 @@ public slots:
     void requestPipelineStats();
     void requestMosaicStats(int probeWindow);
 
+    void requestSurfaceExportSnapshot(int requestId, quint64 knownRevision);
+
 private slots:
     //db
     void onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles);
@@ -176,6 +178,7 @@ signals:
     // diagnostics
     void pipelineStats(const QVariantMap& stats);
     void mosaicStats(const QVariantMap& stats);
+    void surfaceExportSnapshotReady(int requestId, SurfaceExportSnapshotPtr snapshot);
 
 private slots:
     void postTraceLines(const QVector3D& leftBeg, const QVector3D& leftEnd, const QVector3D& rightBeg, const QVector3D& rightEnd, int epochIndex);
@@ -207,6 +210,7 @@ private slots:
     // diagnostics
     void postPipelineStats(const QVariantMap& stats);
     void postMosaicStats(const QVariantMap& stats);
+    void postSurfaceExportSnapshot(int requestId, SurfaceExportSnapshotPtr snapshot);
 
     void onBottomTrackStarted();
     void onBottomTrackFinished();

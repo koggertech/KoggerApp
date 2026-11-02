@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <QFutureWatcher>
 #include <QThread>
 #include <QTimer>
 #include <QVariantList>
@@ -8,8 +9,10 @@
 
 #include "qml_component_controller.h"
 #include "data_processor.h"
+#include "surface_grid_export.h"
 
 
+class Dataset;
 class GraphicsScene3dView;
 class IsobathsViewControlMenuController : public QmlComponentController
 {
@@ -24,12 +27,18 @@ class IsobathsViewControlMenuController : public QmlComponentController
     Q_PROPERTY(QVariantList surfacePaletteColors READ surfacePaletteColors NOTIFY surfacePaletteColorsChanged)
     Q_PROPERTY(float surfaceDepthMin READ surfaceDepthMin NOTIFY surfaceDepthRangeChanged)
     Q_PROPERTY(float surfaceDepthMax READ surfaceDepthMax NOTIFY surfaceDepthRangeChanged)
+    Q_PROPERTY(bool surfaceExportRunning READ surfaceExportRunning NOTIFY surfaceExportRunningChanged)
+    Q_PROPERTY(QVariantMap surfaceExportEstimate READ surfaceExportEstimate NOTIFY surfaceExportEstimateChanged)
+    Q_PROPERTY(QVariantMap surfaceExportLastResult READ surfaceExportLastResult NOTIFY surfaceExportLastResultChanged)
+    Q_PROPERTY(bool surfaceExportEstimateActive READ surfaceExportEstimateActive WRITE setSurfaceExportEstimateActive NOTIFY surfaceExportEstimateActiveChanged)
 
 public:
     explicit IsobathsViewControlMenuController(QObject* parent = nullptr);
+    ~IsobathsViewControlMenuController() override;
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
     void setDataProcessorPtr(DataProcessor *dataProcessorPtr);
+    void setDatasetPtr(Dataset* datasetPtr);
 
     Q_INVOKABLE void onIsobathsVisibilityCheckBoxCheckedChanged(bool checked);
     Q_INVOKABLE void onUpdateIsobathsButtonClicked();
@@ -61,6 +70,16 @@ public:
     float surfaceDepthMin() const;
     float surfaceDepthMax() const;
 
+    Q_INVOKABLE bool startSurfaceExport(const QString& path, int quality, bool extrapolation, double depthOffset, int format = 0);
+    Q_INVOKABLE void cancelSurfaceExport();
+    Q_INVOKABLE void requestSurfaceExportEstimate();
+    Q_INVOKABLE double surfaceExportNodeStep(int quality) const;
+    bool surfaceExportRunning() const;
+    QVariantMap surfaceExportEstimate() const;
+    QVariantMap surfaceExportLastResult() const;
+    bool surfaceExportEstimateActive() const;
+    void setSurfaceExportEstimateActive(bool state);
+
 signals:
     void pipelineStatusChanged();
     void pipelineStatusSeqChanged();
@@ -70,6 +89,10 @@ signals:
     void bandedColorsChanged();
     void surfacePaletteColorsChanged();
     void surfaceDepthRangeChanged();
+    void surfaceExportRunningChanged();
+    void surfaceExportEstimateChanged();
+    void surfaceExportLastResultChanged();
+    void surfaceExportEstimateActiveChanged();
 
 protected:
     void findComponent() override;
@@ -79,13 +102,42 @@ private slots:
     void onSurfaceMinZ(float minZ);
     void onSurfaceMaxZ(float maxZ);
     void onSurfaceCleared();
+    void onSurfaceExportSnapshotReady(int requestId, SurfaceExportSnapshotPtr snapshot);
+    void onSurfaceExportProgress(int value);
+    void onSurfaceExportFinished();
+    void onSurfaceExportEstimateFinished();
+    void onProcessingIdleChanged(bool idle);
+    void onDataProcessorDestroyed();
 
 private:
     void tryInitPendingLambda();
+    void setSurfaceExportRunning(bool state);
+    void finishSurfaceExport(const SurfaceExportResult& result);
+    bool requestSurfaceExportSnapshot(int requestId, quint64 knownRevision);
+    QVector<QVector3D> bottomTrackData() const;
+    void resetSurfaceExportEstimate();
 
 private:
     GraphicsScene3dView* graphicsSceneViewPtr_;
     DataProcessor* dataProcessorPtr_;
+    Dataset* datasetPtr_;
+    QFutureWatcher<SurfaceExportResult> exportWatcher_;
+    QFutureWatcher<SurfaceExportResult> estimateWatcher_;
+    QTimer estimateRefreshTimer_;
+    SurfaceExportParams exportParams_;
+    std::shared_ptr<std::atomic_bool> exportCancel_;
+    QVariantMap exportEstimate_;
+    quint64 estimateRevision_ = 0;
+    qsizetype estimateTrackSize_ = -1;
+    QVariantMap exportLastResult_;
+    int exportRequestCounter_ = 0;
+    int exportRequestId_ = 0;
+    int estimateRequestId_ = 0;
+    int exportPercent_ = -1;
+    bool exportRunning_ = false;
+    bool estimatePending_ = false;
+    bool estimateActive_ = false;
+    bool processingIdle_ = true;
     std::function<void()> pendingLambda_;
     QThread thread_;
     QTimer statusTimer_;

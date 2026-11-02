@@ -258,3 +258,12 @@ void ComputeWorker::reportMosaicStats(int probeWindow)
 
     QMetaObject::invokeMethod(dp_, "postMosaicStats", Qt::QueuedConnection, Q_ARG(QVariantMap, stats));
 }
+
+void ComputeWorker::makeSurfaceExportSnapshot(int requestId, quint64 knownRevision)
+{
+    const SurfaceExportSnapshotPtr snapshot = surface_.makeExportSnapshot(knownRevision);
+
+    QMetaObject::invokeMethod(dp_, "postSurfaceExportSnapshot", Qt::QueuedConnection,
+                              Q_ARG(int, requestId),
+                              Q_ARG(SurfaceExportSnapshotPtr, snapshot));
+}

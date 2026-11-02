@@ -8,6 +8,7 @@
 #include "data_processor_defs.h"
 #include "bottom_track.h"
 #include "surface_mesh.h"
+#include "surface_raster_rules.h"
 #include "surface_tile.h"
 #include "math_defs.h"
 
@@ -413,42 +414,9 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         }
     };
 
-    auto dirForIndexPix = [&](int idx, QVector2D& udirPix) -> bool { // направление движения
-        const QVector3D& p  = bTrData[idx];
-        const QVector3D  pP = surfaceMeshPtr_->convertPhToPixCoords(p);
-
-        QVector2D v0(0.f, 0.f); // prev -> curr
-        QVector2D v1(0.f, 0.f); // curr -> next
-
-        if (idx > 0) {
-            const QVector3D& pr = bTrData[idx - 1];
-            const QVector3D  prP = surfaceMeshPtr_->convertPhToPixCoords(pr);
-            v0 = QVector2D(pP.x() - prP.x(), pP.y() - prP.y());
-            if (v0.lengthSquared() > kmath::fltEps) {
-                v0.normalize();
-            }
-        }
-
-        if (idx + 1 < bTrData.size()) {
-            const QVector3D& nx = bTrData[idx + 1];
-            const QVector3D  nxP = surfaceMeshPtr_->convertPhToPixCoords(nx);
-            v1 = QVector2D(nxP.x() - pP.x(), nxP.y() - pP.y());
-            if (v1.lengthSquared() > kmath::fltEps) {
-                v1.normalize();
-            }
-        }
-
-        if (v0.lengthSquared() <= kmath::fltEps && v1.lengthSquared() <= kmath::fltEps) {
-            return false;
-        }
-
-        QVector2D v = v1.lengthSquared() > kmath::fltEps && v0.lengthSquared() > kmath::fltEps ? (v0 + v1) : (v1.lengthSquared() > kmath::fltEps ? v1 : v0);
-        if (v.lengthSquared() <= kmath::fltEps) {
-            return false;
-        }
-
-        udirPix = v.normalized();
-        return true;
+    const float invTileResolution = 1.0f / tileResolution_;
+    auto dirForIndexPix = [&](int idx, QVector2D& udirPix) -> bool {
+        return SurfaceRasterRules::trackDirection(bTrData, idx, invTileResolution, udirPix);
     };
 
     auto paintDiskExtrapolated = [&](const QVector3D& P, const QVector2D* udirOpt, QSet<SurfaceTile*>& changed) {
@@ -484,7 +452,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         const QVector3D Ppix3 = surfaceMeshPtr_->convertPhToPixCoords(P);
         const QVector3D Qpix3 = surfaceMeshPtr_->convertPhToPixCoords(QVector3D(P.x() + radiusM, P.y(), P.z()));
         const float radiusPxF = std::fabs(Qpix3.x() - Ppix3.x());
-        const int   radiusPx  = std::max(1, static_cast<int>(std::ceil(radiusPxF + 0.5f /*запас*/ * stepPix)));
+        const int   radiusPx  = SurfaceRasterRules::extrapolationRadiusPx(radiusPxF, stepPix);
 
         const int minPx = clampGrid(roundToGrid(Ppix3.x() - radiusPx), meshW - 1);
         const int maxPx = clampGrid(roundToGrid(Ppix3.x() + radiusPx), meshW - 1);
@@ -534,16 +502,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
                 const int dx = px - cx;
                 const int dy = py - cy;
                 if (dx * dx + dy * dy > r2) {
-                    continue; // вне круга
-                }
-                if (dx == 0 && dy == 0) {
-                    continue; // центр
-                }
-
-                bool isFront = true; // круг на forward/backward
-                if (useDir) {
-                    const float dot = static_cast<float>(dx) * ux + static_cast<float>(dy) * uy;
-                    isFront = (dot >= 0.f);
+                    continue;
                 }
 
                 const int tileX = px / tileSidePix;
@@ -570,16 +529,8 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
                 }
 
                 auto& mark = tile->getHeightMarkVerticesRef()[hvIdx];
-
-                if (isFront) {
-                    if (mark == HeightType::kTriangulation || mark == HeightType::kMosaic) {
-                        continue;
-                    }
-                }
-                else {
-                    if (mark != HeightType::kUndefined) {
-                        continue; // сзади — только Undefined
-                    }
+                if (!SurfaceRasterRules::diskNodeWritable(dx, dy, r2, useDir, ux, uy, mark)) {
+                    continue;
                 }
 
                 tile->getHeightVerticesRef()[hvIdx][2] = P.z();
@@ -896,8 +847,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         }
 
         const auto& t = tr[triIdx];
-        const bool inWork = t.a >= 4 && t.b >= 4 && t.c >= 4 && !t.is_bad && t.longest_edge_dist <= edgeLimit_;
-        if (!inWork) {
+        if (!isTriangleInWork(t)) {
             continue;
         }
 
@@ -926,8 +876,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
             }
 
             const auto& t = tr[triIdx];
-            const bool inWork = t.a >= 4 && t.b >= 4 && t.c >= 4 && !t.is_bad && t.longest_edge_dist <= edgeLimit_;
-            if (!inWork) {
+            if (!isTriangleInWork(t)) {
                 continue;
             }
 
@@ -981,8 +930,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         float currMin = std::numeric_limits<float>::max();
         float currMax = std::numeric_limits<float>::lowest();
         for (const auto& t : tr) {
-            const bool inWork = t.a >= 4 && t.b >= 4 && t.c >= 4 && !t.is_bad && t.longest_edge_dist <= edgeLimit_;
-            if (!inWork) {
+            if (!isTriangleInWork(t)) {
                 continue;
             }
             currMin = std::fmin(currMin, std::min({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
@@ -1043,7 +991,7 @@ void SurfaceProcessor::rebuildAfterResolutionChange()
     };
 
     for (const auto& t : tr) {
-        if (t.is_bad || t.a < 4 || t.b < 4 || t.c < 4 || t.longest_edge_dist > edgeLimit_) {
+        if (!isTriangleInWork(t)) {
             continue;
         }
         addPoint(pt[t.a]);
@@ -1295,6 +1243,46 @@ float SurfaceProcessor::getMaxZ() const
     return maxZ_;
 }
 
+quint64 SurfaceProcessor::exportRevision() const
+{
+    return qHashMulti(0, delaunayProc_.getPoints().size(), delaunayProc_.getTriangles().size(), edgeLimit_, extraWidth_);
+}
+
+SurfaceExportSnapshotPtr SurfaceProcessor::makeExportSnapshot(quint64 knownRevision) const
+{
+    auto snapshot = std::make_shared<SurfaceExportSnapshot>();
+    snapshot->revision = exportRevision();
+    if (knownRevision != 0 && snapshot->revision == knownRevision) {
+        snapshot->unchanged = true;
+        return snapshot;
+    }
+
+    const auto& pt = delaunayProc_.getPoints();
+    const auto& tr = delaunayProc_.getTriangles();
+
+    snapshot->points.reserve(pt.size());
+    for (const auto& p : pt) {
+        snapshot->points.push_back(kmath::fvec(p));
+    }
+
+    snapshot->triangles.reserve(tr.size());
+    for (const auto& t : tr) {
+        if (isTriangleInWork(t)) {
+            snapshot->triangles.push_back({ static_cast<int>(t.a), static_cast<int>(t.b), static_cast<int>(t.c) });
+        }
+    }
+
+    snapshot->edgeLimit = edgeLimit_;
+    snapshot->extraWidth = extraWidth_;
+
+    return snapshot;
+}
+
+bool SurfaceProcessor::isTriangleInWork(const delaunay::Triangle& t) const
+{
+    return t.a >= 4 && t.b >= 4 && t.c >= 4 && !t.is_bad && t.longest_edge_dist <= edgeLimit_;
+}
+
 void SurfaceProcessor::writeTriangleToMesh(const QVector3D &A, const QVector3D &B, const QVector3D &C, QSet<SurfaceTile*> &updatedTiles)
 {
     if (!surfaceMeshPtr_ || !surfaceMeshPtr_->getIsInited()) {
@@ -1322,13 +1310,12 @@ void SurfaceProcessor::writeTriangleToMesh(const QVector3D &A, const QVector3D &
         return;
     }
 
-    const float triDenom = kmath::twiceArea(Ap, Bp, Cp);
-    if (qFuzzyIsNull(triDenom)) {
+    const float denom = SurfaceRasterRules::twiceArea(Ap.x(), Ap.y(), Bp.x(), Bp.y(), Cp.x(), Cp.y());
+    if (SurfaceRasterRules::isDegenerate(denom)) {
         return;
     }
 
-    const float maxEdgeMeters = std::max({ (A - B).length(), (B - C).length(), (C - A).length() });
-    if (std::isfinite(maxEdgeMeters) && maxEdgeMeters > edgeLimit_) {
+    if (!SurfaceRasterRules::withinEdgeLimit(A, B, C, edgeLimit_)) {
         return;
     }
 
@@ -1386,24 +1373,13 @@ void SurfaceProcessor::writeTriangleToMesh(const QVector3D &A, const QVector3D &
 
     ensureTilesInitedBatch(tilesToInit, tileSidePix);
 
-    const float denom = kmath::twiceArea(Ap, Bp, Cp);
-    if (qFuzzyIsNull(denom)) { // вырожденный треугольник
-        return;
-    }
-
     for (int py = minPy; py <= maxPy; py += stepPix) {
         for (int px = minPx; px <= maxPx; px += stepPix) {
-            QVector3D Pp(px, py, 0.f);
-
-            float w0 = kmath::twiceArea(Bp, Cp, Pp) / denom;
-            float w1 = kmath::twiceArea(Cp, Ap, Pp) / denom;
-            float w2 = 1.f - w0 - w1;
-
-            if (w0 < -kmath::fltEps || w1 < -kmath::fltEps || w2 < -kmath::fltEps) { // вне треугольника
+            float interpZ = 0.f;
+            if (!SurfaceRasterRules::interpolateInTriangle(Ap.x(), Ap.y(), Bp.x(), Bp.y(), Cp.x(), Cp.y(), denom,
+                                                           A.z(), B.z(), C.z(), float(px), float(py), interpZ)) {
                 continue;
             }
-
-            float interpZ = w0 * A.z() + w1 * B.z() + w2 * C.z();
 
             int tileX = px / tileSidePix;
             int tileY = (tilesY - 1) - py / tileSidePix;
@@ -1669,10 +1645,7 @@ void SurfaceProcessor::refreshAfterEdgeLimitChange()
 
     for (std::size_t i = 0; i < tr.size(); ++i) {
         const auto& t = tr[i];
-        if (t.is_bad || t.a < 4 || t.b < 4 || t.c < 4) {
-            continue;
-        }
-        if (t.longest_edge_dist > edgeLimit_) {
+        if (!isTriangleInWork(t)) {
             continue;
         }
 
@@ -1693,9 +1666,8 @@ void SurfaceProcessor::refreshAfterEdgeLimitChange()
 
     float currMin = std::numeric_limits<float>::max();
     float currMax = std::numeric_limits<float>::lowest();
-    for (auto t : tr) {
-        bool inWork = t.a >= 4 && t.b >= 4 && t.c >= 4 && !t.is_bad && t.longest_edge_dist <= edgeLimit_;
-        if (!inWork) {
+    for (const auto& t : tr) {
+        if (!isTriangleInWork(t)) {
             continue;
         }
         currMin = std::fmin(currMin, std::min({ pt[t.a].z, pt[t.b].z , pt[t.c].z }));

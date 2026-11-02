@@ -3021,7 +3021,6 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
 
     QObject::connect(datasetPtr_, &Dataset::updatedLlaRef,
                      this,      [this]() -> void {
-                         surfaceView_->setLlaRef(datasetPtr_->getLlaRef());
                          forceUpdateDatasetLlaRef();
                          fitAllInView();
                      }, Qt::DirectConnection);

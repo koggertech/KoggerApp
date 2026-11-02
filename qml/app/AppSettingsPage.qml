@@ -8,6 +8,7 @@ import QtCore
 import kqml_types 1.0
 import controls
 import scene2d
+import "ExportPaths.js" as ExportPaths
 
 Column {
     id: root
@@ -206,16 +207,7 @@ Column {
 
     // URL helpers (for export/import paths)
     function localPath(value) {
-        if (!value) return ""
-        if (typeof value === "string") {
-            if (value.startsWith("file:///"))
-                return Qt.platform.os === "windows" ? value.slice(8) : value.slice(7)
-            if (value.startsWith("file://"))
-                return value.slice(7)
-            return value
-        }
-        var lp = value.toLocalFile ? value.toLocalFile() : ""
-        return lp.length ? lp : value.toString()
+        return ExportPaths.localPath(value)
     }
 
     function displayPath(value) {
@@ -1559,8 +1551,6 @@ Column {
         collapsedByDefault: true
 
         readonly property int ctrlW: Math.round(170 * AppPalette.scale)
-        property var exportSurfaceFolder: StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/KoggerApp/exports"
-        property string exportSurfacePathSource: core.defaultExportDirectory() + "/surface.csv"
 
         // Hotkey API — invoked from WorkspaceStore.applyIsobathsHotkey().
         function prevTheme() {
@@ -1576,46 +1566,6 @@ Column {
         function stepUp(step) {
             var d = step === undefined ? 1 : step
             for (var i = 0; i < d; ++i) isobathsSurfaceLineStepSizeSpinBox.increment()
-        }
-
-        function isoSourceUrl(value) {
-            if (!value) return ""
-            if (typeof value === "string") {
-                if (value.startsWith("file:///"))
-                    return Qt.platform.os === "windows" ? value.slice(8) : value.slice(7)
-                if (value.startsWith("file://"))
-                    return value.slice(7)
-                return value
-            }
-            var lp = value.toLocalFile ? value.toLocalFile() : ""
-            return lp.length ? lp : value.toString()
-        }
-        function isoDisplayUrl(value) {
-            var s = isoSourceUrl(value)
-            if (!s.length) return ""
-            try { return decodeURIComponent(s) } catch (e) { return s }
-        }
-        function isoEffectiveSource(displayText, storedSource) {
-            if (!displayText || !displayText.length) return ""
-            if (storedSource && displayText === isoDisplayUrl(storedSource)) return storedSource
-            return displayText
-        }
-        function currentExportSurfacePath() {
-            var p = isoSourceUrl(isoEffectiveSource(exportSurfacePathText.text, exportSurfacePathSource))
-            if (!p || p.length === 0)
-                p = core.defaultExportDirectory() + "/surface.csv"
-            return p
-        }
-        function hasInvalidFileName(p) {
-            var name = p.replace(/^.*[\\/]/, "")
-            if (name.length === 0) return true
-            return /[<>:"|?*\x00-\x1F]/.test(name)
-        }
-
-        Component.onCompleted: {
-            if (!exportSurfacePathSource || exportSurfacePathSource.length === 0)
-                exportSurfacePathSource = core.defaultExportDirectory() + "/surface.csv"
-            exportSurfacePathText.text = isoDisplayUrl(exportSurfacePathSource)
         }
 
         RowLayout {
@@ -1745,98 +1695,13 @@ Column {
             }
         }
 
-        RowLayout {
-            width: parent.width
-            spacing: Tokens.spaceMd
-
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: Tokens.controlHMd
-                radius: Tokens.radiusMd
-                color: AppPalette.bg
-                border.width: exportSurfacePathText.activeFocus ? 1 : Tokens.cardBorderWidth
-                border.color: exportSurfacePathText.activeFocus ? AppPalette.accentBorder : AppPalette.border
-
-                TextInput {
-                    id: exportSurfacePathText
-                    activeFocusOnTab: true
-                    anchors.fill: parent
-                    anchors.leftMargin: Tokens.spaceMd
-                    anchors.rightMargin: Tokens.spaceMd
-                    TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: exportSurfacePathText.selectAll() }
-                    verticalAlignment: TextInput.AlignVCenter
-                    color: AppPalette.text
-                    font.pixelSize: Tokens.fontBase
-                    clip: true
-
-                    Text {
-                        visible: !exportSurfacePathText.text.length
-                        text: qsTr("Enter path")
-                        color: AppPalette.textMuted
-                        font.pixelSize: Tokens.fontBase
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
+        KIsland {
+            KIslandRow {
+                label: qsTr("Surface export")
+                chevron: true
+                interactive: true
+                onClicked: if (root.store) root.store.openSurfaceExportSettings()
             }
-
-            KButton {
-                text: "..."
-                toolTipText: qsTr("Choose the surface .csv file")
-                Layout.fillWidth: false
-                Layout.preferredWidth: Tokens.controlHMd
-                Layout.maximumWidth: Tokens.controlHMd
-                Layout.preferredHeight: Tokens.controlHMd
-                horizontalPadding: 0
-                verticalPadding: 0
-                onClicked: {
-                    exportSurfaceFileDialog.currentFolder = isobathsGroup.exportSurfaceFolder
-                    exportSurfaceFileDialog.open()
-                }
-            }
-
-            FileDialog {
-                id: exportSurfaceFileDialog
-                title: qsTr("Select folder and set .csv file name")
-                currentFolder: isobathsGroup.exportSurfaceFolder
-                fileMode: FileDialog.SaveFile
-                nameFilters: ["CSV Files (*.csv)", "All Files (*)"]
-                defaultSuffix: "csv"
-                onCurrentFolderChanged: { isobathsGroup.exportSurfaceFolder = currentFolder }
-                onAccepted: {
-                    isobathsGroup.exportSurfaceFolder = exportSurfaceFileDialog.currentFolder
-                    isobathsGroup.exportSurfacePathSource = isobathsGroup.isoSourceUrl(selectedFile)
-                    if (!isobathsGroup.exportSurfacePathSource.toLowerCase().endsWith(".csv")) {
-                        isobathsGroup.exportSurfacePathSource += ".csv"
-                    }
-                    exportSurfacePathText.text = isobathsGroup.isoDisplayUrl(isobathsGroup.exportSurfacePathSource)
-                }
-            }
-
-            KButton {
-                text: qsTr("Export to CSV")
-                toolTipText: qsTr("Export the surface to CSV")
-                fontPixelSize: Tokens.fontLg
-                Layout.fillWidth: false
-                Layout.preferredWidth: isobathsGroup.ctrlW
-                Layout.maximumWidth: isobathsGroup.ctrlW
-                Layout.preferredHeight: Tokens.controlHMd
-                onClicked: {
-                    var p = isobathsGroup.currentExportSurfacePath()
-                    var hasN = typeof notifications !== "undefined" && notifications
-                    if (isobathsGroup.hasInvalidFileName(p)) {
-                        if (hasN) notifications.warning(qsTr("Invalid characters in file name"))
-                        return
-                    }
-                    var ok = Scene3DControlMenuController.onExportToCSVButtonClicked(p)
-                    if (hasN) {
-                        if (ok) notifications.info(qsTr("Surface exported to %1").arg(p), p)
-                        else    notifications.warning(qsTr("Surface export failed"))
-                    }
-                }
-            }
-
-            Settings { category: "main/export"; property alias exportSurfaceFolder:     isobathsGroup.exportSurfaceFolder }
-            Settings { category: "main/export"; property alias exportSurfaceFolderText: isobathsGroup.exportSurfacePathSource }
         }
 
         Loader {

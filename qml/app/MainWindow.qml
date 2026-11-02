@@ -1184,6 +1184,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "uiSaving"     ? qsTr("UI Saving")
                      : workspaceStore.settingsSubPageKind === "tgc"          ? qsTr("TGC")
                      : workspaceStore.settingsSubPageKind === "csvExport"    ? qsTr("Export to CSV")
+                     : workspaceStore.settingsSubPageKind === "surfaceExport" ? qsTr("Surface export")
                      : workspaceStore.settingsSubPageKind === "aimPanel"     ? qsTr("Information panel")
                      : workspaceStore.settingsSubPageKind === "console"      ? qsTr("Console")
                      : workspaceStore.settingsSubPageKind === "about"        ? qsTr("About")
@@ -1219,6 +1220,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "uiSaving"   ? uiSavingSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "tgc"        ? tgcSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "csvExport"  ? csvExportSettingsTabComponent
+                     : workspaceStore.settingsSubPageKind === "surfaceExport" ? surfaceExportSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "aimPanel"   ? aimPanelSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "console"    ? consoleSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "about"      ? aboutPageComponent
@@ -1548,6 +1550,14 @@ ApplicationWindow {
             CsvExportSettingsTab {
                 store: workspaceStore
                 targetPlot: workspaceView.primaryPlotItem
+            }
+        }
+
+        Component {
+            id: surfaceExportSettingsTabComponent
+
+            SurfaceExportSettingsTab {
+                store: workspaceStore
             }
         }
 

@@ -80,6 +80,10 @@ Item {
             core.revealInFolder(path)
     }
 
+    function breakablePaths(text) {
+        return String(text).replace(/[\\\/]/g, "$&\u200B")
+    }
+
     function removeById(id) {
         for (var i = 0; i < notificationsModel.count; ++i) {
             if (notificationsModel.get(i).notificationId === id) {
@@ -292,7 +296,8 @@ Item {
                 anchors.rightMargin: card.showClose ? Tokens.spaceMd : Tokens.spaceLg
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: card.headerOffset
-                text: model.text
+                text: root.breakablePaths(model.text)
+                textFormat: Text.PlainText
                 color: AppPalette.text
                 font.pixelSize: Tokens.fontBase
                 wrapMode: Text.Wrap

@@ -6,6 +6,9 @@ target_sources(KoggerApp PRIVATE
     isobaths_processor.h      isobaths_processor.cpp
     mosaic_processor.h        mosaic_processor.cpp
     surface_processor.h       surface_processor.cpp
+    surface_grid_export.h     surface_grid_export.cpp
+    surface_export_snapshot.h
+    surface_raster_rules.h
     surface_mesh.h            surface_mesh.cpp
     surface_tile.h            surface_tile.cpp
     compute_worker.h          compute_worker.cpp

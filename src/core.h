@@ -172,6 +172,9 @@ public slots:
     Q_INVOKABLE void setCsvExportField(const QString& key, bool enabled);
     Q_INVOKABLE void resetCsvExportFields();
     Q_INVOKABLE QString defaultExportDirectory() const;
+    Q_INVOKABLE QString exportFileStem() const;
+    Q_INVOKABLE QString exportSourceName() const;
+    Q_INVOKABLE QString exportFilePath(const QString& folder, const QString& fileName) const;
     void refreshMosaicProcessing();
     void setPlotStartLevel(int level);
     void setPlotStopLevel(int level);

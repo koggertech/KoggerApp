@@ -78,6 +78,7 @@ qt_add_qml_module(kogger_app
         SettingsGroup.qml
         SettingsSidebarBase.qml
         SplashOverlay.qml
+        SurfaceExportSettingsTab.qml
         TgcSettingsTab.qml
         TutorialOverlay.qml
         TutorialsSettingsPage.qml
@@ -127,6 +128,7 @@ qt_add_qml_module(kogger_app
         WidgetSizeStep.qml
         WorkspaceStore.qml
         WorkspaceView.qml
+        ExportPaths.js
         LayoutResize.js
         NodesCheck.js
         NodesCompile.js

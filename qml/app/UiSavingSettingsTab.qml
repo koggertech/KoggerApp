@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtQuick.Dialogs
 import QtCore
 import kqml_types 1.0
+import "ExportPaths.js" as ExportPaths
 
 Column {
     id: page
@@ -15,16 +16,7 @@ Column {
     property var importFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
 
     function localPath(value) {
-        if (!value) return ""
-        if (typeof value === "string") {
-            if (value.startsWith("file:///"))
-                return Qt.platform.os === "windows" ? value.slice(8) : value.slice(7)
-            if (value.startsWith("file://"))
-                return value.slice(7)
-            return value
-        }
-        var lp = value.toLocalFile ? value.toLocalFile() : ""
-        return lp.length ? lp : value.toString()
+        return ExportPaths.localPath(value)
     }
 
     function safeFolder(folderUrl) {

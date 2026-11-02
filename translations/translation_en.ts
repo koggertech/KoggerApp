@@ -294,16 +294,6 @@
         <translation>Surface extrapolation radius around the track</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1636"/>
-        <source>Choose the surface .csv file</source>
-        <translation>Choose the surface .csv file</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1669"/>
-        <source>Export the surface to CSV</source>
-        <translation>Export the surface to CSV</translation>
-    </message>
-    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="644"/>
         <source>Edit workspace panes</source>
         <translation>Edit workspace panes</translation>
@@ -342,21 +332,6 @@
         <location filename="../qml/app/AppSettingsPage.qml" line="3397"/>
         <source>Cancel</source>
         <translation>Cancel</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1684"/>
-        <source>Surface exported to %1</source>
-        <translation>Surface exported to %1</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1685"/>
-        <source>Surface export failed</source>
-        <translation>Surface export failed</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1679"/>
-        <source>Invalid characters in file name</source>
-        <translation>Invalid characters in file name</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="912"/>
@@ -701,16 +676,6 @@
         <location filename="../qml/app/AppSettingsPage.qml" line="1583"/>
         <source>Extra width, m:</source>
         <translation>Extra width, m:</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1626"/>
-        <source>Enter path</source>
-        <translation>Enter path</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1651"/>
-        <source>Select folder and set .csv file name</source>
-        <translation>Select folder and set .csv file name</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="285"/>
@@ -1462,6 +1427,11 @@
         <location filename="../qml/app/AppSettingsPage.qml" line="3853"/>
         <source>Gamepad</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1700"/>
+        <source>Surface export</source>
+        <translation>Surface export</translation>
     </message>
 </context>
 <context>
@@ -6624,6 +6594,51 @@ udp://@:1234
     </message>
 </context>
 <context>
+    <name>IsobathsViewControlMenuController</name>
+    <message>
+        <location filename="../src/scene3d/controllers/isobaths_view_control_menu_controller.cpp" line="585"/>
+        <source>Surface export failed: empty path</source>
+        <translation>Surface export failed: empty path</translation>
+    </message>
+    <message>
+        <location filename="../src/scene3d/controllers/isobaths_view_control_menu_controller.cpp" line="621"/>
+        <source>Surface export: preparing data</source>
+        <translation>Surface export: preparing data</translation>
+    </message>
+    <message>
+        <location filename="../src/scene3d/controllers/isobaths_view_control_menu_controller.cpp" line="797"/>
+        <source>Surface export: %1%</source>
+        <translation>Surface export: %1%</translation>
+    </message>
+    <message>
+        <location filename="../src/scene3d/controllers/isobaths_view_control_menu_controller.cpp" line="862"/>
+        <source>Surface exported (%1 points):
+%2</source>
+        <translation>Surface exported (%1 points):
+%2</translation>
+    </message>
+    <message>
+        <location filename="../src/scene3d/controllers/isobaths_view_control_menu_controller.cpp" line="866"/>
+        <source>Surface export canceled</source>
+        <translation>Surface export canceled</translation>
+    </message>
+    <message>
+        <location filename="../src/scene3d/controllers/isobaths_view_control_menu_controller.cpp" line="870"/>
+        <source>Surface export: no surface data</source>
+        <translation>Surface export: no surface data</translation>
+    </message>
+    <message>
+        <location filename="../src/scene3d/controllers/isobaths_view_control_menu_controller.cpp" line="878"/>
+        <source>Surface export failed: %1</source>
+        <translation>Surface export failed: %1</translation>
+    </message>
+    <message>
+        <location filename="../src/scene3d/controllers/isobaths_view_control_menu_controller.cpp" line="874"/>
+        <source>Surface export: XYZ needs geographic coordinates, and this data has no GNSS reference</source>
+        <translation>Surface export: XYZ needs geographic coordinates, and this data has no GNSS reference</translation>
+    </message>
+</context>
+<context>
     <name>KCircleIconButton</name>
     <message>
         <location filename="../qml/kqml_types/KCircleIconButton.qml" line="72"/>
@@ -7035,6 +7050,11 @@ udp://@:1234
         <location filename="../qml/app/MainWindow.qml" line="1162"/>
         <source>Stand panel</source>
         <translation>Stand panel</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MainWindow.qml" line="1187"/>
+        <source>Surface export</source>
+        <translation>Surface export</translation>
     </message>
 </context>
 <context>
@@ -10209,6 +10229,144 @@ udp://@:1234
         <location filename="../qml/app/StandPanelSettingsPage.qml" line="35"/>
         <source>Background transparency</source>
         <translation>Background transparency</translation>
+    </message>
+</context>
+<context>
+    <name>SurfaceExportSettingsTab</name>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="48"/>
+        <source>%1 GB</source>
+        <translation>%1 GB</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="49"/>
+        <source>&lt; 1 MB</source>
+        <translation>&lt; 1 MB</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="50"/>
+        <source>%1 MB</source>
+        <translation>%1 MB</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="54"/>
+        <source>Estimating size…</source>
+        <translation>Estimating size…</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="56"/>
+        <source>≈ %1 points, ~%2 — a large file</source>
+        <translation>≈ %1 points, ~%2 — a large file</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="57"/>
+        <source>≈ %1 points, ~%2</source>
+        <translation>≈ %1 points, ~%2</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="98"/>
+        <source>Saves the surface with the chosen parameters.</source>
+        <translation>Saves the surface with the chosen parameters.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="188"/>
+        <source>Format</source>
+        <translation>Format</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="332"/>
+        <source>Export to XYZ</source>
+        <translation>Export to XYZ</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="109"/>
+        <source>Show surface</source>
+        <translation>Show surface</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="110"/>
+        <source>Without the surface there is nothing to export.</source>
+        <translation>Without the surface there is nothing to export.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="130"/>
+        <source>Grid</source>
+        <translation>Grid</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="133"/>
+        <source>Point spacing</source>
+        <translation>Point spacing</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="145"/>
+        <source>%1 m</source>
+        <translation>%1 m</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="153"/>
+        <source>Extrapolation</source>
+        <translation>Extrapolation</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="154"/>
+        <source>Also the surface filled around the track</source>
+        <translation>Also the surface filled around the track</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="167"/>
+        <source>Depth correction, m</source>
+        <translation>Depth correction, m</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="168"/>
+        <source>Added to every depth; positive is deeper</source>
+        <translation>Added to every depth; positive is deeper</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="185"/>
+        <source>File</source>
+        <translation>File</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="244"/>
+        <source>Export folder</source>
+        <translation>Export folder</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="260"/>
+        <source>Choose export folder</source>
+        <translation>Choose export folder</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="202"/>
+        <source>Path</source>
+        <translation>Path</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="272"/>
+        <source>Name</source>
+        <translation>Name</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="306"/>
+        <source>File name</source>
+        <translation>File name</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="71"/>
+        <source>Invalid characters in file name</source>
+        <translation>Invalid characters in file name</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="332"/>
+        <source>Cancel export</source>
+        <translation>Cancel export</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="332"/>
+        <source>Export to CSV</source>
+        <translation>Export to CSV</translation>
     </message>
 </context>
 <context>

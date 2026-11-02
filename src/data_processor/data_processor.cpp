@@ -106,6 +106,7 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     qRegisterMetaType<std::vector<uint8_t>>("std::vector<uint8_t>");
     qRegisterMetaType<QSet<TileKey>>("QSet<TileKey>");
     qRegisterMetaType<QVector<int>>("QVector<int>");
+    qRegisterMetaType<SurfaceExportSnapshotPtr>("SurfaceExportSnapshotPtr");
 
     hotCache_.setDataProcessorPtr(this);
 
@@ -1594,6 +1595,23 @@ void DataProcessor::postPipelineStats(const QVariantMap& stats)
     out["queuedBtVertices"]  = epIndxsFromBottomTrack_.size();
 
     emit pipelineStats(out);
+}
+
+void DataProcessor::requestSurfaceExportSnapshot(int requestId, quint64 knownRevision)
+{
+    ComputeWorker* worker = worker_;
+    const bool posted = worker && !shuttingDown_.load()
+                        && QMetaObject::invokeMethod(worker, [worker, requestId, knownRevision]() {
+                               worker->makeSurfaceExportSnapshot(requestId, knownRevision);
+                           }, Qt::QueuedConnection);
+    if (!posted) {
+        emit surfaceExportSnapshotReady(requestId, nullptr);
+    }
+}
+
+void DataProcessor::postSurfaceExportSnapshot(int requestId, SurfaceExportSnapshotPtr snapshot)
+{
+    emit surfaceExportSnapshotReady(requestId, snapshot);
 }
 
 void DataProcessor::requestMosaicStats(int probeWindow)

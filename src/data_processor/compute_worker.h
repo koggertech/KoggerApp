@@ -78,6 +78,8 @@ public slots:
     void reportPipelineStats();
     void reportMosaicStats(int probeWindow);
 
+    void makeSurfaceExportSnapshot(int requestId, quint64 knownRevision);
+
 signals:
     void jobFinished(); // для dataProcessor (нормально, отмена)
 
