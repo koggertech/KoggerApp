@@ -15,6 +15,8 @@ import android.os.PowerManager;
 import android.net.wifi.WifiManager;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.WindowManager;
 import android.app.Activity;
 import android.os.storage.StorageManager;
@@ -60,6 +62,7 @@ public class KoggerActivity extends QtActivity {
         setupMulticastLock();
 
         KoggerUsbSerialManager.initialize(this);
+        KoggerGamepadInput.attach(this);
     }
 
     /**
@@ -85,6 +88,12 @@ public class KoggerActivity extends QtActivity {
         notifyStoragePermissionResult(granted);
     }
 
+    @Override
+    protected void onPause() {
+        KoggerGamepadInput.setForeground(false);
+        super.onPause();
+    }
+
     /**
      * MANAGE_EXTERNAL_STORAGE (API 30+) is granted in system settings, not in a
      * runtime dialog, so its outcome is only observable when the user comes back.
@@ -92,6 +101,7 @@ public class KoggerActivity extends QtActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        KoggerGamepadInput.setForeground(true);
 
         if (!m_storagePermissionPending || Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
             return;
@@ -117,6 +127,7 @@ public class KoggerActivity extends QtActivity {
     @Override
     protected void onDestroy() {
         try {
+            KoggerGamepadInput.detach();
             releaseMulticastLock();
             releaseWakeLock();
             KoggerUsbSerialManager.cleanup(this);
@@ -125,6 +136,22 @@ public class KoggerActivity extends QtActivity {
         }
 
         super.onDestroy();
+    }
+
+    @Override
+    public boolean dispatchGenericMotionEvent(MotionEvent event) {
+        if (KoggerGamepadInput.takeMotion(event)) {
+            return true;
+        }
+        return super.dispatchGenericMotionEvent(event);
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (KoggerGamepadInput.takeKey(event)) {
+            return true;
+        }
+        return super.dispatchKeyEvent(event);
     }
 
     /**

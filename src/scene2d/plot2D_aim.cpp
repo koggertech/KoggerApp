@@ -1,7 +1,9 @@
 #include "plot2D_aim.h"
 #include "plot2D.h"
 #include "themes.h"
+#include <algorithm>
 #include <cmath>
+#include <iterator>
 #include <QBrush>
 #include <QPainterPath>
 #include <QTransform>
@@ -29,11 +31,11 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
     if (cursor.selectEpochIndx != -1) {
         auto* ep = dataset->fromIndex(cursor.selectEpochIndx);
         int offsetX = 0;
-        int halfCanvas = canvas.width() / 2;
+        int halfCanvas = static_cast<int>(static_cast<float>(canvas.width()) / (2.0f * cursor.horZoom));
         int withoutHalf = dataset->size() - halfCanvas;
 
         if (cursor.selectEpochIndx >= withoutHalf) {
-            offsetX = cursor.selectEpochIndx - withoutHalf;
+            offsetX = qRound((cursor.selectEpochIndx - withoutHalf) * cursor.horZoom);
         }
 
         if (ep) {
@@ -53,7 +55,12 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
             }
 
             if (chartPtr) {
-                const int x = canvas.width() / 2 + offsetX;
+                int x = canvas.width() / 2 + offsetX;
+                const auto& indexes = cursor.indexes;
+                const auto it = std::find(indexes.begin(), indexes.end(), cursor.selectEpochIndx);
+                if (it != indexes.end()) {
+                    x = static_cast<int>(std::distance(indexes.begin(), it));
+                }
                 float depthVal = parent->hasSyncDepth() ? parent->getSyncDepth() : chartPtr->bottomProcessing.distance;
                 if (!std::isfinite(depthVal)) {
                     depthVal = 0.0f;

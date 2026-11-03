@@ -125,7 +125,11 @@ Item {
             readonly property bool isProgress: model.kind === 2
             readonly property bool hasAction: model.actionPath !== undefined && model.actionPath.length > 0
             readonly property bool autoDismiss: !isProgress && (!isWarning || root.hideImportant)
-            readonly property bool showClose: !isProgress && isWarning && !root.hideImportant
+            readonly property bool showClose: !isProgress && (hasAction || (isWarning && !root.hideImportant))
+            readonly property real maxWidth: hasAction
+                                             ? Math.min(root.maxCardWidth + Tokens.spaceMd + Tokens.controlHSm + Tokens.spaceSm - Tokens.spaceLg,
+                                                        root.width - 2 * Tokens.spaceXl)
+                                             : root.maxCardWidth
             readonly property real headerOffset: isProgress ? -(progressTrack.height + Tokens.spaceMd) / 2 : 0
             property bool closing: false
 
@@ -184,7 +188,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             width: card.isProgress
                    ? root.maxCardWidth
-                   : Math.min(root.maxCardWidth,
+                   : Math.min(card.maxWidth,
                               Tokens.spaceLg + iconBadge.width + Tokens.spaceMd + messageText.implicitWidth
                               + Tokens.spaceMd + closeButton.width + Tokens.spaceLg)
             height: Math.max(Tokens.controlHLg, messageText.height + 2 * Tokens.spaceLg)
@@ -351,7 +355,6 @@ Item {
                 fillHoverColor: AppPalette.cardHover
                 borderColor: "transparent"
                 onClicked: card.dismiss()
-            }
-        }
+            }        }
     }
 }

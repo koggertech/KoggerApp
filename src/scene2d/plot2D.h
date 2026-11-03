@@ -61,6 +61,19 @@ public:
 
     void setAimEpochEventState(bool state);
     void setTimelinePosition(float position);
+    void adoptTimelinePosition(float position, int datasetSize);
+    int timelineDatasetSize() const { return cursor_.last_dataset_size; }
+    float timelineEpochAt(float column) const;
+    void zoomTimeline(float steps, float anchorColumn, float anchorEpoch);
+    void setTimelineZoom(float zoom, float anchorColumn, float anchorEpoch);
+    void clampTimelineStart(float viewEpochs);
+    void snapTimelineZoom(float anchorColumn, float anchorEpoch);
+    bool timelineZoomModified() const { return cursor_.horZoom != 1.0f; }
+    float timelineZoom() const { return cursor_.horZoom; }
+    bool distanceModified() const { return distanceOverride_; }
+    float distanceZoom() const;
+    float distanceShift() const;
+    void restoreDistance();
     void resetAim();
 
     void setTimelinePositionSec(float position);
@@ -173,6 +186,7 @@ public:
     void setDistance(float from, float to);
     void zoomDistance(float ratio);
     void scrollDistance(float ratio);
+    void offsetDistance(float offset);
 
     void setMousePosition(int x, int y, bool isSync = false);
     void simpleSetMousePosition(int x, int y);
@@ -227,6 +241,15 @@ protected:
     float syncDepth_ = 0.0f;          // absolute physical depth (>=0 from surface)
     int syncChannel_ = 1;             // which channel the synced depth belongs to (1/2)
     int aimFieldsMask_ = 0xFF;
+    bool liveHold_ = false;
+    float timelineDragProgress_ = -1.0f;
+    bool distanceOverride_ = false;
+    float distanceBaseFrom_ = NAN;
+    float distanceBaseTo_ = NAN;
+    AutoRangeMode distanceBaseMode_ = AutoRangeNone;
+
+    void beginDistanceOverride();
+    void settleDistanceOverride();
 
 private:
     bool isEnabled_;

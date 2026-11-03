@@ -496,8 +496,6 @@ onAutopilotOnlineChanged: {
         _autopilotAutoOpening = true
         autopilotPopupOpen = true
         _autopilotAutoOpening = false
-    } else if (!autopilotOnline && _autopilotWasOnline && autopilotPopupOpen) {
-        autopilotPopupOpen = false
     }
     _autopilotWasOnline = autopilotOnline
 }
@@ -1366,14 +1364,6 @@ readonly property var missionRunViewDefaults: ({
     aheadColor: "#3B82F6", currentColor: "#FACC15", doneColor: "#94A3B8",
     routeWidth: 2.5, currentWidth: 3.5
 })
-readonly property bool missionRunViewIsDefault: {
-    const defaults = missionRunViewDefaults
-    for (const key in defaults) {
-        if (missionRunPrefs[key] !== defaults[key])
-            return false
-    }
-    return true
-}
 function resetMissionRunView() {
     const defaults = missionRunViewDefaults
     for (const key in defaults)

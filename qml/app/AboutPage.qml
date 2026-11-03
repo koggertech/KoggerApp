@@ -12,7 +12,8 @@ Column {
     readonly property var components: [
         { name: "Qt",       version: "6.8.3",  license: "GNU LGPL v3",            file: "COPYING.LGPLv3" },
         { name: "FFmpeg",   version: "7.1",    license: "GNU LGPL v2.1 or later", file: "COPYING.LGPLv2.1" },
-        { name: "FreeType", version: "2.13.2", license: qsTr("The FreeType License (FTL)"), file: "FTL.TXT" }
+        { name: "FreeType", version: "2.13.2", license: qsTr("The FreeType License (FTL)"), file: "FTL.TXT" },
+        { name: "SDL",      version: "3.4.2",  license: "zlib",                   file: "SDL3-LICENSE.txt" }
     ]
 
     AppIdentityCard {

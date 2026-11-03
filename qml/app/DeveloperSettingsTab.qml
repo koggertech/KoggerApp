@@ -85,6 +85,29 @@ Column {
 
     KIsland {
         KIslandRow {
+            label: qsTr("Gamepad drawings")
+            toolTipText: qsTr("Every gamepad drawing the app has, side by side")
+            chevron: true
+            interactive: true
+            onClicked: {
+                if (gamepadGalleryLoader.item)
+                    gamepadGalleryLoader.item.open()
+                else
+                    gamepadGalleryLoader.active = true
+            }
+        }
+    }
+
+    Loader {
+        id: gamepadGalleryLoader
+        visible: false
+        active: false
+        source: "qrc:/qml/settings/GamepadGallery.qml"
+        onLoaded: item.open()
+    }
+
+    KIsland {
+        KIslandRow {
             label: qsTr("Application log")
             caption: page.appLogPath.length ? page.appLogPath : qsTr("Log file is not active")
             stacked: true

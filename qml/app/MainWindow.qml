@@ -1330,6 +1330,14 @@ ApplicationWindow {
             siblingIdList: ["btEdit", "profiles"]
         }
 
+        HelmIndicator {
+            cardOpen: workspaceStore.autopilotPopupOpen
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            anchors.topMargin: Math.round(56 * AppPalette.appScale)
+            z: ZOrder.autopilotPopup
+        }
+
         // One delegate per panel, of whichever KIND the def names. The Loader is the branch: a
         // field grid and an acoustic-nodes list are different popups that happen to share the
         // whole of the panel machinery around them — position, scale, z-rank, docking, the
@@ -1654,6 +1662,8 @@ ApplicationWindow {
             anchors.rightMargin: root.settingsInsetRight
             anchors.bottomMargin: consoleDrawer.height
             store: workspaceStore
+            controlsAvoidRect: hotActions.visible ? Qt.rect(hotActions.x, hotActions.y, hotActions.width, hotActions.barHeight)
+                                                  : Qt.rect(0, 0, 0, 0)
             usblPlan: appUsblPlan
             usblNetwork: appNodesStore
             secondaryPlotItem: secondaryContent ? secondaryContent.plot2DInstance : null

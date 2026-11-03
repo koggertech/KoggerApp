@@ -64,6 +64,12 @@ struct RunItem {
  * Progress is measured along the positioned navigation items from seq 1 (RTL counts at the home
  * slot position): remaining = vehicle → current target + the legs after it; time from the planned
  * DO_CHANGE_SPEED speeds when all remaining legs have one, otherwise from the ground speed.
+ *
+ * ArduRover resets the speed to WP_SPEED on every entry to Auto and does not replay DO_CHANGE_SPEED
+ * items it skipped (resume after Hold, jump). So after an observed entry to Auto, and after a change
+ * of a known current item in Auto that is not the step to the next navigation item (judged only
+ * while actionable()), legSpeedRequested carries the planned speed of the current navigation item
+ * once the snapshot is actionable().
  */
 class MissionRunTracker : public QObject
 {
@@ -157,6 +163,7 @@ signals:
     void vehicleMoved();
     void readAutomaticallyChanged();
     void readRequested();
+    void legSpeedRequested(double speed);
 
 private:
     QVector<RunItem> buildItems(const autopilot::MissionBatches& batches, bool link) const;
@@ -170,6 +177,8 @@ private:
     void autoRead(int delayMs);
     void onReadTimer();
     void onPlanChanged();
+    int nextNavSeq(int seq) const;
+    void syncLegSpeed(int previousMode, int previousSeq);
 
     MissionPlanController* plan_ = nullptr;
     RunTelemetry telemetry_;
@@ -210,6 +219,7 @@ private:
 
     bool readWanted_ = false;
     bool readAutomatically_ = true;
+    bool speedSyncPending_ = false;
     int failedReads_ = 0;
     QTimer readTimer_{ this };
     QElapsedTimer lastRead_;

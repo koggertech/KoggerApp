@@ -15,7 +15,7 @@ Slider {
     property int knobSize: Math.round(28 * AppPalette.scale)
 
     property string toolTipText: ""
-    property bool showValueTip: true
+    property bool showValueTip: false
     property int valueDecimals: 0
     property real valueDivisor: 1.0
     property string valueSuffix: ""

@@ -199,11 +199,29 @@ Item {
             WheelHandler {
                 acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                 onWheel: function(event) {
-                    var d = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x
                     var maxX = Math.max(0, strip.contentWidth - strip.width)
-                    strip.contentX = Math.max(0, Math.min(maxX, strip.contentX - d))
+                    var px = event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.pixelDelta.x
+                    if (px !== 0) {
+                        stripScrollAnim.stop()
+                        strip.contentX = Math.max(0, Math.min(maxX, strip.contentX - px))
+                        return
+                    }
+                    var d = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x
+                    var from = stripScrollAnim.running ? stripScrollAnim.to : strip.contentX
+                    stripScrollAnim.to = Math.max(0, Math.min(maxX, from - d))
+                    stripScrollAnim.restart()
                 }
             }
+
+            NumberAnimation {
+                id: stripScrollAnim
+                target: strip
+                property: "contentX"
+                duration: 220
+                easing.type: Easing.OutCubic
+            }
+
+            onMovementStarted: stripScrollAnim.stop()
         }
 
         Item {

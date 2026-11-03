@@ -288,6 +288,8 @@ void Core::setEngine(QQmlApplicationEngine *engine)
             missionRunTrackerPtr_.get(), &mission::MissionRunTracker::onVehicleMissionRead);
     connect(missionRunTrackerPtr_.get(), &mission::MissionRunTracker::readRequested,
             deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::readMissionSilently);
+    connect(missionRunTrackerPtr_.get(), &mission::MissionRunTracker::legSpeedRequested,
+            deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::autopilotSetSpeed, Qt::QueuedConnection);
     connect(deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::vruChanged, this, &Core::pushMissionRunTelemetry);
     connect(deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::missionTransferChanged, this, &Core::pushMissionRunTelemetry);
 }
@@ -2132,6 +2134,7 @@ void Core::setTimelinePosition(double position)
 void Core::setEchogramSyncCursor(bool state)
 {
     echogramSyncCursor_ = state;
+    updateLiveHoldPause();
 }
 
 void Core::setEchogramSyncView(bool state)
@@ -2195,8 +2198,59 @@ void Core::broadcastEchogramTime(QObject* source, double timelinePos)
     for (int i = 0; i < plot2dList_.size(); i++) {
         auto* plot = plot2dList_.at(i);
         if (plot != nullptr && plot != src && plot->getPlotEnabled()) {
-            plot->setTimelinePosition(static_cast<float>(timelinePos));
+            plot->adoptTimelinePosition(static_cast<float>(timelinePos), src ? src->timelineDatasetSize() : 0);
+            if (src && src->liveHoldActive()) {
+                plot->joinLiveHold(true);
+            }
+            else {
+                plot->cancelLiveHold();
+            }
             plot->update();
+        }
+    }
+}
+
+void Core::broadcastLiveHold(qPlot2D* source)
+{
+    if (!echogramSyncCursor_) {
+        return;
+    }
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        auto* plot = plot2dList_.at(i);
+        if (plot != nullptr && plot != source && plot->getPlotEnabled()) {
+            plot->joinLiveHold(true);
+        }
+    }
+}
+
+void Core::broadcastLiveHoldEnd(qPlot2D* source, bool toLiveEnd)
+{
+    if (!echogramSyncCursor_) {
+        return;
+    }
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        auto* plot = plot2dList_.at(i);
+        if (plot != nullptr && plot != source && plot->getPlotEnabled()) {
+            plot->releaseLiveHold(toLiveEnd);
+        }
+    }
+}
+
+void Core::updateLiveHoldPause()
+{
+    bool paused = false;
+    if (echogramSyncCursor_) {
+        for (int i = 0; i < plot2dList_.size(); i++) {
+            auto* plot = plot2dList_.at(i);
+            if (plot != nullptr && plot->getPlotEnabled() && plot->liveHoldPaused()) {
+                paused = true;
+                break;
+            }
+        }
+    }
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        if (auto* plot = plot2dList_.at(i); plot != nullptr) {
+            plot->setLiveHoldSyncPaused(paused);
         }
     }
 }
@@ -2212,6 +2266,20 @@ void Core::broadcastEchogramVertical(QObject* source, double from, double to)
         if (plot != nullptr && plot != src && plot->getPlotEnabled()) {
             plot->setCursorFromTo(static_cast<float>(from), static_cast<float>(to));
             plot->update();
+        }
+    }
+}
+
+void Core::broadcastEchogramVerticalReset(QObject* source)
+{
+    if (!echogramSyncView_) {
+        return;
+    }
+    auto* src = qobject_cast<qPlot2D*>(source);
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        auto* plot = plot2dList_.at(i);
+        if (plot != nullptr && plot != src && plot->getPlotEnabled()) {
+            plot->resetVerticalScale();
         }
     }
 }
@@ -2340,10 +2408,15 @@ void Core::registerPlot2D(QObject* plotObj)
     const bool alreadyRegistered = plot2dList_.contains(plot);
     if (!alreadyRegistered) {
         plot2dList_.append(plot);
+        connect(plot, &QObject::destroyed, this, [this, plot]() {
+            plot2dList_.removeAll(plot);
+            updateLiveHoldPause();
+        });
     }
 
     bindPlot2D(plot);
     plot->setAimFieldsMask(aimFieldsMask_);
+    updateLiveHoldPause();
 
     if (!alreadyRegistered && datasetPtr_ && !datasetPtr_->channelsList().isEmpty()) {
         onChannelsUpdated();
@@ -2900,6 +2973,12 @@ void Core::setContactPlacementArmed(bool armed)
         setBottomTrackEditTool(0);
         if (scene3dViewPtr_) {
             scene3dViewPtr_->setRulerEnabled(false);
+        }
+        for (int i = 0; i < plot2dList_.size(); i++) {
+            auto* plot = plot2dList_.at(i);
+            if (plot != nullptr && plot->getPlotEnabled()) {
+                plot->joinLiveHold(false);
+            }
         }
     }
 
@@ -3573,6 +3652,9 @@ void Core::initAfterApp()
 
     if (linkManagerWrapperPtr_) {
         linkManagerWrapperPtr_->startWorkerThread();
+    }
+    if (deviceManagerWrapperPtr_) {
+        deviceManagerWrapperPtr_->startMissionThread();
     }
 
     createDataProcessor();

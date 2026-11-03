@@ -17,6 +17,7 @@ Item {
     property int lastKeyPressed: Qt.Key_unknown
     property int lastMouseButtons: Qt.NoButton
     property bool suppressNextClickAfterDoubleClick: false
+    property var pressedPlot: null
 
     readonly property var plotTarget: (root.workspaceRoot
                                        && root.leafId >= 0
@@ -100,6 +101,7 @@ Item {
     function routePlotPress(mouseButton, buttons, x, y) {
         if (!root.plotTarget || typeof root.plotTarget.handlePointerPress !== "function")
             return
+        root.pressedPlot = root.plotTarget
         root.plotTarget.handlePointerPress(mouseButton, buttons, x, y, lastKeyPressed)
     }
 
@@ -116,10 +118,26 @@ Item {
     }
 
     function routePlotRelease(mouseButton, buttons, x, y) {
-        if (!root.plotTarget || typeof root.plotTarget.handlePointerRelease !== "function")
+        const target = root.pressedPlot ? root.pressedPlot : root.plotTarget
+        root.pressedPlot = null
+        if (!target || typeof target.handlePointerRelease !== "function")
             return
-        root.plotTarget.handlePointerRelease(mouseButton, buttons, x, y, lastKeyPressed)
+        target.handlePointerRelease(mouseButton, buttons, x, y, lastKeyPressed)
     }
+
+    function cancelPlotPointer() {
+        const target = root.pressedPlot ? root.pressedPlot : root.plotTarget
+        root.pressedPlot = null
+        if (target && typeof target.handlePointerCancel === "function")
+            target.handlePointerCancel()
+    }
+
+    function dropPressedPlot() {
+        if (root.pressedPlot)
+            root.cancelPlotPointer()
+    }
+
+    Component.onDestruction: dropPressedPlot()
 
     function routePlotWheel(buttons, x, y, angleDelta, modifiers) {
         if (!root.plotTarget || typeof root.plotTarget.handlePointerWheel !== "function")
@@ -127,10 +145,10 @@ Item {
         root.plotTarget.handlePointerWheel(buttons, x, y, angleDelta, modifiers, lastKeyPressed)
     }
 
-    function routePlotPinchStarted(centerX, centerY) {
+    function routePlotPinchStarted(centerX, centerY, fingersHorizontal) {
         if (!root.plotTarget || typeof root.plotTarget.handlePinchStarted !== "function")
             return
-        root.plotTarget.handlePinchStarted(centerX, centerY)
+        root.plotTarget.handlePinchStarted(centerX, centerY, fingersHorizontal)
     }
 
     function routePlotPinchUpdated(prevCenterX, prevCenterY, currCenterX, currCenterY, prevScale, scale, prevAngle, angle) {
@@ -148,6 +166,9 @@ Item {
     function toggleLeafFullscreen() {
         if (!root.workspaceRoot || !root.workspaceRoot.store || root.leafId < 0)
             return
+
+        if (root.paneKind === "2D" && root.plotTarget && typeof root.plotTarget.releaseTapHold === "function")
+            root.plotTarget.releaseTapHold()
 
         if (root.leafId === root.workspaceRoot.store.globalPopupLeafId) {
             if (typeof root.workspaceRoot.toggleGlobalPopupFullscreen === "function")
@@ -264,6 +285,7 @@ Item {
                 // give the plot/3D scene an unbalanced Release.
                 if (pointerArea._skipNextRelease) {
                     pointerArea._skipNextRelease = false
+                    root.dropPressedPlot()
                     root.lastMouseButtons = Qt.NoButton
                     overlay.pointerStarted = false
                     mouse.accepted = true
@@ -276,6 +298,7 @@ Item {
                         var rdy = mouse.y - pointerArea._rmbPressPos.y
                         root.scene3dRightReleased(mouse.x, mouse.y, (rdx * rdx + rdy * rdy) > 36)
                     }
+                    root.dropPressedPlot()
                 } else {
                     root.routePlotRelease(mouse.button, root.lastMouseButtons, mouse.x, mouse.y)
                 }
@@ -287,8 +310,9 @@ Item {
                 root.markMouseKeyboardInput()
                 if (root.paneKind === "3D" && root.workspaceRoot && typeof root.workspaceRoot.cancelScene3DPointerInteraction === "function")
                     root.workspaceRoot.cancelScene3DPointerInteraction()
-                else if (root.paneKind === "2D" && root.plotTarget && typeof root.plotTarget.handlePointerCancel === "function")
-                    root.plotTarget.handlePointerCancel()
+                else if (root.paneKind === "2D")
+                    root.cancelPlotPointer()
+                root.dropPressedPlot()
                 root.lastMouseButtons = Qt.NoButton
                 overlay.pointerStarted = false
             }
@@ -342,6 +366,22 @@ Item {
             property real _prevScale: 1.0
             property real _prevRotation: 0
             property point _prevCenter: Qt.point(0, 0)
+            property var _grabbedPoints: []
+
+            onGrabChanged: function(transition, point) {
+                if (transition !== PointerDevice.GrabPassive && transition !== PointerDevice.GrabExclusive)
+                    return
+                const kept = pinchHandler._grabbedPoints.filter(function(p) { return p.id !== point.id })
+                kept.push({ id: point.id, x: point.scenePosition.x, y: point.scenePosition.y })
+                pinchHandler._grabbedPoints = kept.slice(-2)
+            }
+
+            function _fingersHorizontal() {
+                const pts = pinchHandler._grabbedPoints
+                if (pts.length < 2)
+                    return undefined
+                return Math.abs(pts[0].x - pts[1].x) >= Math.abs(pts[0].y - pts[1].y)
+            }
 
             onActiveChanged: {
                 if (active) {
@@ -353,8 +393,9 @@ Item {
                     pinchHandler._prevRotation = activeRotation
                     pinchHandler._prevCenter = centroid.position
                     if (root.paneKind === "2D")
-                        root.routePlotPinchStarted(centroid.position.x, centroid.position.y)
+                        root.routePlotPinchStarted(centroid.position.x, centroid.position.y, pinchHandler._fingersHorizontal())
                 } else {
+                    pinchHandler._grabbedPoints = []
                     root.markTouchInput()
                     if (root.paneKind === "2D")
                         root.routePlotPinchFinished()

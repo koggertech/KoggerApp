@@ -6,12 +6,14 @@
 
 Version **2.13.2**, confirmed two ways in this tree: `include/freetype/freetype.h` declares
 `FREETYPE_MAJOR 2` / `FREETYPE_MINOR 13` / `FREETYPE_PATCH 2`, and the Android archives
-(`lib/arm64-v8a`, `lib/armeabi-v7a`) carry the string `2.13.2`. The other four archives are
+(`lib/arm64-v8a`, `lib/armeabi-v7a`) carry the string `2.13.2`. The other three archives are
 stripped and hold no version string.
 
 `include/` holds the public headers. `lib/<kit>/libfreetype.a` holds **prebuilt static**
-archives, one per kit: `aarch64`, `arm64-v8a`, `armeabi-v7a`, `gcc`, `llvm-mingw-x64`,
-`mingw-x64`. No FreeType source code is vendored.
+archives, one per kit: `arm64-v8a`, `armeabi-v7a` (Android ABIs), `linux-aarch64`, `linux-x86_64`
+(Linux; the compiler does not matter for a C archive, the build host's glibc does) and
+`llvm-mingw-x64` (Windows; the toolchain matters there — llvm-mingw links against UCRT, unlike
+MinGW-GCC or MSVC builds). No FreeType source code is vendored.
 
 No archive checksum is recorded: what is vendored here are prebuilt libraries, not a copy of
 the release tarball, so there is nothing in the tree to hash against upstream.

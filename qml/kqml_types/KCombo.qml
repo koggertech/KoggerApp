@@ -1,5 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Window 2.15
+import Qt5Compat.GraphicalEffects
 
 // Unified combobox used across the app.
 // - Bordered card matches KSpinBox / Connection input style.
@@ -17,6 +19,9 @@ Item {
     property int maxVisibleItems: 8
     property int radius: Tokens.radiusMd
     property color fillColor: AppPalette.bg   // field fill; set lighter when the row is recessed
+    property color indicatorColor: "transparent"   // transparent = the SVG's own colour
+    property color textColor: AppPalette.text
+    property int textInset: Tokens.spaceSm
     // Optional: function(index) -> [{pos, color}] colormap stops. When set, a
     // small gradient dot is drawn before each item's text (and in the field).
     property var swatchFor: null
@@ -50,7 +55,7 @@ Item {
     Component.onCompleted: _remeasure()
 
     readonly property int _popupContentWidth: {
-        var leftInset = root.swatchFor ? (Tokens.spaceSm + root.swatchSize + Tokens.spaceXs) : Tokens.spaceSm
+        var leftInset = root.swatchFor ? (Tokens.spaceSm + root.swatchSize + Tokens.spaceXs) : root.textInset
         var rightReserve = Math.round(12 * AppPalette.scale) + 2 * Tokens.spaceXs
         return root._measuredTextWidth + leftInset + rightReserve + Tokens.spaceSm + Tokens.spaceMd
     }
@@ -136,13 +141,13 @@ Item {
                 }
                 Text {
                     anchors.left: fieldDot.visible ? fieldDot.right : parent.left
-                    anchors.leftMargin: fieldDot.visible ? Tokens.spaceXs : Tokens.spaceSm
+                    anchors.leftMargin: fieldDot.visible ? Tokens.spaceXs : root.textInset
                     anchors.right: parent.right
                     // Just enough to clear the chevron indicator at the right edge.
                     anchors.rightMargin: Math.round(12 * AppPalette.scale) + 2 * Tokens.spaceXs
                     anchors.verticalCenter: parent.verticalCenter
                     text: root.displayTextOverride !== "" ? root.displayTextOverride : combo.displayText
-                    color: AppPalette.text
+                    color: root.textColor
                     font.pixelSize: root.fontPixelSize
                     font.bold: root.bold
                     verticalAlignment: Text.AlignVCenter
@@ -150,15 +155,30 @@ Item {
                 }
             }
 
-            indicator: Image {
+            indicator: Item {
                 anchors.right: parent.right
                 anchors.rightMargin: Tokens.spaceSm
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.round(12 * AppPalette.scale)
                 height: Math.round(12 * AppPalette.scale)
-                source: "qrc:/icons/ui/chevron-down.svg"
-                fillMode: Image.PreserveAspectFit
-                smooth: true
+
+                Image {
+                    id: indicatorImage
+                    anchors.fill: parent
+                    source: "qrc:/icons/ui/chevron-down.svg"
+                    sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
+                    sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    visible: root.indicatorColor.a === 0
+                }
+                ColorOverlay {
+                    anchors.fill: indicatorImage
+                    source: indicatorImage
+                    color: root.indicatorColor
+                    visible: root.indicatorColor.a > 0
+                    smooth: true
+                }
             }
 
             delegate: ItemDelegate {

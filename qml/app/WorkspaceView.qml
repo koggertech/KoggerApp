@@ -28,6 +28,7 @@ Item {
     readonly property alias scene3dViewItem: scene3dView
 
     property var primaryPlotItem: null
+    property rect controlsAvoidRect: Qt.rect(0, 0, 0, 0)
     property var secondaryPlotItem: null
     readonly property int secondaryEchogramKey: workspace.store ? workspace.store.secondaryEchogramKey : 10000
     readonly property var leafRects: workspace.store ? workspace.store.leafRects : []
@@ -175,16 +176,16 @@ Item {
 
         switch (fn) {
         case "horScrollLeft":
-            applyToVisiblePlots(function(item) { item.horScrollEvent(-delta) })
+            applyToVisiblePlots(function(item) { item.smoothHorScroll(-delta, false) })
             break
         case "horScrollRight":
-            applyToVisiblePlots(function(item) { item.horScrollEvent(delta) })
+            applyToVisiblePlots(function(item) { item.smoothHorScroll(delta, false) })
             break
         case "verScrollUp":
-            applyToVisiblePlots(function(item) { item.verScrollEvent(-delta) })
+            applyToVisiblePlots(function(item) { item.smoothVerScroll(-delta, false) })
             break
         case "verScrollDown":
-            applyToVisiblePlots(function(item) { item.verScrollEvent(delta) })
+            applyToVisiblePlots(function(item) { item.smoothVerScroll(delta, false) })
             break
         case "verZoomOut":
             applyToVisiblePlots(function(item) { item.verZoomEvent(-delta) })
@@ -754,6 +755,7 @@ Item {
                 focus: false
                 indx: slotIndex + 1
                 is3dVisible: workspace.active3DHostItem !== null
+                controlsAvoidRect: workspace.controlsAvoidRect
 
                 Component.onCompleted: {
                     setIndx(indx)
@@ -823,6 +825,7 @@ Item {
             focus: false
             indx: 5
             is3dVisible: workspace.active3DHostItem !== null
+            controlsAvoidRect: workspace.controlsAvoidRect
 
             Component.onCompleted: {
                 setIndx(5)

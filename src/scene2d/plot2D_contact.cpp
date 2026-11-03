@@ -49,104 +49,114 @@ bool Plot2DContact::draw(Plot2D *parent, Dataset *dataset)
     setVisibleContact(false);
 
     auto activeContactIndx = dataset->getActiveContactIndx();
-    for (auto& indx : cursor.indexes) {
-        auto* epoch = dataset->fromIndex(indx);
-
-        if (!epoch) {
+    const auto& indexes = cursor.indexes;
+    const int columns = static_cast<int>(indexes.size());
+    for (int column = 0; column < columns; ++column) {
+        const int first = indexes[column];
+        if (first < 0 || (column > 0 && indexes[column - 1] == first)) {
             continue;
         }
+        const int next = column + 1 < columns ? indexes[column + 1] : -1;
+        const int last = next > first + 1 ? next - 1 : first;
+        for (int indx = first; indx <= last; ++indx) {
+            auto* epoch = dataset->fromIndex(indx);
 
-        bool isActiveContact = activeContactIndx == indx;
-        if (epoch->contact_.isValid()) {
-            const bool vertical = !isHorizontal_;
-            float xPos = cursor.numZeroEpoch + indx - cursor.indexes[0];
-            const float canvasHeight = canvas.height();
-            float valueRange = cursor.distance.to - cursor.distance.from;
-            float valueScale = canvasHeight / valueRange;
-            const float echogramDistance = cursor.isChannelDoubled() ? epoch->contact_.echogramDistance
-                                                                     : std::fabs(epoch->contact_.echogramDistance);
-            float yPos = (echogramDistance - cursor.distance.from) * valueScale;
-            bool intersects = false;
+            if (!epoch) {
+                continue;
+            }
 
-            auto& epRect = epoch->contact_.rectEcho;
-            if (!epRect.isEmpty()) {
-                QRectF locRect = vertical
-                    ? QRectF(xPos + shiftXY - 2 * adjPix + qMax(1, qRound(2 * s)) - epRect.height(), yPos + shiftXY, epRect.height(), epRect.width())
-                    : epRect.translated(QPointF(xPos + shiftXY, yPos + shiftXY) - epRect.topLeft());
-                locRect = locRect.adjusted(-adjPix, -adjPix, adjPix, adjPix);
+            bool isActiveContact = activeContactIndx == indx;
+            if (epoch->contact_.isValid()) {
+                const bool vertical = !isHorizontal_;
+                float xPos = static_cast<float>(column);
+                const float canvasHeight = canvas.height();
+                float valueRange = cursor.distance.to - cursor.distance.from;
+                float valueScale = canvasHeight / valueRange;
+                const float echogramDistance = cursor.isChannelDoubled() ? epoch->contact_.echogramDistance
+                                                                         : std::fabs(epoch->contact_.echogramDistance);
+                float yPos = (echogramDistance - cursor.distance.from) * valueScale;
+                bool intersects = false;
 
-                if (locRect.contains(QPointF(mouseX_, mouseY_))) {
-                    indx_ = indx;
-                    isActive_ = isActiveContact;
+                auto& epRect = epoch->contact_.rectEcho;
+                if (!epRect.isEmpty()) {
+                    QRectF locRect = vertical
+                        ? QRectF(xPos + shiftXY - 2 * adjPix + qMax(1, qRound(2 * s)) - epRect.height(), yPos + shiftXY, epRect.height(), epRect.width())
+                        : epRect.translated(QPointF(xPos + shiftXY, yPos + shiftXY) - epRect.topLeft());
+                    locRect = locRect.adjusted(-adjPix, -adjPix, adjPix, adjPix);
 
-                    if (isHorizontal_) {
-                        position_ = QPoint(xPos + shiftXY * 0.75f, yPos + shiftXY * 0.75f);
+                    if (locRect.contains(QPointF(mouseX_, mouseY_))) {
+                        indx_ = indx;
+                        isActive_ = isActiveContact;
 
+                        if (isHorizontal_) {
+                            position_ = QPoint(xPos + shiftXY * 0.75f, yPos + shiftXY * 0.75f);
+
+                        }
+                        else {
+                            float fixedX = xPos + shiftXY;
+                            float fixedY = yPos + shiftXY;
+                            const float currDepth = parent->getDepthByMousePos(fixedX, fixedY, true);
+                            const int currEpochIndx = parent->getEpochIndxByMousePos(fixedX, fixedY, true);
+                            position_ = parent->getMousePosByDepthAndEpochIndx(currDepth, currEpochIndx, false);
+                        }
+
+                        info_ = epoch->contact_.info;
+                        lat_ = epoch->contact_.lat;
+                        lon_ = epoch->contact_.lon;
+                        depth_ = epoch->contact_.depth;// echogramDistance;
+                        setVisibleContact(true);
+                        intersects = true;
                     }
-                    else {
-                        float fixedX = xPos + shiftXY;
-                        float fixedY = yPos + shiftXY;
-                        const float currDepth = parent->getDepthByMousePos(fixedX, fixedY, true);
-                        const int currEpochIndx = parent->getEpochIndxByMousePos(fixedX, fixedY, true);
-                        position_ = parent->getMousePosByDepthAndEpochIndx(currDepth, currEpochIndx, false);
+                }
+
+                QString infoText = epoch->contact_.info;
+                QRectF textRect = p->fontMetrics().boundingRect(infoText);
+                textRect.moveTopLeft(QPointF(xPos + shiftXY, yPos + shiftXY));
+
+                // write rect
+                if (epRect.height() != textRect.height() ||
+                    epRect.width() != textRect.width()) {
+                    epRect = textRect;
+                }
+
+                if (intersects) {
+                    QPointF topLeft = textRect.adjusted(-adjPix + 1, -adjPix + 1, adjPix, adjPix).topLeft();
+                    p->setPen(QPen(QColor(0,190,0), qMax(1, qRound(2 * s))));
+                    p->drawLine(topLeft, topLeft + QPointF(-30 * s, 0));
+                    p->drawLine(topLeft, topLeft + QPointF(0, -30 * s));
+                }
+                else {
+                    QColor linesColor = isActiveContact ? QColor(0, 0, 190) : QColor(190, 0, 0);
+
+                    // Counter-rotate +90 in vertical so the label stays upright; lower the box
+                    // by 2*adjPix so its corner lands on the pointer corner (left unmoved).
+                    const bool prevAntialias = p->testRenderHint(QPainter::Antialiasing);
+                    p->save();
+                    if (vertical) {
+                        p->translate(textRect.topLeft() - QPointF(2 * adjPix - qMax(1, qRound(2 * s)), 0));
+                        p->rotate(90);
                     }
+                    const QRectF boxRect = vertical ? QRectF(0, 0, textRect.width(), textRect.height()) : textRect;
+                    const qreal outerRadius = qMax(2.0, 5.0 * s);
+                    const qreal innerRadius = qMax(1.0, outerRadius - (adjPix - 3.0 * s));
+                    p->setRenderHint(QPainter::Antialiasing, true);
+                    p->setPen(Qt::NoPen);
+                    p->setBrush(linesColor);
+                    p->drawPath(squarePointerCornerBox(boxRect.adjusted(-adjPix, -adjPix, adjPix, adjPix),
+                                                       outerRadius));
+                    p->setBrush(QColor(45, 45, 45));
+                    p->drawPath(squarePointerCornerBox(boxRect.adjusted(-3 * s, -3 * s, 3 * s, 3 * s),
+                                                       innerRadius));
+                    p->setPen(QColor(255, 255, 255));
+                    p->drawText(boxRect, Qt::AlignLeft | Qt::AlignTop, infoText);
+                    p->restore();
+                    p->setRenderHint(QPainter::Antialiasing, prevAntialias);
 
-                    info_ = epoch->contact_.info;
-                    lat_ = epoch->contact_.lat;
-                    lon_ = epoch->contact_.lon;
-                    depth_ = epoch->contact_.depth;// echogramDistance;
-                    setVisibleContact(true);
-                    intersects = true;
+                    QPointF topLeft = textRect.adjusted(-adjPix + 1, -adjPix + 1, adjPix, adjPix).topLeft();
+                    p->setPen(QPen(linesColor, qMax(1, qRound(2 * s))));
+                    p->drawLine(topLeft, topLeft + QPointF(-30 * s, 0));
+                    p->drawLine(topLeft, topLeft + QPointF(0, -30 * s));
                 }
-            }
-
-            QString infoText = epoch->contact_.info;
-            QRectF textRect = p->fontMetrics().boundingRect(infoText);
-            textRect.moveTopLeft(QPointF(xPos + shiftXY, yPos + shiftXY));
-
-            // write rect
-            if (epRect.height() != textRect.height() ||
-                epRect.width() != textRect.width()) {
-                epRect = textRect;
-            }
-
-            if (intersects) {
-                QPointF topLeft = textRect.adjusted(-adjPix + 1, -adjPix + 1, adjPix, adjPix).topLeft();
-                p->setPen(QPen(QColor(0,190,0), qMax(1, qRound(2 * s))));
-                p->drawLine(topLeft, topLeft + QPointF(-30 * s, 0));
-                p->drawLine(topLeft, topLeft + QPointF(0, -30 * s));
-            }
-            else {
-                QColor linesColor = isActiveContact ? QColor(0, 0, 190) : QColor(190, 0, 0);
-
-                // Counter-rotate +90 in vertical so the label stays upright; lower the box
-                // by 2*adjPix so its corner lands on the pointer corner (left unmoved).
-                const bool prevAntialias = p->testRenderHint(QPainter::Antialiasing);
-                p->save();
-                if (vertical) {
-                    p->translate(textRect.topLeft() - QPointF(2 * adjPix - qMax(1, qRound(2 * s)), 0));
-                    p->rotate(90);
-                }
-                const QRectF boxRect = vertical ? QRectF(0, 0, textRect.width(), textRect.height()) : textRect;
-                const qreal outerRadius = qMax(2.0, 5.0 * s);
-                const qreal innerRadius = qMax(1.0, outerRadius - (adjPix - 3.0 * s));
-                p->setRenderHint(QPainter::Antialiasing, true);
-                p->setPen(Qt::NoPen);
-                p->setBrush(linesColor);
-                p->drawPath(squarePointerCornerBox(boxRect.adjusted(-adjPix, -adjPix, adjPix, adjPix),
-                                                   outerRadius));
-                p->setBrush(QColor(45, 45, 45));
-                p->drawPath(squarePointerCornerBox(boxRect.adjusted(-3 * s, -3 * s, 3 * s, 3 * s),
-                                                   innerRadius));
-                p->setPen(QColor(255, 255, 255));
-                p->drawText(boxRect, Qt::AlignLeft | Qt::AlignTop, infoText);
-                p->restore();
-                p->setRenderHint(QPainter::Antialiasing, prevAntialias);
-
-                QPointF topLeft = textRect.adjusted(-adjPix + 1, -adjPix + 1, adjPix, adjPix).topLeft();
-                p->setPen(QPen(linesColor, qMax(1, qRound(2 * s))));
-                p->drawLine(topLeft, topLeft + QPointF(-30 * s, 0));
-                p->drawLine(topLeft, topLeft + QPointF(0, -30 * s));
             }
         }
     }

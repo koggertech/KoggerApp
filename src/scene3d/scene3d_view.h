@@ -56,6 +56,8 @@ class GraphicsScene3dView : public QQuickFramebufferObject
     Q_PROPERTY(bool sceneContentVisible READ sceneContentVisible NOTIFY sceneContentVisibleChanged)
     Q_PROPERTY(bool followReturnPending READ followReturnPending NOTIFY followReturnStateChanged)
     Q_PROPERTY(int followReturnSeconds READ followReturnSeconds NOTIFY followReturnStateChanged)
+    Q_PROPERTY(int followReturnRemainingMs READ followReturnRemainingMs NOTIFY followReturnStateChanged)
+    Q_PROPERTY(double followReturnDeadlineMs READ followReturnDeadlineMs NOTIFY followReturnStateChanged)
     Q_PROPERTY(int syncEpochIndex READ syncEpochIndex NOTIFY syncEpochIndexChanged)
     Q_PROPERTY(bool syncLoupeOverlayVisible READ syncLoupeOverlayVisible NOTIFY syncLoupeStateChanged)
     Q_PROPERTY(int syncLoupeEpochIndex READ syncLoupeEpochIndex NOTIFY syncLoupeStateChanged)
@@ -247,6 +249,8 @@ public:
     bool sceneContentVisible() const { return sceneContentVisible_; }
     bool followReturnPending() const;
     int followReturnSeconds() const;
+    int followReturnRemainingMs() const;
+    double followReturnDeadlineMs() const;
     Dataset* dataset() const;
     void clear(bool cleanMap = false);
     void clearSurfaceViewRender();
@@ -426,10 +430,14 @@ private:
     void queueWheelZoom(qreal steps, const QPointF& anchorPos);
     void stepWheelZoom();
     void cancelWheelZoom();
+    void stepKeyNudge();
+    void cancelKeyNudge();
     void resetHeadingToNorth();
     void notifyManualCameraInteraction();
     void beginFollowReturn();
     void cancelFollowReturn();
+    void holdFollowForContact();
+    void releaseFollowAfterContact();
     void cancelCameraPoseAnim();
     void cancelVScaleAnim();
 
@@ -526,7 +534,14 @@ private:
     QTimer* wheelZoomTimer_ = nullptr;
     qreal wheelZoomResidual_ = 0.0;
     QPointF wheelZoomAnchor_;
+    QTimer* keyNudgeTimer_ = nullptr;
+    Smoother keyPanXSmoother_;
+    Smoother keyPanYSmoother_;
+    Smoother keyVScaleSmoother_;
+    QPointF keyPanResidual_;
+    qreal keyVScaleResidual_ = 0.0;
     bool followSuspended_ = false;
+    bool contactFollowPending_ = false;
     bool positionsLive_ = false;
     QTimer* followResumeTimer_ = nullptr;
     QTimer* followTickTimer_ = nullptr;
