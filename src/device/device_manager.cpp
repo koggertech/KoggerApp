@@ -130,6 +130,16 @@ int DeviceManager::autopilotSystemId()
     return vru_.systemId;
 }
 
+int DeviceManager::autopilotComponentId()
+{
+    return vru_.componentId;
+}
+
+void DeviceManager::autopilotReboot()
+{
+    sendCommandLong(MavCmdPreflightRebootShutdown, 1.0f);
+}
+
 void DeviceManager::autopilotArm(bool arm, bool force)
 {
     sendCommandLong(MavCmdComponentArmDisarm, arm ? 1.0f : 0.0f, force ? kMavArmForceMagic : 0.0f);
@@ -1050,6 +1060,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     const auto value = autopilot::decodePayload<MAVLink_MSG_PARAM_VALUE>(transferPayload);
                     emit autopilotParamReceived(QString::fromLatin1(value.param_id, int(qstrnlen(value.param_id, kMavParamIdLength))),
                                                 value.param_value);
+                    emit autopilotParamFrame(transferPayload);
                 }
                 if (fromAutopilotComponent && msgId == MAVLink_MSG_RC_CHANNELS::getID()) {
                     const uint16_t length = mavlink_frame.payloadLen();

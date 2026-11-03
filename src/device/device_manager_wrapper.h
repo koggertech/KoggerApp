@@ -5,6 +5,7 @@
 #include <QVariantList>
 #include <memory>
 
+#include "autopilot_params.h"
 #include "device_manager.h"
 #include "mission_transfer.h"
 
@@ -69,6 +70,8 @@ public:
 
     DeviceManager* getWorker();
     QUuid getFileUuid() const;
+    /** Parameter list of the latched autopilot, exposed to QML as `autopilotParams`. */
+    autopilot::AutopilotParams* autopilotParams() { return autopilotParams_.get(); }
 
     /*QML*/
     QList<DevQProperty*> getDevList     () { return getWorker()->getDevList();     }
@@ -259,6 +262,7 @@ private:
     std::unique_ptr<DeviceManager> workerObject_;
     std::unique_ptr<QThread> missionThread_;
     autopilot::MissionTransfer* missionTransfer_ = nullptr;
+    std::unique_ptr<autopilot::AutopilotParams> autopilotParams_;
     AutopilotState autopilotState_;
     QVariantList autopilotMessages_;
     bool echogramDeliveryKnown_ = false;
