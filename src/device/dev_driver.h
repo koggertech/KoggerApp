@@ -314,6 +314,11 @@ signals:
     // or 0 when no RESP arrived within the ACK timeout. checksum is CK1 | CK2 << 8 of the frame.
     void usblControlFrameSent(int ver, int checksum);
     void usblControlAck(int ver, int checksum, int code);
+    // The same pair for ID_USBL_SCHEDULE settings.
+    void usblScheduleFrameSent(int ver, int checksum);
+    void usblScheduleAck(int ver, int checksum, int code);
+    void usblScheduleChanged();
+    void usblScheduleEntryReceived(int index, const QVariantMap& entry);
 
     void dopplerVeloComplete();
     void dopplerBeamComplete(IDBinDVL::BeamSolution *beams, uint16_t cnt);
@@ -388,6 +393,17 @@ public slots:
 
     void setUsblTransponderEnable(bool enabled);
     void setUsblMonitorConfig(uint32_t suppressSelfResponseUs, uint32_t suppressSelfRequestUs, bool receiveResponseInIdle);
+    // V0: 0 = CmdOnly (also stops a running schedule), 4 = Regular every periodUs.
+    void setUsblTriggerControl(int source, double periodUs);
+    void setUsblScheduleEntry(int index, int address, int cmdId, double replyDistanceMm, double durationUs,
+                              const QString& hexPayload, int payloadBits);
+    void runUsblSchedule(int count);
+    void stopUsblSchedule();
+    void requestUsblScheduleStatus();
+    void requestUsblScheduleEntry(int index);
+    QVariantMap usblScheduleStatus() const;
+    // -1 not asked yet, 0 the firmware does not know ID_USBL_SCHEDULE, 1 it does.
+    int usblScheduleSupport() const { return usblScheduleSupport_; }
     // The only per-slot write there is. v6 USBLCmdConfig carries a receiver_function AND a
     // sender_function, so one frame configures both directions of a command slot.
     //
@@ -444,6 +460,7 @@ protected:
 
     IDBinUsblSolution* idUSBL = nullptr;
     IDBinUsblDiag* idUsblDiag = nullptr;
+    IDBinUsblSchedule* idUSBLSchedule = nullptr;
     IDBinUsblControl* idUSBLControl = nullptr;
     IDBinModemSolution* idModemSolution = nullptr;
 
@@ -591,6 +608,7 @@ protected slots:
     void receivedUSBL       (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedUsblDiag   (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedUSBLControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedUSBLSchedule(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
     void receivedModemSolution(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
     void receivedServoControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
@@ -662,12 +680,18 @@ private:
         int ver = 0;
         int64_t sentMs = 0;
         int relayed = -1;
+        bool schedule = false;
+        bool getting = false;
     };
     QHash<int, UsblPendingFrame> usblPending_;
     QHash<int, int64_t> usblAnswered_;
     int usblAckEcho_ = -1;
+    int usblScheduleSupport_ = -1;
+    int64_t usblScheduleStatusMs_ = 0;
     void trackUsblFrame(int ver, uint16_t checksum);
-    void logUsblControl(int ver, const QString& what);
+    void trackUsblFrame(int ver, uint16_t checksum, uint16_t relayed, bool schedule, bool getting);
+    bool ackUsblFrame(bool schedule, int ver, int resp);
+    void logUsblControl(int ver, const QString& what, bool schedule = false);
 
     void sendUsblTransponder();
     void sendUsblFilter();

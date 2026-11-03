@@ -510,16 +510,61 @@ Item {
                         TabsRow {
                             label: qsTr("Keeps time")
                             options: [ { label: qsTr("App"), value: "host" }, { label: qsTr("PPS"), value: "pps" },
-                                       { label: qsTr("Device"), value: "periodic", tip: qsTr("device-timed transmission, not available yet") } ]
+                                       { label: qsTr("Device"), value: "periodic",
+                                         tip: qsTr("The head times its own steps, at most 8: they are written with the network, Start runs them, and they keep running if the app disconnects") } ]
                             currentValue: root.ll ? root.ll.executor.mode : "host"
                             onValueSelected: function (v) { root.store.setLifelineField(root.ll.id, "executorMode", v) }
+                        }
+                        Note {
+                            readonly property var _dev: root.ll && root.store ? root.store.deviceFor(root.ll.id) : null
+                            readonly property var _st: root.engine && root.ll ? root.engine.deviceStatus(root.ll.id) : ({})
+                            readonly property var _s: root.engine && root.ll ? root.engine.deviceStateFor(root.ll.id)
+                                                                             : ({ code: "unknown", noLink: false, silentMs: -1 })
+                            readonly property var _ev: root.engine && root.ll ? root.engine.deviceEvent[root.ll.id] : undefined
+                            readonly property bool _lost: _s.noLink || !_dev
+                            readonly property string _evText: {
+                                switch (_ev ? _ev.code : "") {
+                                case "notStarted": return qsTr("The head did not start its timer: write the network and Start again")
+                                case "notStopped": return qsTr("The head did not confirm Stop: press Stop again")
+                                case "stoppedOnDevice": return qsTr("The timer stopped on the head itself: a reset, or a command from elsewhere")
+                                case "notWritten": return qsTr("Not started: the network was not written")
+                                default: return ""
+                                }
+                            }
+                            visible: !!root.ll && root.ll.executor.mode === "periodic"
+                            color: _evText.length && _s.code !== "starting" && _s.code !== "stopping" ? AppPalette.dangerText : AppPalette.textSecond
+                            text: {
+                                if (_dev && _dev.usblScheduleSupport === 0) return qsTr("This device's firmware has no interrogation schedule")
+                                var silent = _s.silentMs >= 0 ? qsTr(", no answer for %1 s").arg(Math.round(_s.silentMs / 1000)) : ""
+                                switch (_s.code) {
+                                case "starting":
+                                    return _lost ? qsTr("On the device: starting — no link%1; Start is sent again when the head answers").arg(silent)
+                                                 : qsTr("On the device: starting…")
+                                case "stopping":
+                                    return _lost ? qsTr("On the device: Stop waits for the link%1; it is sent again when the head answers").arg(silent)
+                                                 : qsTr("On the device: stopping…")
+                                case "running":
+                                    if (_lost) return qsTr("No link to the head%1 — it keeps running its own timer").arg(silent)
+                                    return (_evText.length ? _evText + " · " : "")
+                                           + qsTr("On the device: running · %1 steps · cycle %2 s · %3 cycles · skipped %4 late, %5 busy%6")
+                                             .arg(_st.count).arg((_st.cycleUs / 1e6).toFixed(2)).arg(_st.cycles)
+                                             .arg(_st.skippedLate).arg(_st.skippedBusy)
+                                             .arg(_st.pending ? qsTr(" · a change waits for the next cycle") : "")
+                                case "stopped":
+                                    if (_evText.length) return _evText
+                                    return _lost ? qsTr("On the device: stopped when last heard%1").arg(silent) : qsTr("On the device: stopped")
+                                default:
+                                    if (_evText.length) return _evText
+                                    return _dev ? qsTr("On the device: state not known yet") : qsTr("On the device: not connected")
+                                }
+                            }
                         }
                         Actions {
                             Btn {
                                 readonly property bool _on: !!root.engine && root.engine.isRunningFor(root.ll ? root.ll.id : -1)
                                 text: _on ? qsTr("■ Stop") : qsTr("▶ Run this head")
                                 checked: _on
-                                enabled: !!root.engine && root.engine.runnableFor(root.ll ? root.ll.id : -1).length > 0
+                                enabled: _on || (!!root.engine && root.engine.runnableFor(root.ll ? root.ll.id : -1).length > 0)
                                 toolTipText: enabled ? qsTr("Interrogate only this head's steps") : qsTr("Bind and connect this head first")
                                 onClicked: _on ? root.engine.stop() : root.engine.start(root.ll.id)
                             }

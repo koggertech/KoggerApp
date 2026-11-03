@@ -24,7 +24,16 @@ QtObject {
                                  ? dataset.usblSolutions : ({})
     readonly property var problems: Check.check(st, compiled)
     readonly property var liveProblems: Check.liveCheck(st, compiled, _sols)
-    readonly property var deviceProblems: Check.deviceCheck(st, _assign)
+    readonly property var deviceProblems: {
+        var support = {}
+        for (var i = 0; i < st.lifelines.length; ++i) {
+            var l = st.lifelines[i]
+            if (!l.executor || l.executor.mode !== "periodic") continue
+            var d = deviceFor(l.id)
+            support[l.id] = d && typeof d.usblScheduleSupport === "number" ? d.usblScheduleSupport : -1
+        }
+        return Check.deviceCheck(st, _assign, support)
+    }
     readonly property var allProblems: problems.concat(liveProblems).concat(deviceProblems)
     readonly property var problemCounts: Check.counts(allProblems)
 
@@ -840,8 +849,9 @@ QtObject {
         case "stepMuchLonger": return qsTr("A step lasts %1 ms; %2 ms would do.").arg(d.durationMs).arg(d.requiredMs)
         case "ppsStepVsPeriod": return qsTr("A PPS step takes %1 pulse periods.").arg(d.periods)
         case "noSteps": return qsTr("No step is enabled; nothing will be interrogated.")
-        case "periodicNeedsOneStep": return qsTr("%1: device-periodic transmission needs exactly one step (has %2).").arg(ll).arg(d.steps)
-        case "periodicUnavailable": return qsTr("%1: device-periodic transmission is not available yet; the app keeps time instead.").arg(ll)
+        case "scheduleTooLong": return qsTr("%1: the head's own timer runs at most %2 steps (has %3).").arg(ll).arg(d.max).arg(d.steps)
+        case "deviceTimersUnsynced": return qsTr("%1 heads run their own timers: their cycles drift against each other and can collide.").arg(d.heads)
+        case "deviceTimerUnsupported": return qsTr("%1: the bound device's firmware has no interrogation schedule; update it or let the app keep time.").arg(ll)
         case "multiHeadLive": return qsTr("Several heads are bound: live replies are told apart by address only.")
         case "measuredNearMax": return qsTr("%1: measured %2 m, close to Max range %3 m.").arg(ex).arg(Math.round(d.distance)).arg(d.maxM)
         case "negativeRange": return qsTr("%1: negative range %2 m — the head's firmware predates the range fix.").arg(ex).arg(Math.round(d.distance))

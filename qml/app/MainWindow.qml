@@ -55,6 +55,7 @@ ApplicationWindow {
         plan: appUsblPlan
         preferredDev: workspaceStore.activeDevice
         exclusiveWith: appNodesEngine
+        writer: appNodesWriter
     }
     NodesStore {
         id: appNodesStore
@@ -67,6 +68,7 @@ ApplicationWindow {
     NodesEngine {
         id: appNodesEngine
         store: appNodesStore
+        writer: appNodesWriter
         exclusiveWith: appUsblEngine
     }
     property string _nodesMode: "design"

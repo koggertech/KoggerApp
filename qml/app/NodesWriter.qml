@@ -16,6 +16,7 @@ QtObject {
     readonly property int jobLifeline: job ? job.lifelineId : -1
 
     signal finished(int lifelineId, string state)
+    signal deviceWriteFinished(string tag, string state)
 
     readonly property var _baseline: {
         var w = [{ kind: "v3", ver: 3, timeoutUs: 0 }]
@@ -32,11 +33,12 @@ QtObject {
 
     function _sendable(dev, writes) {
         var hasV0 = typeof dev.setUsblTriggerControl === "function"
-        return writes.filter(function (w) { return w.kind !== "v0" || hasV0 })
+        var hasSched = typeof dev.setUsblScheduleEntry === "function"
+        return writes.filter(function (w) { return (w.kind !== "v0" || hasV0) && (w.kind !== "sched" || hasSched) })
     }
 
     function _enqueue(item) {
-        var q = queue.filter(function (j) { return j.lifelineId !== item.lifelineId })
+        var q = queue.filter(function (j) { return j.lifelineId !== item.lifelineId || j.tag !== item.tag })
         q.push(item)
         queue = q
         if (!job) Qt.callLater(_startNext)
@@ -74,6 +76,16 @@ QtObject {
         return writeLifelines(ids)
     }
 
+    /**
+     * Writes frames to one device outside any lifeline, each confirmed like a network write;
+     * deviceWriteFinished(tag, state) reports it. A later call with the same tag replaces a queued one.
+     */
+    function writeDevice(dev, writes, tag) {
+        if (!dev || !writes.length) return false
+        _enqueue({ lifelineId: -1, tag: tag, kind: "device", dev: dev, fingerprint: "", writes: writes.slice() })
+        return true
+    }
+
     /** Known, deliberately deaf state: silent, no address accepted, every slot at defaults. */
     function resetToBaseline(lifelineId) {
         if (!store || !store.deviceFor(lifelineId)) return false
@@ -81,13 +93,14 @@ QtObject {
         return true
     }
 
-    /** Stops every connected device answering. Not tracked as a write. */
+    /** Stops every connected device answering and transmitting on its own timer. Not tracked as a write. */
     function silenceAll() {
         if (!store) return
         for (var i = 0; i < store.devices.length; ++i) {
             var d = store.devices[i]
             if (typeof d.usblControlReady === "function" && !d.usblControlReady()) continue
             d.acousticResponceTimeout(0)
+            if (typeof d.setUsblTriggerControl === "function") d.setUsblTriggerControl(Compile.SOURCE_CMD_ONLY, 0)
         }
     }
 
@@ -105,29 +118,35 @@ QtObject {
     property Connections _devConn: Connections {
         target: writer.job ? writer.job.dev : null
         ignoreUnknownSignals: true
-        function onUsblControlFrameSent(ver, checksum) {
-            var j = writer.job
-            if (!j || j.awaitVer !== ver || j.awaitCk >= 0) return
-            j.awaitCk = checksum
-        }
-        function onUsblControlAck(ver, checksum, code) {
-            var j = writer.job
-            if (!j || j.awaitVer < 0 || j.awaitCk < 0 || checksum !== j.awaitCk) return
-            writer._timeout.stop()
-            writer._log(code)
-            if (code === 1) {
-                j.acked += 1
-                j.index += 1
-                j.attempt = 0
-                j.awaitVer = -1
-                j.awaitCk = -1
-                writer._progress()
-                Qt.callLater(writer._sendCurrent)
-            } else if (code === 0) {
-                writer._noAnswer()
-            } else {
-                writer._finish("rejected", code)
-            }
+        function onUsblControlFrameSent(ver, checksum) { writer._frameSent(false, ver, checksum) }
+        function onUsblScheduleFrameSent(ver, checksum) { writer._frameSent(true, ver, checksum) }
+        function onUsblControlAck(ver, checksum, code) { writer._ack(false, checksum, code) }
+        function onUsblScheduleAck(ver, checksum, code) { writer._ack(true, checksum, code) }
+    }
+
+    function _frameSent(sched, ver, checksum) {
+        var j = job
+        if (!j || j.awaitSched !== sched || j.awaitVer !== ver || j.awaitCk >= 0) return
+        j.awaitCk = checksum
+    }
+
+    function _ack(sched, checksum, code) {
+        var j = job
+        if (!j || j.awaitSched !== sched || j.awaitVer < 0 || j.awaitCk < 0 || checksum !== j.awaitCk) return
+        _timeout.stop()
+        _log(code)
+        if (code === 1) {
+            j.acked += 1
+            j.index += 1
+            j.attempt = 0
+            j.awaitVer = -1
+            j.awaitCk = -1
+            _progress()
+            Qt.callLater(_sendCurrent)
+        } else if (code === 0) {
+            _noAnswer()
+        } else {
+            _finish("rejected", code)
         }
     }
 
@@ -136,7 +155,7 @@ QtObject {
         if (!j) return
         var w = j.writes[j.index]
         var l = lastLog.slice()
-        l.push({ index: j.index, kind: w.kind, ver: w.ver, cmd: w.kind === "v6" ? w.cmd : -1,
+        l.push({ index: j.index, kind: w.kind, ver: w.ver, cmd: w.kind === "v6" || w.kind === "sched" ? w.cmd : -1,
                  event: w.kind === "v6" ? w.event : 0, code: code, attempt: j.attempt,
                  ms: Date.now() - j.sentAt })
         lastLog = l
@@ -160,21 +179,32 @@ QtObject {
         var q = queue.slice()
         var item = q.shift()
         queue = q
-        var dev = store ? store.deviceFor(item.lifelineId) : null
-        if (!dev) { finished(item.lifelineId, "noDevice"); Qt.callLater(_startNext); return }
+        var own = item.kind === "device"
+        var dev = own ? item.dev : (store ? store.deviceFor(item.lifelineId) : null)
+        if (!dev) {
+            if (own) deviceWriteFinished(item.tag, "noDevice")
+            else finished(item.lifelineId, "noDevice")
+            Qt.callLater(_startNext)
+            return
+        }
         var writes = _sendable(dev, item.writes)
         if (typeof dev.usblControlReady === "function" && !dev.usblControlReady()) {
-            store.setWriteStatus(item.lifelineId, { state: "notReady", serial: dev.devSN, at: store.linkKeyOf(dev), atMs: Date.now(),
-                                                    done: 0, total: writes.length, fingerprint: item.fingerprint,
-                                                    failure: null })
-            finished(item.lifelineId, "notReady")
+            if (own) {
+                deviceWriteFinished(item.tag, "notReady")
+            } else {
+                store.setWriteStatus(item.lifelineId, { state: "notReady", serial: dev.devSN, at: store.linkKeyOf(dev), atMs: Date.now(),
+                                                        done: 0, total: writes.length, fingerprint: item.fingerprint,
+                                                        failure: null })
+                finished(item.lifelineId, "notReady")
+            }
             Qt.callLater(_startNext)
             return
         }
         lastLog = []
-        job = { lifelineId: item.lifelineId, kind: item.kind, dev: dev, serial: dev.devSN, at: store.linkKeyOf(dev),
+        job = { lifelineId: item.lifelineId, tag: item.tag, kind: item.kind, dev: dev, serial: dev.devSN,
+                at: own || !store ? "" : store.linkKeyOf(dev),
                 fingerprint: item.fingerprint, writes: writes, index: 0, acked: 0, attempt: 0,
-                awaitVer: -1, awaitCk: -1, sentAt: 0 }
+                awaitVer: -1, awaitCk: -1, awaitSched: false, sentAt: 0 }
         _progress()
         Qt.callLater(_sendCurrent)
     }
@@ -184,6 +214,7 @@ QtObject {
         if (!j) return
         progressDone = j.acked
         progressTotal = j.writes.length
+        if (j.kind === "device") return
         store.setWriteStatus(j.lifelineId, { state: "writing", serial: j.serial, at: j.at, atMs: Date.now(),
                                              done: j.acked, total: j.writes.length,
                                              fingerprint: j.fingerprint, failure: null })
@@ -198,6 +229,7 @@ QtObject {
         j.attempt += 1
         j.awaitVer = w.ver
         j.awaitCk = -1
+        j.awaitSched = w.kind === "sched"
         j.sentAt = Date.now()
         _timeout.restart()
         switch (w.kind) {
@@ -209,6 +241,10 @@ QtObject {
             d.setUsblCmdConfig(w.cmd, w.event, w.recvFn, w.recvBits, w.sendFn, w.sendHex,
                                w.eventAction, w.cmdIdAction, w.cmdIdRepl, w.addrAction, w.addrRepl,
                                w.sendFn === 1 ? w.sendBits : -1)
+            break
+        case "sched":
+            d.setUsblScheduleEntry(w.index, w.address, w.cmd, w.replyMm, w.durationUs, w.payloadHex,
+                                   typeof w.payloadBits === "number" ? w.payloadBits : -1)
             break
         }
     }
@@ -228,6 +264,12 @@ QtObject {
             state = "partial"
         progressDone = j.acked
         progressTotal = j.writes.length
+        if (j.kind === "device") {
+            job = null
+            deviceWriteFinished(j.tag, state)
+            Qt.callLater(_startNext)
+            return
+        }
         var status = { state: state, serial: j.serial, at: j.at, atMs: Date.now(), done: j.acked,
                        total: j.writes.length, fingerprint: j.fingerprint, failure: failure }
         if (j.kind === "baseline") {

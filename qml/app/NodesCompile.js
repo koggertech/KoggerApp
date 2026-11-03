@@ -11,6 +11,7 @@ var TRIGGER_FOREVER_US = 4294967295;
 var ADDR_DISABLED = 255;
 var SOURCE_CMD_ONLY = 0;
 var SOURCE_REGULAR = 4;
+var SCHEDULE_ENTRIES = 8;
 
 function defaultSlot(event, cmd) {
     return { cmd: cmd, event: event, configured: false,
@@ -247,8 +248,22 @@ function deviceState(st, l, table) {
     writes.push({ kind: "v3", ver: 3, timeoutUs: v3 });
     var fp = _hash(JSON.stringify(writes));
     return { lifelineId: l.id, slots: slots, filter: filt, v4: v4, v3: v3, v7: v7,
-             writes: writes, fingerprint: fp,
+             writes: writes, fingerprint: fp, schedule: [],
              configuredSlots: slots.filter(function (x) { return x.configured; }).length };
+}
+
+/**
+ * Entries a device-timed head runs: its enabled steps in cycle order, at most SCHEDULE_ENTRIES.
+ * Written after the slots, because the device checks each entry's duration against the
+ * response slot of its cmd.
+ */
+function scheduleOf(steps, headId) {
+    var mine = steps.filter(function (r) { return r.enabled && r.initiatorId === headId && r.addr >= 0; });
+    return mine.slice(0, SCHEDULE_ENTRIES).map(function (r, i) {
+        return { kind: "sched", ver: 0, index: i, stepId: r.stepId, address: r.addr, cmd: r.cmd,
+                 replyMm: Math.round(r.replyMm), durationUs: Math.round(r.durationMs * 1000),
+                 payloadHex: r.payloadHex, payloadBits: r.payloadBits };
+    });
 }
 
 function _specFor(st, ex) {
@@ -331,6 +346,15 @@ function compile(st) {
     }
     var total = 0;
     for (var t = 0; t < rows.length; ++t) if (rows[t].enabled) { rows[t].startMs = total; total += rows[t].durationMs; }
+
+    for (var h = 0; h < st.lifelines.length; ++h) {
+        var head = st.lifelines[h];
+        if (!devices[head.id] || !head.executor || head.executor.mode !== "periodic") continue;
+        var dv = devices[head.id];
+        dv.schedule = scheduleOf(rows, head.id);
+        dv.writes = dv.writes.concat(dv.schedule);
+        dv.fingerprint = _hash(JSON.stringify(dv.writes));
+    }
 
     var targets = [], seen = {};
     for (var e = 0; e < st.exchanges.length; ++e) {
@@ -425,6 +449,9 @@ function framesView(dev) {
         case "v4": text = "AddressFilter [" + w.raw.map(function (a) { return a === ADDR_DISABLED ? "FF" : String(a); }).join(", ") + "]"; break;
         case "v7": text = "Monitor selfResp=" + w.suppressSelfResponseUs + " us selfReq=" + w.suppressSelfRequestUs
                         + " us idle=" + (w.receiveResponseInIdle ? 1 : 0); break;
+        case "sched": text = "ScheduleEntry " + w.index + " addr=" + w.address + " cmd=" + w.cmd
+                           + " window=" + (w.replyMm / 1000) + " m every " + (w.durationUs / 1000) + " ms"
+                           + (w.payloadBits > 0 ? " data=" + w.payloadHex + " (" + w.payloadBits + " bit)" : ""); break;
         default:
             text = "CmdConfig cmd=" + w.cmd + " ev=" + (w.event === 1 ? "request" : "response")
                  + (w.configured ? "" : " (default)")
@@ -443,9 +470,9 @@ if (typeof module !== "undefined" && module.exports) {
     module.exports = {
         EVENT_ON_REQUEST: EVENT_ON_REQUEST, EVENT_ON_RESPONSE: EVENT_ON_RESPONSE,
         V3_ALWAYS: V3_ALWAYS, TRIGGER_FOREVER_US: TRIGGER_FOREVER_US, ADDR_DISABLED: ADDR_DISABLED,
-        SOURCE_CMD_ONLY: SOURCE_CMD_ONLY, SOURCE_REGULAR: SOURCE_REGULAR,
+        SOURCE_CMD_ONLY: SOURCE_CMD_ONLY, SOURCE_REGULAR: SOURCE_REGULAR, SCHEDULE_ENTRIES: SCHEDULE_ENTRIES,
         defaultSlot: defaultSlot, claimsFor: claimsFor, allocate: allocate, filterOf: filterOf,
-        deviceState: deviceState, timingSpec: timingSpec, requiredFor: requiredFor,
+        deviceState: deviceState, scheduleOf: scheduleOf, timingSpec: timingSpec, requiredFor: requiredFor,
         nodeKeyFor: nodeKeyFor, compile: compile, dataLegs: dataLegs, legsAt: legsAt,
         stepsOf: stepsOf, framesView: framesView
     };

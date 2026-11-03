@@ -1388,9 +1388,7 @@ uint16_t IDBinUsblControl::pingRequest(uint32_t timeout_us, uint8_t address, uin
     return pingRequest(timeout_us, address, cmd_id, 20000, QByteArray());
 }
 
-uint16_t IDBinUsblControl::send(ProtoBinOut& frame) {
-    emit binFrameOut(frame);
-
+static uint16_t relayedChecksum(ProtoBinOut& frame) {
     const uint8_t* bytes = frame.frame();
     const int checked_end = frame.frameLen() - 2;
     uint8_t check1 = 0, check2 = 0;
@@ -1398,8 +1396,96 @@ uint16_t IDBinUsblControl::send(ProtoBinOut& frame) {
         check1 += (i == 2) ? 0 : bytes[i];
         check2 += check1;
     }
-    lastRelayedChecksum_ = (uint16_t)(check1 | (check2 << 8));
+    return (uint16_t)(check1 | (check2 << 8));
+}
+
+uint16_t IDBinUsblControl::send(ProtoBinOut& frame) {
+    emit binFrameOut(frame);
+    lastRelayedChecksum_ = relayedChecksum(frame);
     return frame.checksum();
+}
+
+uint16_t IDBinUsblControl::setTriggerControl(uint8_t source, uint32_t period_us) {
+    ProtoBinOut out;
+    out.create(SETTING, USBLTriggerControl::getVer(), id(), m_address);
+    USBLTriggerControl tc;
+    tc.txTriggerSource = source;
+    tc.period_us = period_us;
+    out.write<USBLTriggerControl>(tc);
+    out.end();
+    return send(out);
+}
+
+Resp IDBinUsblSchedule::parsePayload(FrameParser& proto)
+{
+    if(proto.ver() == USBLScheduleStatus::getVer()) {
+        if(proto.readAvailable() < (int16_t)sizeof(USBLScheduleStatus)) {
+            return respErrorPayload;
+        }
+        status_ = proto.read<USBLScheduleStatus>();
+        hasStatus_ = true;
+        return respOk;
+    }
+    if(proto.ver() == USBLScheduleEntryState::getVer()) {
+        if(proto.readAvailable() < (int16_t)sizeof(USBLScheduleEntryState)) {
+            return respErrorPayload;
+        }
+        lastEntry_ = proto.read<USBLScheduleEntryState>();
+        const int bytes = qMin((int)proto.readAvailable(), (lastEntry_.payload_bit_length + 7) / 8);
+        lastEntryPayload_ = QByteArray(bytes > 0 ? bytes : 0, 0);
+        for(int i = 0; i < bytes; i++) {
+            lastEntryPayload_[i] = (char)proto.read<uint8_t>();
+        }
+        return respOk;
+    }
+    return respErrorVersion;
+}
+
+uint16_t IDBinUsblSchedule::send(ProtoBinOut& frame) {
+    emit binFrameOut(frame);
+    lastRelayedChecksum_ = relayedChecksum(frame);
+    return frame.checksum();
+}
+
+uint16_t IDBinUsblSchedule::setEntry(const USBLScheduleEntry& entry, const QByteArray& payload) {
+    ProtoBinOut out;
+    out.create(SETTING, USBLScheduleEntry::getVer(), id(), m_address);
+    USBLScheduleEntry e = entry;
+    const int bytes = qMin((int)payload.size(), (e.payload_bit_length + 7) / 8);
+    e.payload_bit_length = (uint16_t)qMin((int)e.payload_bit_length, bytes * 8);
+    e.function = e.payload_bit_length > 0 ? USBLScheduleEntry::FunctionBitArray : USBLScheduleEntry::FunctionDefault;
+    out.write<USBLScheduleEntry>(e);
+    if(e.payload_bit_length > 0) {
+        out.write((void*)payload.constData(), (uint16_t)((e.payload_bit_length + 7) / 8));
+    }
+    out.end();
+    return send(out);
+}
+
+uint16_t IDBinUsblSchedule::setRun(bool run, uint8_t count) {
+    ProtoBinOut out;
+    out.create(SETTING, USBLScheduleRun::getVer(), id(), m_address);
+    USBLScheduleRun r;
+    r.state = run ? 1 : 0;
+    r.count = run ? count : 0;
+    out.write<USBLScheduleRun>(r);
+    out.end();
+    return send(out);
+}
+
+uint16_t IDBinUsblSchedule::requestEntry(uint8_t index) {
+    ProtoBinOut out;
+    out.create(GETTING, USBLScheduleEntryState::getVer(), id(), m_address);
+    out.write<uint8_t>(index);
+    out.end();
+    return send(out);
+}
+
+uint16_t IDBinUsblSchedule::requestStatus() {
+    ProtoBinOut out;
+    out.create(GETTING, USBLScheduleStatus::getVer(), id(), m_address);
+    out.end();
+    return send(out);
 }
 
 uint16_t IDBinUsblControl::pingRequest(uint32_t timeout_us, uint8_t address, uint8_t cmd_id, uint32_t reply_distance_mm, const QByteArray& payload, int payload_bits) {

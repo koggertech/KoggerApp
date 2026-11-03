@@ -3,12 +3,15 @@ import QtQml
 import "UsblNodeLogic.js" as Node
 import "NodesCompile.js" as Compile
 import "NodesPayload.js" as Payload
+import "UsblDeviceTimer.js" as DeviceTimer
 
 QtObject {
     id: engine
 
     property var store: null
     property var exclusiveWith: null
+    // Writes a device-timed head before its timer is started, when the head is not current.
+    property var writer: null
 
     // -1 runs every head's steps; a lifeline id runs only that head's.
     property int scope: -1
@@ -17,7 +20,18 @@ QtObject {
     property var curStep: null
     property int stepIndex: -1
     property bool _running: false
-    readonly property bool running: _running
+    // lifelineId -> what was last asked of the head's own timer (UsblDeviceTimer), until its status answers it.
+    property var deviceWant: ({})
+    // lifelineId -> { code, atMs }: how the last request ended when it did not go as asked.
+    property var deviceEvent: ({})
+    property var _pendingRun: ({})
+    readonly property bool _devicesRunning: {
+        for (var k in deviceWant) if (deviceWant[k].state === "run") return true
+        var heads = deviceHeadsIn(-1)
+        for (var i = 0; i < heads.length; ++i) if (isRunningFor(heads[i])) return true
+        return false
+    }
+    readonly property bool running: _running || _devicesRunning
 
     // stepId -> { state: waiting|replied|missed|skipped, sentAt, atMs, count, replies, and from the last reply:
     //   distance, azimuth, elevation, snr (RSRQ), sync { val, snr, firstVal, firstSnr, rms, leadMs }, beacon { lat, lon, depth } }
@@ -36,7 +50,7 @@ QtObject {
         for (var i = 0; i < _all.length; ++i) {
             var s = _all[i]
             if (scope >= 0 && s.initiatorId !== scope) continue
-            if (s.addr < 0) continue
+            if (s.addr < 0 || s.executor === "periodic") continue
             if (store && store.deviceFor(s.initiatorId)) out.push(s)
         }
         return out
@@ -47,7 +61,150 @@ QtObject {
             if (_all[i].initiatorId === lifelineId && _all[i].addr >= 0 && store && store.deviceFor(lifelineId)) out.push(_all[i])
         return out
     }
-    readonly property bool canRun: runnable.length > 0
+    readonly property bool canRun: runnable.length > 0 || deviceHeadsIn(-1).length > 0
+
+    // ── heads that time their own steps (executor "periodic") ────────────────
+    /** Bound device-timed heads with at least one step, in scope (-1: all). */
+    function deviceHeadsIn(sc) {
+        var seen = {}, out = []
+        for (var i = 0; i < _all.length; ++i) {
+            var s = _all[i]
+            if (s.executor !== "periodic" || s.addr < 0 || seen[s.initiatorId]) continue
+            if (sc >= 0 && s.initiatorId !== sc) continue
+            if (!store || !store.deviceFor(s.initiatorId)) continue
+            seen[s.initiatorId] = true
+            out.push(s.initiatorId)
+        }
+        return out
+    }
+    function isDeviceTimed(lifelineId) {
+        var ls = store ? store.lifelines : []
+        for (var i = 0; i < ls.length; ++i)
+            if (ls[i].id === lifelineId) return !!ls[i].executor && ls[i].executor.mode === "periodic"
+        return false
+    }
+    function scheduleOf(lifelineId) {
+        var d = store && store.compiled.devices[lifelineId]
+        return d && d.schedule ? d.schedule : []
+    }
+    /** The head's last reported schedule status: { running, count, index, pending, cycleUs, cycles, skippedLate, skippedBusy, atMs }. */
+    function deviceStatus(lifelineId) {
+        var d = store ? store.deviceFor(lifelineId) : null
+        return d && d.usblScheduleStatus ? d.usblScheduleStatus : ({})
+    }
+    function deviceRunningFor(lifelineId) { return !!deviceStatus(lifelineId).running }
+    /** The head's timer for a status line: { code: starting|stopping|running|stopped|unknown, noLink, silentMs }. */
+    function deviceStateFor(lifelineId) {
+        return DeviceTimer.stateOf(deviceWant[lifelineId] || null, deviceStatus(lifelineId), nowMs)
+    }
+
+    function _without(map, key) {
+        var n = {}
+        for (var k in map) if (String(k) !== String(key)) n[k] = map[k]
+        return n
+    }
+
+    function _startDevice(id) {
+        var d = store.deviceFor(id)
+        var n = scheduleOf(id).length
+        if (!d || typeof d.runUsblSchedule !== "function" || !n) return
+        deviceEvent = _without(deviceEvent, id)
+        if (writer && store.needsWrite(id)) {
+            deviceWant = _with(deviceWant, id, DeviceTimer.wantRun(n, Date.now()))
+            _pendingRun = _with(_pendingRun, id, true)
+            writer.writeLifeline(id)
+            return
+        }
+        _runDevice(id)
+    }
+    function _runDevice(id) {
+        var d = store ? store.deviceFor(id) : null
+        var n = scheduleOf(id).length
+        if (!d || !n) { deviceWant = _without(deviceWant, id); return }
+        deviceWant = _with(deviceWant, id, DeviceTimer.wantRun(n, Date.now()))
+        d.runUsblSchedule(n)
+        d.requestUsblScheduleStatus()
+    }
+    // Every head asked to run or reporting that it runs, connected or not: one that is out of reach
+    // now gets the stop when it answers again.
+    function _stopDevices() {
+        var now = Date.now(), ids = {}, wants = {}
+        for (var k in deviceWant) ids[k] = true
+        var heads = deviceHeadsIn(-1)
+        for (var i = 0; i < heads.length; ++i) if (deviceRunningFor(heads[i])) ids[heads[i]] = true
+        for (var id in ids) {
+            wants[id] = DeviceTimer.wantStop(now)
+            var d = store ? store.deviceFor(Number(id)) : null
+            if (d && typeof d.stopUsblSchedule === "function") { d.stopUsblSchedule(); d.requestUsblScheduleStatus() }
+        }
+        deviceWant = wants
+        _pendingRun = ({})
+    }
+
+    function _writerHas(id) {
+        if (!writer) return false
+        if (writer.jobLifeline === id) return true
+        for (var i = 0; i < writer.queue.length; ++i) if (writer.queue[i].lifelineId === id) return true
+        return false
+    }
+
+    // A write starts with a cmd-only trigger, which stops the head's timer: a head asked to run is
+    // started again with what was written, whether the write came from Start or from Write.
+    property Connections _writerWatch: Connections {
+        target: engine.writer
+        ignoreUnknownSignals: true
+        function onFinished(lifelineId, state) {
+            var pending = !!engine._pendingRun[lifelineId]
+            var want = engine.deviceWant[lifelineId]
+            if (pending) engine._pendingRun = engine._without(engine._pendingRun, lifelineId)
+            if (!pending && !(want && want.state === "run")) return
+            if (state === "confirmed" && engine.isDeviceTimed(lifelineId)) {
+                engine._runDevice(lifelineId)
+                return
+            }
+            engine.deviceWant = engine._without(engine.deviceWant, lifelineId)
+            if (state !== "confirmed")
+                engine.deviceEvent = engine._with(engine.deviceEvent, lifelineId, { code: "notWritten", atMs: Date.now() })
+        }
+    }
+
+    // The head's own status is the only account of its timer: polled for every bound device-timed
+    // head and every head with a request standing, which also tells whether its firmware has the
+    // schedule at all. A head that does not answer keeps its request; see UsblDeviceTimer.js.
+    property Timer _statusPoll: Timer {
+        interval: DeviceTimer.POLL_MS
+        repeat: true
+        running: engine.deviceHeadsIn(-1).length > 0 || Object.keys(engine.deviceWant).length > 0
+        onTriggered: engine._pollDevices()
+    }
+
+    function _pollDevices() {
+        if (!store) return
+        var now = Date.now(), wants = deviceWant, events = deviceEvent, changed = false, ask = {}
+        for (var k in deviceWant) {
+            var id = Number(k)
+            var d = store.deviceFor(id)
+            if (!d) continue
+            ask[id] = d
+            if (_pendingRun[id] || _writerHas(id)) continue
+            var r = DeviceTimer.reconcile(deviceWant[k], deviceStatus(id), now)
+            if (r.send === "run") d.runUsblSchedule(r.want.count)
+            else if (r.send === "stop") d.stopUsblSchedule()
+            if (r.want !== deviceWant[k]) {
+                wants = r.want ? _with(wants, id, r.want) : _without(wants, id)
+                changed = true
+            }
+            if (r.event === "notStarted" || r.event === "notStopped" || r.event === "stoppedOnDevice") {
+                events = _with(events, id, { code: r.event, atMs: now })
+                changed = true
+            }
+        }
+        if (changed) { deviceWant = wants; deviceEvent = events }
+        var heads = deviceHeadsIn(-1)
+        for (var i = 0; i < heads.length; ++i) ask[heads[i]] = store.deviceFor(heads[i])
+        for (var h in ask)
+            if (ask[h] && typeof ask[h].requestUsblScheduleStatus === "function") ask[h].requestUsblScheduleStatus()
+    }
 
     readonly property var dev: {
         if (!store) return null
@@ -100,20 +257,44 @@ QtObject {
             engine.poll = Node.noteReplyAddr(engine.poll, engine.targets, dataset.lastUsblAddress, Date.now())
             if (wasOpen !== -1 && engine.poll.waitNodeId === -1) {
                 engine._waitTimer.stop()
-                var sols = dataset.usblSolutions || {}
-                var e = sols[String(dataset.lastUsblAddress)] || {}
-                if (s) engine._log(s.stepId, { state: "replied", atMs: Date.now(),
-                                               distance: dataset.lastUsblDistance,
-                                               azimuth: dataset.lastUsblAzimuth,
-                                               elevation: dataset.lastUsblElevation,
-                                               snr: dataset.lastUsblSnr,
-                                               sync: { val: e.syncVal, snr: e.syncSnr, firstVal: e.syncFirstVal,
-                                                       firstSnr: e.syncFirstSnr, rms: e.syncRms, leadMs: e.syncFirstMainMaxMs },
-                                               beacon: e.coordValid ? { lat: e.beaconLat, lon: e.beaconLon, depth: e.beaconDepth } : null,
-                                               replied: true })
+                if (s) engine._log(s.stepId, engine._reply())
                 engine._drainManual()
+            } else if (wasOpen === -1) {
+                var ds = engine._deviceStepFor(dataset.lastUsblAddress)
+                if (ds) {
+                    var patch = engine._reply()
+                    patch.sentAt = Date.now()
+                    patch.counted = true
+                    engine._log(ds.stepId, patch)
+                }
             }
         }
+    }
+
+    function _reply() {
+        var sols = dataset.usblSolutions || {}
+        var e = sols[String(dataset.lastUsblAddress)] || {}
+        return { state: "replied", atMs: Date.now(),
+                 distance: dataset.lastUsblDistance,
+                 azimuth: dataset.lastUsblAzimuth,
+                 elevation: dataset.lastUsblElevation,
+                 snr: dataset.lastUsblSnr,
+                 sync: { val: e.syncVal, snr: e.syncSnr, firstVal: e.syncFirstVal,
+                         firstSnr: e.syncFirstSnr, rms: e.syncRms, leadMs: e.syncFirstMainMaxMs },
+                 beacon: e.coordValid ? { lat: e.beaconLat, lon: e.beaconLon, depth: e.beaconDepth } : null,
+                 replied: true }
+    }
+
+    // A reply with no window of the app's open belongs to a head timing itself. A solution carries
+    // the beacon's address but not its cmd, so two steps of one head to one address are told apart
+    // by nothing: the first of them takes it.
+    function _deviceStepFor(addr) {
+        for (var i = 0; i < _all.length; ++i) {
+            var s = _all[i]
+            if (s.executor === "periodic" && s.addr === addr && s.kind !== "ping" && deviceRunningFor(s.initiatorId))
+                return s
+        }
+        return null
     }
 
     property Instantiator _modemWatch: Instantiator {
@@ -136,7 +317,7 @@ QtObject {
         }
     }
 
-    onHasDeviceChanged: if (!hasDevice && _running) stop()
+    onHasDeviceChanged: if (!hasDevice && _running) _stopHost()
 
     function _with(map, key, value) {
         var n = {}
@@ -219,9 +400,10 @@ QtObject {
         var e = {}
         for (var p in prev) e[p] = prev[p]
         for (var q in patch) e[q] = patch[q]
-        if (patch.state === "waiting") e.count = (prev.count || 0) + 1
+        if (patch.state === "waiting" || patch.counted) e.count = (prev.count || 0) + 1
         if (patch.replied) e.replies = (prev.replies || 0) + 1
         delete e.replied
+        delete e.counted
         n[stepId] = e
         stepLog = n
     }
@@ -229,7 +411,9 @@ QtObject {
     function _send(s) {
         var d = store ? store.deviceFor(s.initiatorId) : null
         curStep = s
-        if (!d || (typeof d.usblControlReady === "function" && !d.usblControlReady())) {
+        // A head running its own timer refuses a single ping, whatever keeps time in the plan now.
+        if (!d || (typeof d.usblControlReady === "function" && !d.usblControlReady())
+                || deviceRunningFor(s.initiatorId)) {
             _log(s.stepId, { state: "skipped", atMs: Date.now() })
             return
         }
@@ -299,9 +483,9 @@ QtObject {
             }
         }
         var list = runnable
-        if (!list.length) { stop(); return }
+        if (!list.length) { _stopHost(); return }
         stepIndex = (stepIndex + 1) % list.length
-        if (stepIndex === 0 && store && !store.st.cycle.repeat && _cycleDone) { stop(); return }
+        if (stepIndex === 0 && store && !store.st.cycle.repeat && _cycleDone) { _stopHost(); return }
         if (stepIndex === list.length - 1) _cycleDone = true
         var s = list[stepIndex]
         _send(s)
@@ -310,30 +494,53 @@ QtObject {
     }
     property bool _cycleDone: false
 
-    /** Starts the cycle: every head (-1) or one head's steps. */
+    /**
+     * Starts the cycle: every head (-1) or one head's steps. A device-timed head is written first
+     * when it is not current, then its own timer is started; the app keeps time for the others.
+     */
     function start(lifelineId) {
-        if (exclusiveWith && exclusiveWith.running) exclusiveWith.stop()
+        if (exclusiveWith && exclusiveWith.running) exclusiveWith.release()
         scope = (typeof lifelineId === "number") ? lifelineId : -1
+        var heads = deviceHeadsIn(scope)
+        for (var i = 0; i < heads.length; ++i) _startDevice(heads[i])
         stepIndex = -1
         _cycleDone = false
-        _running = true
-        advance()
+        if (runnable.length) {
+            _running = true
+            advance()
+        }
     }
-    function stop() {
+    function _stopHost() {
         _running = false
         _stepTimer.stop()
     }
+    function stop() {
+        _stopHost()
+        _stopDevices()
+    }
+    // Hands the heads over to the other loop: one stop each, and no request left standing that
+    // would resend it into the other loop's run.
+    function release() {
+        _stopHost()
+        _stopDevices()
+        deviceWant = ({})
+    }
     function step(lifelineId) {
-        if (exclusiveWith && exclusiveWith.running) exclusiveWith.stop()
+        if (exclusiveWith && exclusiveWith.running) exclusiveWith.release()
         if (typeof lifelineId === "number") scope = lifelineId
-        stop()
-        var list = runnable
+        _stopHost()
+        var list = runnable.length ? runnable : _all.filter(function (s) {
+            return s.addr >= 0 && (scope < 0 || s.initiatorId === scope) && !!store && !!store.deviceFor(s.initiatorId)
+        })
         if (!list.length) return
         stepIndex = (stepIndex + 1) % list.length
         _send(list[stepIndex])
     }
     function toggleRun() { running ? stop() : start(scope) }
-    function isRunningFor(lifelineId) { return _running && (scope < 0 || scope === lifelineId) }
+    function isRunningFor(lifelineId) {
+        if (isDeviceTimed(lifelineId)) return DeviceTimer.isRunning(deviceWant[lifelineId] || null, deviceStatus(lifelineId))
+        return _running && (scope < 0 || scope === lifelineId)
+    }
 
     // UsblEngine-compatible surface for the scene panel.
     readonly property int dwellMs: cycleMs

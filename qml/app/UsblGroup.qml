@@ -280,7 +280,8 @@ DeviceSettingsGroup {
 
     // ── the schedule: what drives the list ────────────────────────────────
     // Always visible, and first. The schedule is the host's own interrogation loop -- it sends
-    // ID_USBL_CONTROL v1 ping requests and needs nothing applied to the device beforehand.
+    // ID_USBL_CONTROL v1 ping requests and needs nothing applied to the device beforehand --
+    // unless Transmit is Device timer, when it is written to the head and the head runs it.
     // It RUNS IN UsblEngine, not here; these three forward to it.
     function requestEmit(nodeId, cmd) { if (engine) engine.requestEmit(nodeId, cmd) }
 
@@ -346,7 +347,7 @@ DeviceSettingsGroup {
             implicitHeight: Tokens.controlHSm; fontPixelSize: Tokens.fontXs
             checked: usblGroup._running
             anchors.verticalCenter: parent.verticalCenter
-            enabled: !!(usblGroup.engine && usblGroup.engine.canRun)
+            enabled: usblGroup._running || !!(usblGroup.engine && usblGroup.engine.canRun)
             onClicked: if (usblGroup.engine) usblGroup.engine.toggleRun()
         }
     }
@@ -397,23 +398,81 @@ DeviceSettingsGroup {
             fontPixelSize: Tokens.fontSm
             trackColor: AppPalette.bgDeep
             options: [
-                { label: qsTr("Immediately"), value: false },
-                { label: qsTr("On PPS"), value: true }
+                { label: qsTr("Immediately"), value: "now" },
+                { label: qsTr("On PPS"), value: "pps" },
+                { label: qsTr("Device timer"), value: "device" }
             ]
-            currentValue: !!(usblGroup.engine && usblGroup.engine.fireOnPps)
+            currentValue: !usblGroup.engine ? "now"
+                          : usblGroup.engine.onDevice ? "device" : usblGroup.engine.fireOnPps ? "pps" : "now"
             anchors.verticalCenter: parent.verticalCenter
-            onValueSelected: function(v) { if (usblGroup.engine) usblGroup.engine.setFireOnPps(v) }
+            onValueSelected: function(v) {
+                if (!usblGroup.engine) return
+                usblGroup.engine.setOnDevice(v === "device")
+                if (v !== "device") usblGroup.engine.setFireOnPps(v === "pps")
+            }
         }
     }
 
     Text {
-        visible: !!(usblGroup.engine && usblGroup.engine.fireOnPps)
+        visible: !!(usblGroup.engine && usblGroup.engine.fireOnPps && !usblGroup.engine.onDevice)
         width: parent.width
         wrapMode: Text.WordWrap
         text: qsTr("Each step only arms the request; the device transmits on its next PPS pulse, "
                  + "and without a PPS signal nothing is sent. Keep Dwell at 1 s or more.")
         color: AppPalette.textMuted
         font.pixelSize: Tokens.fontXs
+    }
+
+    // The head keeps the time itself: written on Start, and it keeps interrogating through a
+    // dropped link. The line reports the head's own status, which is the only account of it.
+    Text {
+        readonly property var _e: usblGroup.engine
+        readonly property var _s: _e ? _e.deviceState : ({ code: "unknown", noLink: false, silentMs: -1 })
+        readonly property var _st: _e ? _e.deviceStatus : ({})
+        readonly property var _ev: _e ? _e.deviceEvent : null
+        readonly property string _evText: {
+            switch (_ev ? _ev.code : "") {
+            case "notStarted": return qsTr("The head did not start its timer. Start again.")
+            case "notStopped": return qsTr("The head did not confirm Stop. Press Stop again.")
+            case "stoppedOnDevice": return qsTr("The timer stopped on the head itself: a reset, or a command from elsewhere.")
+            case "notWritten": return qsTr("Not started: the schedule was not written to the head.")
+            default: return ""
+            }
+        }
+        visible: !!(_e && _e.onDevice)
+        width: parent.width
+        wrapMode: Text.WordWrap
+        color: _evText.length && _s.code !== "starting" && _s.code !== "stopping" ? AppPalette.dangerText : AppPalette.textMuted
+        font.pixelSize: Tokens.fontXs
+        text: {
+            if (!_e) return ""
+            var intro = qsTr("The head runs the first %1 steps itself, Dwell apart, and keeps going if the link drops. ")
+                        .arg(_e.deviceEntriesMax)
+            if (plan && plan.schedule.length > _e.deviceEntriesMax)
+                return intro + qsTr("This schedule has %1 steps: mute some, or keep time in the app.").arg(plan.schedule.length)
+            if (_e.deviceSupport === 0) return qsTr("This head's firmware has no device timer. Choose Immediately or On PPS.")
+            if (!_e.hasDevice && _s.code === "unknown") return intro
+            var silent = _s.silentMs >= 0 ? qsTr(", no answer for %1 s").arg(Math.round(_s.silentMs / 1000)) : ""
+            var lost = _s.noLink || !_e.hasDevice
+            switch (_s.code) {
+            case "starting":
+                return lost ? qsTr("Starting — no link%1. Start is sent again when the head answers.").arg(silent)
+                            : qsTr("Writing the schedule and starting…")
+            case "stopping":
+                return lost ? qsTr("Stop waits for the link%1. It is sent again when the head answers.").arg(silent)
+                            : qsTr("Stopping…")
+            case "running":
+                if (lost) return qsTr("No link to the head%1. It keeps running its own timer.").arg(silent)
+                return (_evText.length ? _evText + " " : "")
+                       + qsTr("Running on the head · %1 steps · cycle %2 s · %3 cycles · skipped %4 late, %5 busy")
+                         .arg(_st.count).arg((_st.cycleUs / 1e6).toFixed(2)).arg(_st.cycles)
+                         .arg(_st.skippedLate).arg(_st.skippedBusy)
+            case "stopped":
+                return _evText.length ? _evText : intro + (lost ? qsTr("Stopped when last heard%1.").arg(silent) : qsTr("Stopped."))
+            default:
+                return _evText.length ? _evText : intro
+            }
+        }
     }
 
     Rectangle { width: parent.width; height: 1; color: AppPalette.border }

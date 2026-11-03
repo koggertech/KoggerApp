@@ -123,6 +123,8 @@ public:
     Q_PROPERTY(bool usblRespEnabled            READ usblRespEnabled            NOTIFY usblResponseConfigChanged)
     Q_PROPERTY(bool usblRespFilterKnown        READ usblRespFilterKnown        NOTIFY usblResponseConfigChanged)
     Q_PROPERTY(QVariantList usblRespAcceptedAddresses READ usblRespAcceptedAddresses NOTIFY usblResponseConfigChanged)
+    Q_PROPERTY(QVariantMap usblScheduleStatus  READ usblScheduleStatus  NOTIFY usblScheduleChanged)
+    Q_PROPERTY(int         usblScheduleSupport READ usblScheduleSupport NOTIFY usblScheduleChanged)
     Q_PROPERTY(bool usblRespMonitorKnown       READ usblRespMonitorKnown       NOTIFY usblResponseConfigChanged)
     Q_PROPERTY(int  usblRespSuppressResponseUs READ usblRespSuppressResponseUs NOTIFY usblResponseConfigChanged)
     Q_PROPERTY(int  usblRespSuppressRequestUs  READ usblRespSuppressRequestUs  NOTIFY usblResponseConfigChanged)

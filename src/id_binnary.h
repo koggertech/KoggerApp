@@ -1726,6 +1726,24 @@ public:
     ID id() override { return ID_USBL_CONTROL; }
     Resp parsePayload(FrameParser& proto) override;
 
+    // What starts an interrogation: CmdOnly pings only on a USBLPingRequest (and stops a running
+    // ID_USBL_SCHEDULE too); Regular repeats the last USBLPingRequest every period_us.
+    struct USBLTriggerControl {
+        static constexpr ID getId() { return ID_USBL_CONTROL; }
+        static constexpr Version getVer() { return v0; }
+        enum TxTriggerSource : uint8_t {
+            TxTriggerSourceCmdOnly = 0,
+            TxTriggerSourceRegular = 4,
+        };
+        uint8_t txTriggerSource = TxTriggerSourceCmdOnly;
+        uint8_t triggerActive = 0;
+        uint8_t clockDriftStatus = 0;
+        uint8_t reserved = 0;
+        uint32_t period_us = 0;
+        uint32_t offset_us = 0;
+    } __attribute__((packed));
+    static_assert(sizeof(USBLTriggerControl) == 12, "USBLTriggerControl is 12 B on the wire");
+
     // Fire SIGNAL_SYNC_MASTER and SIGNAL_ADDRESS_MASTER (if enabled by "address") in a sequence
     // If (timeout_us > 0) then it will fire the signal sequence by trigger event,
     // else immediately (not precise time) by this CMD
@@ -1855,6 +1873,7 @@ public:
     // sending_bit_length is derived from the payload actually written, so a truncated
     // payload can never declare more bits than went on the wire. sending_bits < 0 means all of it.
     uint16_t setCmdConfig(const USBLCmdConfig& cfg, const QByteArray& sendingPayload = {}, int sending_bits = -1);
+    uint16_t setTriggerControl(uint8_t source, uint32_t period_us);
 
     // A relay (a logger port) hands the frame to the board with route 0, and the board echoes
     // the checksum of what it received: this is that checksum for the last frame sent.
@@ -1863,6 +1882,95 @@ public:
 protected:
     uint16_t send(ProtoBinOut& frame);
     uint16_t lastRelayedChecksum_ = 0;
+};
+
+// Device-timed interrogation: up to eight entries, each one ping with its own duration, run by
+// the head in a repeating cycle. Entries written while it runs take effect at the next cycle.
+class IDBinUsblSchedule : public IDBin
+{
+    Q_OBJECT
+public:
+    explicit IDBinUsblSchedule() : IDBin() {
+    }
+
+    ID id() override { return ID_USBL_SCHEDULE; }
+    Resp parsePayload(FrameParser& proto) override;
+
+    static constexpr int Entries = 8;
+
+    struct USBLScheduleEntry {
+        static constexpr ID getId() { return ID_USBL_SCHEDULE; }
+        static constexpr Version getVer() { return v0; }
+        enum Function : uint8_t {
+            FunctionDefault = 0,
+            FunctionBitArray = 1,
+        };
+        uint8_t index = 0;
+        uint8_t address = 0;
+        uint8_t cmd_id = 0;
+        uint8_t function = FunctionDefault;
+        uint32_t reply_distance_mm = 0;
+        uint32_t duration_us = 0;
+        uint16_t payload_bit_length = 0;
+    } __attribute__((packed));
+    static_assert(sizeof(USBLScheduleEntry) == 14, "USBLScheduleEntry is 14 B on the wire");
+
+    struct USBLScheduleEntryState {
+        static constexpr ID getId() { return ID_USBL_SCHEDULE; }
+        static constexpr Version getVer() { return v0; }
+        uint8_t index = 0;
+        uint8_t address = 0;
+        uint8_t cmd_id = 0;
+        uint8_t function = 0;
+        uint32_t reply_distance_mm = 0;
+        uint32_t duration_us = 0;
+        uint32_t min_duration_us = 0;
+        uint16_t payload_bit_length = 0;
+    } __attribute__((packed));
+    static_assert(sizeof(USBLScheduleEntryState) == 18, "USBLScheduleEntryState is 18 B on the wire");
+
+    struct USBLScheduleRun {
+        static constexpr ID getId() { return ID_USBL_SCHEDULE; }
+        static constexpr Version getVer() { return v1; }
+        uint8_t state = 0;
+        uint8_t count = 0;
+        uint16_t reserved = 0;
+    } __attribute__((packed));
+    static_assert(sizeof(USBLScheduleRun) == 4, "USBLScheduleRun is 4 B on the wire");
+
+    struct USBLScheduleStatus {
+        static constexpr ID getId() { return ID_USBL_SCHEDULE; }
+        static constexpr Version getVer() { return v2; }
+        uint8_t state = 0;
+        uint8_t count = 0;
+        uint8_t index = 0xFF;
+        uint8_t pending = 0;
+        uint32_t cycle_us = 0;
+        uint32_t cycles = 0;
+        uint16_t skipped_late = 0;
+        uint16_t skipped_busy = 0;
+    } __attribute__((packed));
+    static_assert(sizeof(USBLScheduleStatus) == 16, "USBLScheduleStatus is 16 B on the wire");
+
+    // Setters and requests return the checksum of the frame sent, as IDBinUsblControl does.
+    uint16_t setEntry(const USBLScheduleEntry& entry, const QByteArray& payload);
+    uint16_t setRun(bool run, uint8_t count);
+    uint16_t requestEntry(uint8_t index);
+    uint16_t requestStatus();
+    uint16_t lastRelayedChecksum() const { return lastRelayedChecksum_; }
+
+    bool hasStatus() const { return hasStatus_; }
+    const USBLScheduleStatus& status() const { return status_; }
+    const USBLScheduleEntryState& lastEntry() const { return lastEntry_; }
+    const QByteArray& lastEntryPayload() const { return lastEntryPayload_; }
+
+protected:
+    uint16_t send(ProtoBinOut& frame);
+    uint16_t lastRelayedChecksum_ = 0;
+    bool hasStatus_ = false;
+    USBLScheduleStatus status_ = {};
+    USBLScheduleEntryState lastEntry_ = {};
+    QByteArray lastEntryPayload_;
 };
 
 // Receive-only: modem payloads carried back by an acoustic request/response.

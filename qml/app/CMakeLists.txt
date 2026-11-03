@@ -137,5 +137,6 @@ qt_add_qml_module(kogger_app
         StandLogic.js
         StatusSeverity.js
         TutorialLayout.js
+        UsblDeviceTimer.js
         UsblNodeLogic.js
         UsblPlanLogic.js)

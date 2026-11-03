@@ -66,6 +66,7 @@ DevDriver::DevDriver(QObject *parent)
     regID(idUsblDiag = new IDBinUsblDiag(), &DevDriver::receivedUsblDiag);
 
     regID(idUSBLControl = new IDBinUsblControl(), &DevDriver::receivedUSBLControl);
+    regID(idUSBLSchedule = new IDBinUsblSchedule(), &DevDriver::receivedUSBLSchedule);
 
     regID(idModemSolution = new IDBinModemSolution(), &DevDriver::receivedModemSolution);
 
@@ -519,22 +520,95 @@ void DevDriver::acousticPingRequestHex(int address, double timeoutUs, int cmdId,
 }
 
 void DevDriver::trackUsblFrame(int ver, uint16_t checksum) {
+    trackUsblFrame(ver, checksum, idUSBLControl->lastRelayedChecksum(), false, false);
+}
+
+void DevDriver::trackUsblFrame(int ver, uint16_t checksum, uint16_t relayed, bool schedule, bool getting) {
     UsblPendingFrame f;
     f.ver = ver;
     f.sentMs = QDateTime::currentMSecsSinceEpoch();
-    f.relayed = (int)idUSBLControl->lastRelayedChecksum();
+    f.relayed = (int)relayed;
+    f.schedule = schedule;
+    f.getting = getting;
     usblPending_[(int)checksum] = f;
-    logUsblControl(ver, QStringLiteral("sent ck %1").arg(checksum, 4, 16, QLatin1Char('0')));
-    emit usblControlFrameSent(ver, (int)checksum);
+    if(getting) return;
+    logUsblControl(ver, QStringLiteral("sent ck %1").arg(checksum, 4, 16, QLatin1Char('0')), schedule);
+    if(schedule) {
+        emit usblScheduleFrameSent(ver, (int)checksum);
+    } else {
+        emit usblControlFrameSent(ver, (int)checksum);
+    }
 }
 
-void DevDriver::logUsblControl(int ver, const QString& what) {
+void DevDriver::logUsblControl(int ver, const QString& what, bool schedule) {
     // Pings go out every step; only configuration frames are rare enough to log unconditionally.
-    if(ver == (int)v1 && !usblConsoled_) return;
-    qInfo().noquote() << QStringLiteral("USBL ctl v%1 %2 [%3 SN %4 route %5]")
+    if(!schedule && ver == (int)v1 && !usblConsoled_) return;
+    qInfo().noquote() << QStringLiteral("USBL %1 v%2 %3 [%4 SN %5 route %6]")
+                             .arg(schedule ? QStringLiteral("sched") : QStringLiteral("ctl"))
                              .arg(ver).arg(what, m_devName)
                              .arg(devSerialNumber())
                              .arg(getBusAddress());
+}
+
+void DevDriver::setUsblTriggerControl(int source, double periodUs) {
+    if(!m_state.connect) return;
+    const uint32_t period = (uint32_t)qBound(0.0, periodUs, 4294967295.0);
+    trackUsblFrame(v0, idUSBLControl->setTriggerControl((uint8_t)qBound(0, source, 255), period));
+}
+
+void DevDriver::setUsblScheduleEntry(int index, int address, int cmdId, double replyDistanceMm, double durationUs,
+                                     const QString& hexPayload, int payloadBits) {
+    if(!m_state.connect) return;
+    IDBinUsblSchedule::USBLScheduleEntry e;
+    e.index = (uint8_t)qBound(0, index, 255);
+    e.address = (uint8_t)qBound(0, address, 255);
+    e.cmd_id = (uint8_t)qBound(0, cmdId, 255);
+    e.reply_distance_mm = (uint32_t)qBound(0.0, replyDistanceMm, 4294967295.0);
+    e.duration_us = (uint32_t)qBound(0.0, durationUs, 4294967295.0);
+    const QByteArray payload = parseHexPayload(hexPayload);
+    e.payload_bit_length = (uint16_t)qBound(0, payloadBits < 0 ? (int)payload.size() * 8 : payloadBits, 0xFFFF);
+    const uint16_t ck = idUSBLSchedule->setEntry(e, payload);
+    trackUsblFrame(v0, ck, idUSBLSchedule->lastRelayedChecksum(), true, false);
+}
+
+void DevDriver::runUsblSchedule(int count) {
+    if(!m_state.connect) return;
+    const uint16_t ck = idUSBLSchedule->setRun(true, (uint8_t)qBound(0, count, 255));
+    trackUsblFrame(v1, ck, idUSBLSchedule->lastRelayedChecksum(), true, false);
+}
+
+void DevDriver::stopUsblSchedule() {
+    if(!m_state.connect) return;
+    const uint16_t ck = idUSBLSchedule->setRun(false, 0);
+    trackUsblFrame(v1, ck, idUSBLSchedule->lastRelayedChecksum(), true, false);
+}
+
+void DevDriver::requestUsblScheduleStatus() {
+    if(!m_state.connect) return;
+    const uint16_t ck = idUSBLSchedule->requestStatus();
+    trackUsblFrame(v2, ck, idUSBLSchedule->lastRelayedChecksum(), true, true);
+}
+
+void DevDriver::requestUsblScheduleEntry(int index) {
+    if(!m_state.connect) return;
+    const uint16_t ck = idUSBLSchedule->requestEntry((uint8_t)qBound(0, index, 255));
+    trackUsblFrame(v0, ck, idUSBLSchedule->lastRelayedChecksum(), true, true);
+}
+
+QVariantMap DevDriver::usblScheduleStatus() const {
+    QVariantMap m;
+    if(!idUSBLSchedule || !idUSBLSchedule->hasStatus()) return m;
+    const auto& s = idUSBLSchedule->status();
+    m["running"] = s.state == 1;
+    m["count"] = (int)s.count;
+    m["index"] = s.index == 0xFF ? -1 : (int)s.index;
+    m["pending"] = s.pending != 0;
+    m["cycleUs"] = (double)s.cycle_us;
+    m["cycles"] = (double)s.cycles;
+    m["skippedLate"] = (int)s.skipped_late;
+    m["skippedBusy"] = (int)s.skipped_busy;
+    m["atMs"] = (double)usblScheduleStatusMs_;
+    return m;
 }
 
 void DevDriver::acousticResponceFilter(uint8_t address) {
@@ -792,7 +866,7 @@ void DevDriver::protoComplete(Parsers::FrameParser& proto)
             IDBin* parse_instance = _hashID[proto.id()].instance;
             parse_instance->parse(proto);
             lastAddress_ = proto.route();
-            if(parse_instance == idUSBLControl) {
+            if(parse_instance == idUSBLControl || parse_instance == idUSBLSchedule) {
                 usblAckEcho_ = (proto.resp() && proto.readAvailable() >= 2) ? (int)proto.read<uint16_t>() : -1;
             }
 
@@ -1877,54 +1951,103 @@ void DevDriver::receivedUsblDiag(Parsers::Type type, Parsers::Version ver, Parse
 void DevDriver::receivedUSBLControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
 {
     Q_UNUSED(type)
-    if(resp != respNone) {
-        const int echo = usblAckEcho_;
-        int matched = -1;
-        QString how;
-        const int64_t now = QDateTime::currentMSecsSinceEpoch();
-        for(auto it = usblAnswered_.begin(); it != usblAnswered_.end();)
-            it = (now - it.value()) > 10000 ? usblAnswered_.erase(it) : std::next(it);
-        if(echo >= 0) {
-            for(auto it = usblPending_.cbegin(); it != usblPending_.cend() && matched < 0; ++it) {
-                if(it.key() == echo || it.value().relayed == echo) matched = it.key();
-            }
-        }
-        if(matched >= 0) {
-            how = matched == echo ? QStringLiteral("echo matched") : QStringLiteral("relayed echo matched");
-        } else if(echo >= 0 && usblAnswered_.contains(echo)) {
-            // A second RESP to a frame that was sent twice: answered already, and matching it by
-            // version would confirm the next frame before it was answered.
-            logUsblControl((int)ver, QStringLiteral("duplicate ack code %1 ck %2 ignored")
-                                         .arg((int)resp).arg(echo, 4, 16, QLatin1Char('0')));
-            return;
-        } else {
-            // The echo names neither a frame we sent nor its relayed form. The oldest frame still
-            // waiting on this version is the one a device answering in order answers.
-            int64_t oldest = std::numeric_limits<int64_t>::max();
-            for(auto it = usblPending_.cbegin(); it != usblPending_.cend(); ++it) {
-                if(it.value().ver == (int)ver && it.value().sentMs < oldest) {
-                    oldest = it.value().sentMs;
-                    matched = it.key();
-                }
-            }
-            how = matched >= 0 ? QStringLiteral("matched by version, echo %1").arg(echo, 4, 16, QLatin1Char('0'))
-                               : QStringLiteral("unmatched, echo %1").arg(echo, 4, 16, QLatin1Char('0'));
-        }
-        int ackVer = (int)ver;
-        if(matched >= 0) {
-            const UsblPendingFrame answered = usblPending_.take(matched);
-            ackVer = answered.ver;
-            usblAnswered_[matched] = now;
-            if(answered.relayed >= 0) usblAnswered_[answered.relayed] = now;
-        }
-        logUsblControl(ackVer, QStringLiteral("ack code %1 ck %2 %3")
-                                   .arg((int)resp).arg(matched >= 0 ? matched : echo, 4, 16, QLatin1Char('0')).arg(how));
-        emit usblControlAck(ackVer, matched >= 0 ? matched : echo, (int)resp);
-    }
+    if(resp != respNone && !ackUsblFrame(false, (int)ver, (int)resp)) return;
     if(resp == respNone || (int)ver >= (int)usblAck_.size()) return;
     if(usblAck_[ver] != UsblApplyPending && usblAck_[ver] != UsblApplyNoAnswer) return;
     usblAck_[ver] = resp == respOk ? UsblApplyConfirmed : UsblApplyRejected;
     emit usblResponseConfigChanged();
+}
+
+bool DevDriver::ackUsblFrame(bool schedule, int ver, int resp)
+{
+    const int echo = usblAckEcho_;
+    int matched = -1;
+    QString how;
+    const int64_t now = QDateTime::currentMSecsSinceEpoch();
+    for(auto it = usblAnswered_.begin(); it != usblAnswered_.end();)
+        it = (now - it.value()) > 10000 ? usblAnswered_.erase(it) : std::next(it);
+    if(echo >= 0) {
+        for(auto it = usblPending_.cbegin(); it != usblPending_.cend() && matched < 0; ++it) {
+            if(it.value().schedule == schedule && (it.key() == echo || it.value().relayed == echo)) matched = it.key();
+        }
+    }
+    if(matched >= 0) {
+        how = matched == echo ? QStringLiteral("echo matched") : QStringLiteral("relayed echo matched");
+    } else if(echo >= 0 && usblAnswered_.contains(echo)) {
+        // A second RESP to a frame that was sent twice: answered already, and matching it by
+        // version would confirm the next frame before it was answered.
+        logUsblControl(ver, QStringLiteral("duplicate ack code %1 ck %2 ignored")
+                                .arg(resp).arg(echo, 4, 16, QLatin1Char('0')), schedule);
+        return false;
+    } else {
+        // The echo names neither a frame we sent nor its relayed form. The oldest setting still
+        // waiting on this version is the one a device answering in order answers.
+        int64_t oldest = std::numeric_limits<int64_t>::max();
+        for(auto it = usblPending_.cbegin(); it != usblPending_.cend(); ++it) {
+            const UsblPendingFrame& p = it.value();
+            if(p.schedule == schedule && !p.getting && p.ver == ver && p.sentMs < oldest) {
+                oldest = p.sentMs;
+                matched = it.key();
+            }
+        }
+        how = matched >= 0 ? QStringLiteral("matched by version, echo %1").arg(echo, 4, 16, QLatin1Char('0'))
+                           : QStringLiteral("unmatched, echo %1").arg(echo, 4, 16, QLatin1Char('0'));
+    }
+    int ackVer = ver;
+    if(matched >= 0) {
+        const UsblPendingFrame answered = usblPending_.take(matched);
+        ackVer = answered.ver;
+        usblAnswered_[matched] = now;
+        if(answered.relayed >= 0) usblAnswered_[answered.relayed] = now;
+        if(answered.getting) {
+            const int support = (resp == respErrorID || resp == respErrorVersion || resp == respErrorType) ? 0 : 1;
+            if(support != usblScheduleSupport_) {
+                usblScheduleSupport_ = support;
+                emit usblScheduleChanged();
+            }
+            return true;
+        }
+    }
+    if(schedule && resp == respErrorID && usblScheduleSupport_ != 0) {
+        usblScheduleSupport_ = 0;
+        emit usblScheduleChanged();
+    }
+    logUsblControl(ackVer, QStringLiteral("ack code %1 ck %2 %3")
+                               .arg(resp).arg(matched >= 0 ? matched : echo, 4, 16, QLatin1Char('0')).arg(how), schedule);
+    if(schedule) {
+        emit usblScheduleAck(ackVer, matched >= 0 ? matched : echo, resp);
+    } else {
+        emit usblControlAck(ackVer, matched >= 0 ? matched : echo, resp);
+    }
+    return true;
+}
+
+void DevDriver::receivedUSBLSchedule(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
+{
+    Q_UNUSED(type)
+    if(resp != respNone) {
+        ackUsblFrame(true, (int)ver, (int)resp);
+        return;
+    }
+    usblScheduleSupport_ = 1;
+    if(ver == v2) {
+        usblScheduleStatusMs_ = QDateTime::currentMSecsSinceEpoch();
+        emit usblScheduleChanged();
+        return;
+    }
+    if(ver == v0) {
+        const auto& e = idUSBLSchedule->lastEntry();
+        QVariantMap m;
+        m["index"] = (int)e.index;
+        m["address"] = (int)e.address;
+        m["cmdId"] = (int)e.cmd_id;
+        m["replyDistanceMm"] = (double)e.reply_distance_mm;
+        m["durationUs"] = (double)e.duration_us;
+        m["minDurationUs"] = (double)e.min_duration_us;
+        m["payloadBits"] = (int)e.payload_bit_length;
+        m["payload"] = QString::fromLatin1(idUSBLSchedule->lastEntryPayload().toHex());
+        emit usblScheduleEntryReceived((int)e.index, m);
+    }
 }
 
 void DevDriver::receivedModemSolution(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp)
@@ -1976,11 +2099,16 @@ void DevDriver::process() {
 
     for(auto it = usblPending_.begin(); it != usblPending_.end();) {
         if((curr_time - it.value().sentMs) > usblAckTimeoutMsec) {
-            const int ver = it.value().ver;
+            const UsblPendingFrame p = it.value();
             const int checksum = it.key();
             it = usblPending_.erase(it);
-            logUsblControl(ver, QStringLiteral("no answer ck %1").arg(checksum, 4, 16, QLatin1Char('0')));
-            emit usblControlAck(ver, checksum, 0);
+            if(p.getting) continue;
+            logUsblControl(p.ver, QStringLiteral("no answer ck %1").arg(checksum, 4, 16, QLatin1Char('0')), p.schedule);
+            if(p.schedule) {
+                emit usblScheduleAck(p.ver, checksum, 0);
+            } else {
+                emit usblControlAck(p.ver, checksum, 0);
+            }
         } else {
             ++it;
         }

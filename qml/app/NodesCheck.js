@@ -33,8 +33,6 @@ function check(st, compiled) {
         if (l.kind !== "external" && !l.binding) out.push(_p("unbound", "info", { lifeline: l.id }, {}, { action: "bind" }));
         if (l.respond && typeof l.respond.windowS === "number")
             out.push(_p("windowExpires", "warning", { lifeline: l.id }, { windowS: l.respond.windowS }, { action: "respondAlways" }));
-        if (l.executor && l.executor.mode === "periodic")
-            out.push(_p("periodicUnavailable", "warning", { lifeline: l.id }, {}, { action: "executorHost", lifeline: l.id }));
     }
 
     var listenerOf = {};
@@ -140,11 +138,16 @@ function check(st, compiled) {
             out.push(_p("ppsStepVsPeriod", "info", { step: s.stepId }, { periods: Math.ceil(s.requiredMs / 1000) }));
     }
     if (st.exchanges.length && !enabledCount) out.push(_p("noSteps", "info"));
+    var deviceTimed = 0;
     for (var id in perInitiator) {
         var h = Model.lifeline(st, Number(id));
-        if (h && h.executor.mode === "periodic" && perInitiator[id] !== 1)
-            out.push(_p("periodicNeedsOneStep", "error", { lifeline: h.id }, { steps: perInitiator[id] }, { action: "executorHost", lifeline: h.id }));
+        if (!h || h.executor.mode !== "periodic") continue;
+        ++deviceTimed;
+        if (perInitiator[id] > Compile.SCHEDULE_ENTRIES)
+            out.push(_p("scheduleTooLong", "error", { lifeline: h.id },
+                        { steps: perInitiator[id], max: Compile.SCHEDULE_ENTRIES }, { action: "executorHost", lifeline: h.id }));
     }
+    if (deviceTimed > 1) out.push(_p("deviceTimersUnsynced", "warning", {}, { heads: deviceTimed }));
     var boundHeads = 0;
     var inis = Model.initiators(st);
     for (i = 0; i < inis.length; ++i) if (inis[i].binding) ++boundHeads;
@@ -175,12 +178,17 @@ function liveCheck(st, compiled, solutions) {
     return out;
 }
 
-/** Problems of pairing lifelines with connected devices. assign: NodesModel.assignDevices(st, ...). */
-function deviceCheck(st, assign) {
+/**
+ * Problems of the connected devices. assign: NodesModel.assignDevices(st, ...);
+ * scheduleSupport: { lifelineId: -1 unknown | 0 no | 1 yes } of the paired devices.
+ */
+function deviceCheck(st, assign, scheduleSupport) {
     var out = [];
     for (var i = 0; i < st.lifelines.length; ++i) {
         var l = st.lifelines[i], n = assign ? assign.ambiguous[l.id] : 0;
         if (n) out.push(_p("sharedSerial", "warning", { lifeline: l.id }, { serial: l.binding.serial, count: n }, { action: "bind" }));
+        if (l.executor && l.executor.mode === "periodic" && scheduleSupport && scheduleSupport[l.id] === 0)
+            out.push(_p("deviceTimerUnsupported", "warning", { lifeline: l.id }, {}, { action: "executorHost", lifeline: l.id }));
     }
     return out;
 }
