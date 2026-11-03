@@ -248,6 +248,7 @@ BasePanePopup {
         case 176: return qsTr("Mode change")
         case 300: return qsTr("Mission start")
         case 224: return qsTr("Go to point")
+        case 246: return qsTr("Reboot")
         }
         return qsTr("Command %1").arg(command)
     }
@@ -305,6 +306,13 @@ BasePanePopup {
     function _toast(text) {
         if (typeof notifications !== "undefined" && notifications)
             notifications.info(text)
+    }
+
+    function openParamsDialog() {
+        if (paramsDialogLoader.item)
+            paramsDialogLoader.item.open()
+        else
+            paramsDialogLoader.active = true
     }
 
 
@@ -387,6 +395,17 @@ BasePanePopup {
         id: nextConfirmTimer
         interval: 4000
         onTriggered: root.nextConfirmPending = false
+    }
+
+    Loader {
+        id: paramsDialogLoader
+        visible: false
+        active: false
+        source: "qrc:/qml/app/AutopilotParamsDialog.qml"
+        onLoaded: {
+            item.store = root.store
+            item.open()
+        }
     }
 
     Connections {
@@ -869,6 +888,22 @@ BasePanePopup {
                 }
 
                 PillSeparator {}
+
+                KCircleIconButton {
+                    width: root._controlH
+                    height: root._controlH
+                    enabled: root._online
+                    toolTipOnHold: true
+                    iconSource: "qrc:/icons/ui/adjustments_horizontal.svg"
+                    iconTintColor: AppPalette.text
+                    fillColor: AppPalette.card
+                    fillHoverColor: AppPalette.cardHover
+                    fillPressedColor: AppPalette.bgDeep
+                    borderColor: AppPalette.border
+                    borderHoverColor: AppPalette.borderHover
+                    toolTipText: qsTr("Autopilot parameters")
+                    onClicked: root.openParamsDialog()
+                }
 
                 KCircleIconButton {
                     width: root._controlH

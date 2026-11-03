@@ -20,6 +20,7 @@ enum MavCommandId : uint16_t {
     MavCmdDoSetMode = 176,
     MavCmdDoChangeSpeed = 178,
     MavCmdDoSetMissionCurrent = 224,
+    MavCmdPreflightRebootShutdown = 246,
     MavCmdMissionStart = 300,
     MavCmdComponentArmDisarm = 400,
     MavCmdSetMessageInterval = 511,
@@ -35,6 +36,16 @@ enum MavResult : int8_t {
     MavResultFailed = 4,
     MavResultInProgress = 5,
     MavResultCancelled = 6
+};
+
+enum MavParamType : uint8_t {
+    MavParamTypeUint8 = 1,
+    MavParamTypeInt8 = 2,
+    MavParamTypeUint16 = 3,
+    MavParamTypeInt16 = 4,
+    MavParamTypeUint32 = 5,
+    MavParamTypeInt32 = 6,
+    MavParamTypeReal32 = 9
 };
 
 enum MavMissionType : uint8_t {
@@ -302,6 +313,15 @@ struct __attribute__((packed)) MAVLink_MSG_PARAM_SET
     static int v1Length() { return 23; }
 };
 
+struct __attribute__((packed)) MAVLink_MSG_PARAM_REQUEST_LIST
+{
+    uint8_t target_system = 0;
+    uint8_t target_component = 0;
+
+    static uint32_t getID() { return 21; }
+    static int v1Length() { return 2; }
+};
+
 struct __attribute__((packed)) MAVLink_MSG_PARAM_REQUEST_READ
 {
     int16_t param_index = -1;
@@ -364,6 +384,7 @@ static_assert(sizeof(MAVLink_MSG_MISSION_COUNT) == 5);
 static_assert(sizeof(MAVLink_MSG_MISSION_REQUEST_INT) == 5);
 static_assert(sizeof(MAVLink_MSG_MISSION_ACK) == 8);
 static_assert(sizeof(MAVLink_MSG_MISSION_ITEM_INT) == 38);
+static_assert(sizeof(MAVLink_MSG_PARAM_REQUEST_LIST) == 2);
 static_assert(sizeof(MAVLink_MSG_PARAM_REQUEST_READ) == 20);
 static_assert(sizeof(MAVLink_MSG_RC_CHANNELS) == 42);
 static_assert(sizeof(MAVLink_MSG_MANUAL_CONTROL) == 11);

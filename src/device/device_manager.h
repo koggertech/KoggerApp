@@ -86,6 +86,7 @@ public:
     Q_INVOKABLE int vruBatteryPercent();
     Q_INVOKABLE bool autopilotOnline();
     Q_INVOKABLE int autopilotSystemId();
+    int autopilotComponentId();
     double vehicleHomeLat();
     double vehicleHomeLon();
     bool proxyLinkActive();
@@ -163,6 +164,8 @@ public slots:
     void setAutopilotParam(const QString& name, float value);
     /** Asks the latched vehicle to send message @p msgId once (MAV_CMD_REQUEST_MESSAGE). */
     void requestAutopilotMessage(int msgId);
+    /** Reboots the autopilot (MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN 1); the answer arrives as autopilotCommandAcked. */
+    void autopilotReboot();
 
 signals:
     void sendFrameInputToLogger(QUuid uuid, Link* link, Parsers::FrameParser frame);
@@ -171,6 +174,8 @@ signals:
     void autopilotStatusText(int severity, const QString& text);
     void autopilotMissionItemReached(int seq);
     void autopilotParamReceived(const QString& name, float value);
+    /** The whole PARAM_VALUE payload of the latched autopilot component, next to autopilotParamReceived. */
+    void autopilotParamFrame(const QByteArray& payload);
     /** RC_CHANNELS from the latched autopilot: the receiver channel count (0 = no RC receiver has delivered since boot). */
     void autopilotRcChannelCount(int count);
     void missionFrameReceived(quint32 msgId, const QByteArray& payload);

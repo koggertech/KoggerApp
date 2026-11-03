@@ -57,6 +57,15 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     QObject::connect(missionTransfer_, &autopilot::MissionTransfer::downloadFinished, this, &DeviceManagerWrapper::onMissionDownloadFinished);
     QObject::connect(dm, &DeviceManager::missionUploadRefused, this, [this](int result, int missionType) { onMissionUploadFinished(false, result, missionType); });
     QObject::connect(dm, &DeviceManager::missionDownloadRefused, this, [this](int result) { onMissionDownloadFinished(false, result, 0, {}); });
+
+    autopilotParams_ = std::make_unique<autopilot::AutopilotParams>();
+    autopilot::AutopilotParams* params = autopilotParams_.get();
+    QObject::connect(dm, &DeviceManager::autopilotParamFrame, params, &autopilot::AutopilotParams::handleParamValue);
+    QObject::connect(params, &autopilot::AutopilotParams::sendMessage, dm, &DeviceManager::sendAutopilotMessage);
+    QObject::connect(params, &autopilot::AutopilotParams::rebootRequested, dm, &DeviceManager::autopilotReboot);
+    QObject::connect(this, &DeviceManagerWrapper::vruChanged, params, [this, params]() {
+        params->setVehicle(autopilotState_.online, workerObject_->autopilotSystemId(), workerObject_->autopilotComponentId());
+    });
 }
 
 void DeviceManagerWrapper::startMissionThread()
