@@ -1529,7 +1529,7 @@ void GraphicsScene3dView::setTrackLastData(bool state)
 
 void GraphicsScene3dView::flyToLastPosition()
 {
-    if (!trackLastData_) {
+    if (!trackLastData_ || missionEditorActive_) {
         return;
     }
 
@@ -1707,7 +1707,7 @@ void GraphicsScene3dView::returnToBoatNow()
 
 void GraphicsScene3dView::notifyManualCameraInteraction()
 {
-    if (!trackLastData_ || !positionsLive_) {
+    if (!trackLastData_ || !positionsLive_ || missionEditorActive_) {
         return;
     }
 
@@ -1727,7 +1727,7 @@ void GraphicsScene3dView::notifyManualCameraInteraction()
 
 void GraphicsScene3dView::beginFollowReturn()
 {
-    if (!followSuspended_ || !trackLastData_) {
+    if (!followSuspended_ || !trackLastData_ || missionEditorActive_) {
         return;
     }
 
@@ -2406,6 +2406,10 @@ void GraphicsScene3dView::setMissionEditorActive(bool active)
     refreshSceneContentVisible();
     QQuickFramebufferObject::update();
     onCameraMoved();
+
+    if (!active && positionsLive_) {
+        flyToLastPosition();
+    }
 }
 
 void GraphicsScene3dView::missionFitInView()
@@ -3924,7 +3928,7 @@ void GraphicsScene3dView::onPositionAdded(uint64_t indx)
         m_planeGrid->setCirclePosition(boatPosVec3D);
     }
 
-    if (trackLastData_ && !followSuspended_ && !contactPlacementArmed_) {
+    if (trackLastData_ && !followSuspended_ && !contactPlacementArmed_ && !missionEditorActive_) {
         setLastEpochFocusView(useAngleLocation_, navigatorViewLocation_); // сюда лодка
     }
 }
