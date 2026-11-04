@@ -65,6 +65,8 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     QObject::connect(params, &autopilot::AutopilotParams::rebootRequested, dm, &DeviceManager::autopilotReboot);
     QObject::connect(this, &DeviceManagerWrapper::vruChanged, params, [this, params]() {
         params->setVehicle(autopilotState_.online, workerObject_->autopilotSystemId(), workerObject_->autopilotComponentId());
+        params->setFirmware(autopilotState_.autopilotKind, autopilotState_.vehicleType, autopilotState_.firmwareVersion,
+                            autopilotState_.firmwareVersionPending);
     });
 }
 

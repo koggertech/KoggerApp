@@ -32,4 +32,5 @@ docs/KoggerApp-Docs/
 tests/KoggerApp-Tests/
 *.py
 !scripts/tutorial_tool.py
+!scripts/update_ardupilot_params.py
 src/tutorial/generated/

@@ -11,7 +11,9 @@ extern Core core;
 
 namespace {
 
-constexpr qint64 kAutopilotHeartbeatTimeoutMs = 3000;
+constexpr qint64 kAutopilotSilenceTimeoutMs = 3000;
+constexpr qint64 kAutopilotLateTickMs = 2000;
+constexpr qint64 kAutopilotSilenceHardLimitMs = 10000;
 constexpr int kLinkWindowSeconds = 5;
 constexpr int kLinkMaxGap = 128;
 constexpr qint64 kRadioStatusTimeoutMs = 5000;
@@ -336,6 +338,7 @@ void DeviceManager::resetFirmwareInfo()
     firmwareVersionType_ = -1;
     firmwareGitHash_.clear();
     versionReceived_ = false;
+    versionGaveUp_ = false;
     versionRequestMs_ = -1;
     versionRequests_ = 0;
 }
@@ -514,6 +517,7 @@ void DeviceManager::publishVru()
     state.firmwareVersion = firmwareVersion_;
     state.firmwareVersionType = firmwareVersionType_;
     state.firmwareGitHash = firmwareGitHash_;
+    state.firmwareVersionPending = vru_.online && !versionReceived_ && !versionGaveUp_;
     state.mission = missionTelemetry_;
     emit vruChanged(state);
 }
@@ -527,10 +531,16 @@ void DeviceManager::checkAutopilotOnline()
 {
     if (!vru_.online) {
         autopilotTimer_.stop();
+        lastOnlineCheckMs_ = -1;
         return;
     }
-    if (heartbeatClock_.elapsed() - vru_.lastHeartbeatMs > kAutopilotHeartbeatTimeoutMs) {
+    const qint64 now = heartbeatClock_.elapsed();
+    const bool lateTick = lastOnlineCheckMs_ >= 0 && now - lastOnlineCheckMs_ > kAutopilotLateTickMs;
+    lastOnlineCheckMs_ = now;
+    const qint64 silence = now - vru_.lastSeenMs;
+    if (silence > kAutopilotSilenceTimeoutMs && (!lateTick || silence > kAutopilotSilenceHardLimitMs)) {
         vru_.online = false;
+        lastOnlineCheckMs_ = -1;
         vru_.homeLat = NAN;
         vru_.homeLon = NAN;
         autopilotTimer_.stop();
@@ -542,7 +552,6 @@ void DeviceManager::checkAutopilotOnline()
         return;
     }
     sendGcsHeartbeat();
-    const qint64 now = heartbeatClock_.elapsed();
     const bool missionCurrentMissing = lastMissionCurrentMs_ < 0 || now - lastMissionCurrentMs_ > kStreamWatchdogMs;
     if (missionCurrentMissing && streamRequests_ < kStreamRequestAttempts && now - streamRequestMs_ > kStreamWatchdogMs) {
         requestAutopilotStreams();
@@ -550,6 +559,11 @@ void DeviceManager::checkAutopilotOnline()
     if (!versionReceived_ && versionRequests_ > 0 && versionRequests_ < kVersionRequestAttempts
         && now - versionRequestMs_ > kVersionRequestIntervalMs) {
         requestAutopilotVersion();
+    }
+    if (!versionReceived_ && !versionGaveUp_ && versionRequests_ >= kVersionRequestAttempts
+        && now - versionRequestMs_ > kVersionRequestIntervalMs) {
+        versionGaveUp_ = true;
+        publishVru();
     }
     if (gpsMs_ >= 0 && now - gpsMs_ > kGpsRawTimeoutMs) {
         gpsFixType_ = -1;
@@ -968,6 +982,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                 if (vru_.online && uuid == autopilotLinkUuid_) {
                     if (int(mavlink_frame.systemID()) == vru_.systemId && int(mavlink_frame.componentID()) == vru_.componentId) {
                         countAutopilotFrame(mavlink_frame.sequenceNumber());
+                        vru_.lastSeenMs = heartbeatClock_.elapsed();
                     }
                     const bool radioStatus = mavlink_frame.msgId() == MAVLink_MSG_RADIO_STATUS::getID();
                     const auto radio = radioStatus ? mavlink_frame.read<MAVLink_MSG_RADIO_STATUS>() : MAVLink_MSG_RADIO_STATUS{};
@@ -1062,9 +1077,10 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     vru_.mavlinkVersion = mavlink_frame.MAVLinkVersion();
                     autopilotKind_ = heartbeat.autopilot;
                     vehicleType_ = heartbeat.type;
-                    vru_.lastHeartbeatMs = heartbeatClock_.elapsed();
+                    vru_.lastSeenMs = heartbeatClock_.elapsed();
                     vru_.online = link != nullptr;
                     if (vru_.online && !autopilotTimer_.isActive()) {
+                        lastOnlineCheckMs_ = -1;
                         autopilotTimer_.start();
                     }
                     if (vru_.online && !wasOnline) {

@@ -72,6 +72,8 @@ struct AutopilotState
     QString firmwareVersion;
     int firmwareVersionType = -1;
     QString firmwareGitHash;
+    /** AUTOPILOT_VERSION is still being requested; false once it arrived or the requests gave up. */
+    bool firmwareVersionPending = false;
     MissionTelemetry mission;
 };
 
@@ -299,7 +301,7 @@ private:
             componentId(-1),
             mavlinkVersion(2),
             online(false),
-            lastHeartbeatMs(0)
+            lastSeenMs(0)
         {};
 
         void cleanVru()
@@ -318,7 +320,7 @@ private:
             componentId = -1;
             mavlinkVersion = 2;
             online = false;
-            lastHeartbeatMs = 0;
+            lastSeenMs = 0;
         };
 
         float voltage;
@@ -335,7 +337,7 @@ private:
         int componentId;
         int mavlinkVersion;
         bool online;
-        qint64 lastHeartbeatMs;
+        qint64 lastSeenMs;
     };
 
     VruData vru_;
@@ -388,8 +390,10 @@ private:
     int firmwareVersionType_ = -1;
     QString firmwareGitHash_;
     bool versionReceived_ = false;
+    bool versionGaveUp_ = false;
     qint64 versionRequestMs_ = -1;
     int versionRequests_ = 0;
+    qint64 lastOnlineCheckMs_ = -1;
     bool streamIntervalUnsupported_ = false;
     int statusTextId_ = 0;
     int statusTextSeverity_ = 0;
