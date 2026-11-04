@@ -537,6 +537,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("missionPlan", core.getMissionPlanControllerPtr());
     engine.rootContext()->setContextProperty("missionRun", core.getMissionRunTrackerPtr());
     engine.rootContext()->setContextProperty("autopilotParams", core.getDeviceManagerWrapperPtr()->autopilotParams());
+    engine.rootContext()->setContextProperty("linkLoss", core.getDeviceManagerWrapperPtr()->linkLoss());
     videoStreams.setSourceModel(core.getLinkManagerWrapperPtr()->getModelPtr());
     QObject::connect(&videoStreams, &VideoStreamPool::streamingChanged,
                      core.getLinkManagerWrapperPtr(), &LinkManagerWrapper::setVideoStreaming);
@@ -651,6 +652,7 @@ int main(int argc, char *argv[])
                 controlServer.registerObject(QStringLiteral("deviceTopology"),       core.getDeviceTopologyModelPtr());
                 controlServer.registerObject(QStringLiteral("missionPlan"),            core.getMissionPlanControllerPtr());
                 controlServer.registerObject(QStringLiteral("autopilotParams"),      core.getDeviceManagerWrapperPtr()->autopilotParams());
+                controlServer.registerObject(QStringLiteral("linkLoss"),             core.getDeviceManagerWrapperPtr()->linkLoss());
                 controlServer.registerObject(QStringLiteral("videoStreams"),         &videoStreams);
                 controlServer.registerObject(QStringLiteral("linkDiscovery"),        &linkDiscovery);
                 controlServer.registerObject(QStringLiteral("logViewer"),            core.getConsolePtr());

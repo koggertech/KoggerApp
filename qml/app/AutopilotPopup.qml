@@ -89,6 +89,60 @@ BasePanePopup {
     readonly property bool _helmActive: !!_helm && _helm.active
     readonly property bool _helmRowVisible: !!_helm && (_helm.available || _helm.active)
     readonly property int _helmConfirmation: _helm ? _helm.confirmation : 0
+    readonly property var _loss: (typeof linkLoss !== "undefined") ? linkLoss : null
+    readonly property bool _lossAvailable: _online && !!_loss && _loss.available
+    readonly property int _lossChoiceNothing: 0
+    readonly property int _lossOutcomeUnknown: 0
+    readonly property int _lossOutcomeNothing: 1
+    readonly property int _modeHold: 4
+    readonly property int _blockGap: Math.round(8 * _s)
+    readonly property int _lossActionHold: 2
+    readonly property color _lossInk: !!_loss && _loss.outcome === _lossOutcomeNothing ? AppPalette.linkIdleText : AppPalette.textMuted
+    readonly property bool _lossActive: !!_loss && _loss.known && _loss.choice !== _lossChoiceNothing
+    readonly property var _lossCurrentOption: {
+        if (!_loss) return null
+        var list = _loss.options
+        for (var i = 0; i < list.length; ++i)
+            if (list[i].choice === _loss.choice) return list[i]
+        return null
+    }
+    property bool _lossNothingPending: false
+    readonly property var _lossSegments: {
+        if (!_loss) return []
+        var out = []
+        var list = _loss.options
+        for (var i = 0; i < list.length; ++i) {
+            var o = list[i]
+            var confirming = _lossNothingPending && o.choice === _lossChoiceNothing
+            out.push({ value: o.choice,
+                       label: confirming ? qsTr("Tap again") : o.label,
+                       enabled: o.enabled && _loss.known && !_loss.busy,
+                       current: o.choice === _loss.choice,
+                       danger: confirming })
+        }
+        return out
+    }
+    readonly property var _lossMissionSegments: {
+        if (!_loss) return []
+        var free = _loss.known && !_loss.busy
+        return [{ value: true, label: qsTr("Keep going"), enabled: free, current: _loss.continueMission, danger: false },
+                { value: false, label: qsTr("Abort → %1").arg(_loss.actionText.length > 0 ? _loss.actionText : "FS_ACTION"),
+                  enabled: free, current: !_loss.continueMission, danger: false }]
+    }
+    readonly property string _lossNote: {
+        if (!_loss || !_loss.known) return ""
+        var note = _lossCurrentOption ? _lossCurrentOption.note : _loss.choiceLabel
+        return note + "."
+    }
+    readonly property string _lossWarning: {
+        if (!_loss || !_loss.known) return ""
+        var parts = []
+        if (_lossActive) parts.push(qsTr("Closing KoggerApp also counts as a link loss."))
+        if (_lossActive && _loss.sharedWithRc) parts.push(qsTr("The same happens when the RC transmitter is lost."))
+        if (_lossActive && _mode === _modeHold && !_loss.activeInHold && _loss.fsAction !== _lossActionHold) parts.push(qsTr("In Hold the boat ignores a link loss and stays in Hold (FS_OPTIONS bit 0 is off)."))
+        if (_loss.proxyMasks) parts.push(qsTr("A ground station behind the MAVLink proxy can hide the loss from the boat."))
+        return parts.join(" ")
+    }
     property bool expanded: false
     readonly property bool _trayVisible: _online && (expanded || _missionRowVisible || _helmRowVisible)
     readonly property int _rowPad: _trayVisible ? Math.round(6 * _s) : _sidePad
@@ -170,6 +224,18 @@ BasePanePopup {
         nextConfirmTimer.stop()
     }
 
+    function requestLinkLoss(choice) {
+        if (!_loss || _loss.busy || !_loss.known) return
+        if (choice === _lossChoiceNothing && _armed && _loss.choice !== _lossChoiceNothing && !_lossNothingPending) {
+            _lossNothingPending = true
+            lossConfirmTimer.restart()
+            return
+        }
+        _lossNothingPending = false
+        lossConfirmTimer.stop()
+        _loss.apply(choice, _loss.continueMission)
+    }
+
     function requestNextPoint() {
         if (!_dmw || !_online || !_run || !_run.actionable || _nextSeq < 0) return
         if (!nextConfirmPending) {
@@ -189,7 +255,8 @@ BasePanePopup {
     }
 
     readonly property var _modeNamesForWidth: ["Manual", "Acro", "Hold", "Loiter", "Auto", "RTL"]
-    readonly property real _titleSlotW: Math.max(modeNameProbe.width, titleText.implicitWidth)
+    readonly property real _titleSlotW: Math.max(modeNameProbe.width, titleText.implicitWidth,
+                                                 lossHint.visible ? lossHint.implicitWidth : 0)
     readonly property var _statTemplates: ["100 %", "88.8 V", "88.8 A", "88.8 " + qsTr("m/s"), "88"]
     readonly property real _statValueW: Math.ceil(statValueProbe.width)
     readonly property real _statLastValueW: Math.ceil(statLastValueProbe.width)
@@ -340,7 +407,7 @@ BasePanePopup {
     on_WantWChanged: _applySize()
     on_WantHChanged: { _applySize(); Qt.callLater(_restorePlacement) }
     onInteractionStarted: _dragging = true
-    on_OnlineChanged: if (!_online) { _cancelArmConfirm(); _cancelNextConfirm(); expanded = false; _pendingJumpSeq = -1 }
+    on_OnlineChanged: if (!_online) { _cancelArmConfirm(); _cancelNextConfirm(); _lossNothingPending = false; expanded = false; _pendingJumpSeq = -1 }
     on_NextSeqChanged: _cancelNextConfirm()
     onExpandedChanged: _cancelNextConfirm()
     on_ArmedChanged: _cancelArmConfirm()
@@ -416,6 +483,12 @@ BasePanePopup {
         id: nextConfirmTimer
         interval: 4000
         onTriggered: root.nextConfirmPending = false
+    }
+
+    Timer {
+        id: lossConfirmTimer
+        interval: root._armConfirmMs
+        onTriggered: root._lossNothingPending = false
     }
 
     Loader {
@@ -555,6 +628,122 @@ BasePanePopup {
                 height: Math.round(signalBars.barH * (index + 1) / 4)
                 radius: 1
                 color: index < signalBars.lit ? root._levelColor(signalBars.percent) : AppPalette.border
+            }
+        }
+    }
+
+    component Panel: Rectangle {
+        id: panel
+        property string title: ""
+        property url icon: ""
+        property string note: ""
+        default property alias content: panelBody.data
+        readonly property int pad: Math.round(8 * root._s)
+        implicitHeight: panelColumn.implicitHeight + pad * 2
+        radius: Tokens.radiusLg
+        color: AppPalette.bgDeep
+        border.color: AppPalette.border
+        border.width: Tokens.cardBorderWidth
+
+        Column {
+            id: panelColumn
+            x: panel.pad
+            y: panel.pad
+            width: panel.width - panel.pad * 2
+            spacing: Math.round(6 * root._s)
+
+            Item {
+                width: parent.width
+                height: Math.max(panelTitle.implicitHeight, panelIcon.height)
+
+                StatIcon {
+                    id: panelIcon
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Math.round(14 * root._s)
+                    source: panel.icon
+                    tint: AppPalette.textMuted
+                }
+                Text {
+                    id: panelTitle
+                    anchors.left: panelIcon.right
+                    anchors.leftMargin: Math.round(5 * root._s)
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: panel.title
+                    color: AppPalette.textStrong
+                    font.pixelSize: Math.round(12 * root._s)
+                    font.bold: true
+                }
+                Text {
+                    anchors.left: panelTitle.right
+                    anchors.leftMargin: Math.round(8 * root._s)
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    horizontalAlignment: Text.AlignRight
+                    text: panel.note
+                    color: AppPalette.textMuted
+                    font.pixelSize: Math.round(11 * root._s)
+                    elide: Text.ElideRight
+                }
+            }
+
+            Column {
+                id: panelBody
+                width: parent.width
+                spacing: Math.round(6 * root._s)
+            }
+        }
+    }
+
+    component Segments: Rectangle {
+        id: segments
+        property var items: []
+        signal picked(var value)
+        readonly property int inset: Math.max(2, Math.round(2 * root._s))
+        implicitWidth: segmentRow.implicitWidth + inset * 2
+        implicitHeight: Tokens.controlHMd
+        radius: Tokens.radiusMd
+        color: AppPalette.card
+        border.color: AppPalette.border
+        border.width: Tokens.cardBorderWidth
+
+        Row {
+            id: segmentRow
+            x: segments.inset
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 0
+
+            Repeater {
+                model: segments.items
+                delegate: Rectangle {
+                    id: segment
+                    required property var modelData
+                    readonly property bool tappable: modelData.danger || (modelData.enabled && !modelData.current)
+                    width: segmentLabel.implicitWidth + Math.round(18 * root._s)
+                    height: segments.height - segments.inset * 2
+                    radius: Math.max(2, segments.radius - segments.inset)
+                    opacity: modelData.enabled || modelData.current ? 1.0 : 0.4
+                    color: modelData.danger ? AppPalette.dangerBg
+                         : modelData.current ? AppPalette.accentBgStrong
+                         : segmentTap.containsMouse && tappable ? AppPalette.cardHover : "transparent"
+
+                    Text {
+                        id: segmentLabel
+                        anchors.centerIn: parent
+                        text: segment.modelData.label
+                        color: segment.modelData.danger ? AppPalette.dangerText : AppPalette.textStrong
+                        font.pixelSize: Math.round(12 * root._s)
+                        font.bold: true
+                    }
+                    MouseArea {
+                        id: segmentTap
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        enabled: segment.tappable
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: segments.picked(segment.modelData.value)
+                    }
+                }
             }
         }
     }
@@ -703,13 +892,36 @@ BasePanePopup {
                         id: titleRow
                         spacing: Math.round(6 * root._s)
 
-                        Text {
-                            id: titleText
+                        Column {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: root._modeName
-                            color: AppPalette.textStrong
-                            font.pixelSize: Math.round(13 * root._s)
-                            font.bold: true
+                            width: root._titleSlotW
+                            spacing: 0
+
+                            Text {
+                                id: titleText
+                                text: root._modeName
+                                color: AppPalette.textStrong
+                                font.pixelSize: Math.round(13 * root._s)
+                                font.bold: true
+                            }
+                            Row {
+                                id: lossHint
+                                visible: root._lossAvailable
+                                spacing: Math.round(3 * root._s)
+
+                                StatIcon {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: Math.round(11 * root._s)
+                                    source: "qrc:/icons/ui/autopilot-link-off.svg"
+                                    tint: root._lossInk
+                                }
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: root._loss ? root._loss.outcomeText : ""
+                                    color: root._lossInk
+                                    font.pixelSize: Math.round(10 * root._s)
+                                }
+                            }
                         }
                         KCircleIconButton {
                             id: chevron
@@ -1176,7 +1388,8 @@ BasePanePopup {
                         text: root._helmConfirmation === 1
                               ? qsTr("%1 s after the last gamepad command the boat follows the transmitter sticks again. Keep the transmitter on.")
                                     .arg(root._helm ? root._helm.overrideSeconds : 3)
-                              : qsTr("Without a transmitter the boat would keep the last gamepad command. Turn on stopping on link loss? The boat holds; missions in Auto go on. The setting is saved on the boat.")
+                              : qsTr("Without a transmitter the boat would keep the last gamepad command. Turn on the link-loss action (%1)? Missions in Auto go on. The setting is saved on the boat.")
+                                    .arg(root._loss && root._loss.actionText.length > 0 ? root._loss.actionText : "FS_ACTION")
                         color: AppPalette.textSecond
                         font.pixelSize: Math.round(12 * root._s)
                         wrapMode: Text.WordWrap
@@ -1252,108 +1465,241 @@ BasePanePopup {
                     }
                 }
 
-                Column {
+                Item {
+                    id: expandedArea
+                    readonly property real gap: root._blockGap
+                    readonly property real panelW: lossGrid.implicitWidth + lossPanel.pad * 2
+                    readonly property bool sideBySide: lossPanel.visible && width - panelW - gap >= Math.round(300 * root._s)
                     width: parent.width
                     visible: root.expanded
-                    spacing: Math.round(6 * root._s)
-
-                    Text {
-                        width: parent.width
-                        visible: root._missionKnown && !!root._run && root._run.currentLabel.length > 0
-                        textFormat: Text.StyledText
-                        text: {
-                            if (!root._run) return ""
-                            var line = "<b>" + root._run.currentLabel + "</b>"
-                            if (root._nextSeq >= 0) line += "  →  " + root._run.labelForSeq(root._nextSeq)
-                            return line
-                        }
-                        color: AppPalette.textStrong
-                        font.pixelSize: Math.round(12 * root._s)
-                        elide: Text.ElideRight
-                    }
-
-                    Flow {
-                        width: parent.width
-                        spacing: Math.round(12 * root._s)
-
-                        InfoCell {
-                            visible: root._missionKnown
-                            key: qsTr("To point")
-                            value: root._dmw && root._dmw.navigationValid ? root._fmtDist(root._dmw.waypointDistance) : "—"
-                        }
-                        InfoCell {
-                            visible: root._missionKnown
-                            key: qsTr("Cross-track")
-                            value: root._dmw && root._dmw.navigationValid && isFinite(root._dmw.crossTrackError)
-                                   ? qsTr("%1 m").arg(Math.abs(root._dmw.crossTrackError).toFixed(1)) : "—"
-                        }
-                        InfoCell {
-                            key: qsTr("GPS")
-                            valueColor: root._gpsPoor ? AppPalette.linkIdleText : AppPalette.textStrong
-                            value: {
-                                if (root._gpsFix < 0) return "—"
-                                var parts = [root._gpsFixName(root._gpsFix)]
-                                if (root._gpsSats >= 0) parts.push(qsTr("%1 sat.").arg(root._gpsSats))
-                                if (isFinite(root._gpsHdop)) parts.push("HDOP " + root._gpsHdop.toFixed(1))
-                                return parts.join(" · ")
-                            }
-                        }
-                        InfoCell {
-                            key: qsTr("To home")
-                            value: root._fmtDist(root._homeDistance)
-                        }
-                        InfoCell {
-                            visible: root._rssiValid
-                            key: "RSSI"
-                            value: qsTr("%1 dBm").arg(root._rssi)
-                        }
-                        InfoCell {
-                            visible: root._firmwareText.length > 0
-                            key: qsTr("Firmware")
-                            value: root._firmwareText
-                        }
-                    }
-
-                    Text {
-                        width: parent.width
-                        visible: text.length > 0 && !root._sourceIsPlan
-                        text: root._missionSourceText
-                        color: AppPalette.textSecond
-                        font.pixelSize: Math.round(11 * root._s)
-                        wrapMode: Text.WordWrap
-                    }
-
-                    Row {
-                        spacing: Math.round(6 * root._s)
-
-                        KButton {
-                            visible: root._missionKnown && root._nextSeq >= 0
-                            height: Tokens.controlHMd
-                            danger: root.nextConfirmPending
-                            text: root.nextConfirmPending ? qsTr("Tap again to skip") : qsTr("Next point")
-                            onClicked: root.requestNextPoint()
-                        }
-                        KButton {
-                            visible: !!root._run && !root._run.reading
-                            height: Tokens.controlHMd
-                            text: qsTr("Read again")
-                            toolTipText: qsTr("Read the mission from the vehicle again")
-                            onClicked: if (root._run) root._run.refresh()
-                        }
-                    }
+                    height: sideBySide ? Math.max(expandedLeft.implicitHeight, lossPanel.height)
+                                       : expandedLeft.implicitHeight + (lossPanel.visible ? gap + lossPanel.height : 0)
 
                     Column {
-                        width: parent.width
-                        spacing: Math.round(2 * root._s)
+                        id: expandedLeft
+                        width: expandedArea.sideBySide ? expandedArea.width - expandedArea.panelW - expandedArea.gap : expandedArea.width
+                        spacing: root._blockGap
 
-                        Repeater {
-                            model: root._dmw ? root._dmw.autopilotMessages.slice(0, root._messagesShown) : []
-                            delegate: Text {
-                                required property var modelData
+                        Panel {
+                            width: parent.width
+                            title: qsTr("Boat")
+                            icon: "qrc:/icons/ui/speedboat.svg"
+
+                            Flow {
                                 width: parent.width
-                                textFormat: Text.PlainText
-                                text: Qt.formatTime(new Date(modelData.time), "hh:mm:ss") + "  " + modelData.text
-                                color: root._severityColor(modelData.severity)
+                                spacing: Math.round(12 * root._s)
+
+                                InfoCell {
+                                    key: qsTr("GPS")
+                                    valueColor: root._gpsPoor ? AppPalette.linkIdleText : AppPalette.textStrong
+                                    value: {
+                                        if (root._gpsFix < 0) return "—"
+                                        var parts = [root._gpsFixName(root._gpsFix)]
+                                        if (root._gpsSats >= 0) parts.push(qsTr("%1 sat.").arg(root._gpsSats))
+                                        if (isFinite(root._gpsHdop)) parts.push("HDOP " + root._gpsHdop.toFixed(1))
+                                        return parts.join(" · ")
+                                    }
+                                }
+                                InfoCell {
+                                    key: qsTr("To home")
+                                    value: root._fmtDist(root._homeDistance)
+                                }
+                                InfoCell {
+                                    visible: root._rssiValid
+                                    key: "RSSI"
+                                    value: qsTr("%1 dBm").arg(root._rssi)
+                                }
+                                InfoCell {
+                                    visible: root._firmwareText.length > 0
+                                    key: qsTr("Firmware")
+                                    value: root._firmwareText
+                                }
+                            }
+                        }
+
+                        Panel {
+                            width: parent.width
+                            visible: !!root._run
+                            title: qsTr("Mission")
+                            icon: "qrc:/icons/ui/route.svg"
+
+                            Text {
+                                width: parent.width
+                                visible: root._missionKnown && !!root._run && root._run.currentLabel.length > 0
+                                textFormat: Text.StyledText
+                                text: {
+                                    if (!root._run) return ""
+                                    var line = "<b>" + root._run.currentLabel + "</b>"
+                                    if (root._nextSeq >= 0) line += "  →  " + root._run.labelForSeq(root._nextSeq)
+                                    return line
+                                }
+                                color: AppPalette.textStrong
+                                font.pixelSize: Math.round(12 * root._s)
+                                elide: Text.ElideRight
+                            }
+
+                            Flow {
+                                width: parent.width
+                                visible: root._missionKnown
+                                spacing: Math.round(12 * root._s)
+
+                                InfoCell {
+                                    key: qsTr("To point")
+                                    value: root._dmw && root._dmw.navigationValid ? root._fmtDist(root._dmw.waypointDistance) : "—"
+                                }
+                                InfoCell {
+                                    key: qsTr("Cross-track")
+                                    value: root._dmw && root._dmw.navigationValid && isFinite(root._dmw.crossTrackError)
+                                           ? qsTr("%1 m").arg(Math.abs(root._dmw.crossTrackError).toFixed(1)) : "—"
+                                }
+                            }
+
+                            Text {
+                                width: parent.width
+                                visible: text.length > 0
+                                text: root._missionSourceText
+                                color: root._sourceIsPlan ? AppPalette.textMuted : AppPalette.textSecond
+                                font.pixelSize: Math.round(11 * root._s)
+                                wrapMode: Text.WordWrap
+                            }
+
+                            Flow {
+                                width: parent.width
+                                spacing: Math.round(6 * root._s)
+
+                                KButton {
+                                    visible: root._missionKnown && root._nextSeq >= 0
+                                    height: Tokens.controlHMd
+                                    horizontalPadding: Math.round(10 * root._s)
+                                    danger: root.nextConfirmPending
+                                    text: root.nextConfirmPending ? qsTr("Tap again to skip") : qsTr("Next point")
+                                    onClicked: root.requestNextPoint()
+                                }
+                                KButton {
+                                    visible: !!root._run && !root._run.reading
+                                    height: Tokens.controlHMd
+                                    horizontalPadding: Math.round(10 * root._s)
+                                    text: qsTr("Read from the boat")
+                                    toolTipText: qsTr("Read the mission from the vehicle again")
+                                    onClicked: if (root._run) root._run.refresh()
+                                }
+                            }
+                        }
+
+                        Panel {
+                            width: parent.width
+                            visible: !!root._dmw && root._dmw.autopilotMessages.length > 0
+                            title: qsTr("Messages")
+                            icon: "qrc:/icons/ui/list-details.svg"
+
+                            Repeater {
+                                model: root._dmw ? root._dmw.autopilotMessages.slice(0, root._messagesShown) : []
+                                delegate: Text {
+                                    required property var modelData
+                                    width: parent.width
+                                    textFormat: Text.PlainText
+                                    text: Qt.formatTime(new Date(modelData.time), "hh:mm:ss") + "  " + modelData.text
+                                    color: root._severityColor(modelData.severity)
+                                    font.pixelSize: Math.round(11 * root._s)
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        id: lossPanel
+                        readonly property int pad: Math.round(8 * root._s)
+                        visible: root._lossAvailable
+                        x: expandedArea.sideBySide ? expandedArea.width - width : 0
+                        y: expandedArea.sideBySide ? 0 : expandedLeft.implicitHeight + expandedArea.gap
+                        width: expandedArea.sideBySide ? expandedArea.panelW : expandedArea.width
+                        height: lossColumn.implicitHeight + pad * 2
+                        radius: Tokens.radiusLg
+                        color: AppPalette.bgDeep
+                        border.color: AppPalette.border
+                        border.width: Tokens.cardBorderWidth
+
+                        Column {
+                            id: lossColumn
+                            x: lossPanel.pad
+                            y: lossPanel.pad
+                            width: lossPanel.width - lossPanel.pad * 2
+                            spacing: Math.round(6 * root._s)
+
+                            Grid {
+                                id: lossGrid
+                                columns: 2
+                                columnSpacing: Math.round(10 * root._s)
+                                rowSpacing: Math.round(6 * root._s)
+                                verticalItemAlignment: Grid.AlignVCenter
+
+                                Row {
+                                    spacing: Math.round(5 * root._s)
+
+                                    StatIcon {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: Math.round(14 * root._s)
+                                        source: "qrc:/icons/ui/autopilot-link-off.svg"
+                                        tint: root._lossInk
+                                    }
+                                    Text {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: qsTr("On link loss")
+                                        color: AppPalette.textStrong
+                                        font.pixelSize: Math.round(12 * root._s)
+                                        font.bold: true
+                                    }
+                                    Text {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: {
+                                            if (!root._loss) return ""
+                                            if (root._loss.busy) return qsTr("saving…")
+                                            if (root._loss.reading) return qsTr("reading…")
+                                            return root._loss.delaySeconds >= 0
+                                                    ? qsTr("%1 s").arg(Math.round(root._loss.delaySeconds * 10) / 10) : ""
+                                        }
+                                        color: AppPalette.textMuted
+                                        font.pixelSize: Math.round(11 * root._s)
+                                    }
+                                }
+                                Segments {
+                                    items: root._lossSegments
+                                    onPicked: function(value) { root.requestLinkLoss(value) }
+                                }
+
+                                Text {
+                                    visible: root._lossActive
+                                    text: qsTr("Mission in Auto")
+                                    color: AppPalette.textMuted
+                                    font.pixelSize: Math.round(11 * root._s)
+                                }
+                                Segments {
+                                    visible: root._lossActive
+                                    items: root._lossMissionSegments
+                                    onPicked: function(value) { if (root._loss) root._loss.apply(root._loss.choice, value) }
+                                }
+                            }
+
+                            Text {
+                                width: parent.width
+                                visible: text.length > 0
+                                textFormat: Text.StyledText
+                                text: {
+                                    var note = root._lossNote
+                                    if (root._lossWarning.length === 0) return note
+                                    return note + " <font color=\"" + AppPalette.linkIdleText + "\">" + root._lossWarning + "</font>"
+                                }
+                                color: AppPalette.textSecond
+                                font.pixelSize: Math.round(11 * root._s)
+                                wrapMode: Text.WordWrap
+                            }
+
+                            Text {
+                                width: parent.width
+                                visible: !!root._loss && root._loss.error.length > 0
+                                text: root._loss ? root._loss.error : ""
+                                color: AppPalette.dangerText
                                 font.pixelSize: Math.round(11 * root._s)
                                 wrapMode: Text.WordWrap
                             }

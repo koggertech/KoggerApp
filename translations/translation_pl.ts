@@ -1877,12 +1877,12 @@
 <context>
     <name>AutopilotPopup</name>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="255"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="321"/>
         <source>no autopilot link</source>
         <translation>brak łączności z autopilotem</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="198"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="264"/>
         <source>Manual</source>
         <translation>Ręczny (Manual)</translation>
     </message>
@@ -1912,354 +1912,429 @@
         <translation>Statyczny</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="105"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="158"/>
         <source>Mission complete</source>
         <translation>Misja zakończona</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="107"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="160"/>
         <source>Paused</source>
         <translation>Wstrzymana</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="108"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="161"/>
         <source>Pt %1/%2</source>
         <translation>P %1/%2</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="117"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="170"/>
         <source>Reading the vehicle mission…</source>
         <translation>Odczyt misji z łodzi…</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="118"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="171"/>
         <source>The mission on the vehicle has changed; read it again</source>
         <translation>Misja na łodzi zmieniła się, odczytaj ją ponownie</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="119"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="172"/>
         <source>The vehicle mission has not been read</source>
         <translation>Misja z łodzi nie została jeszcze odczytana</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="120"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="173"/>
         <source>No mission on the vehicle</source>
         <translation>Brak misji na łodzi</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="121"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="174"/>
         <source>This plan is on the vehicle</source>
         <translation>Ten plan jest na łodzi</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="121"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="174"/>
         <source>The vehicle has another mission than the open plan</source>
         <translation>Łódź ma inną misję niż otwarty plan</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="137"/>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1288"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="190"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1552"/>
         <source>%1 m</source>
         <translation>%1 m</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="137"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="190"/>
         <source>%1 km</source>
         <translation>%1 km</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="142"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="195"/>
         <source>&lt;1 min</source>
         <translation>&lt;1 min</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="144"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="197"/>
         <source>%1 min</source>
         <translation>%1 min</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="145"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="198"/>
         <source>%1 h %2 min</source>
         <translation>%1 h %2 min</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="188"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="253"/>
         <source>Going to %1</source>
         <translation>Przejście: %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1308"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1509"/>
         <source>%1 dBm</source>
         <translation>%1 dBm</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="200"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="266"/>
         <source>Hold</source>
         <translation>Stop (Hold)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="201"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="117"/>
+        <source>Tap again</source>
+        <translation>Dotknij ponownie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="127"/>
+        <source>Keep going</source>
+        <translation>Kontynuuj</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="128"/>
+        <source>Abort → %1</source>
+        <translation>Przerwij → %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="139"/>
+        <source>Closing KoggerApp also counts as a link loss.</source>
+        <translation>Zamknięcie KoggerApp również liczy się jako utrata łączności.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="140"/>
+        <source>The same happens when the RC transmitter is lost.</source>
+        <translation>To samo nastąpi po utracie łączności z aparaturą.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="141"/>
+        <source>In Hold the boat ignores a link loss and stays in Hold (FS_OPTIONS bit 0 is off).</source>
+        <translation>W trybie Hold łódź ignoruje utratę łączności i zostaje w Hold (bit 0 FS_OPTIONS jest wyłączony).</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="142"/>
+        <source>A ground station behind the MAVLink proxy can hide the loss from the boat.</source>
+        <translation>Stacja naziemna za proxy MAVLink może ukryć utratę łączności przed łodzią.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="267"/>
         <source>Loiter</source>
         <translation>Utrzymanie pozycji (Loiter)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="202"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="268"/>
         <source>Auto</source>
         <translation>Misja (Auto)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="203"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="269"/>
         <source>RTL</source>
         <translation>Powrót (RTL)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="256"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="322"/>
         <source>no response</source>
         <translation>brak odpowiedzi</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="257"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="323"/>
         <source>temporarily rejected</source>
         <translation>tymczasowo odrzucono</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="258"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="324"/>
         <source>denied</source>
         <translation>odmowa</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="259"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="325"/>
         <source>unsupported</source>
         <translation>nieobsługiwane</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="260"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="326"/>
         <source>failed</source>
         <translation>błąd</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="261"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="327"/>
         <source>cancelled</source>
         <translation>anulowano</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="268"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="334"/>
         <source>Arm/disarm</source>
         <translation>Uzbrojenie/rozbrojenie</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="269"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="335"/>
         <source>Mode change</source>
         <translation>Zmiana trybu</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="270"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="336"/>
         <source>Mission start</source>
         <translation>Start misji</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="271"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="337"/>
         <source>Go to point</source>
         <translation>Przejście do punktu</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="272"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="338"/>
         <source>Reboot</source>
         <translation>Restart</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="274"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="340"/>
         <source>Command %1</source>
         <translation>Polecenie %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="319"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="385"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="456"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="528"/>
         <source>Vehicle: %1</source>
         <translation>Łódź: %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1281"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1390"/>
+        <source>Without a transmitter the boat would keep the last gamepad command. Turn on the link-loss action (%1)? Missions in Auto go on. The setting is saved on the boat.</source>
+        <translation>Bez aparatury łódź wykonywałaby dalej ostatnie polecenie z gamepada. Włączyć akcję po utracie łączności (%1)? Misje w Auto będą kontynuowane. Ustawienie zostanie zapisane na łodzi.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1484"/>
+        <source>Boat</source>
+        <translation>Łódź</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1522"/>
+        <source>Mission</source>
+        <translation>Misja</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1546"/>
         <source>To point</source>
         <translation>Do punktu</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1286"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1550"/>
         <source>Cross-track</source>
         <translation>Odchylenie</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1333"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1574"/>
         <source>Tap again to skip</source>
         <translation>Naciśnij ponownie</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1333"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1574"/>
         <source>Next point</source>
         <translation>Następny punkt</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1339"/>
-        <source>Read again</source>
-        <translation>Odczytaj ponownie</translation>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1581"/>
+        <source>Read from the boat</source>
+        <translation>Odczytaj z łodzi</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1340"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1582"/>
         <source>Read the mission from the vehicle again</source>
         <translation>Odczytaj ponownie misję z łodzi</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1291"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1591"/>
+        <source>Messages</source>
+        <translation>Komunikaty</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1647"/>
+        <source>On link loss</source>
+        <translation>Po utracie łączności</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1656"/>
+        <source>saving…</source>
+        <translation>zapisywanie…</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1657"/>
+        <source>reading…</source>
+        <translation>odczyt…</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1659"/>
+        <source>%1 s</source>
+        <translation>%1 s</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1672"/>
+        <source>Mission in Auto</source>
+        <translation>Misja w Auto</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1492"/>
         <source>GPS</source>
         <translation>GPS</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1296"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1497"/>
         <source>%1 sat.</source>
         <translation>%1 sat.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1302"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1503"/>
         <source>To home</source>
         <translation>Do domu</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="636"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="824"/>
         <source>No autopilot</source>
         <translation>Brak autopilota</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="193"/>
-        <location filename="../qml/app/AutopilotPopup.qml" line="757"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="259"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="968"/>
         <source>m/s</source>
         <translation>m/s</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="941"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1152"/>
         <source>Mission editor</source>
         <translation>Edytor misji</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1029"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1240"/>
         <source>Checking vehicle parameters…</source>
         <translation>Sprawdzanie parametrów pojazdu…</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1030"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1241"/>
         <source>Switching to Manual…</source>
         <translation>Przełączanie na Manual…</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1032"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1243"/>
         <source>Holding position…</source>
         <translation>Utrzymanie pozycji…</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1031"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1242"/>
         <source>Gamepad control</source>
         <translation>Sterowanie z gamepada</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="297"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="363"/>
         <source>Release the throttle before arming</source>
         <translation>Puść gaz przed uzbrojeniem</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="926"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1137"/>
         <source>Autopilot parameters</source>
         <translation>Parametry autopilota</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1166"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1377"/>
         <source>If the link drops, the transmitter takes over</source>
         <translation>Po zerwaniu łączności sterowanie przejmie aparatura</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1167"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1378"/>
         <source>The boat does not stop when the link drops</source>
         <translation>Łódź nie zatrzyma się po utracie łączności</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1177"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1388"/>
         <source>%1 s after the last gamepad command the boat follows the transmitter sticks again. Keep the transmitter on.</source>
         <translation>%1 s po ostatnim poleceniu z gamepada łódź znów słucha drążków aparatury. Nie wyłączaj aparatury.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1179"/>
-        <source>Without a transmitter the boat would keep the last gamepad command. Turn on stopping on link loss? The boat holds; missions in Auto go on. The setting is saved on the boat.</source>
-        <translation>Bez aparatury łódź wykonywałaby dalej ostatnie polecenie z gamepada. Włączyć zatrzymanie po utracie łączności? Łódź stanie (Hold), misje w Auto będą kontynuowane. Ustawienie zostanie zapisane na łodzi.</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1195"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1407"/>
         <source>Transmitter is on — start</source>
         <translation>Aparatura włączona — start</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1196"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1408"/>
         <source>Saving…</source>
         <translation>Zapisywanie…</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1197"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1409"/>
         <source>Turn on and start</source>
         <translation>Włącz i zacznij</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1206"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1418"/>
         <source>Cancel</source>
         <translation>Anuluj</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1138"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1349"/>
         <source>Gamepad settings</source>
         <translation>Ustawienia gamepada</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1149"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1360"/>
         <source>Take control</source>
         <translation>Przejmij sterowanie</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1149"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1360"/>
         <source>Release control</source>
         <translation>Oddaj sterowanie</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1031"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1242"/>
         <source>Gamepad control · background</source>
         <translation>Sterowanie z gamepada · w tle</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1109"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1320"/>
         <source>Throttle</source>
         <translation>Gaz</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1119"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1330"/>
         <source>Turn</source>
         <translation>Skręt</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="199"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="265"/>
         <source>Course hold (Acro)</source>
         <translation>Utrzymanie kursu (Acro)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1070"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1281"/>
         <source>Gamepad that drives the boat</source>
         <translation>Gamepad, którym sterowana jest łódź</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1033"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1244"/>
         <source>Gamepad ready</source>
         <translation>Gamepad gotowy</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1312"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1513"/>
         <source>Firmware</source>
         <translation>Oprogramowanie</translation>
     </message>
@@ -5997,92 +6072,102 @@ udp://@:1234
         <translation>Gamepad odłączony — utrzymanie pozycji</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="754"/>
+        <location filename="../src/helm/helm_controller.cpp" line="707"/>
+        <source>The link-loss action is on</source>
+        <translation>Akcja po utracie łączności jest włączona</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="708"/>
+        <source>The link-loss action is on: %1</source>
+        <translation>Akcja po utracie łączności jest włączona: %1</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="756"/>
         <source>App in the background — holding position</source>
         <translation>Aplikacja w tle — utrzymanie pozycji</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="768"/>
+        <location filename="../src/helm/helm_controller.cpp" line="770"/>
         <source>Gamepad stopped responding — holding position</source>
         <translation>Gamepad przestał odpowiadać — utrzymanie pozycji</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="862"/>
+        <location filename="../src/helm/helm_controller.cpp" line="864"/>
         <source>%1: no answer from the vehicle</source>
         <translation>%1: brak odpowiedzi pojazdu</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="866"/>
+        <location filename="../src/helm/helm_controller.cpp" line="868"/>
         <source>RC_OVERRIDE_TIME is 0: the vehicle ignores gamepad control</source>
         <translation>RC_OVERRIDE_TIME wynosi 0: pojazd ignoruje sterowanie z gamepada</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="869"/>
+        <location filename="../src/helm/helm_controller.cpp" line="871"/>
         <source>RC_OPTIONS bit 1 is set: the vehicle ignores gamepad control</source>
         <translation>W RC_OPTIONS ustawiony jest bit 1: pojazd ignoruje sterowanie z gamepada</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="888"/>
+        <location filename="../src/helm/helm_controller.cpp" line="890"/>
         <source>MAV_GCS_SYSID does not include %1: the vehicle ignores gamepad control</source>
         <translation>MAV_GCS_SYSID nie obejmuje %1: pojazd ignoruje sterowanie z gamepada</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="893"/>
+        <location filename="../src/helm/helm_controller.cpp" line="895"/>
         <source>SYSID_MYGCS is not %1: the vehicle ignores gamepad control</source>
         <translation>SYSID_MYGCS nie wynosi %1: pojazd ignoruje sterowanie z gamepada</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="897"/>
+        <location filename="../src/helm/helm_controller.cpp" line="899"/>
         <source>GCS system id: no answer from the vehicle</source>
         <translation>Identyfikator systemowy stacji naziemnej: brak odpowiedzi pojazdu</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="907"/>
+        <location filename="../src/helm/helm_controller.cpp" line="909"/>
         <source>Transmitter switch RC_OVERRIDE_ENABLE: set up</source>
         <translation>Przełącznik nadajnika RC_OVERRIDE_ENABLE: skonfigurowany</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="908"/>
+        <location filename="../src/helm/helm_controller.cpp" line="910"/>
         <source>Transmitter switch RC_OVERRIDE_ENABLE: not set up</source>
         <translation>Przełącznik nadajnika RC_OVERRIDE_ENABLE: nieskonfigurowany</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="910"/>
+        <location filename="../src/helm/helm_controller.cpp" line="912"/>
         <source>PILOT_STEER_TYPE: %1</source>
         <translation>PILOT_STEER_TYPE: %1</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="930"/>
+        <location filename="../src/helm/helm_controller.cpp" line="932"/>
         <source>Gamepad disconnected</source>
         <translation>Gamepad odłączony</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="943"/>
+        <location filename="../src/helm/helm_controller.cpp" line="945"/>
         <source>Gamepad control refused: %1</source>
         <translation>Sterowanie z gamepada odrzucone: %1</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="988"/>
+        <location filename="../src/helm/helm_controller.cpp" line="990"/>
         <source>The vehicle refused Manual — gamepad control off</source>
         <translation>Pojazd odrzucił Manual — sterowanie z gamepada wyłączone</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="997"/>
+        <location filename="../src/helm/helm_controller.cpp" line="999"/>
         <source>The vehicle refused %1</source>
         <translation>Pojazd odrzucił %1</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="1010"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1012"/>
         <source>%1. The vehicle refused Loiter and Hold</source>
         <translation>%1. Pojazd odrzucił Loiter i Hold</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="927"/>
+        <location filename="../src/helm/helm_controller.cpp" line="929"/>
         <source>Gamepad layout: forward throttle or steering has no input</source>
         <translation>Układ gamepada: gaz naprzód lub ster nie ma przypisania</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="933"/>
+        <location filename="../src/helm/helm_controller.cpp" line="935"/>
         <source>Release the throttle</source>
         <translation>Puść gaz</translation>
     </message>
@@ -6092,32 +6177,27 @@ udp://@:1234
         <translation>Łódź nie potwierdziła ustawienia — sterowanie z gamepada nie zostało uruchomione</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="706"/>
-        <source>The boat now stops when the link drops</source>
-        <translation>Łódź zatrzyma się teraz po utracie łączności</translation>
-    </message>
-    <message>
-        <location filename="../src/helm/helm_controller.cpp" line="876"/>
+        <location filename="../src/helm/helm_controller.cpp" line="878"/>
         <source>Stop on link loss (FS_THR_ENABLE, FS_GCS_ENABLE): off</source>
         <translation>Zatrzymanie po utracie łączności (FS_THR_ENABLE, FS_GCS_ENABLE): wyłączone</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="877"/>
+        <location filename="../src/helm/helm_controller.cpp" line="879"/>
         <source>RC receiver: %1 channels</source>
         <translation>Odbiornik aparatury: kanałów %1</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="877"/>
+        <location filename="../src/helm/helm_controller.cpp" line="879"/>
         <source>RC receiver: none</source>
         <translation>Odbiornik aparatury: brak</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="880"/>
+        <location filename="../src/helm/helm_controller.cpp" line="882"/>
         <source>RC_OVERRIDE_TIME is negative: the transmitter never takes over from the gamepad</source>
         <translation>RC_OVERRIDE_TIME jest ujemny: aparatura nigdy nie przejmie sterowania od gamepada</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="996"/>
+        <location filename="../src/helm/helm_controller.cpp" line="998"/>
         <source>The boat refused Loiter — no position (GPS/EKF)</source>
         <translation>Łódź odrzuciła Loiter — brak pozycji (GPS/EKF)</translation>
     </message>
@@ -6132,12 +6212,12 @@ udp://@:1234
         <translation>Gamepad odłączony — łodzią steruje aparatura</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="754"/>
+        <location filename="../src/helm/helm_controller.cpp" line="756"/>
         <source>App in the background — the transmitter has the boat</source>
         <translation>Aplikacja w tle — łodzią steruje aparatura</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="768"/>
+        <location filename="../src/helm/helm_controller.cpp" line="770"/>
         <source>Gamepad stopped responding — the transmitter has the boat</source>
         <translation>Gamepad przestał odpowiadać — łodzią steruje aparatura</translation>
     </message>
@@ -6172,7 +6252,7 @@ udp://@:1234
         <translation>Puść gaz przed uzbrojeniem</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="939"/>
+        <location filename="../src/helm/helm_controller.cpp" line="941"/>
         <source>Vehicle check: %1</source>
         <translation>Sprawdzenie pojazdu: %1</translation>
     </message>
@@ -10861,7 +10941,7 @@ udp://@:1234
     <message>
         <location filename="../qml/app/NodesPayloadEditor.qml" line="21"/>
         <source>Nothing</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nic</translation>
     </message>
     <message>
         <location filename="../qml/app/NodesPayloadEditor.qml" line="22"/>
@@ -15407,76 +15487,171 @@ udp://@:1234
 <context>
     <name>autopilot::AutopilotParams</name>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="329"/>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="345"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="351"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="367"/>
         <source>The vehicle has no parameter %1</source>
         <translation>Autopilot nie ma parametru %1</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="333"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="355"/>
         <source>Read-only parameter</source>
         <translation>Parametr tylko do odczytu</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="427"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="449"/>
         <source>Outside the documented range %1…%2%3</source>
         <translation>Poza udokumentowanym zakresem %1…%2%3</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="434"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="456"/>
         <source>No file chosen</source>
         <translation>Nie wybrano pliku</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="454"/>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="462"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="476"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="484"/>
         <source>Cannot write the file (%1)</source>
         <translation>Nie można zapisać pliku (%1)</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="475"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="497"/>
         <source>Cannot open the file (%1)</source>
         <translation>Nie można otworzyć pliku (%1)</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="528"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="550"/>
         <source>No parameters found in the file</source>
         <translation>Nie znaleziono parametrów w pliku</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="777"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="801"/>
         <source>All</source>
         <translation>Wszystkie</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="782"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="806"/>
         <source>Other</source>
         <translation>Inne</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="831"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="855"/>
         <source>Not a number</source>
         <translation>To nie jest liczba</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="838"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="862"/>
         <source>Whole number expected</source>
         <translation>Wymagana liczba całkowita</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="842"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="866"/>
         <source>Out of range %1…%2</source>
         <translation>Poza zakresem %1…%2</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="850"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="874"/>
         <source>Cannot be sent exactly; the nearest value is %1</source>
         <translation>Nie da się przesłać dokładnie; najbliższa wartość to %1</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="858"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="882"/>
         <source>Out of range</source>
         <translation>Poza zakresem</translation>
+    </message>
+</context>
+<context>
+    <name>autopilot::LinkLossPolicy</name>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="80"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="98"/>
+        <source>Nothing</source>
+        <translation>Nic</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="98"/>
+        <source>The boat keeps its mode and its last command</source>
+        <translation>Łódź zachowuje tryb i ostatnie polecenie</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="99"/>
+        <source>The motors stop and the boat drifts</source>
+        <translation>Silniki stają, łódź dryfuje</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="102"/>
+        <source>The boat holds its position; without a position fix it stops (Hold)</source>
+        <translation>Łódź utrzymuje pozycję; bez ustalonej pozycji zatrzymuje się (Hold)</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="105"/>
+        <source>The boat returns to the nearest rally point or home and holds its position there</source>
+        <translation>Łódź wraca do najbliższego punktu zbornego lub do domu i tam utrzymuje pozycję</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="108"/>
+        <source>The boat returns along its own track since arming and holds its position; without a track it does RTL</source>
+        <translation>Łódź wraca własnym śladem od uzbrojenia i utrzymuje pozycję; bez śladu wykonuje RTL</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="109"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="172"/>
+        <source>SmartRTL is off on the boat (SRTL_POINTS = 0)</source>
+        <translation>SmartRTL jest wyłączony na łodzi (SRTL_POINTS = 0)</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="144"/>
+        <source>no action</source>
+        <translation>brak akcji</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="145"/>
+        <source>mission goes on</source>
+        <translation>misja trwa dalej</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="146"/>
+        <source>stays in %1</source>
+        <translation>zostaje w %1</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="160"/>
+        <source>No autopilot</source>
+        <translation>Brak autopilota</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="166"/>
+        <source>The link-loss parameters have not been read yet</source>
+        <translation>Parametry utraty łączności nie zostały jeszcze odczytane</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="169"/>
+        <source>This firmware has no Loiter link-loss action</source>
+        <translation>To oprogramowanie nie ma akcji Loiter po utracie łączności</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="254"/>
+        <source>The link was lost before the boat confirmed the change</source>
+        <translation>Łączność została utracona, zanim łódź potwierdziła zmianę</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="279"/>
+        <source>The boat did not answer FS_GCS_ENABLE / FS_ACTION</source>
+        <translation>Łódź nie odpowiedziała na FS_GCS_ENABLE / FS_ACTION</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="289"/>
+        <source>Not confirmed: the boat reports %1 = %2</source>
+        <translation>Niepotwierdzone: łódź zgłasza %1 = %2</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="295"/>
+        <source>Not confirmed by the boat</source>
+        <translation>Łódź nie potwierdziła</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="422"/>
+        <source>Disarm</source>
+        <translation>Rozbrojenie</translation>
     </message>
 </context>
 <context>

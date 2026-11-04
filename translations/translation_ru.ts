@@ -1877,12 +1877,12 @@
 <context>
     <name>AutopilotPopup</name>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="255"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="321"/>
         <source>no autopilot link</source>
         <translation>нет связи с автопилотом</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="198"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="264"/>
         <source>Manual</source>
         <translation>Ручной (Manual)</translation>
     </message>
@@ -1912,354 +1912,429 @@
         <translation>Статический</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="105"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="158"/>
         <source>Mission complete</source>
         <translation>Миссия завершена</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="107"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="160"/>
         <source>Paused</source>
         <translation>Пауза</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="108"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="161"/>
         <source>Pt %1/%2</source>
         <translation>Т %1/%2</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="117"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="170"/>
         <source>Reading the vehicle mission…</source>
         <translation>Чтение миссии с лодки…</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="118"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="171"/>
         <source>The mission on the vehicle has changed; read it again</source>
         <translation>Миссия на лодке изменилась, прочитайте её заново</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="119"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="172"/>
         <source>The vehicle mission has not been read</source>
         <translation>Миссия с лодки ещё не прочитана</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="120"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="173"/>
         <source>No mission on the vehicle</source>
         <translation>На лодке нет миссии</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="121"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="174"/>
         <source>This plan is on the vehicle</source>
         <translation>Этот план на лодке</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="121"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="174"/>
         <source>The vehicle has another mission than the open plan</source>
         <translation>На лодке другая миссия, не открытый план</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="137"/>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1288"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="190"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1552"/>
         <source>%1 m</source>
         <translation>%1 м</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="137"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="190"/>
         <source>%1 km</source>
         <translation>%1 км</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="142"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="195"/>
         <source>&lt;1 min</source>
         <translation>&lt;1 мин</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="144"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="197"/>
         <source>%1 min</source>
         <translation>%1 мин</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="145"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="198"/>
         <source>%1 h %2 min</source>
         <translation>%1 ч %2 мин</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="188"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="253"/>
         <source>Going to %1</source>
         <translation>Переход: %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1308"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1509"/>
         <source>%1 dBm</source>
         <translation>%1 дБм</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="200"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="266"/>
         <source>Hold</source>
         <translation>Стоп (Hold)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="201"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="117"/>
+        <source>Tap again</source>
+        <translation>Ещё раз</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="127"/>
+        <source>Keep going</source>
+        <translation>Продолжить</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="128"/>
+        <source>Abort → %1</source>
+        <translation>Прервать → %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="139"/>
+        <source>Closing KoggerApp also counts as a link loss.</source>
+        <translation>Закрытие KoggerApp тоже считается потерей связи.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="140"/>
+        <source>The same happens when the RC transmitter is lost.</source>
+        <translation>То же произойдёт при потере связи с пультом.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="141"/>
+        <source>In Hold the boat ignores a link loss and stays in Hold (FS_OPTIONS bit 0 is off).</source>
+        <translation>В Hold лодка не реагирует на потерю связи и остаётся в Hold (бит 0 FS_OPTIONS выключен).</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="142"/>
+        <source>A ground station behind the MAVLink proxy can hide the loss from the boat.</source>
+        <translation>Наземная станция за MAVLink-прокси может скрыть потерю связи от лодки.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="267"/>
         <source>Loiter</source>
         <translation>Удержание точки (Loiter)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="202"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="268"/>
         <source>Auto</source>
         <translation>Миссия (Auto)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="203"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="269"/>
         <source>RTL</source>
         <translation>Возврат (RTL)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="256"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="322"/>
         <source>no response</source>
         <translation>нет ответа</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="257"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="323"/>
         <source>temporarily rejected</source>
         <translation>временно отклонено</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="258"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="324"/>
         <source>denied</source>
         <translation>запрещено</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="259"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="325"/>
         <source>unsupported</source>
         <translation>не поддерживается</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="260"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="326"/>
         <source>failed</source>
         <translation>ошибка</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="261"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="327"/>
         <source>cancelled</source>
         <translation>отменено</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="268"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="334"/>
         <source>Arm/disarm</source>
         <translation>Арм/дизарм</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="269"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="335"/>
         <source>Mode change</source>
         <translation>Смена режима</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="270"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="336"/>
         <source>Mission start</source>
         <translation>Запуск миссии</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="271"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="337"/>
         <source>Go to point</source>
         <translation>Переход к точке</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="272"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="338"/>
         <source>Reboot</source>
         <translation>Перезагрузка</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="274"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="340"/>
         <source>Command %1</source>
         <translation>Команда %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="319"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="385"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="456"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="528"/>
         <source>Vehicle: %1</source>
         <translation>Лодка: %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1281"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1390"/>
+        <source>Without a transmitter the boat would keep the last gamepad command. Turn on the link-loss action (%1)? Missions in Auto go on. The setting is saved on the boat.</source>
+        <translation>Без пульта лодка продолжит выполнять последнюю команду с геймпада. Включить действие при потере связи (%1)? Миссии в Auto продолжатся. Настройка сохранится на лодке.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1484"/>
+        <source>Boat</source>
+        <translation>Лодка</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1522"/>
+        <source>Mission</source>
+        <translation>Миссия</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1546"/>
         <source>To point</source>
         <translation>До точки</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1286"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1550"/>
         <source>Cross-track</source>
         <translation>Отклонение</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1333"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1574"/>
         <source>Tap again to skip</source>
         <translation>Нажмите ещё раз</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1333"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1574"/>
         <source>Next point</source>
         <translation>Следующая точка</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1339"/>
-        <source>Read again</source>
-        <translation>Прочитать заново</translation>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1581"/>
+        <source>Read from the boat</source>
+        <translation>Прочитать с лодки</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1340"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1582"/>
         <source>Read the mission from the vehicle again</source>
         <translation>Прочитать миссию с лодки заново</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1291"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1591"/>
+        <source>Messages</source>
+        <translation>Сообщения</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1647"/>
+        <source>On link loss</source>
+        <translation>При потере связи</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1656"/>
+        <source>saving…</source>
+        <translation>сохранение…</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1657"/>
+        <source>reading…</source>
+        <translation>чтение…</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1659"/>
+        <source>%1 s</source>
+        <translation>%1 с</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1672"/>
+        <source>Mission in Auto</source>
+        <translation>Миссия в Auto</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1492"/>
         <source>GPS</source>
         <translation>GPS</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1296"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1497"/>
         <source>%1 sat.</source>
         <translation>%1 спут.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1302"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1503"/>
         <source>To home</source>
         <translation>До дома</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="636"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="824"/>
         <source>No autopilot</source>
         <translation>Автопилот не найден</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="193"/>
-        <location filename="../qml/app/AutopilotPopup.qml" line="757"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="259"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="968"/>
         <source>m/s</source>
         <translation>м/с</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="941"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1152"/>
         <source>Mission editor</source>
         <translation>Редактор миссий</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1029"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1240"/>
         <source>Checking vehicle parameters…</source>
         <translation>Проверка параметров аппарата…</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1030"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1241"/>
         <source>Switching to Manual…</source>
         <translation>Переключение в Manual…</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1032"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1243"/>
         <source>Holding position…</source>
         <translation>Удержание позиции…</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1031"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1242"/>
         <source>Gamepad control</source>
         <translation>Управление с геймпада</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="297"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="363"/>
         <source>Release the throttle before arming</source>
         <translation>Сбросьте газ перед включением моторов</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="926"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1137"/>
         <source>Autopilot parameters</source>
         <translation>Параметры автопилота</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1166"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1377"/>
         <source>If the link drops, the transmitter takes over</source>
         <translation>При обрыве связи управление перейдёт к пульту</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1167"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1378"/>
         <source>The boat does not stop when the link drops</source>
         <translation>Лодка не остановится при потере связи</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1177"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1388"/>
         <source>%1 s after the last gamepad command the boat follows the transmitter sticks again. Keep the transmitter on.</source>
         <translation>Через %1 с после последней команды с геймпада лодка снова слушается стиков пульта. Не выключайте пульт.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1179"/>
-        <source>Without a transmitter the boat would keep the last gamepad command. Turn on stopping on link loss? The boat holds; missions in Auto go on. The setting is saved on the boat.</source>
-        <translation>Без пульта лодка продолжит выполнять последнюю команду с геймпада. Включить остановку при потере связи? Лодка встанет (Hold), миссии в Auto продолжатся. Настройка сохранится на лодке.</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1195"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1407"/>
         <source>Transmitter is on — start</source>
         <translation>Пульт включён — начать</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1196"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1408"/>
         <source>Saving…</source>
         <translation>Сохранение…</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1197"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1409"/>
         <source>Turn on and start</source>
         <translation>Включить и начать</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1206"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1418"/>
         <source>Cancel</source>
         <translation>Отмена</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1138"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1349"/>
         <source>Gamepad settings</source>
         <translation>Настройки геймпада</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1149"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1360"/>
         <source>Take control</source>
         <translation>Взять управление</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1149"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1360"/>
         <source>Release control</source>
         <translation>Отдать управление</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1031"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1242"/>
         <source>Gamepad control · background</source>
         <translation>Управление с геймпада · фон</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1109"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1320"/>
         <source>Throttle</source>
         <translation>Газ</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1119"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1330"/>
         <source>Turn</source>
         <translation>Поворот</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="199"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="265"/>
         <source>Course hold (Acro)</source>
         <translation>Удержание курса (Acro)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1070"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1281"/>
         <source>Gamepad that drives the boat</source>
         <translation>Геймпад, которым управляется лодка</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1033"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1244"/>
         <source>Gamepad ready</source>
         <translation>Геймпад готов</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1312"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1513"/>
         <source>Firmware</source>
         <translation>Прошивка</translation>
     </message>
@@ -5997,92 +6072,102 @@ udp://@:1234
         <translation>Геймпад отключён — удержание позиции</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="754"/>
+        <location filename="../src/helm/helm_controller.cpp" line="707"/>
+        <source>The link-loss action is on</source>
+        <translation>Действие при потере связи включено</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="708"/>
+        <source>The link-loss action is on: %1</source>
+        <translation>Действие при потере связи включено: %1</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="756"/>
         <source>App in the background — holding position</source>
         <translation>Приложение в фоне — удержание позиции</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="768"/>
+        <location filename="../src/helm/helm_controller.cpp" line="770"/>
         <source>Gamepad stopped responding — holding position</source>
         <translation>Геймпад перестал отвечать — удержание позиции</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="862"/>
+        <location filename="../src/helm/helm_controller.cpp" line="864"/>
         <source>%1: no answer from the vehicle</source>
         <translation>%1: аппарат не ответил</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="866"/>
+        <location filename="../src/helm/helm_controller.cpp" line="868"/>
         <source>RC_OVERRIDE_TIME is 0: the vehicle ignores gamepad control</source>
         <translation>RC_OVERRIDE_TIME равен 0: аппарат игнорирует управление с геймпада</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="869"/>
+        <location filename="../src/helm/helm_controller.cpp" line="871"/>
         <source>RC_OPTIONS bit 1 is set: the vehicle ignores gamepad control</source>
         <translation>В RC_OPTIONS установлен бит 1: аппарат игнорирует управление с геймпада</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="888"/>
+        <location filename="../src/helm/helm_controller.cpp" line="890"/>
         <source>MAV_GCS_SYSID does not include %1: the vehicle ignores gamepad control</source>
         <translation>MAV_GCS_SYSID не включает %1: аппарат игнорирует управление с геймпада</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="893"/>
+        <location filename="../src/helm/helm_controller.cpp" line="895"/>
         <source>SYSID_MYGCS is not %1: the vehicle ignores gamepad control</source>
         <translation>SYSID_MYGCS не равен %1: аппарат игнорирует управление с геймпада</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="897"/>
+        <location filename="../src/helm/helm_controller.cpp" line="899"/>
         <source>GCS system id: no answer from the vehicle</source>
         <translation>Системный id наземной станции: аппарат не ответил</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="907"/>
+        <location filename="../src/helm/helm_controller.cpp" line="909"/>
         <source>Transmitter switch RC_OVERRIDE_ENABLE: set up</source>
         <translation>Переключатель пульта RC_OVERRIDE_ENABLE: настроен</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="908"/>
+        <location filename="../src/helm/helm_controller.cpp" line="910"/>
         <source>Transmitter switch RC_OVERRIDE_ENABLE: not set up</source>
         <translation>Переключатель пульта RC_OVERRIDE_ENABLE: не настроен</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="910"/>
+        <location filename="../src/helm/helm_controller.cpp" line="912"/>
         <source>PILOT_STEER_TYPE: %1</source>
         <translation>PILOT_STEER_TYPE: %1</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="930"/>
+        <location filename="../src/helm/helm_controller.cpp" line="932"/>
         <source>Gamepad disconnected</source>
         <translation>Геймпад отключён</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="943"/>
+        <location filename="../src/helm/helm_controller.cpp" line="945"/>
         <source>Gamepad control refused: %1</source>
         <translation>Управление с геймпада отклонено: %1</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="988"/>
+        <location filename="../src/helm/helm_controller.cpp" line="990"/>
         <source>The vehicle refused Manual — gamepad control off</source>
         <translation>Аппарат отклонил Manual — управление с геймпада выключено</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="997"/>
+        <location filename="../src/helm/helm_controller.cpp" line="999"/>
         <source>The vehicle refused %1</source>
         <translation>Аппарат отклонил %1</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="1010"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1012"/>
         <source>%1. The vehicle refused Loiter and Hold</source>
         <translation>%1. Аппарат отклонил Loiter и Hold</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="927"/>
+        <location filename="../src/helm/helm_controller.cpp" line="929"/>
         <source>Gamepad layout: forward throttle or steering has no input</source>
         <translation>Раскладка геймпада: газу вперёд или рулю ничего не назначено</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="933"/>
+        <location filename="../src/helm/helm_controller.cpp" line="935"/>
         <source>Release the throttle</source>
         <translation>Сбросьте газ</translation>
     </message>
@@ -6092,32 +6177,27 @@ udp://@:1234
         <translation>Лодка не подтвердила настройку — управление с геймпада не запущено</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="706"/>
-        <source>The boat now stops when the link drops</source>
-        <translation>Теперь лодка остановится при потере связи</translation>
-    </message>
-    <message>
-        <location filename="../src/helm/helm_controller.cpp" line="876"/>
+        <location filename="../src/helm/helm_controller.cpp" line="878"/>
         <source>Stop on link loss (FS_THR_ENABLE, FS_GCS_ENABLE): off</source>
         <translation>Остановка при потере связи (FS_THR_ENABLE, FS_GCS_ENABLE): выключена</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="877"/>
+        <location filename="../src/helm/helm_controller.cpp" line="879"/>
         <source>RC receiver: %1 channels</source>
         <translation>Приёмник пульта: каналов %1</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="877"/>
+        <location filename="../src/helm/helm_controller.cpp" line="879"/>
         <source>RC receiver: none</source>
         <translation>Приёмник пульта: нет</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="880"/>
+        <location filename="../src/helm/helm_controller.cpp" line="882"/>
         <source>RC_OVERRIDE_TIME is negative: the transmitter never takes over from the gamepad</source>
         <translation>RC_OVERRIDE_TIME отрицательный: пульт никогда не перехватит управление у геймпада</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="996"/>
+        <location filename="../src/helm/helm_controller.cpp" line="998"/>
         <source>The boat refused Loiter — no position (GPS/EKF)</source>
         <translation>Лодка отклонила Loiter — нет позиции (GPS/EKF)</translation>
     </message>
@@ -6132,12 +6212,12 @@ udp://@:1234
         <translation>Геймпад отключён — лодкой управляет пульт</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="754"/>
+        <location filename="../src/helm/helm_controller.cpp" line="756"/>
         <source>App in the background — the transmitter has the boat</source>
         <translation>Приложение в фоне — лодкой управляет пульт</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="768"/>
+        <location filename="../src/helm/helm_controller.cpp" line="770"/>
         <source>Gamepad stopped responding — the transmitter has the boat</source>
         <translation>Геймпад перестал отвечать — лодкой управляет пульт</translation>
     </message>
@@ -6172,7 +6252,7 @@ udp://@:1234
         <translation>Сбросьте газ перед включением моторов</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="939"/>
+        <location filename="../src/helm/helm_controller.cpp" line="941"/>
         <source>Vehicle check: %1</source>
         <translation>Проверка аппарата: %1</translation>
     </message>
@@ -10861,7 +10941,7 @@ udp://@:1234
     <message>
         <location filename="../qml/app/NodesPayloadEditor.qml" line="21"/>
         <source>Nothing</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ничего</translation>
     </message>
     <message>
         <location filename="../qml/app/NodesPayloadEditor.qml" line="22"/>
@@ -15407,76 +15487,171 @@ udp://@:1234
 <context>
     <name>autopilot::AutopilotParams</name>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="329"/>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="345"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="351"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="367"/>
         <source>The vehicle has no parameter %1</source>
         <translation>У автопилота нет параметра %1</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="333"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="355"/>
         <source>Read-only parameter</source>
         <translation>Параметр только для чтения</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="427"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="449"/>
         <source>Outside the documented range %1…%2%3</source>
         <translation>Вне документированного диапазона %1…%2%3</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="434"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="456"/>
         <source>No file chosen</source>
         <translation>Файл не выбран</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="454"/>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="462"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="476"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="484"/>
         <source>Cannot write the file (%1)</source>
         <translation>Не удалось записать файл (%1)</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="475"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="497"/>
         <source>Cannot open the file (%1)</source>
         <translation>Не удалось открыть файл (%1)</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="528"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="550"/>
         <source>No parameters found in the file</source>
         <translation>В файле нет параметров</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="777"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="801"/>
         <source>All</source>
         <translation>Все</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="782"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="806"/>
         <source>Other</source>
         <translation>Прочие</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="831"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="855"/>
         <source>Not a number</source>
         <translation>Не число</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="838"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="862"/>
         <source>Whole number expected</source>
         <translation>Нужно целое число</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="842"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="866"/>
         <source>Out of range %1…%2</source>
         <translation>Вне диапазона %1…%2</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="850"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="874"/>
         <source>Cannot be sent exactly; the nearest value is %1</source>
         <translation>Нельзя передать точно; ближайшее значение %1</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/autopilot_params.cpp" line="858"/>
+        <location filename="../src/autopilot/autopilot_params.cpp" line="882"/>
         <source>Out of range</source>
         <translation>Вне диапазона</translation>
+    </message>
+</context>
+<context>
+    <name>autopilot::LinkLossPolicy</name>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="80"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="98"/>
+        <source>Nothing</source>
+        <translation>Ничего</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="98"/>
+        <source>The boat keeps its mode and its last command</source>
+        <translation>Лодка сохраняет режим и последнюю команду</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="99"/>
+        <source>The motors stop and the boat drifts</source>
+        <translation>Моторы останавливаются, лодку сносит</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="102"/>
+        <source>The boat holds its position; without a position fix it stops (Hold)</source>
+        <translation>Лодка удерживает позицию; без координат останавливается (Hold)</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="105"/>
+        <source>The boat returns to the nearest rally point or home and holds its position there</source>
+        <translation>Лодка возвращается к ближайшей точке сбора или домой и удерживает там позицию</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="108"/>
+        <source>The boat returns along its own track since arming and holds its position; without a track it does RTL</source>
+        <translation>Лодка возвращается по своему следу с момента арма и удерживает позицию; без следа выполняет RTL</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="109"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="172"/>
+        <source>SmartRTL is off on the boat (SRTL_POINTS = 0)</source>
+        <translation>SmartRTL выключен на лодке (SRTL_POINTS = 0)</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="144"/>
+        <source>no action</source>
+        <translation>без действия</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="145"/>
+        <source>mission goes on</source>
+        <translation>миссия продолжится</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="146"/>
+        <source>stays in %1</source>
+        <translation>останется в %1</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="160"/>
+        <source>No autopilot</source>
+        <translation>Автопилот не найден</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="166"/>
+        <source>The link-loss parameters have not been read yet</source>
+        <translation>Параметры потери связи ещё не прочитаны</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="169"/>
+        <source>This firmware has no Loiter link-loss action</source>
+        <translation>В этой прошивке нет действия Loiter при потере связи</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="254"/>
+        <source>The link was lost before the boat confirmed the change</source>
+        <translation>Связь пропала раньше, чем лодка подтвердила изменение</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="279"/>
+        <source>The boat did not answer FS_GCS_ENABLE / FS_ACTION</source>
+        <translation>Лодка не ответила на запрос FS_GCS_ENABLE / FS_ACTION</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="289"/>
+        <source>Not confirmed: the boat reports %1 = %2</source>
+        <translation>Не подтверждено: лодка сообщает %1 = %2</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="295"/>
+        <source>Not confirmed by the boat</source>
+        <translation>Лодка не подтвердила</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="422"/>
+        <source>Disarm</source>
+        <translation>Disarm</translation>
     </message>
 </context>
 <context>

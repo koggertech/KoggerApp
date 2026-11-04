@@ -246,6 +246,7 @@ AutopilotParams::AutopilotParams(QObject* parent)
     connect(&transfer_, &ParamTransfer::progressChanged, this, &AutopilotParams::onProgress);
     connect(&transfer_, &ParamTransfer::downloadFinished, this, &AutopilotParams::onDownloadFinished);
     connect(&transfer_, &ParamTransfer::writeFinished, this, &AutopilotParams::onWriteFinished);
+    connect(&transfer_, &ParamTransfer::readFinished, this, &AutopilotParams::requestFinished);
     connect(&metadataWatcher_, &QFutureWatcher<ParamMetadata>::finished, this, &AutopilotParams::onMetadataLoaded);
 }
 
@@ -320,6 +321,27 @@ void AutopilotParams::ensureLoaded()
     if (online_ && !loading_ && (!loaded_ || stale_)) {
         refresh();
     }
+}
+
+void AutopilotParams::request(const QStringList& names)
+{
+    if (!online_) {
+        emit requestFinished(names);
+        return;
+    }
+    metadataWanted_ = true;
+    updateMetadata();
+    transfer_.readNames(names);
+}
+
+bool AutopilotParams::value(const QString& name, float* value) const
+{
+    const auto it = byName_.constFind(name);
+    if (it == byName_.cend()) {
+        return false;
+    }
+    *value = entries_.at(it.value()).value;
+    return true;
 }
 
 QString AutopilotParams::validate(const QString& name, const QString& text) const
@@ -664,6 +686,7 @@ void AutopilotParams::onValueReceived(const QString& name, float value, int type
             e.index = index;
         }
         rows_.entryChanged(it.value());
+        emit paramChanged(name);
         return;
     }
     Entry e;
@@ -674,6 +697,7 @@ void AutopilotParams::onValueReceived(const QString& name, float value, int type
     entries_.append(e);
     byName_.insert(name, int(entries_.size()) - 1);
     scheduleRebuild();
+    emit paramChanged(name);
 }
 
 void AutopilotParams::onProgress(int received, int total)

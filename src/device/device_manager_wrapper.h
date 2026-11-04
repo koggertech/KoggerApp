@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "autopilot_params.h"
+#include "link_loss_policy.h"
 #include "device_manager.h"
 #include "mission_transfer.h"
 
@@ -78,6 +79,8 @@ public:
     QUuid getFileUuid() const;
     /** Parameter list of the latched autopilot, exposed to QML as `autopilotParams`. */
     autopilot::AutopilotParams* autopilotParams() { return autopilotParams_.get(); }
+    /** The link-loss action of the latched autopilot, exposed to QML as `linkLoss`. */
+    autopilot::LinkLossPolicy* linkLoss() { return linkLoss_.get(); }
 
     /*QML*/
     QList<DevQProperty*> getDevList     () { return getWorker()->getDevList();     }
@@ -274,6 +277,7 @@ private:
     std::unique_ptr<QThread> missionThread_;
     autopilot::MissionTransfer* missionTransfer_ = nullptr;
     std::unique_ptr<autopilot::AutopilotParams> autopilotParams_;
+    std::unique_ptr<autopilot::LinkLossPolicy> linkLoss_;
     AutopilotState autopilotState_;
     QVariantList autopilotMessages_;
     bool echogramDeliveryKnown_ = false;

@@ -7,6 +7,7 @@
 #include <QObject>
 #include <QSet>
 #include <QString>
+#include <QStringList>
 #include <QTimer>
 #include <QVector>
 
@@ -48,6 +49,8 @@ public:
     static constexpr int kIndexRetries = 5;
     static constexpr int kWriteTimeoutMs = 1000;
     static constexpr int kWriteAttempts = 3;
+    static constexpr int kReadTimeoutMs = 1500;
+    static constexpr int kReadAttempts = 3;
     static constexpr uint16_t kUnrequestedIndex = 65535;
 
     explicit ParamTransfer(QObject* parent = nullptr);
@@ -64,6 +67,12 @@ public slots:
     void startDownload();
     /** Queues a write of @p value as MAV_PARAM_TYPE @p type; a queued write of the same name is replaced. Emits writeFinished(). */
     void write(const QString& name, float value, int type);
+    /**
+     * Reads @p names one by one (PARAM_REQUEST_READ by name), asking again for the ones still
+     * unanswered every kReadTimeoutMs, kReadAttempts times in all. Names added while a read runs
+     * join it and restart the attempts. Emits readFinished() once nothing is left.
+     */
+    void readNames(const QStringList& names);
     /** Feeds the payload of one PARAM_VALUE (22) of the target component. */
     void handleParamValue(const QByteArray& payload);
     /** Ends the download and every write with @p result without talking to the vehicle. */
@@ -76,6 +85,8 @@ signals:
     /** @p missing counts the indices that never arrived; ok is false only when the list was never answered or the download was aborted. */
     void downloadFinished(bool ok, int result, int missing);
     void writeFinished(const QString& name, bool ok, int result);
+    /** @p missing are the names that never answered (unknown to the vehicle, or the link failed). */
+    void readFinished(const QStringList& missing);
 
 private:
     enum class State : uint8_t { Idle, WaitList, Streaming };
@@ -94,6 +105,8 @@ private:
 
     void onListTimeout();
     void onWriteTimeout();
+    void onReadTimeout();
+    void finishRead();
     void fillIndexBatch();
     void finishDownload(bool ok, int result);
     void reportProgress();
@@ -118,6 +131,10 @@ private:
     bool writing_ = false;
     int writeAttempts_ = 0;
     QTimer writeTimer_{ this };
+
+    QStringList readPending_;
+    int readAttempts_ = 0;
+    QTimer readTimer_{ this };
 };
 
 } // namespace autopilot

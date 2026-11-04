@@ -178,6 +178,16 @@ public:
     Q_INVOKABLE void refresh();
     /** refresh() unless a complete, current list is already here or a load runs. */
     Q_INVOKABLE void ensureLoaded();
+    /**
+     * Reads only @p names by name, without the whole list, and loads the metadata; the answers
+     * join the list like any PARAM_VALUE. Emits requestFinished() once all answered or gave up.
+     * Ignored while no autopilot is online.
+     */
+    Q_INVOKABLE void request(const QStringList& names);
+    /** True when the vehicle has reported @p name; @p value receives it. */
+    bool value(const QString& name, float* value) const;
+    /** The bundled metadata of @p name, or nullptr. */
+    const ParamInfo* metadataOf(const QString& name) const { return metadata_.find(name); }
     /** Empty when @p text is a value parameter @p name can take, else the reason. */
     Q_INVOKABLE QString validate(const QString& name, const QString& text) const;
     /** Queues the write of @p text; false (with lastError) when validate() refuses it. */
@@ -229,6 +239,10 @@ signals:
     /** A write was not confirmed; @p actual is the value the vehicle reports now (may still change). */
     void writeFailed(const QString& name, const QString& actual);
     void writeConfirmed(const QString& name, const QString& value);
+    /** A PARAM_VALUE for @p name arrived (any source: a load, a read, a write echo, another ground station). */
+    void paramChanged(const QString& name);
+    /** The end of request(); @p missing never answered. */
+    void requestFinished(const QStringList& missing);
 
 private:
     friend class AutopilotParamRows;
