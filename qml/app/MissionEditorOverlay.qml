@@ -1459,7 +1459,7 @@ Rectangle {
                             }
                             KIslandRow {
                                 visible: root.plan && root.plan.endAction === 0
-                                caption: qsTr("RTL goes to the autopilot's arming position, which may differ from the start point; the boat then holds position there")
+                                caption: qsTr("RTL goes to the autopilot's arming position or to a closer rally point within RALLY_LIMIT_KM, not to the start point; the boat then holds position there")
                                 captionColor: AppPalette.linkIdleText
                                 stacked: true
                             }
@@ -1474,7 +1474,7 @@ Rectangle {
                                 readonly property bool missing: root.plan ? !root.plan.hasHome : false
                                 property real pulse: 0.0
                                 label: qsTr("Start point")
-                                caption: missing ? qsTr("not set — tap the tool") : qsTr("placed")
+                                caption: missing ? qsTr("not set — tap the tool") : qsTr("first point of the route, not the boat's home (H)")
                                 labelColor: missing ? AppPalette.linkIdleText : AppPalette.textStrong
                                 captionColor: missing ? AppPalette.linkIdleText : AppPalette.textSecond
                                 fillColor: missing ? Qt.rgba(AppPalette.linkIdleBorder.r, AppPalette.linkIdleBorder.g, AppPalette.linkIdleBorder.b, pulse) : "transparent"

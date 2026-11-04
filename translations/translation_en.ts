@@ -8363,13 +8363,13 @@ udp://@:1234
     </message>
     <message>
         <location filename="../qml/app/MissionEditorOverlay.qml" line="1477"/>
-        <source>placed</source>
-        <translation>placed</translation>
+        <source>first point of the route, not the boat&apos;s home (H)</source>
+        <translation>first point of the route, not the boat&apos;s home (H)</translation>
     </message>
     <message>
         <location filename="../qml/app/MissionEditorOverlay.qml" line="1462"/>
-        <source>RTL goes to the autopilot&apos;s arming position, which may differ from the start point; the boat then holds position there</source>
-        <translation>RTL goes to the autopilot&apos;s arming position, which may differ from the start point; the boat then holds position there</translation>
+        <source>RTL goes to the autopilot&apos;s arming position or to a closer rally point within RALLY_LIMIT_KM, not to the start point; the boat then holds position there</source>
+        <translation>RTL goes to the autopilot&apos;s arming position or to a closer rally point within RALLY_LIMIT_KM, not to the start point; the boat then holds position there</translation>
     </message>
     <message>
         <location filename="../qml/app/MissionEditorOverlay.qml" line="1468"/>

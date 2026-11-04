@@ -8369,13 +8369,13 @@ udp://@:1234
     </message>
     <message>
         <location filename="../qml/app/MissionEditorOverlay.qml" line="1477"/>
-        <source>placed</source>
-        <translation>ustawiony</translation>
+        <source>first point of the route, not the boat&apos;s home (H)</source>
+        <translation>pierwszy punkt trasy, nie dom łodzi (H)</translation>
     </message>
     <message>
         <location filename="../qml/app/MissionEditorOverlay.qml" line="1462"/>
-        <source>RTL goes to the autopilot&apos;s arming position, which may differ from the start point; the boat then holds position there</source>
-        <translation>RTL prowadzi do miejsca uzbrojenia autopilota, które może różnić się od punktu startowego; tam łódź utrzymuje pozycję</translation>
+        <source>RTL goes to the autopilot&apos;s arming position or to a closer rally point within RALLY_LIMIT_KM, not to the start point; the boat then holds position there</source>
+        <translation>RTL prowadzi do miejsca uzbrojenia autopilota lub do bliższego punktu zbornego w zasięgu RALLY_LIMIT_KM, a nie do punktu startowego; tam łódź utrzymuje pozycję</translation>
     </message>
     <message>
         <location filename="../qml/app/MissionEditorOverlay.qml" line="1468"/>
