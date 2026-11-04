@@ -7,6 +7,7 @@ Popup {
     id: dialog
 
     property var store: null
+    property string firmwareText: ""
 
     readonly property var params: (typeof autopilotParams !== "undefined") ? autopilotParams : null
     readonly property var dmw: (typeof deviceManagerWrapper !== "undefined") ? deviceManagerWrapper : null
@@ -185,11 +186,25 @@ Popup {
 
         Text {
             id: titleText
-            width: parent.width
+            width: parent.width - (firmwareLabel.visible ? firmwareLabel.width + Tokens.spaceMd : 0)
             text: qsTr("Autopilot parameters")
             color: AppPalette.textStrong
             font.pixelSize: Tokens.fontXl
             font.bold: true
+            elide: Text.ElideRight
+        }
+
+        Text {
+            id: firmwareLabel
+            visible: dialog.firmwareText.length > 0
+            anchors.right: parent.right
+            anchors.baseline: titleText.baseline
+            width: Math.min(implicitWidth, parent.width * 0.5)
+            text: dialog.firmwareText
+            color: AppPalette.textSecond
+            font.pixelSize: Tokens.fontMd
+            horizontalAlignment: Text.AlignRight
+            elide: Text.ElideRight
         }
 
         Text {

@@ -425,6 +425,7 @@ BasePanePopup {
         source: "qrc:/qml/app/AutopilotParamsDialog.qml"
         onLoaded: {
             item.store = root.store
+            item.firmwareText = Qt.binding(function() { return root._firmwareText })
             item.open()
         }
     }
