@@ -24,6 +24,8 @@ constexpr float kSpeedTypeGround = 1.0f;
 constexpr float kThrottleUnchanged = -1.0f;
 constexpr qint64 kStreamWatchdogMs = 10000;
 constexpr int kStreamRequestAttempts = 3;
+constexpr qint64 kVersionRequestIntervalMs = 3000;
+constexpr int kVersionRequestAttempts = 3;
 constexpr float kMissionCurrentIntervalUs = 1000000.0f;
 constexpr float kNavOutputIntervalUs = 500000.0f;
 constexpr uint16_t kExtendedStatusRateHz = 2;
@@ -319,6 +321,53 @@ void DeviceManager::requestVehicleHome()
     sendCommandLong(MavCmdRequestMessage, float(MAVLink_MSG_HOME_POSITION::getID()));
 }
 
+void DeviceManager::requestAutopilotVersion()
+{
+    versionRequestMs_ = heartbeatClock_.elapsed();
+    ++versionRequests_;
+    sendCommandLong(MavCmdRequestMessage, float(MAVLink_MSG_AUTOPILOT_VERSION::getID()));
+}
+
+void DeviceManager::resetFirmwareInfo()
+{
+    autopilotKind_ = -1;
+    vehicleType_ = -1;
+    firmwareVersion_.clear();
+    firmwareVersionType_ = -1;
+    firmwareGitHash_.clear();
+    versionReceived_ = false;
+    versionRequestMs_ = -1;
+    versionRequests_ = 0;
+}
+
+void DeviceManager::handleAutopilotVersion(const MAVLink_MSG_AUTOPILOT_VERSION& message)
+{
+    versionReceived_ = true;
+    const uint32_t version = message.flight_sw_version;
+    if (version != 0) {
+        firmwareVersion_ = QStringLiteral("%1.%2.%3").arg((version >> 24) & 0xFF).arg((version >> 16) & 0xFF).arg((version >> 8) & 0xFF);
+        firmwareVersionType_ = int(version & 0xFF);
+    } else {
+        firmwareVersion_.clear();
+        firmwareVersionType_ = -1;
+    }
+    firmwareGitHash_.clear();
+    const uint8_t* custom = message.flight_custom_version;
+    if (autopilotKind_ == kMavAutopilotPx4) {
+        for (int i = 7; i >= 0; --i) {
+            firmwareGitHash_ += QStringLiteral("%1").arg(custom[i], 2, 16, QLatin1Char('0'));
+        }
+    } else {
+        for (int i = 0; i < 8 && custom[i] != 0; ++i) {
+            if (custom[i] >= 0x20 && custom[i] < 0x7F) {
+                firmwareGitHash_ += QLatin1Char(char(custom[i]));
+            }
+        }
+    }
+    core.consoleInfo(QString(">> MAVLink: AUTOPILOT_VERSION %1 type %2 %3").arg(firmwareVersion_).arg(firmwareVersionType_).arg(firmwareGitHash_));
+    publishVru();
+}
+
 void DeviceManager::sendAutopilotMessage(quint32 msgId, const QByteArray& payload, int v1Length)
 {
     if (!vru_.online || autopilotLink_ == nullptr) {
@@ -460,6 +509,11 @@ void DeviceManager::publishVru()
     state.gpsFixType = gpsFixType_;
     state.gpsSatellites = gpsSatellites_;
     state.gpsHdop = gpsHdop_;
+    state.autopilotKind = autopilotKind_;
+    state.vehicleType = vehicleType_;
+    state.firmwareVersion = firmwareVersion_;
+    state.firmwareVersionType = firmwareVersionType_;
+    state.firmwareGitHash = firmwareGitHash_;
     state.mission = missionTelemetry_;
     emit vruChanged(state);
 }
@@ -483,6 +537,7 @@ void DeviceManager::checkAutopilotOnline()
         unbindAutopilotLink();
         resetLinkQuality();
         resetMissionTelemetry();
+        resetFirmwareInfo();
         publishVru();
         return;
     }
@@ -491,6 +546,10 @@ void DeviceManager::checkAutopilotOnline()
     const bool missionCurrentMissing = lastMissionCurrentMs_ < 0 || now - lastMissionCurrentMs_ > kStreamWatchdogMs;
     if (missionCurrentMissing && streamRequests_ < kStreamRequestAttempts && now - streamRequestMs_ > kStreamWatchdogMs) {
         requestAutopilotStreams();
+    }
+    if (!versionReceived_ && versionRequests_ > 0 && versionRequests_ < kVersionRequestAttempts
+        && now - versionRequestMs_ > kVersionRequestIntervalMs) {
+        requestAutopilotVersion();
     }
     if (gpsMs_ >= 0 && now - gpsMs_ > kGpsRawTimeoutMs) {
         gpsFixType_ = -1;
@@ -570,6 +629,7 @@ void DeviceManager::bindAutopilotLink(QUuid uuid, Link* link)
     missionSetCurrentUnsupported_ = false;
     streamIntervalUnsupported_ = false;
     resetMissionTelemetry();
+    resetFirmwareInfo();
     connect(this, &DeviceManager::writeMavlinkBytes, autopilotLink_, &Link::write, Qt::UniqueConnection);
 }
 
@@ -579,6 +639,7 @@ void DeviceManager::resetAutopilot()
     unbindAutopilotLink();
     resetLinkQuality();
     resetMissionTelemetry();
+    resetFirmwareInfo();
     missionSetCurrentUnsupported_ = false;
     vru_.cleanVru();
 }
@@ -999,6 +1060,8 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     vru_.systemId = mavlink_frame.systemID();
                     vru_.componentId = mavlink_frame.componentID();
                     vru_.mavlinkVersion = mavlink_frame.MAVLinkVersion();
+                    autopilotKind_ = heartbeat.autopilot;
+                    vehicleType_ = heartbeat.type;
                     vru_.lastHeartbeatMs = heartbeatClock_.elapsed();
                     vru_.online = link != nullptr;
                     if (vru_.online && !autopilotTimer_.isActive()) {
@@ -1013,6 +1076,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     if (vru_.online && !wasOnline) {
                         sendGcsHeartbeat();
                         requestAutopilotStreams();
+                        requestAutopilotVersion();
                     }
                     publishVru();
                 }
@@ -1128,6 +1192,11 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
 
                 if (fromAutopilot && vru_.online && msgId == MAVLink_MSG_STATUSTEXT::getID()) {
                     handleStatusText(mavlink_frame.read<MAVLink_MSG_STATUSTEXT>());
+                }
+
+                if (fromAutopilot && vru_.online && msgId == MAVLink_MSG_AUTOPILOT_VERSION::getID()
+                    && int(mavlink_frame.componentID()) == vru_.componentId) {
+                    handleAutopilotVersion(mavlink_frame.read<MAVLink_MSG_AUTOPILOT_VERSION>());
                 }
 
                 if (fromAutopilot && vru_.online && msgId == MAVLink_MSG_HOME_POSITION::getID()) {

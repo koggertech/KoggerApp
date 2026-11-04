@@ -19,6 +19,7 @@
 
 class LocationReader;
 struct MAVLink_MSG_STATUSTEXT;
+struct MAVLink_MSG_AUTOPILOT_VERSION;
 
 /**
  * Mission execution as the vehicle reports it. seq / total / state / missionId come from
@@ -64,6 +65,13 @@ struct AutopilotState
     int gpsFixType = -1;
     int gpsSatellites = -1;
     double gpsHdop = NAN;
+    /** HEARTBEAT of the latched vehicle: MAV_AUTOPILOT and MAV_TYPE, -1 while none. */
+    int autopilotKind = -1;
+    int vehicleType = -1;
+    /** AUTOPILOT_VERSION: "major.minor.patch" (empty until received), FIRMWARE_VERSION_TYPE (-1 = unknown), git hash. */
+    QString firmwareVersion;
+    int firmwareVersionType = -1;
+    QString firmwareGitHash;
     MissionTelemetry mission;
 };
 
@@ -263,6 +271,9 @@ private:
     void sendMissionSetCurrent(int seq);
     void sendGcsHeartbeat();
     void handleStatusText(const MAVLink_MSG_STATUSTEXT& message);
+    void requestAutopilotVersion();
+    void resetFirmwareInfo();
+    void handleAutopilotVersion(const MAVLink_MSG_AUTOPILOT_VERSION& message);
     void emitStatusText(int severity, const QString& text);
     void flushStatusText();
     void bindAutopilotLink(QUuid uuid, Link* link);
@@ -371,6 +382,14 @@ private:
     qint64 gpsMs_ = -1;
     qint64 streamRequestMs_ = -1;
     int streamRequests_ = 0;
+    int autopilotKind_ = -1;
+    int vehicleType_ = -1;
+    QString firmwareVersion_;
+    int firmwareVersionType_ = -1;
+    QString firmwareGitHash_;
+    bool versionReceived_ = false;
+    qint64 versionRequestMs_ = -1;
+    int versionRequests_ = 0;
     bool streamIntervalUnsupported_ = false;
     int statusTextId_ = 0;
     int statusTextSeverity_ = 0;

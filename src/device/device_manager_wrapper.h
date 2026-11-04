@@ -54,6 +54,12 @@ public:
     Q_PROPERTY(int gpsFixType READ gpsFixType NOTIFY vruChanged)
     Q_PROPERTY(int gpsSatellites READ gpsSatellites NOTIFY vruChanged)
     Q_PROPERTY(double gpsHdop READ gpsHdop NOTIFY vruChanged)
+    /** Latched vehicle: MAV_AUTOPILOT / MAV_TYPE from HEARTBEAT (-1 = none); AUTOPILOT_VERSION "major.minor.patch" (empty until received), FIRMWARE_VERSION_TYPE (-1 = unknown), git hash. */
+    Q_PROPERTY(int autopilotKind READ autopilotKind NOTIFY vruChanged)
+    Q_PROPERTY(int vehicleType READ vehicleType NOTIFY vruChanged)
+    Q_PROPERTY(QString firmwareVersion READ firmwareVersion NOTIFY vruChanged)
+    Q_PROPERTY(int firmwareVersionType READ firmwareVersionType NOTIFY vruChanged)
+    Q_PROPERTY(QString firmwareGitHash READ firmwareGitHash NOTIFY vruChanged)
     Q_PROPERTY(double vehicleLat READ vehicleLat NOTIFY vruChanged)
     Q_PROPERTY(double vehicleLon READ vehicleLon NOTIFY vruChanged)
     /** Last STATUSTEXT messages of the vehicle, newest first: { severity, text, time (ms since epoch) }. */
@@ -102,6 +108,11 @@ public:
     int                  gpsFixType() const { return autopilotState_.gpsFixType; }
     int                  gpsSatellites() const { return autopilotState_.gpsSatellites; }
     double               gpsHdop() const { return autopilotState_.gpsHdop; }
+    int                  autopilotKind() const { return autopilotState_.autopilotKind; }
+    int                  vehicleType() const { return autopilotState_.vehicleType; }
+    QString              firmwareVersion() const { return autopilotState_.firmwareVersion; }
+    int                  firmwareVersionType() const { return autopilotState_.firmwareVersionType; }
+    QString              firmwareGitHash() const { return autopilotState_.firmwareGitHash; }
     double               vehicleLat() const { return autopilotState_.latitude; }
     double               vehicleLon() const { return autopilotState_.longitude; }
     QVariantList         autopilotMessages() const { return autopilotMessages_; }

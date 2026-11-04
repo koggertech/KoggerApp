@@ -11,6 +11,7 @@ constexpr uint8_t kMavModeFlagCustomModeEnabled = 1;
 constexpr float kMavArmForceMagic = 21196.0f;
 constexpr uint8_t kMavDataStreamExtendedStatus = 2;
 constexpr uint8_t kMavParamTypeInt8 = 2;
+constexpr uint8_t kMavAutopilotPx4 = 12;
 constexpr int kMavParamIdLength = 16;
 constexpr int16_t kMavAxisInvalid = INT16_MAX;
 constexpr uint8_t kMavStateActive = 4;
@@ -369,7 +370,26 @@ struct __attribute__((packed)) MAVLink_MSG_GCS_HEARTBEAT
     static int v1Length() { return 9; }
 };
 
+struct __attribute__((packed)) MAVLink_MSG_AUTOPILOT_VERSION
+{
+    uint64_t capabilities = 0;
+    uint64_t uid = 0;
+    uint32_t flight_sw_version = 0;
+    uint32_t middleware_sw_version = 0;
+    uint32_t os_sw_version = 0;
+    uint32_t board_version = 0;
+    uint16_t vendor_id = 0;
+    uint16_t product_id = 0;
+    uint8_t flight_custom_version[8] = {};
+    uint8_t middleware_custom_version[8] = {};
+    uint8_t os_custom_version[8] = {};
+    uint8_t uid2[18] = {};
+
+    static uint32_t getID() { return 148; }
+};
+
 static_assert(sizeof(MAVLink_MSG_COMMAND_LONG) == 33);
+static_assert(sizeof(MAVLink_MSG_AUTOPILOT_VERSION) == 78);
 static_assert(sizeof(MAVLink_MSG_PARAM_VALUE) == 25);
 static_assert(sizeof(MAVLink_MSG_PARAM_SET) == 23);
 static_assert(sizeof(MAVLink_MSG_REQUEST_DATA_STREAM) == 6);

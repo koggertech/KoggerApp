@@ -35,10 +35,31 @@ BasePanePopup {
     readonly property bool _armed: _arm > 0
     readonly property int _gpsFix: _dmw ? _dmw.gpsFixType : -1
     readonly property int _gpsSats: _dmw ? _dmw.gpsSatellites : -1
+    readonly property string _firmwareText: {
+        if (!_dmw || _dmw.firmwareVersion.length === 0) return ""
+        var name = ""
+        if (_dmw.autopilotKind === 12) name = "PX4"
+        else if (_dmw.autopilotKind === 3) name = (_dmw.vehicleType === 10 || _dmw.vehicleType === 11) ? "ArduRover" : "ArduPilot"
+        var parts = [(name.length ? name + " " : "") + _dmw.firmwareVersion]
+        var kind = _firmwareTypeName(_dmw.firmwareVersionType)
+        if (kind.length) parts.push(kind)
+        if (_dmw.firmwareGitHash.length) parts.push(_dmw.firmwareGitHash)
+        return parts.join(" · ")
+    }
     readonly property real _gpsHdop: _dmw ? _dmw.gpsHdop : NaN
     readonly property int _gpsFix3d: 3
     readonly property int _gpsMinSatellites: 6
     readonly property bool _gpsPoor: _gpsFix >= 0 && (_gpsFix < _gpsFix3d || (_gpsSats >= 0 && _gpsSats < _gpsMinSatellites))
+
+    function _firmwareTypeName(type) {
+        switch (type) {
+        case 0: return "dev"
+        case 64: return "alpha"
+        case 128: return "beta"
+        case 192: return "RC"
+        }
+        return ""
+    }
 
     function _gpsFixName(fix) {
         switch (fix) {
@@ -1284,6 +1305,11 @@ BasePanePopup {
                             visible: root._rssiValid
                             key: "RSSI"
                             value: qsTr("%1 dBm").arg(root._rssi)
+                        }
+                        InfoCell {
+                            visible: root._firmwareText.length > 0
+                            key: qsTr("Firmware")
+                            value: root._firmwareText
                         }
                     }
 

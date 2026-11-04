@@ -1882,6 +1882,11 @@
         <source>Gamepad ready</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1311"/>
+        <source>Firmware</source>
+        <translation>Firmware</translation>
+    </message>
 </context>
 <context>
     <name>BottomTrackEditPopup</name>
