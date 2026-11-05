@@ -31,7 +31,7 @@ Item {
         if (!_online) return qsTr("No autopilot")
         if (!_armed) return qsTr("Arm the boat first")
         if (!_vehicleKnown) return qsTr("Boat position unknown")
-        if (_ekfPosition === 0) return qsTr("The autopilot has no position estimate yet (EKF): wait for GPS")
+        if (_ekfPosition === 0) return qsTr("No EKF position yet: wait for GPS")
         if (_distance > _maxDistanceM) return qsTr("Too far: limit %1").arg(_fmtDist(_maxDistanceM))
         return ""
     }
@@ -39,6 +39,13 @@ Item {
     readonly property real _storedSpeed: store ? store.goToSpeed : 0
     readonly property int _arrival: store ? store.goToArrival : _arrivalKeep
     readonly property bool _missionOnBoat: !!_run && _run.known && !_run.vehicleEmpty
+    readonly property var _arrivalItems: [
+        { value: _arrivalKeep, label: "Guided", enabled: true },
+        { value: _arrivalMission, label: "Auto", enabled: _missionOnBoat },
+        { value: _arrivalHome, label: "RTL", enabled: true },
+        { value: _arrivalDrift, label: "Hold", enabled: true }
+    ]
+    readonly property bool _arrivalFallback: _arrival === _arrivalMission && !_missionOnBoat
     readonly property real _s: AppPalette.scale
 
     readonly property int _roverModeHold: 4
@@ -369,6 +376,7 @@ Item {
 
     component CardTitle: Item {
         property alias text: titleLabel.text
+        property alias detail: titleDetail.text
         signal closeClicked()
         width: parent ? parent.width : 0
         height: Math.max(titleLabel.implicitHeight, titleClose.height)
@@ -376,12 +384,24 @@ Item {
         Text {
             id: titleLabel
             anchors.left: parent.left
-            anchors.right: titleClose.left
-            anchors.rightMargin: Tokens.spaceSm
             anchors.verticalCenter: parent.verticalCenter
+            width: Math.min(implicitWidth, titleClose.x - Tokens.spaceSm)
             color: AppPalette.textStrong
             font.pixelSize: Tokens.fontBase
             font.bold: true
+            elide: Text.ElideRight
+        }
+
+        Text {
+            id: titleDetail
+            anchors.left: titleLabel.right
+            anchors.leftMargin: Tokens.spaceSm
+            anchors.right: titleClose.left
+            anchors.rightMargin: Tokens.spaceSm
+            anchors.baseline: titleLabel.baseline
+            visible: text.length > 0
+            color: AppPalette.textMuted
+            font.pixelSize: Tokens.fontSm
             elide: Text.ElideRight
         }
 
@@ -409,18 +429,54 @@ Item {
         borderColor: AppPalette.border
     }
 
-    component ArrivalButton: KButton {
-        property int arrivalAction: 0
-        readonly property bool selected: root._arrival === arrivalAction
-        width: (parent.width - parent.spacing) / 2
+    component ArrivalSegments: Rectangle {
+        id: segments
+        property var items: []
+        property int current: 0
+        signal picked(int value)
+        readonly property int inset: Math.max(2, Math.round(2 * root._s))
+        width: parent ? parent.width : 0
         height: Tokens.controlHMd
-        fontPixelSize: Tokens.fontSm
-        normalBg: selected ? AppPalette.accentBg : AppPalette.card
-        hoverBg: selected ? AppPalette.accentBgHover : AppPalette.cardHover
-        normalBorder: selected ? AppPalette.accentBorder : AppPalette.border
-        textColor: selected ? AppPalette.accentText : AppPalette.textStrong
-        opacity: enabled ? 1.0 : 0.5
-        onClicked: if (root.store) root.store.goToArrival = arrivalAction
+        radius: Tokens.radiusMd
+        color: AppPalette.card
+        border.color: AppPalette.border
+        border.width: Tokens.cardBorderWidth
+
+        Row {
+            x: segments.inset
+            y: segments.inset
+
+            Repeater {
+                model: segments.items
+                delegate: Rectangle {
+                    id: segment
+                    required property var modelData
+                    readonly property bool selected: modelData.value === segments.current
+                    width: (segments.width - segments.inset * 2) / Math.max(1, segments.items.length)
+                    height: segments.height - segments.inset * 2
+                    radius: Math.max(2, segments.radius - segments.inset)
+                    opacity: modelData.enabled || selected ? 1.0 : 0.4
+                    color: selected ? AppPalette.accentBgStrong
+                         : segmentTap.containsMouse && segmentTap.enabled ? AppPalette.cardHover : "transparent"
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: segment.modelData.label
+                        color: AppPalette.textStrong
+                        font.pixelSize: Tokens.fontSm
+                        font.bold: true
+                    }
+                    MouseArea {
+                        id: segmentTap
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        enabled: segment.modelData.enabled && !segment.selected
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: segments.picked(segment.modelData.value)
+                    }
+                }
+            }
+        }
     }
 
     CardFrame {
@@ -441,16 +497,8 @@ Item {
 
             CardTitle {
                 text: qsTr("Go here")
+                detail: isFinite(root._distance) ? qsTr("%1 from the boat").arg(root._fmtDist(root._distance)) : ""
                 onCloseClicked: if (root.ctl) root.ctl.clearGoToPick()
-            }
-
-            Text {
-                width: parent.width
-                visible: isFinite(root._distance)
-                text: qsTr("%1 from the boat").arg(root._fmtDist(root._distance))
-                color: AppPalette.textMuted
-                font.pixelSize: Tokens.fontSm
-                elide: Text.ElideRight
             }
 
             Item {
@@ -510,42 +558,30 @@ Item {
                 }
             }
 
-            Text {
-                text: qsTr("On arrival")
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontSm
-            }
-
-            Flow {
+            Column {
                 width: parent.width
-                spacing: Tokens.spaceSm
+                spacing: Tokens.spaceXs
 
-                ArrivalButton {
-                    arrivalAction: root._arrivalKeep
-                    text: qsTr("Hold the point")
+                Text {
+                    text: qsTr("On arrival")
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontSm
                 }
-                ArrivalButton {
-                    arrivalAction: root._arrivalMission
-                    enabled: root._missionOnBoat
-                    text: qsTr("Continue mission")
-                }
-                ArrivalButton {
-                    arrivalAction: root._arrivalHome
-                    text: qsTr("Return home")
-                }
-                ArrivalButton {
-                    arrivalAction: root._arrivalDrift
-                    text: qsTr("Stop and drift")
-                }
-            }
 
-            Text {
-                width: parent.width
-                visible: root._arrival === root._arrivalMission && !root._missionOnBoat
-                text: qsTr("No mission on the boat: it will hold the point")
-                color: AppPalette.linkIdleText
-                font.pixelSize: Tokens.fontSm
-                wrapMode: Text.WordWrap
+                ArrivalSegments {
+                    items: root._arrivalItems
+                    current: root._arrival
+                    onPicked: function(value) { if (root.store) root.store.goToArrival = value }
+                }
+
+                Text {
+                    width: parent.width
+                    text: root._arrivalFallback ? qsTr("No mission on the boat: it will hold the point")
+                                                : root._arrivalText(root._arrival)
+                    color: root._arrivalFallback ? AppPalette.linkIdleText : AppPalette.textMuted
+                    font.pixelSize: Tokens.fontSm
+                    wrapMode: Text.WordWrap
+                }
             }
 
             Text {

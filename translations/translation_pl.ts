@@ -6078,8 +6078,8 @@ udp://@:1234
     </message>
     <message>
         <location filename="../qml/app/GoToPointCard.qml" line="34"/>
-        <source>The autopilot has no position estimate yet (EKF): wait for GPS</source>
-        <translation>Autopilot nie ma jeszcze oszacowania pozycji (EKF): poczekaj na GPS</translation>
+        <source>No EKF position yet: wait for GPS</source>
+        <translation>Brak pozycji EKF: poczekaj na GPS</translation>
     </message>
     <message>
         <location filename="../qml/app/GoToPointCard.qml" line="35"/>
@@ -6229,26 +6229,6 @@ udp://@:1234
         <location filename="../qml/app/GoToPointCard.qml" line="514"/>
         <source>On arrival</source>
         <translation>Po dotarciu</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="525"/>
-        <source>Hold the point</source>
-        <translation>Trzymaj punkt</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="530"/>
-        <source>Continue mission</source>
-        <translation>Kontynuuj misję</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="534"/>
-        <source>Return home</source>
-        <translation>Wróć do domu</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="538"/>
-        <source>Stop and drift</source>
-        <translation>Stop i dryf</translation>
     </message>
     <message>
         <location filename="../qml/app/GoToPointCard.qml" line="545"/>
