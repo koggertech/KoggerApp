@@ -8911,6 +8911,16 @@ udp://@:1234
 <context>
     <name>MissionPlan</name>
     <message>
+        <location filename="../src/mission/mission_expander.cpp" line="82"/>
+        <source>Speed %1 m/s is below %2 m/s: drift outruns the boat and it circles in place</source>
+        <translation>Prędkość %1 m/s jest poniżej %2 m/s: dryf jest szybszy od łodzi i krąży ona w miejscu</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_expander.cpp" line="84"/>
+        <source>Speed %1 m/s is below %2 m/s: the boat weaves off its course</source>
+        <translation>Prędkość %1 m/s jest poniżej %2 m/s: łódź myszkuje i zbacza z kursu</translation>
+    </message>
+    <message>
         <location filename="../src/mission/mission_expander.cpp" line="93"/>
         <source>Generated points leave the valid coordinate range</source>
         <translation>Wygenerowane punkty wykraczają poza dopuszczalny zakres współrzędnych</translation>

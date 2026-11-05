@@ -8905,6 +8905,16 @@ udp://@:1234
 <context>
     <name>MissionPlan</name>
     <message>
+        <location filename="../src/mission/mission_expander.cpp" line="82"/>
+        <source>Speed %1 m/s is below %2 m/s: drift outruns the boat and it circles in place</source>
+        <translation>Speed %1 m/s is below %2 m/s: drift outruns the boat and it circles in place</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_expander.cpp" line="84"/>
+        <source>Speed %1 m/s is below %2 m/s: the boat weaves off its course</source>
+        <translation>Speed %1 m/s is below %2 m/s: the boat weaves off its course</translation>
+    </message>
+    <message>
         <location filename="../src/mission/mission_expander.cpp" line="93"/>
         <source>Generated points leave the valid coordinate range</source>
         <translation>Generated points leave the valid coordinate range</translation>

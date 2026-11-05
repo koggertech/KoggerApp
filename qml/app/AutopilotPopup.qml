@@ -1139,18 +1139,8 @@ BasePanePopup {
 
                 PillSeparator {}
 
-                KCircleIconButton {
-                    width: root._controlH
-                    height: root._controlH
-                    enabled: root._online
-                    toolTipOnHold: true
+                PillButton {
                     iconSource: "qrc:/icons/ui/adjustments_horizontal.svg"
-                    iconTintColor: AppPalette.text
-                    fillColor: AppPalette.card
-                    fillHoverColor: AppPalette.cardHover
-                    fillPressedColor: AppPalette.bgDeep
-                    borderColor: AppPalette.border
-                    borderHoverColor: AppPalette.borderHover
                     toolTipText: qsTr("Autopilot parameters")
                     onClicked: root.openParamsDialog()
                 }
