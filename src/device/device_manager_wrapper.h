@@ -143,7 +143,7 @@ public:
     /** Makes vehicle mission item @p seq current (skip ahead or back); see DeviceManager::autopilotSetMissionCurrent. */
     Q_INVOKABLE void autopilotSetMissionCurrent(int seq);
     /** Sets the vehicle's ground speed in m/s; see DeviceManager::autopilotSetSpeed. */
-    void autopilotSetSpeed(double speed);
+    Q_INVOKABLE void autopilotSetSpeed(double speed);
     /** Sends the vehicle to a point in Guided; see DeviceManager::autopilotGoTo. */
     Q_INVOKABLE void autopilotGoTo(double latitude, double longitude);
     /** Sends one MANUAL_CONTROL frame; see DeviceManager::sendManualControl. */

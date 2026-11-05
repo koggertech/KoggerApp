@@ -6056,119 +6056,226 @@ udp://@:1234
 <context>
     <name>GoToPointCard</name>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="26"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="31"/>
         <source>No autopilot</source>
         <translation>No autopilot</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="27"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="32"/>
         <source>Arm the boat first</source>
         <translation>Arm the boat first</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="28"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="33"/>
         <source>Boat position unknown</source>
         <translation>Boat position unknown</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="29"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="34"/>
         <source>The autopilot has no position estimate yet (EKF): wait for GPS</source>
         <translation>The autopilot has no position estimate yet (EKF): wait for GPS</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="30"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="35"/>
         <source>Too far: limit %1</source>
         <translation>Too far: limit %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="69"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="98"/>
         <source>%1 m</source>
         <translation>%1 m</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="69"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="98"/>
         <source>%1 km</source>
         <translation>%1 km</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="74"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="102"/>
+        <source>%1 m/s</source>
+        <translation>%1 m/s</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="107"/>
+        <source>Then the mission continues</source>
+        <translation>Then the mission continues</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="108"/>
+        <source>Then the boat returns home</source>
+        <translation>Then the boat returns home</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="109"/>
+        <source>Then the boat stops and drifts</source>
+        <translation>Then the boat stops and drifts</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="111"/>
+        <source>Then the boat holds the point</source>
+        <translation>Then the boat holds the point</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="125"/>
         <source>no autopilot link</source>
         <translation>no autopilot link</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="75"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="126"/>
         <source>no response</source>
         <translation>no response</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="76"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="127"/>
         <source>temporarily rejected</source>
         <translation>temporarily rejected</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="77"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="128"/>
         <source>denied</source>
         <translation>denied</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="78"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="129"/>
         <source>unsupported</source>
         <translation>unsupported</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="79"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="130"/>
         <source>failed</source>
         <translation>failed</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="80"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="131"/>
         <source>cancelled</source>
         <translation>cancelled</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="158"/>
-        <location filename="../qml/app/GoToPointCard.qml" line="188"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="175"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="623"/>
+        <source>Stop</source>
+        <translation>Stop</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="253"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="317"/>
         <source>Go here: %1</source>
         <translation>Go here: %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="184"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="273"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="295"/>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="302"/>
+        <source>Go here speed: %1</source>
+        <translation>Go here speed: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="313"/>
         <source>Go here failed: the boat could not enter Guided or take the point, usually because the autopilot has no position estimate yet (EKF/GPS)</source>
         <translation>Go here failed: the boat could not enter Guided or take the point, usually because the autopilot has no position estimate yet (EKF/GPS)</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="197"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="336"/>
         <source>Going to %1, %2</source>
         <translation>Going to %1, %2</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="202"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="341"/>
         <source>The boat reached the point</source>
         <translation>The boat reached the point</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="248"/>
-        <location filename="../qml/app/GoToPointCard.qml" line="303"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="345"/>
+        <source>After arrival</source>
+        <translation>After arrival</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="443"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="574"/>
         <source>Go here</source>
         <translation>Go here</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="273"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="450"/>
         <source>%1 from the boat</source>
         <translation>%1 from the boat</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="291"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="463"/>
+        <source>Speed</source>
+        <translation>Speed</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="493"/>
+        <source>boat default</source>
+        <translation>boat default</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="507"/>
+        <source>Use the boat default speed (WP_SPEED)</source>
+        <translation>Use the boat default speed (WP_SPEED)</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="514"/>
+        <source>On arrival</source>
+        <translation>On arrival</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="525"/>
+        <source>Hold the point</source>
+        <translation>Hold the point</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="530"/>
+        <source>Continue mission</source>
+        <translation>Continue mission</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="534"/>
+        <source>Return home</source>
+        <translation>Return home</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="538"/>
+        <source>Stop and drift</source>
+        <translation>Stop and drift</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="545"/>
+        <source>No mission on the boat: it will hold the point</source>
+        <translation>No mission on the boat: it will hold the point</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="563"/>
         <source>The boat switches to Guided and the mission pauses; Auto continues it</source>
         <translation>The boat switches to Guided and the mission pauses; Auto continues it</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="292"/>
-        <source>The boat switches to Guided and holds the point on arrival</source>
-        <translation>The boat switches to Guided and holds the point on arrival</translation>
+        <location filename="../qml/app/GoToPointCard.qml" line="596"/>
+        <source>The boat is at the point</source>
+        <translation>The boat is at the point</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="303"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="596"/>
+        <source>The boat is going here</source>
+        <translation>The boat is going here</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="603"/>
+        <source>%1 to go</source>
+        <translation>%1 to go</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="624"/>
+        <source>Loiter: the boat stops and holds its position</source>
+        <translation>Loiter: the boat stops and holds its position</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/GoToPointCard.qml" line="574"/>
         <source>Tap again to go</source>
         <translation>Tap again to go</translation>
     </message>
@@ -12005,22 +12112,22 @@ udp://@:1234
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/Pane3DWindow.qml" line="179"/>
+        <location filename="../qml/app/Pane3DWindow.qml" line="180"/>
         <source>Surface: </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/Pane3DWindow.qml" line="179"/>
+        <location filename="../qml/app/Pane3DWindow.qml" line="180"/>
         <source> cm/cell</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/Pane3DWindow.qml" line="181"/>
+        <location filename="../qml/app/Pane3DWindow.qml" line="182"/>
         <source>Mosaic: </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/app/Pane3DWindow.qml" line="181"/>
+        <location filename="../qml/app/Pane3DWindow.qml" line="182"/>
         <source> cm/pix</source>
         <translation></translation>
     </message>
@@ -15588,23 +15695,23 @@ udp://@:1234
 <context>
     <name>WorkspaceStore</name>
     <message>
-        <location filename="../qml/app/WorkspaceStore.qml" line="1413"/>
-        <location filename="../qml/app/WorkspaceStore.qml" line="5107"/>
+        <location filename="../qml/app/WorkspaceStore.qml" line="1422"/>
+        <location filename="../qml/app/WorkspaceStore.qml" line="5116"/>
         <source>Video</source>
         <translation>Video</translation>
     </message>
     <message>
-        <location filename="../qml/app/WorkspaceStore.qml" line="1418"/>
+        <location filename="../qml/app/WorkspaceStore.qml" line="1427"/>
         <source>Global pop-up</source>
         <translation>Global pop-up</translation>
     </message>
     <message>
-        <location filename="../qml/app/WorkspaceStore.qml" line="1422"/>
+        <location filename="../qml/app/WorkspaceStore.qml" line="1431"/>
         <source>Second window</source>
         <translation>Second window</translation>
     </message>
     <message>
-        <location filename="../qml/app/WorkspaceStore.qml" line="2081"/>
+        <location filename="../qml/app/WorkspaceStore.qml" line="2090"/>
         <source>Echogram</source>
         <translation>Echogram</translation>
     </message>

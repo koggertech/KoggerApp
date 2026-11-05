@@ -1379,6 +1379,15 @@ property Settings missionRunBehaviour: Settings {
 property alias missionRunReadAutomatically:  missionRunBehaviour.readAutomatically
 property alias missionRunRestartAfterUpload: missionRunBehaviour.restartAfterUpload
 
+property Settings goToPrefs: Settings {
+    id: goToPrefs
+    category: "main/goTo"
+    property real speed: 0
+    property int arrival: 0
+}
+property alias goToSpeed:   goToPrefs.speed
+property alias goToArrival: goToPrefs.arrival
+
 property Binding _missionRunReadBinding: Binding {
     target: (typeof missionRun !== "undefined") ? missionRun : null
     property: "readAutomatically"

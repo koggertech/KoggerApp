@@ -251,6 +251,12 @@ QString MissionRunController::selectedLabel() const
 
 bool MissionRunController::onTap(qreal x, qreal y)
 {
+    if (hitGoToTarget(x, y)) {
+        clearSelection();
+        selectGoToTarget();
+        return true;
+    }
+    clearGoToTargetSelection();
     if (!shown() || !tracker_->actionable()) {
         clearSelection();
         return false;
@@ -289,6 +295,12 @@ bool MissionRunController::onGoToTap(qreal x, qreal y)
     if (!view_ || !view_->m_camera || !view_->m_camera->viewLlaRef_.isInit || editorActive_) {
         return false;
     }
+    if (hitGoToTarget(x, y)) {
+        clearGoToPick();
+        selectGoToTarget();
+        return true;
+    }
+    clearGoToTargetSelection();
     QVector3D p;
     if (!view_->tryProjectScreenToPlane(x, y, 0.0f, p)) {
         return false;
@@ -349,7 +361,68 @@ void MissionRunController::clearGoToTarget()
     goToTarget_ = mission::GeoPoint();
     goToArrived_ = false;
     emit goToTargetChanged();
+    clearGoToTargetSelection();
     markDirty();
+}
+
+void MissionRunController::clearGoToTargetSelection()
+{
+    if (!goToTargetSelected_) {
+        return;
+    }
+    goToTargetSelected_ = false;
+    goToTargetOnScreen_ = false;
+    emit goToTargetSelectionChanged();
+    emit goToTargetScreenChanged();
+    markDirty();
+}
+
+void MissionRunController::selectGoToTarget()
+{
+    if (!goToTargetSelected_) {
+        goToTargetSelected_ = true;
+        emit goToTargetSelectionChanged();
+    }
+    updateGoToTargetScreen();
+    markDirty();
+}
+
+bool MissionRunController::screenOf(const mission::GeoPoint& point, QPointF& screen) const
+{
+    if (!point.isValid() || editorActive_ || !view_ || !view_->m_camera || view_->width() <= 0 || view_->height() <= 0) {
+        return false;
+    }
+    screen = toScreen(toScene(point));
+    return std::isfinite(screen.x()) && std::isfinite(screen.y())
+           && screen.x() >= 0.0 && screen.y() >= 0.0 && screen.x() <= view_->width() && screen.y() <= view_->height();
+}
+
+bool MissionRunController::hitGoToTarget(qreal x, qreal y) const
+{
+    QPointF screen;
+    if (!goToTarget_.isValid() || !screenOf(goToTarget_, screen)) {
+        return false;
+    }
+    return QLineF(screen, QPointF(x, y)).length() <= kTapRadiusPx * renderScale();
+}
+
+void MissionRunController::updateGoToTargetScreen()
+{
+    QPointF screen = goToTargetScreen_;
+    const bool onScreen = goToTargetSelected_ && screenOf(goToTarget_, screen);
+    const bool moved = QLineF(screen, goToTargetScreen_).length() > 0.5;
+    if (onScreen == goToTargetOnScreen_ && !moved) {
+        return;
+    }
+    goToTargetOnScreen_ = onScreen;
+    goToTargetScreen_ = screen;
+    if (!goToTargetNotifyQueued_) {
+        goToTargetNotifyQueued_ = true;
+        QMetaObject::invokeMethod(this, [this]() {
+            goToTargetNotifyQueued_ = false;
+            emit goToTargetScreenChanged();
+        }, Qt::QueuedConnection);
+    }
 }
 
 void MissionRunController::setGoToArrived(bool arrived)
@@ -426,6 +499,9 @@ void MissionRunController::appendGoTo(MissionLayer::RenderData& rd) const
         }
         appendPoint(rd, world, color, kGoToPointPx, QString());
         appendRing(rd, world, color, kTargetRingPx);
+        if (goToTargetSelected_) {
+            appendRing(rd, world, kSelectedRing, kSelectedRingPx);
+        }
     }
     if (goToPick_.isValid()) {
         const QVector3D world = toScene(goToPick_);
@@ -453,6 +529,7 @@ void MissionRunController::rebuildIfNeeded()
     }
     updateSelectedScreen();
     updateGoToPickScreen();
+    updateGoToTargetScreen();
     const bool persp = view_->m_camera->getIsPerspective();
     const bool viewRefChanged = (lastViewRef_ != view_->m_camera->viewLlaRef_);
     const bool perspChanged = (lastPerspective_ != persp);

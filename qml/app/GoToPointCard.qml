@@ -5,11 +5,14 @@ Item {
     id: root
 
     property var view: null
+    property var store: null
     property bool hostsView: false
 
     readonly property var ctl: view ? view.missionRunController : null
     readonly property var _dmw: (typeof deviceManagerWrapper !== "undefined") ? deviceManagerWrapper : null
     readonly property var _core: (typeof core !== "undefined") ? core : null
+    readonly property var _params: (typeof autopilotParams !== "undefined") ? autopilotParams : null
+    readonly property var _run: (typeof missionRun !== "undefined") ? missionRun : null
     readonly property bool _online: _dmw ? _dmw.autopilotOnline : false
     readonly property bool _armed: _dmw ? _dmw.pilotArmState > 0 : false
     readonly property int _mode: _dmw ? _dmw.pilotModeState : -1
@@ -20,6 +23,8 @@ Item {
                                           && _dmw.gpsFixType >= _gpsFix3d
     readonly property real _distance: (_hasPick && _vehicleKnown)
                                       ? _distanceM(_dmw.vehicleLat, _dmw.vehicleLon, ctl.goToPickLat, ctl.goToPickLon) : NaN
+    readonly property real _targetDistance: (!!ctl && ctl.goToTargetValid && _vehicleKnown)
+                                            ? _distanceM(_dmw.vehicleLat, _dmw.vehicleLon, ctl.goToTargetLat, ctl.goToTargetLon) : NaN
     readonly property int _ekfPosition: _dmw ? _dmw.ekfPositionState : -1
     readonly property bool _retarget: _guided && !!ctl && ctl.goToTargetValid
     readonly property string _blockReason: {
@@ -31,11 +36,19 @@ Item {
         return ""
     }
     readonly property bool _canSend: _blockReason.length === 0 && !_sending
+    readonly property real _storedSpeed: store ? store.goToSpeed : 0
+    readonly property int _arrival: store ? store.goToArrival : _arrivalKeep
+    readonly property bool _missionOnBoat: !!_run && _run.known && !_run.vehicleEmpty
     readonly property real _s: AppPalette.scale
 
+    readonly property int _roverModeHold: 4
+    readonly property int _roverModeLoiter: 5
     readonly property int _roverModeAuto: 10
+    readonly property int _roverModeRtl: 11
     readonly property int _roverModeGuided: 15
     readonly property int _gpsFix3d: 3
+    readonly property int _cmdSetMode: 176
+    readonly property int _cmdChangeSpeed: 178
     readonly property int _cmdDoReposition: 192
     readonly property int _resultAccepted: 0
     readonly property int _resultInProgress: 5
@@ -46,6 +59,14 @@ Item {
     readonly property int _guidedWaitMs: 4000
     readonly property real _maxDistanceM: 1000
     readonly property real _earthRadiusM: 6371008.8
+    readonly property real _speedStep: 0.5
+    readonly property real _speedMin: 0.5
+    readonly property real _speedMax: 10
+    readonly property real _speedFallback: 2.0
+    readonly property int _arrivalKeep: 0
+    readonly property int _arrivalMission: 1
+    readonly property int _arrivalHome: 2
+    readonly property int _arrivalDrift: 3
 
     property bool confirmPending: false
     property real _firstTapMs: 0
@@ -53,7 +74,15 @@ Item {
     property bool _lateAck: false
     property real _sentLat: NaN
     property real _sentLon: NaN
+    property real _sentSpeed: 0
+    property int _sentArrival: 0
     property bool _awaitGuided: false
+    property real _wpSpeed: NaN
+    property int _targetArrival: 0
+    property bool _speedPending: false
+    property bool _speedOverridden: false
+    property int _modePending: -1
+    property string _modePendingLabel: ""
 
     function _distanceM(lat1, lon1, lat2, lon2) {
         var r = Math.PI / 180
@@ -67,6 +96,28 @@ Item {
     function _fmtDist(m) {
         if (!isFinite(m)) return ""
         return m < 1000 ? qsTr("%1 m").arg(Math.round(m)) : qsTr("%1 km").arg((m / 1000).toFixed(2))
+    }
+
+    function _fmtSpeed(v) {
+        return qsTr("%1 m/s").arg(v.toFixed(1))
+    }
+
+    function _arrivalText(action) {
+        switch (action) {
+        case _arrivalMission: return qsTr("Then the mission continues")
+        case _arrivalHome: return qsTr("Then the boat returns home")
+        case _arrivalDrift: return qsTr("Then the boat stops and drifts")
+        }
+        return qsTr("Then the boat holds the point")
+    }
+
+    function _arrivalMode(action) {
+        switch (action) {
+        case _arrivalMission: return _roverModeAuto
+        case _arrivalHome: return _roverModeRtl
+        case _arrivalDrift: return _roverModeHold
+        }
+        return -1
     }
 
     function resultText(result) {
@@ -98,6 +149,32 @@ Item {
         ackTimer.stop()
     }
 
+    function _refreshWpSpeed() {
+        var v = _params ? parseFloat(_params.valueText("WP_SPEED")) : NaN
+        _wpSpeed = isFinite(v) && v > 0 ? v : NaN
+    }
+
+    function _stepSpeed(direction) {
+        if (!store) return
+        var base = _storedSpeed > 0 ? _storedSpeed : (isFinite(_wpSpeed) ? _wpSpeed : _speedFallback)
+        var next = Math.round((base + direction * _speedStep) / _speedStep) * _speedStep
+        store.goToSpeed = Math.max(_speedMin, Math.min(_speedMax, next))
+    }
+
+    function _sendMode(mode, label) {
+        if (!_dmw || !_online) return
+        _modePending = mode
+        _modePendingLabel = label
+        modeAckTimer.restart()
+        _dmw.autopilotSetMode(mode)
+    }
+
+    function stopBoat() {
+        if (ctl) ctl.clearGoToTargetSelection()
+        _targetArrival = _arrivalKeep
+        _sendMode(_roverModeLoiter, qsTr("Stop"))
+    }
+
     function tapGo() {
         if (!ctl || !_dmw || !_hasPick || !_canSend) return
         if (!_retarget) {
@@ -114,6 +191,8 @@ Item {
         confirmTimer.stop()
         _sentLat = ctl.goToPickLat
         _sentLon = ctl.goToPickLon
+        _sentSpeed = _storedSpeed
+        _sentArrival = (_arrival === _arrivalMission && !_missionOnBoat) ? _arrivalKeep : _arrival
         _lateAck = false
         _sending = true
         ackTimer.restart()
@@ -121,7 +200,14 @@ Item {
         _dmw.autopilotGoTo(_sentLat, _sentLon)
     }
 
-    on_HasPickChanged: confirmPending = false
+    on_HasPickChanged: {
+        confirmPending = false
+        if (_hasPick && !isFinite(_wpSpeed)) {
+            _refreshWpSpeed()
+            if (!isFinite(_wpSpeed) && _params && _online)
+                _params.request(["WP_SPEED"])
+        }
+    }
     onHostsViewChanged: if (!hostsView) { confirmPending = false }
     on_OnlineChanged: {
         if (_online || !hostsView) return
@@ -129,6 +215,11 @@ Item {
         _finishSend()
         _awaitGuided = false
         guidedTimer.stop()
+        _wpSpeed = NaN
+        _speedPending = false
+        _speedOverridden = false
+        _modePending = -1
+        modeAckTimer.stop()
         if (_core) _core.setGoToPlacementArmed(false)
     }
     on_ModeChanged: {
@@ -138,8 +229,12 @@ Item {
             guidedTimer.stop()
             return
         }
-        if (_mode >= 0 && !_awaitGuided && ctl.goToTargetValid)
+        if (_mode >= 0)
+            _speedOverridden = false
+        if (_mode >= 0 && !_awaitGuided && ctl.goToTargetValid) {
             ctl.clearGoToTarget()
+            _targetArrival = _arrivalKeep
+        }
     }
 
     Timer {
@@ -169,11 +264,45 @@ Item {
         }
     }
 
+    Timer {
+        id: modeAckTimer
+        interval: root._ackTimeoutMs
+        onTriggered: {
+            if (root._modePending < 0) return
+            root._modePending = -1
+            root._toast(qsTr("%1: %2").arg(root._modePendingLabel).arg(root.resultText(-2)))
+        }
+    }
+
+    Connections {
+        target: root._params
+        ignoreUnknownSignals: true
+        function onListChanged() { root._refreshWpSpeed() }
+        function onRequestFinished(missing) { root._refreshWpSpeed() }
+        function onWriteConfirmed(name, value) { if (name === "WP_SPEED") root._refreshWpSpeed() }
+    }
+
     Connections {
         target: root._dmw
         ignoreUnknownSignals: true
         function onAutopilotCommandAcked(command, result) {
-            if (!root.hostsView || command !== root._cmdDoReposition || (!root._sending && !root._lateAck)) return
+            if (!root.hostsView) return
+            if (command === root._cmdSetMode && root._modePending >= 0) {
+                if (result === root._resultInProgress) return
+                root._modePending = -1
+                modeAckTimer.stop()
+                if (result !== root._resultAccepted)
+                    root._toast(qsTr("%1: %2").arg(root._modePendingLabel).arg(root.resultText(result)))
+                return
+            }
+            if (command === root._cmdChangeSpeed && root._speedPending) {
+                if (result === root._resultInProgress) return
+                root._speedPending = false
+                if (result !== root._resultAccepted)
+                    root._toast(qsTr("Go here speed: %1").arg(root.resultText(result)))
+                return
+            }
+            if (command !== root._cmdDoReposition || (!root._sending && !root._lateAck)) return
             if (result === root._resultInProgress) {
                 if (root._sending)
                     ackTimer.restart()
@@ -194,38 +323,113 @@ Item {
             }
             if (root.ctl)
                 root.ctl.setGoToTarget(root._sentLat, root._sentLon)
+            root._targetArrival = root._sentArrival
+            if (root._sentSpeed > 0) {
+                root._speedPending = true
+                root._speedOverridden = true
+                root._dmw.autopilotSetSpeed(root._sentSpeed)
+            } else if (root._speedOverridden && isFinite(root._wpSpeed)) {
+                root._speedPending = true
+                root._speedOverridden = false
+                root._dmw.autopilotSetSpeed(root._wpSpeed)
+            }
             root._log(qsTr("Going to %1, %2").arg(root._sentLat.toFixed(6)).arg(root._sentLon.toFixed(6)))
         }
         function onAutopilotMissionItemReached(seq) {
             if (!root.hostsView || seq !== 0 || !root._guided || !root.ctl || !root.ctl.goToTargetValid || root.ctl.goToArrived) return
             root.ctl.setGoToArrived(true)
             root._toast(qsTr("The boat reached the point"))
+            var mode = root._arrivalMode(root._targetArrival)
+            root._targetArrival = root._arrivalKeep
+            if (mode >= 0)
+                root._sendMode(mode, qsTr("After arrival"))
         }
     }
 
-    Rectangle {
-        id: card
-
-        readonly property real anchorX: root.ctl ? root.ctl.goToPickScreen.x : 0
-        readonly property real anchorY: root.ctl ? root.ctl.goToPickScreen.y : 0
+    component CardFrame: Rectangle {
+        property real anchorX: 0
+        property real anchorY: 0
+        property bool alert: false
         readonly property real gapPx: Math.round(22 * root._s)
-
-        visible: root.hostsView && root._hasPick && root.ctl.goToPickOnScreen
-        width: Math.round(250 * root._s)
-        height: content.implicitHeight + Tokens.spaceMd * 2
+        width: Math.round(270 * root._s)
         x: Math.max(Tokens.spaceMd, Math.min(root.width - width - Tokens.spaceMd, anchorX - width / 2))
         y: anchorY - height - gapPx >= Tokens.spaceMd ? anchorY - height - gapPx
                                                       : Math.min(root.height - height - Tokens.spaceMd, anchorY + gapPx)
         radius: Tokens.radiusLg
         color: AppPalette.card
         border.width: 1
-        border.color: root.confirmPending ? AppPalette.dangerBorder : AppPalette.border
+        border.color: alert ? AppPalette.dangerBorder : AppPalette.border
 
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.AllButtons
             onWheel: function(w) { w.accepted = true }
         }
+    }
+
+    component CardTitle: Item {
+        property alias text: titleLabel.text
+        signal closeClicked()
+        width: parent ? parent.width : 0
+        height: Math.max(titleLabel.implicitHeight, titleClose.height)
+
+        Text {
+            id: titleLabel
+            anchors.left: parent.left
+            anchors.right: titleClose.left
+            anchors.rightMargin: Tokens.spaceSm
+            anchors.verticalCenter: parent.verticalCenter
+            color: AppPalette.textStrong
+            font.pixelSize: Tokens.fontBase
+            font.bold: true
+            elide: Text.ElideRight
+        }
+
+        KCircleIconButton {
+            id: titleClose
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            width: Tokens.controlHMd
+            height: Tokens.controlHMd
+            glyph: "×"
+            glyphPixelSize: Math.round(14 * root._s)
+            fillColor: "transparent"
+            fillHoverColor: AppPalette.cardHover
+            borderColor: "transparent"
+            onClicked: parent.closeClicked()
+        }
+    }
+
+    component StepButton: KCircleIconButton {
+        width: Tokens.controlHMd
+        height: Tokens.controlHMd
+        glyphPixelSize: Math.round(14 * root._s)
+        fillColor: AppPalette.card
+        fillHoverColor: AppPalette.cardHover
+        borderColor: AppPalette.border
+    }
+
+    component ArrivalButton: KButton {
+        property int arrivalAction: 0
+        readonly property bool selected: root._arrival === arrivalAction
+        width: (parent.width - parent.spacing) / 2
+        height: Tokens.controlHMd
+        fontPixelSize: Tokens.fontSm
+        normalBg: selected ? AppPalette.accentBg : AppPalette.card
+        hoverBg: selected ? AppPalette.accentBgHover : AppPalette.cardHover
+        normalBorder: selected ? AppPalette.accentBorder : AppPalette.border
+        textColor: selected ? AppPalette.accentText : AppPalette.textStrong
+        opacity: enabled ? 1.0 : 0.5
+        onClicked: if (root.store) root.store.goToArrival = arrivalAction
+    }
+
+    CardFrame {
+        id: card
+        visible: root.hostsView && root._hasPick && root.ctl.goToPickOnScreen
+        anchorX: root.ctl ? root.ctl.goToPickScreen.x : 0
+        anchorY: root.ctl ? root.ctl.goToPickScreen.y : 0
+        alert: root.confirmPending
+        height: content.implicitHeight + Tokens.spaceMd * 2
 
         Column {
             id: content
@@ -235,36 +439,9 @@ Item {
             anchors.margins: Tokens.spaceMd
             spacing: Tokens.spaceSm
 
-            Item {
-                width: parent.width
-                height: Math.max(titleText.implicitHeight, closeButton.height)
-
-                Text {
-                    id: titleText
-                    anchors.left: parent.left
-                    anchors.right: closeButton.left
-                    anchors.rightMargin: Tokens.spaceSm
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: qsTr("Go here")
-                    color: AppPalette.textStrong
-                    font.pixelSize: Tokens.fontBase
-                    font.bold: true
-                    elide: Text.ElideRight
-                }
-
-                KCircleIconButton {
-                    id: closeButton
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: Tokens.controlHMd
-                    height: Tokens.controlHMd
-                    glyph: "×"
-                    glyphPixelSize: Math.round(14 * root._s)
-                    fillColor: "transparent"
-                    fillHoverColor: AppPalette.cardHover
-                    borderColor: "transparent"
-                    onClicked: if (root.ctl) root.ctl.clearGoToPick()
-                }
+            CardTitle {
+                text: qsTr("Go here")
+                onCloseClicked: if (root.ctl) root.ctl.clearGoToPick()
             }
 
             Text {
@@ -274,6 +451,101 @@ Item {
                 color: AppPalette.textMuted
                 font.pixelSize: Tokens.fontSm
                 elide: Text.ElideRight
+            }
+
+            Item {
+                width: parent.width
+                height: Tokens.controlHMd
+
+                Text {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Speed")
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontSm
+                }
+
+                Row {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Tokens.spaceSm
+
+                    StepButton {
+                        glyph: "−"
+                        onClicked: root._stepSpeed(-1)
+                    }
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.round(72 * root._s)
+                        Text {
+                            width: parent.width
+                            horizontalAlignment: Text.AlignHCenter
+                            text: root._storedSpeed > 0 ? root._fmtSpeed(root._storedSpeed)
+                                : (isFinite(root._wpSpeed) ? root._fmtSpeed(root._wpSpeed) : "—")
+                            color: AppPalette.textStrong
+                            font.pixelSize: Tokens.fontBase
+                            font.bold: true
+                        }
+                        Text {
+                            width: parent.width
+                            horizontalAlignment: Text.AlignHCenter
+                            visible: root._storedSpeed <= 0
+                            text: qsTr("boat default")
+                            color: AppPalette.textMuted
+                            font.pixelSize: Tokens.fontSm
+                        }
+                    }
+                    StepButton {
+                        glyph: "+"
+                        onClicked: root._stepSpeed(1)
+                    }
+                    StepButton {
+                        glyph: "↺"
+                        toolTipOnHold: true
+                        enabled: root._storedSpeed > 0
+                        opacity: enabled ? 1.0 : 0.4
+                        toolTipText: qsTr("Use the boat default speed (WP_SPEED)")
+                        onClicked: if (root.store) root.store.goToSpeed = 0
+                    }
+                }
+            }
+
+            Text {
+                text: qsTr("On arrival")
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontSm
+            }
+
+            Flow {
+                width: parent.width
+                spacing: Tokens.spaceSm
+
+                ArrivalButton {
+                    arrivalAction: root._arrivalKeep
+                    text: qsTr("Hold the point")
+                }
+                ArrivalButton {
+                    arrivalAction: root._arrivalMission
+                    enabled: root._missionOnBoat
+                    text: qsTr("Continue mission")
+                }
+                ArrivalButton {
+                    arrivalAction: root._arrivalHome
+                    text: qsTr("Return home")
+                }
+                ArrivalButton {
+                    arrivalAction: root._arrivalDrift
+                    text: qsTr("Stop and drift")
+                }
+            }
+
+            Text {
+                width: parent.width
+                visible: root._arrival === root._arrivalMission && !root._missionOnBoat
+                text: qsTr("No mission on the boat: it will hold the point")
+                color: AppPalette.linkIdleText
+                font.pixelSize: Tokens.fontSm
+                wrapMode: Text.WordWrap
             }
 
             Text {
@@ -287,9 +559,8 @@ Item {
 
             Text {
                 width: parent.width
-                visible: root._blockReason.length === 0 && !root._guided
-                text: root._auto ? qsTr("The boat switches to Guided and the mission pauses; Auto continues it")
-                                 : qsTr("The boat switches to Guided and holds the point on arrival")
+                visible: root._blockReason.length === 0 && root._auto
+                text: qsTr("The boat switches to Guided and the mission pauses; Auto continues it")
                 color: AppPalette.textSecond
                 font.pixelSize: Tokens.fontSm
                 wrapMode: Text.WordWrap
@@ -302,6 +573,56 @@ Item {
                 danger: root.confirmPending
                 text: root.confirmPending ? qsTr("Tap again to go") : qsTr("Go here")
                 onClicked: root.tapGo()
+            }
+        }
+    }
+
+    CardFrame {
+        id: targetCard
+        visible: root.hostsView && !!root.ctl && root.ctl.goToTargetSelected && root.ctl.goToTargetOnScreen
+        anchorX: root.ctl ? root.ctl.goToTargetScreen.x : 0
+        anchorY: root.ctl ? root.ctl.goToTargetScreen.y : 0
+        height: targetContent.implicitHeight + Tokens.spaceMd * 2
+
+        Column {
+            id: targetContent
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: Tokens.spaceMd
+            spacing: Tokens.spaceSm
+
+            CardTitle {
+                text: root.ctl && root.ctl.goToArrived ? qsTr("The boat is at the point") : qsTr("The boat is going here")
+                onCloseClicked: if (root.ctl) root.ctl.clearGoToTargetSelection()
+            }
+
+            Text {
+                width: parent.width
+                visible: isFinite(root._targetDistance) && !!root.ctl && !root.ctl.goToArrived
+                text: qsTr("%1 to go").arg(root._fmtDist(root._targetDistance))
+                color: AppPalette.textMuted
+                font.pixelSize: Tokens.fontSm
+                elide: Text.ElideRight
+            }
+
+            Text {
+                width: parent.width
+                visible: !!root.ctl && !root.ctl.goToArrived
+                text: root._arrivalText(root._targetArrival)
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontSm
+                wrapMode: Text.WordWrap
+            }
+
+            KButton {
+                width: parent.width
+                height: Tokens.controlHMd
+                enabled: root._online
+                danger: true
+                text: qsTr("Stop")
+                toolTipText: qsTr("Loiter: the boat stops and holds its position")
+                onClicked: root.stopBoat()
             }
         }
     }

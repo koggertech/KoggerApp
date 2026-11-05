@@ -120,6 +120,7 @@ Item {
 
         GoToPointCard {
             anchors.fill: parent
+            store: root.workspaceRoot ? root.workspaceRoot.store : null
             view: root.scene3dView
             hostsView: !!root.scene3dView && root.scene3dView.parent === hostSurface
         }

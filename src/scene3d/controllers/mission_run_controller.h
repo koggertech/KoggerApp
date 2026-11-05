@@ -61,6 +61,10 @@ class MissionRunController : public QObject
     Q_PROPERTY(double  goToTargetLat    READ goToTargetLat                      NOTIFY goToTargetChanged)
     Q_PROPERTY(double  goToTargetLon    READ goToTargetLon                      NOTIFY goToTargetChanged)
     Q_PROPERTY(bool    goToArrived      READ goToArrived                        NOTIFY goToTargetChanged)
+    /** The accepted "Go here" target was tapped: the QML card offering "Stop" follows goToTargetScreen. */
+    Q_PROPERTY(bool    goToTargetSelected READ goToTargetSelected                NOTIFY goToTargetSelectionChanged)
+    Q_PROPERTY(QPointF goToTargetScreen   READ goToTargetScreen                  NOTIFY goToTargetScreenChanged)
+    Q_PROPERTY(bool    goToTargetOnScreen READ goToTargetOnScreen                NOTIFY goToTargetScreenChanged)
     /** "Go here" colour (the app accent): the target ring and the animated line from the armed vehicle to it. */
     Q_PROPERTY(QColor  goToColor        READ goToColor    WRITE setGoToColor    NOTIFY drawOptionsChanged)
 
@@ -110,6 +114,9 @@ public:
     double goToTargetLon() const { return goToTarget_.lon; }
     bool goToArrived() const { return goToArrived_; }
     QColor goToColor() const { return goToColor_; }
+    bool goToTargetSelected() const { return goToTargetSelected_; }
+    QPointF goToTargetScreen() const { return goToTargetScreen_; }
+    bool goToTargetOnScreen() const { return goToTargetOnScreen_; }
     void setGoToColor(const QColor& color);
 
     /** Selects the navigation point under (x, y); false when nothing was hit (the selection is then cleared). */
@@ -126,6 +133,7 @@ public:
     Q_INVOKABLE void setGoToTarget(double lat, double lon);
     Q_INVOKABLE void clearGoToTarget();
     Q_INVOKABLE void setGoToArrived(bool arrived);
+    Q_INVOKABLE void clearGoToTargetSelection();
 
 signals:
     void layerVisibleChanged();
@@ -136,6 +144,8 @@ signals:
     void goToPickChanged();
     void goToPickScreenChanged();
     void goToTargetChanged();
+    void goToTargetSelectionChanged();
+    void goToTargetScreenChanged();
 
 private:
     void rebuild();
@@ -146,6 +156,10 @@ private:
     void updateShown();
     void updateSelectedScreen();
     void updateGoToPickScreen();
+    void updateGoToTargetScreen();
+    bool screenOf(const mission::GeoPoint& point, QPointF& screen) const;
+    bool hitGoToTarget(qreal x, qreal y) const;
+    void selectGoToTarget();
     bool goToShown() const;
     void appendGoTo(MissionLayer::RenderData& rd) const;
     void setFlowAnimating(bool animating);
@@ -187,6 +201,10 @@ private:
     mission::GeoPoint goToTarget_;
     bool goToArrived_{false};
     QColor goToColor_{34, 211, 238};
+    bool goToTargetSelected_{false};
+    QPointF goToTargetScreen_;
+    bool goToTargetOnScreen_{false};
+    bool goToTargetNotifyQueued_{false};
     QTimer flowAnimation_;
     bool flowAnimating_{false};
 };
