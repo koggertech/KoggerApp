@@ -606,6 +606,11 @@ Item {
             }
             Binding {
                 target: scene3dView.missionRunController
+                property: "goToColor"
+                value: AppPalette.accent
+            }
+            Binding {
+                target: scene3dView.missionRunController
                 property: "showVehicleLine"
                 value: workspace.store ? workspace.store.missionRunShowVehicleLine : true
             }

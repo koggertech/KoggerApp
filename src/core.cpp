@@ -300,6 +300,7 @@ void Core::pushMissionRunTelemetry()
     const AutopilotState& state = dmw->autopilotState();
     mission::RunTelemetry t;
     t.online = state.online;
+    t.armed = state.armState > 0;
     t.transferActive = dmw->missionTransferActive();
     t.transferSilent = dmw->missionTransferSilent();
     t.flightMode = state.flightMode;

@@ -42,15 +42,17 @@ const QColor kSelectedRing(255, 255, 255, 255);
 const QColor kOutline(17, 24, 39, 230);
 
 constexpr float kVehicleLineWidthPx = 1.5f;
+constexpr float kVehicleFlowWidthPx = 2.0f;
 constexpr float kFenceWidthPx = 1.5f;
 constexpr float kLabelledPointPx = 7.0f;
 constexpr float kPathPointPx = 4.0f;
 constexpr float kTargetRingPx = 13.0f;
 constexpr float kSelectedRingPx = 17.0f;
 const QColor kGoToPickColor(255, 255, 255, 245);
-const QColor kGoToColor(34, 211, 238, 245);
 const QColor kGoToArrivedColor(34, 197, 94, 245);
-constexpr int kGoToLineAlpha = 170;
+constexpr int kGoToAlpha = 245;
+constexpr int kGoToStillLineAlpha = 120;
+constexpr int kFlowAnimationIntervalMs = 33;
 constexpr float kGoToLineWidthPx = 2.0f;
 constexpr float kGoToPointPx = 6.0f;
 
@@ -95,6 +97,12 @@ MissionRunController::MissionRunController(GraphicsScene3dView* view, MissionLay
     , view_(view)
     , layer_(layer)
 {
+    flowAnimation_.setInterval(kFlowAnimationIntervalMs);
+    connect(&flowAnimation_, &QTimer::timeout, this, [this]() {
+        if (view_) {
+            view_->update();
+        }
+    });
 }
 
 void MissionRunController::setTracker(mission::MissionRunTracker* tracker)
@@ -110,6 +118,7 @@ void MissionRunController::setTracker(mission::MissionRunTracker* tracker)
         connect(tracker_, &mission::MissionRunTracker::snapshotChanged, this, &MissionRunController::onSnapshotChanged);
         connect(tracker_, &mission::MissionRunTracker::progressChanged, this, &MissionRunController::markDirty);
         connect(tracker_, &mission::MissionRunTracker::vehicleMoved, this, &MissionRunController::markDirty);
+        connect(tracker_, &mission::MissionRunTracker::armedChanged, this, &MissionRunController::markDirty);
     }
     onSnapshotChanged();
 }
@@ -353,6 +362,26 @@ void MissionRunController::setGoToArrived(bool arrived)
     markDirty();
 }
 
+void MissionRunController::setGoToColor(const QColor& color)
+{
+    setColorOption(goToColor_, color);
+}
+
+void MissionRunController::setFlowAnimating(bool animating)
+{
+    if (animating == flowAnimating_) {
+        return;
+    }
+    flowAnimating_ = animating;
+    QMetaObject::invokeMethod(this, [this, animating]() {
+        if (animating) {
+            flowAnimation_.start();
+        } else {
+            flowAnimation_.stop();
+        }
+    }, Qt::QueuedConnection);
+}
+
 bool MissionRunController::goToShown() const
 {
     return !editorActive_ && (goToPick_.isValid() || goToTarget_.isValid());
@@ -385,12 +414,16 @@ void MissionRunController::updateGoToPickScreen()
 void MissionRunController::appendGoTo(MissionLayer::RenderData& rd) const
 {
     if (goToTarget_.isValid()) {
-        const QColor color = goToArrived_ ? kGoToArrivedColor : kGoToColor;
+        const QColor color = goToArrived_ ? kGoToArrivedColor : withAlpha(goToColor_, kGoToAlpha);
         const mission::GeoPoint vehicle = tracker_ ? tracker_->vehiclePosition() : mission::GeoPoint();
-        if (!goToArrived_ && vehicle.isValid()) {
-            appendLeg(rd, vehicle, goToTarget_, withAlpha(color, kGoToLineAlpha), kGoToLineWidthPx, false);
-        }
         const QVector3D world = toScene(goToTarget_);
+        if (!goToArrived_ && vehicle.isValid()) {
+            if (tracker_->armed()) {
+                rd.flows.append(MissionLayer::Flow{toScene(vehicle), world, color, kGoToLineWidthPx});
+            } else {
+                appendLeg(rd, vehicle, goToTarget_, withAlpha(color, kGoToStillLineAlpha), kGoToLineWidthPx, false);
+            }
+        }
         appendPoint(rd, world, color, kGoToPointPx, QString());
         appendRing(rd, world, color, kTargetRingPx);
     }
@@ -555,6 +588,7 @@ void MissionRunController::rebuild()
     MissionLayer::RenderData rd;
     rd.enabled = shown() || goToShown();
     if (!rd.enabled || !layer_) {
+        setFlowAnimating(false);
         if (layer_) {
             layer_->setRenderData(rd);
         }
@@ -562,6 +596,7 @@ void MissionRunController::rebuild()
     }
     if (!shown()) {
         appendGoTo(rd);
+        setFlowAnimating(!rd.flows.isEmpty());
         layer_->setRenderData(rd);
         return;
     }
@@ -599,7 +634,11 @@ void MissionRunController::rebuild()
 
     const mission::GeoPoint vehicle = tracker_->vehiclePosition();
     if (showVehicleLine_ && targetIdx >= 0 && targetIdx < positions.size() && vehicle.isValid() && tracker_->running()) {
-        appendLeg(rd, vehicle, positions.at(targetIdx), withAlpha(currentColor_, kVehicleLineAlpha), kVehicleLineWidthPx, false);
+        if (tracker_->armed()) {
+            rd.flows.append(MissionLayer::Flow{toScene(vehicle), toScene(positions.at(targetIdx)), withAlpha(currentColor_, kCurrentAlpha), kVehicleFlowWidthPx});
+        } else {
+            appendLeg(rd, vehicle, positions.at(targetIdx), withAlpha(currentColor_, kVehicleLineAlpha), kVehicleLineWidthPx, false);
+        }
     }
 
     for (int k = 0; k < seqs.size(); ++k) {
@@ -649,5 +688,6 @@ void MissionRunController::rebuild()
     }
 
     appendGoTo(rd);
+    setFlowAnimating(!rd.flows.isEmpty());
     layer_->setRenderData(rd);
 }

@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QPointF>
 #include <QString>
+#include <QTimer>
 #include <QVector>
 #include <QVector3D>
 
@@ -60,6 +61,8 @@ class MissionRunController : public QObject
     Q_PROPERTY(double  goToTargetLat    READ goToTargetLat                      NOTIFY goToTargetChanged)
     Q_PROPERTY(double  goToTargetLon    READ goToTargetLon                      NOTIFY goToTargetChanged)
     Q_PROPERTY(bool    goToArrived      READ goToArrived                        NOTIFY goToTargetChanged)
+    /** "Go here" colour (the app accent): the target ring and the animated line from the armed vehicle to it. */
+    Q_PROPERTY(QColor  goToColor        READ goToColor    WRITE setGoToColor    NOTIFY drawOptionsChanged)
 
 public:
     MissionRunController(GraphicsScene3dView* view, MissionLayer* layer, QObject* parent = nullptr);
@@ -106,6 +109,8 @@ public:
     double goToTargetLat() const { return goToTarget_.lat; }
     double goToTargetLon() const { return goToTarget_.lon; }
     bool goToArrived() const { return goToArrived_; }
+    QColor goToColor() const { return goToColor_; }
+    void setGoToColor(const QColor& color);
 
     /** Selects the navigation point under (x, y); false when nothing was hit (the selection is then cleared). */
     bool onTap(qreal x, qreal y);
@@ -143,6 +148,7 @@ private:
     void updateGoToPickScreen();
     bool goToShown() const;
     void appendGoTo(MissionLayer::RenderData& rd) const;
+    void setFlowAnimating(bool animating);
     void onSnapshotChanged();
     void appendLeg(MissionLayer::RenderData& rd, const mission::GeoPoint& a, const mission::GeoPoint& b, const QColor& color, float widthPx, bool arrow) const;
     QVector3D toScene(const mission::GeoPoint& p) const;
@@ -180,4 +186,7 @@ private:
     bool goToScreenNotifyQueued_{false};
     mission::GeoPoint goToTarget_;
     bool goToArrived_{false};
+    QColor goToColor_{34, 211, 238};
+    QTimer flowAnimation_;
+    bool flowAnimating_{false};
 };

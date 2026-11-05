@@ -3088,194 +3088,194 @@ udp://@:1234
 <context>
     <name>Core</name>
     <message>
-        <location filename="../src/core.cpp" line="3603"/>
+        <location filename="../src/core.cpp" line="3604"/>
         <source>Internet connection restored</source>
         <translation>Internet connection restored</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="3604"/>
+        <location filename="../src/core.cpp" line="3605"/>
         <source>Internet connection lost</source>
         <translation>Internet connection lost</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="3616"/>
+        <location filename="../src/core.cpp" line="3617"/>
         <source>Metered network detected</source>
         <translation>Metered network detected</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2740"/>
-        <location filename="../src/core.cpp" line="2764"/>
+        <location filename="../src/core.cpp" line="2741"/>
+        <location filename="../src/core.cpp" line="2765"/>
         <source>street</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1481"/>
+        <location filename="../src/core.cpp" line="1482"/>
         <source>USBL diagnostics exported to CSV (%1 reports): %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1990"/>
+        <location filename="../src/core.cpp" line="1991"/>
         <source>Export failed: no log file is open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2003"/>
+        <location filename="../src/core.cpp" line="2004"/>
         <source>Export failed: this file has no epoch index</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2017"/>
-        <location filename="../src/core.cpp" line="2028"/>
+        <location filename="../src/core.cpp" line="2018"/>
+        <location filename="../src/core.cpp" line="2029"/>
         <source>Export failed: cannot read %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2064"/>
+        <location filename="../src/core.cpp" line="2065"/>
         <source>KLF fragment saved: %1 (%2 epochs, %3 MB)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2746"/>
-        <location filename="../src/core.cpp" line="2752"/>
-        <location filename="../src/core.cpp" line="2758"/>
+        <location filename="../src/core.cpp" line="2747"/>
+        <location filename="../src/core.cpp" line="2753"/>
+        <location filename="../src/core.cpp" line="2759"/>
         <source>satellite</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="3205"/>
+        <location filename="../src/core.cpp" line="3206"/>
         <source>Connected</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="3205"/>
+        <location filename="../src/core.cpp" line="3206"/>
         <source>Connected: %1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="3216"/>
+        <location filename="../src/core.cpp" line="3217"/>
         <source>Disconnected</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="3216"/>
+        <location filename="../src/core.cpp" line="3217"/>
         <source>Disconnected: %1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="970"/>
+        <location filename="../src/core.cpp" line="971"/>
         <source>KLF logging disabled</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="962"/>
+        <location filename="../src/core.cpp" line="963"/>
         <source>KLF logging not started</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1277"/>
+        <location filename="../src/core.cpp" line="1278"/>
         <source>CSV logging disabled</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1269"/>
+        <location filename="../src/core.cpp" line="1270"/>
         <source>CSV logging not started</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="959"/>
+        <location filename="../src/core.cpp" line="960"/>
         <source>KLF logging started:
 %1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="968"/>
+        <location filename="../src/core.cpp" line="969"/>
         <source>KLF log saved:
 %1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1266"/>
+        <location filename="../src/core.cpp" line="1267"/>
         <source>CSV logging started:
 %1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1275"/>
+        <location filename="../src/core.cpp" line="1276"/>
         <source>CSV log saved:
 %1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1162"/>
+        <location filename="../src/core.cpp" line="1163"/>
         <source>Invalid log folder:
 %1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1168"/>
+        <location filename="../src/core.cpp" line="1169"/>
         <source>Log folder is not writable:
 %1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2927"/>
+        <location filename="../src/core.cpp" line="2928"/>
         <source>File opened</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2928"/>
+        <location filename="../src/core.cpp" line="2929"/>
         <source>File opened: %1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="748"/>
+        <location filename="../src/core.cpp" line="749"/>
         <source>File closed</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="749"/>
+        <location filename="../src/core.cpp" line="750"/>
         <source>File closed: %1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1895"/>
+        <location filename="../src/core.cpp" line="1896"/>
         <source>Exported to CSV: %1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2099"/>
+        <location filename="../src/core.cpp" line="2100"/>
         <source>Exported to XTF: %1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1365"/>
+        <location filename="../src/core.cpp" line="1366"/>
         <source>Complex signals exported to CSV: %1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1528"/>
+        <location filename="../src/core.cpp" line="1529"/>
         <source>USBL exported to CSV: %1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1997"/>
-        <location filename="../src/core.cpp" line="2076"/>
+        <location filename="../src/core.cpp" line="1998"/>
+        <location filename="../src/core.cpp" line="2077"/>
         <source>Export failed</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1313"/>
-        <location filename="../src/core.cpp" line="1362"/>
-        <location filename="../src/core.cpp" line="1457"/>
-        <location filename="../src/core.cpp" line="1478"/>
-        <location filename="../src/core.cpp" line="1492"/>
-        <location filename="../src/core.cpp" line="1525"/>
-        <location filename="../src/core.cpp" line="1620"/>
-        <location filename="../src/core.cpp" line="1892"/>
-        <location filename="../src/core.cpp" line="2039"/>
-        <location filename="../src/core.cpp" line="2060"/>
-        <location filename="../src/core.cpp" line="2084"/>
-        <location filename="../src/core.cpp" line="2096"/>
+        <location filename="../src/core.cpp" line="1314"/>
+        <location filename="../src/core.cpp" line="1363"/>
+        <location filename="../src/core.cpp" line="1458"/>
+        <location filename="../src/core.cpp" line="1479"/>
+        <location filename="../src/core.cpp" line="1493"/>
+        <location filename="../src/core.cpp" line="1526"/>
+        <location filename="../src/core.cpp" line="1621"/>
+        <location filename="../src/core.cpp" line="1893"/>
+        <location filename="../src/core.cpp" line="2040"/>
+        <location filename="../src/core.cpp" line="2061"/>
+        <location filename="../src/core.cpp" line="2085"/>
+        <location filename="../src/core.cpp" line="2097"/>
         <source>Export failed: %1</source>
         <translation></translation>
     </message>
@@ -12542,7 +12542,7 @@ udp://@:1234
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="3266"/>
+        <location filename="../src/core.cpp" line="3267"/>
         <source>File</source>
         <translation>File</translation>
     </message>
@@ -15623,7 +15623,7 @@ udp://@:1234
     <name>WorkspaceView</name>
     <message>
         <location filename="../qml/app/WorkspaceView.qml" line="48"/>
-        <location filename="../qml/app/WorkspaceView.qml" line="782"/>
+        <location filename="../qml/app/WorkspaceView.qml" line="787"/>
         <source>Echogram</source>
         <translation>Echogram</translation>
     </message>
@@ -15634,7 +15634,7 @@ udp://@:1234
     </message>
     <message>
         <location filename="../qml/app/WorkspaceView.qml" line="47"/>
-        <location filename="../qml/app/WorkspaceView.qml" line="846"/>
+        <location filename="../qml/app/WorkspaceView.qml" line="851"/>
         <source>Global pop-up</source>
         <translation>Global pop-up</translation>
     </message>
