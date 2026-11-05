@@ -350,6 +350,7 @@ public:
     void setEpochSyncEnabled(bool state);
     bool isEpochSyncEnabled() const { return epochSyncEnabled_; }
     void setContactPlacementArmed(bool armed);
+    void setGoToPlacementArmed(bool armed);
 
     void setActiveZeroing(bool state);
 

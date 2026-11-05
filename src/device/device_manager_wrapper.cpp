@@ -172,6 +172,21 @@ void DeviceManagerWrapper::autopilotSetSpeed(double speed)
     workerObject_->autopilotSetSpeed(float(speed));
 }
 
+int DeviceManagerWrapper::ekfPositionState() const
+{
+    const int flags = autopilotState_.ekfFlags;
+    if (flags < 0) {
+        return -1;
+    }
+    const bool position = (flags & (kMavEkfPosHorizAbs | kMavEkfPosHorizRel)) != 0;
+    return (position && (flags & kMavEkfConstPosMode) == 0) ? 1 : 0;
+}
+
+void DeviceManagerWrapper::autopilotGoTo(double latitude, double longitude)
+{
+    workerObject_->autopilotGoTo(latitude, longitude);
+}
+
 void DeviceManagerWrapper::autopilotManualControl(int steering, int throttle)
 {
     workerObject_->sendManualControl(steering, throttle);

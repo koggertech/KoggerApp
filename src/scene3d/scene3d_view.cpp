@@ -630,7 +630,9 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
         }
     }
 
-    if (geoJsonEnabled_) {
+    const bool goToArmed = missionRunController_->goToArmed();
+
+    if (geoJsonEnabled_ && !goToArmed) {
         if (mouseButton == Qt::MouseButton::RightButton) {
             // right-click menu is handled in QML
             QQuickFramebufferObject::update();
@@ -704,7 +706,7 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
         }
     }
 
-    if (mouseButton == Qt::MouseButton::RightButton) {
+    if (mouseButton == Qt::MouseButton::RightButton && !goToArmed && !contactPlacementArmed_) {
         switchToBottomTrackVertexComboSelectionMode(x, y);
     }
 
@@ -766,7 +768,7 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
         }
     }
 
-    if (geoJsonEnabled_) {
+    if (geoJsonEnabled_ && !missionRunController_->goToArmed()) {
         if (geoJsonDragging_ && mouseButton.testFlag(Qt::LeftButton)) {
             const auto movedWorld = calculateIntersectionPoint(toOrig, toDir, geoJsonDragPlaneZ_);
             geoJsonController_->updateVertex(geoJsonDragFeatureId_, geoJsonDragVertexIndex_, sceneToGeojson(movedWorld));
@@ -861,6 +863,17 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
             QVector3D p;
             const bool hasPoint = tryProjectScreenToPlane(x, y, 0.0f, p);
             missionController_->onRelease(p, hasPoint, wasMoved_ || blocked);
+        }
+        switchedToBottomTrackVertexComboSelectionMode_ = false;
+        wasMoved_ = false;
+        wasMovedMouseButton_ = Qt::MouseButton::NoButton;
+        QQuickFramebufferObject::update();
+        return;
+    }
+
+    if (missionRunController_->goToArmed()) {
+        if (!wasMoved_ && mouseButton.testFlag(Qt::LeftButton)) {
+            missionRunController_->onGoToTap(x, y);
         }
         switchedToBottomTrackVertexComboSelectionMode_ = false;
         wasMoved_ = false;
@@ -2357,6 +2370,11 @@ void GraphicsScene3dView::setMissionPlan(mission::MissionPlanController* plan)
 void GraphicsScene3dView::setMissionRun(mission::MissionRunTracker* tracker)
 {
     missionRunController_->setTracker(tracker);
+}
+
+void GraphicsScene3dView::setGoToPlacementArmed(bool armed)
+{
+    missionRunController_->setGoToArmed(armed);
 }
 
 void GraphicsScene3dView::setMissionEditorActive(bool active)

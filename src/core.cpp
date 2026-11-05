@@ -2970,6 +2970,7 @@ void Core::setContactPlacementArmed(bool armed)
     contactPlacementArmed_ = armed;
 
     if (armed) {
+        setGoToPlacementArmed(false);
         setBottomTrackEditTool(0);
         if (scene3dViewPtr_) {
             scene3dViewPtr_->setRulerEnabled(false);
@@ -2989,6 +2990,29 @@ void Core::setContactPlacementArmed(bool armed)
     emit contactPlacementArmedChanged();
 }
 
+void Core::setGoToPlacementArmed(bool armed)
+{
+    if (goToPlacementArmed_ == armed) {
+        return;
+    }
+    goToPlacementArmed_ = armed;
+
+    if (armed) {
+        setContactPlacementArmed(false);
+        setBottomTrackEditTool(0);
+        if (scene3dViewPtr_) {
+            scene3dViewPtr_->setRulerEnabled(false);
+            scene3dViewPtr_->setGeoJsonEnabled(false);
+        }
+    }
+
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->setGoToPlacementArmed(armed);
+    }
+
+    emit goToPlacementArmedChanged();
+}
+
 void Core::setMissionEditorActive(bool active)
 {
     if (missionEditorActive_ == active) {
@@ -2998,6 +3022,7 @@ void Core::setMissionEditorActive(bool active)
 
     if (active) {
         setContactPlacementArmed(false);
+        setGoToPlacementArmed(false);
         setBottomTrackEditTool(0);
         if (scene3dViewPtr_) {
             scene3dViewPtr_->setRulerEnabled(false);

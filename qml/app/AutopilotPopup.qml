@@ -21,6 +21,8 @@ BasePanePopup {
     readonly property int _severityInfo: 6
 
     readonly property var _dmw: (typeof deviceManagerWrapper !== "undefined") ? deviceManagerWrapper : null
+    readonly property var _core: (typeof core !== "undefined") ? core : null
+    readonly property bool _goToArmed: _core ? _core.goToPlacementArmed : false
     readonly property bool _online: _dmw ? _dmw.autopilotOnline : false
     readonly property int _arm: _dmw ? _dmw.pilotArmState : -1
     readonly property int _mode: _dmw ? _dmw.pilotModeState : -1
@@ -82,6 +84,7 @@ BasePanePopup {
     readonly property int _messagesShown: 5
     readonly property real _earthRadiusM: 6371000.0
     readonly property bool _paused: !!_dmw && _dmw.missionState === _missionStatePaused
+    readonly property bool _autoDisarmed: !!_run && _run.running && !_paused && !_armed && _mode === _modeAuto
     readonly property bool _missionKnown: _online && !!_run && _run.known && !_run.vehicleEmpty
     readonly property bool _missionRowVisible: _missionKnown && (_run.running || _paused || (_run.complete && _armed))
     readonly property var _helm: (typeof helm !== "undefined") ? helm : null
@@ -95,6 +98,7 @@ BasePanePopup {
     readonly property int _lossOutcomeUnknown: 0
     readonly property int _lossOutcomeNothing: 1
     readonly property int _modeHold: 4
+    readonly property int _modeAuto: 10
     readonly property int _blockGap: Math.round(8 * _s)
     readonly property int _lossActionHold: 2
     readonly property color _lossInk: !!_loss && _loss.outcome === _lossOutcomeNothing ? AppPalette.linkIdleText : AppPalette.textMuted
@@ -159,9 +163,10 @@ BasePanePopup {
         if (_run.complete) return qsTr("Mission complete")
         var parts = []
         if (_paused) parts.push(qsTr("Paused"))
+        if (_autoDisarmed) parts.push(qsTr("Not armed, the boat is not moving"))
         if (_run.currentNav > 0) parts.push(qsTr("Pt %1/%2").arg(_run.currentNav).arg(_run.navCount))
         if (isFinite(_run.remainingDistance)) parts.push(_fmtDist(_run.remainingDistance))
-        if (isFinite(_run.remainingSeconds)) parts.push("~" + _fmtTime(_run.remainingSeconds))
+        if (isFinite(_run.remainingSeconds) && !_autoDisarmed) parts.push("~" + _fmtTime(_run.remainingSeconds))
         return parts.join(" · ")
     }
 
@@ -336,6 +341,7 @@ BasePanePopup {
         case 176: return qsTr("Mode change")
         case 300: return qsTr("Mission start")
         case 224: return qsTr("Go to point")
+        case 192: return qsTr("Go here")
         case 246: return qsTr("Reboot")
         }
         return qsTr("Command %1").arg(command)
@@ -430,6 +436,8 @@ BasePanePopup {
 
     onPopupVisibleChanged: {
         _cancelArmConfirm()
+        if (!popupVisible && _core)
+            _core.setGoToPlacementArmed(false)
         if (popupVisible) {
             _applySize()
             syncFromStore()
@@ -1121,6 +1129,14 @@ BasePanePopup {
                     }
                 }
 
+                PillButton {
+                    anchors.verticalCenter: parent.verticalCenter
+                    selected: root._goToArmed
+                    iconSource: "qrc:/icons/ui/location_pin.svg"
+                    toolTipText: root._goToArmed ? qsTr("Stop picking a point") : qsTr("Go here: tap a point in the 3D view")
+                    onClicked: if (root._core) root._core.setGoToPlacementArmed(!root._goToArmed)
+                }
+
                 PillSeparator {}
 
                 KCircleIconButton {
@@ -1441,7 +1457,7 @@ BasePanePopup {
                         Text {
                             width: parent.width
                             text: root._missionRowText
-                            color: AppPalette.textStrong
+                            color: root._autoDisarmed ? AppPalette.linkIdleText : AppPalette.textStrong
                             font.pixelSize: Math.round(12 * root._s)
                             font.bold: true
                             elide: Text.ElideRight
@@ -1458,7 +1474,7 @@ BasePanePopup {
                                 width: parent.width * (root._run ? Math.max(0, Math.min(1, root._run.progress)) : 0)
                                 height: parent.height
                                 radius: parent.radius
-                                color: root._paused ? AppPalette.textMuted : AppPalette.accentBar
+                                color: root._paused || root._autoDisarmed ? AppPalette.textMuted : AppPalette.accentBar
                                 Behavior on width { NumberAnimation { duration: Anim.controlMs; easing.type: Anim.controlEasing } }
                             }
                         }
@@ -1469,11 +1485,12 @@ BasePanePopup {
                     id: expandedArea
                     readonly property real gap: root._blockGap
                     readonly property real panelW: lossGrid.implicitWidth + lossPanel.pad * 2
-                    readonly property bool sideBySide: lossPanel.visible && width - panelW - gap >= Math.round(300 * root._s)
+                    readonly property bool rightVisible: lossPanel.visible || messagesPanel.visible
+                    readonly property bool sideBySide: rightVisible && width - panelW - gap >= Math.round(300 * root._s)
                     width: parent.width
                     visible: root.expanded
-                    height: sideBySide ? Math.max(expandedLeft.implicitHeight, lossPanel.height)
-                                       : expandedLeft.implicitHeight + (lossPanel.visible ? gap + lossPanel.height : 0)
+                    height: sideBySide ? Math.max(expandedLeft.implicitHeight, expandedRight.implicitHeight)
+                                       : expandedLeft.implicitHeight + (rightVisible ? gap + expandedRight.implicitHeight : 0)
 
                     Column {
                         id: expandedLeft
@@ -1585,8 +1602,115 @@ BasePanePopup {
                                 }
                             }
                         }
+                    }
+
+                    Column {
+                        id: expandedRight
+                        visible: expandedArea.rightVisible
+                        x: expandedArea.sideBySide ? expandedArea.width - width : 0
+                        y: expandedArea.sideBySide ? 0 : expandedLeft.implicitHeight + expandedArea.gap
+                        width: expandedArea.sideBySide ? expandedArea.panelW : expandedArea.width
+                        spacing: root._blockGap
+
+                        Rectangle {
+                            id: lossPanel
+                            readonly property int pad: Math.round(8 * root._s)
+                            visible: root._lossAvailable
+                            width: parent.width
+                            height: lossColumn.implicitHeight + pad * 2
+                            radius: Tokens.radiusLg
+                            color: AppPalette.bgDeep
+                            border.color: AppPalette.border
+                            border.width: Tokens.cardBorderWidth
+
+                            Column {
+                                id: lossColumn
+                                x: lossPanel.pad
+                                y: lossPanel.pad
+                                width: lossPanel.width - lossPanel.pad * 2
+                                spacing: Math.round(6 * root._s)
+
+                                Grid {
+                                    id: lossGrid
+                                    columns: 2
+                                    columnSpacing: Math.round(10 * root._s)
+                                    rowSpacing: Math.round(6 * root._s)
+                                    verticalItemAlignment: Grid.AlignVCenter
+
+                                    Row {
+                                        spacing: Math.round(5 * root._s)
+
+                                        StatIcon {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: Math.round(14 * root._s)
+                                            source: "qrc:/icons/ui/autopilot-link-off.svg"
+                                            tint: root._lossInk
+                                        }
+                                        Text {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: qsTr("On link loss")
+                                            color: AppPalette.textStrong
+                                            font.pixelSize: Math.round(12 * root._s)
+                                            font.bold: true
+                                        }
+                                        Text {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: {
+                                                if (!root._loss) return ""
+                                                if (root._loss.busy) return qsTr("saving…")
+                                                if (root._loss.reading) return qsTr("reading…")
+                                                return root._loss.delaySeconds >= 0
+                                                        ? qsTr("%1 s").arg(Math.round(root._loss.delaySeconds * 10) / 10) : ""
+                                            }
+                                            color: AppPalette.textMuted
+                                            font.pixelSize: Math.round(11 * root._s)
+                                        }
+                                    }
+                                    Segments {
+                                        items: root._lossSegments
+                                        onPicked: function(value) { root.requestLinkLoss(value) }
+                                    }
+
+                                    Text {
+                                        visible: root._lossActive
+                                        text: qsTr("Mission in Auto")
+                                        color: AppPalette.textMuted
+                                        font.pixelSize: Math.round(11 * root._s)
+                                    }
+                                    Segments {
+                                        visible: root._lossActive
+                                        items: root._lossMissionSegments
+                                        onPicked: function(value) { if (root._loss) root._loss.apply(root._loss.choice, value) }
+                                    }
+                                }
+
+                                Text {
+                                    width: parent.width
+                                    visible: text.length > 0
+                                    textFormat: Text.StyledText
+                                    text: {
+                                        var note = root._lossNote
+                                        if (root._lossWarning.length === 0) return note
+                                        return note + " <font color=\"" + AppPalette.linkIdleText + "\">" + root._lossWarning + "</font>"
+                                    }
+                                    color: AppPalette.textSecond
+                                    font.pixelSize: Math.round(11 * root._s)
+                                    wrapMode: Text.WordWrap
+                                }
+
+                                Text {
+                                    width: parent.width
+                                    visible: !!root._loss && root._loss.error.length > 0
+                                    text: root._loss ? root._loss.error : ""
+                                    color: AppPalette.dangerText
+                                    font.pixelSize: Math.round(11 * root._s)
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                        }
 
                         Panel {
+                            id: messagesPanel
                             width: parent.width
                             visible: !!root._dmw && root._dmw.autopilotMessages.length > 0
                             title: qsTr("Messages")
@@ -1603,105 +1727,6 @@ BasePanePopup {
                                     font.pixelSize: Math.round(11 * root._s)
                                     wrapMode: Text.WordWrap
                                 }
-                            }
-                        }
-                    }
-
-                    Rectangle {
-                        id: lossPanel
-                        readonly property int pad: Math.round(8 * root._s)
-                        visible: root._lossAvailable
-                        x: expandedArea.sideBySide ? expandedArea.width - width : 0
-                        y: expandedArea.sideBySide ? 0 : expandedLeft.implicitHeight + expandedArea.gap
-                        width: expandedArea.sideBySide ? expandedArea.panelW : expandedArea.width
-                        height: lossColumn.implicitHeight + pad * 2
-                        radius: Tokens.radiusLg
-                        color: AppPalette.bgDeep
-                        border.color: AppPalette.border
-                        border.width: Tokens.cardBorderWidth
-
-                        Column {
-                            id: lossColumn
-                            x: lossPanel.pad
-                            y: lossPanel.pad
-                            width: lossPanel.width - lossPanel.pad * 2
-                            spacing: Math.round(6 * root._s)
-
-                            Grid {
-                                id: lossGrid
-                                columns: 2
-                                columnSpacing: Math.round(10 * root._s)
-                                rowSpacing: Math.round(6 * root._s)
-                                verticalItemAlignment: Grid.AlignVCenter
-
-                                Row {
-                                    spacing: Math.round(5 * root._s)
-
-                                    StatIcon {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        width: Math.round(14 * root._s)
-                                        source: "qrc:/icons/ui/autopilot-link-off.svg"
-                                        tint: root._lossInk
-                                    }
-                                    Text {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: qsTr("On link loss")
-                                        color: AppPalette.textStrong
-                                        font.pixelSize: Math.round(12 * root._s)
-                                        font.bold: true
-                                    }
-                                    Text {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: {
-                                            if (!root._loss) return ""
-                                            if (root._loss.busy) return qsTr("saving…")
-                                            if (root._loss.reading) return qsTr("reading…")
-                                            return root._loss.delaySeconds >= 0
-                                                    ? qsTr("%1 s").arg(Math.round(root._loss.delaySeconds * 10) / 10) : ""
-                                        }
-                                        color: AppPalette.textMuted
-                                        font.pixelSize: Math.round(11 * root._s)
-                                    }
-                                }
-                                Segments {
-                                    items: root._lossSegments
-                                    onPicked: function(value) { root.requestLinkLoss(value) }
-                                }
-
-                                Text {
-                                    visible: root._lossActive
-                                    text: qsTr("Mission in Auto")
-                                    color: AppPalette.textMuted
-                                    font.pixelSize: Math.round(11 * root._s)
-                                }
-                                Segments {
-                                    visible: root._lossActive
-                                    items: root._lossMissionSegments
-                                    onPicked: function(value) { if (root._loss) root._loss.apply(root._loss.choice, value) }
-                                }
-                            }
-
-                            Text {
-                                width: parent.width
-                                visible: text.length > 0
-                                textFormat: Text.StyledText
-                                text: {
-                                    var note = root._lossNote
-                                    if (root._lossWarning.length === 0) return note
-                                    return note + " <font color=\"" + AppPalette.linkIdleText + "\">" + root._lossWarning + "</font>"
-                                }
-                                color: AppPalette.textSecond
-                                font.pixelSize: Math.round(11 * root._s)
-                                wrapMode: Text.WordWrap
-                            }
-
-                            Text {
-                                width: parent.width
-                                visible: !!root._loss && root._loss.error.length > 0
-                                text: root._loss ? root._loss.error : ""
-                                color: AppPalette.dangerText
-                                font.pixelSize: Math.round(11 * root._s)
-                                wrapMode: Text.WordWrap
                             }
                         }
                     }

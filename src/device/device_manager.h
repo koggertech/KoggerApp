@@ -65,6 +65,8 @@ struct AutopilotState
     int gpsFixType = -1;
     int gpsSatellites = -1;
     double gpsHdop = NAN;
+    /** EKF_STATUS_REPORT flags of the latched vehicle (MAVLink EKF_STATUS_FLAGS), -1 while none arrived in the last 5 s. */
+    int ekfFlags = -1;
     /** HEARTBEAT of the latched vehicle: MAV_AUTOPILOT and MAV_TYPE, -1 while none. */
     int autopilotKind = -1;
     int vehicleType = -1;
@@ -154,6 +156,13 @@ public slots:
     void autopilotStartMission();
     /** Sets the ground speed of the running mode in m/s (MAV_CMD_DO_CHANGE_SPEED, throttle unchanged); ignored unless positive. */
     void autopilotSetSpeed(float speed);
+    /**
+     * Sends the vehicle to @p latitude / @p longitude (degrees): MAV_CMD_DO_REPOSITION as COMMAND_INT
+     * (ArduPilot rejects it as COMMAND_LONG) with the change-mode flag, so the vehicle switches to
+     * Guided itself; speed 0 keeps the current one, altitude 0 relative to home. The answer arrives as
+     * autopilotCommandAcked(MavCmdDoReposition, result).
+     */
+    void autopilotGoTo(double latitude, double longitude);
     /**
      * Makes mission item @p seq (vehicle list index, 0 = home slot) the current one: the vehicle
      * goes to it on the shortest path, skipping the items in between. Sends
@@ -260,6 +269,7 @@ private:
     void delAllDev();
     void deleteDevicesByLink(QUuid uuid);
     DevQProperty* createDev(QUuid uuid, Link* link, uint8_t addr);
+    void sendCommandInt(uint16_t command, uint8_t frame, int32_t x, int32_t y, float z, float p1 = 0.0f, float p2 = 0.0f);
     void sendCommandLong(uint16_t command, float p1 = 0.0f, float p2 = 0.0f, float p3 = 0.0f, float p4 = 0.0f, float p5 = 0.0f, float p6 = 0.0f, float p7 = 0.0f);
     void checkAutopilotOnline();
     void publishVru();
@@ -382,6 +392,8 @@ private:
     int gpsSatellites_ = -1;
     double gpsHdop_ = NAN;
     qint64 gpsMs_ = -1;
+    int ekfFlags_ = -1;
+    qint64 ekfMs_ = -1;
     qint64 streamRequestMs_ = -1;
     int streamRequests_ = 0;
     int autopilotKind_ = -1;

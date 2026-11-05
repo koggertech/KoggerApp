@@ -53,6 +53,8 @@ public:
     /** Vehicle position from GLOBAL_POSITION_INT of the latched vehicle, NaN while unknown. */
     /** GPS of the latched vehicle (GPS_RAW_INT): MAVLink GPS_FIX_TYPE or -1, satellites or -1, HDOP or NaN. */
     Q_PROPERTY(int gpsFixType READ gpsFixType NOTIFY vruChanged)
+    /** Whether the vehicle's EKF has the horizontal position an armed ArduRover needs for Guided / Loiter / Auto: 1 yes, 0 no, -1 unknown (no EKF_STATUS_REPORT). */
+    Q_PROPERTY(int ekfPositionState READ ekfPositionState NOTIFY vruChanged)
     Q_PROPERTY(int gpsSatellites READ gpsSatellites NOTIFY vruChanged)
     Q_PROPERTY(double gpsHdop READ gpsHdop NOTIFY vruChanged)
     /** Latched vehicle: MAV_AUTOPILOT / MAV_TYPE from HEARTBEAT (-1 = none); AUTOPILOT_VERSION "major.minor.patch" (empty until received), FIRMWARE_VERSION_TYPE (-1 = unknown), git hash. */
@@ -109,6 +111,7 @@ public:
     double               waypointDistance() const { return autopilotState_.mission.waypointDistance; }
     double               crossTrackError() const { return autopilotState_.mission.crossTrackError; }
     int                  gpsFixType() const { return autopilotState_.gpsFixType; }
+    int                  ekfPositionState() const;
     int                  gpsSatellites() const { return autopilotState_.gpsSatellites; }
     double               gpsHdop() const { return autopilotState_.gpsHdop; }
     int                  autopilotKind() const { return autopilotState_.autopilotKind; }
@@ -141,6 +144,8 @@ public:
     Q_INVOKABLE void autopilotSetMissionCurrent(int seq);
     /** Sets the vehicle's ground speed in m/s; see DeviceManager::autopilotSetSpeed. */
     void autopilotSetSpeed(double speed);
+    /** Sends the vehicle to a point in Guided; see DeviceManager::autopilotGoTo. */
+    Q_INVOKABLE void autopilotGoTo(double latitude, double longitude);
     /** Sends one MANUAL_CONTROL frame; see DeviceManager::sendManualControl. */
     void autopilotManualControl(int steering, int throttle);
     /** Hands steering and throttle back to the transmitter; see DeviceManager::releaseManualControl. */

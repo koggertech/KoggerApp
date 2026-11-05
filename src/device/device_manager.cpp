@@ -1,6 +1,7 @@
 #include "device_manager.h"
 #include "device_defs.h"
 #include <algorithm>
+#include <cmath>
 #include <iterator>
 #include <QDateTime>
 #include "location_reader.h"
@@ -24,6 +25,9 @@ constexpr float kCrossTrackStepM = 0.1f;
 constexpr int kMissionSeqMax = 0xFFFF;
 constexpr float kSpeedTypeGround = 1.0f;
 constexpr float kThrottleUnchanged = -1.0f;
+constexpr double kDegE7 = 1.0e7;
+constexpr double kLatitudeMaxDeg = 90.0;
+constexpr double kLongitudeMaxDeg = 180.0;
 constexpr qint64 kStreamWatchdogMs = 10000;
 constexpr int kStreamRequestAttempts = 3;
 constexpr qint64 kVersionRequestIntervalMs = 3000;
@@ -33,6 +37,8 @@ constexpr float kNavOutputIntervalUs = 500000.0f;
 constexpr uint16_t kExtendedStatusRateHz = 2;
 constexpr float kGpsRawIntervalUs = 1000000.0f;
 constexpr qint64 kGpsRawTimeoutMs = 5000;
+constexpr float kEkfStatusIntervalUs = 1000000.0f;
+constexpr qint64 kEkfStatusTimeoutMs = 5000;
 constexpr int kGpsRawFixTypeOffset = 28;
 constexpr int kGpsRawSatellitesOffset = 29;
 constexpr uint8_t kGpsSatellitesUnknown = 0xFF;
@@ -170,6 +176,16 @@ void DeviceManager::autopilotSetSpeed(float speed)
     sendCommandLong(MavCmdDoChangeSpeed, kSpeedTypeGround, speed, kThrottleUnchanged);
 }
 
+void DeviceManager::autopilotGoTo(double latitude, double longitude)
+{
+    if (!std::isfinite(latitude) || !std::isfinite(longitude) || std::abs(latitude) > kLatitudeMaxDeg || std::abs(longitude) > kLongitudeMaxDeg) {
+        emit autopilotCommandAcked(MavCmdDoReposition, MavResultDenied);
+        return;
+    }
+    sendCommandInt(MavCmdDoReposition, kMavFrameGlobalRelativeAlt, int32_t(std::lround(latitude * kDegE7)), int32_t(std::lround(longitude * kDegE7)),
+                   0.0f, 0.0f, kMavDoRepositionFlagsChangeMode);
+}
+
 void DeviceManager::autopilotSetMissionCurrent(int seq)
 {
     if (seq < 0 || seq > kMissionSeqMax) {
@@ -211,6 +227,7 @@ void DeviceManager::requestAutopilotStreams()
     sendCommandLong(MavCmdSetMessageInterval, float(MAVLink_MSG_MISSION_CURRENT::getID()), kMissionCurrentIntervalUs);
     sendCommandLong(MavCmdSetMessageInterval, float(MAVLink_MSG_NAV_CONTROLLER_OUTPUT::getID()), kNavOutputIntervalUs);
     sendCommandLong(MavCmdSetMessageInterval, float(MAVLink_MSG_GPS_RAW_INT::getID()), kGpsRawIntervalUs);
+    sendCommandLong(MavCmdSetMessageInterval, float(MAVLink_MSG_EKF_STATUS_REPORT::getID()), kEkfStatusIntervalUs);
 }
 
 void DeviceManager::sendDataStreamRequest()
@@ -241,6 +258,8 @@ void DeviceManager::resetMissionTelemetry()
     gpsSatellites_ = -1;
     gpsHdop_ = NAN;
     gpsMs_ = -1;
+    ekfFlags_ = -1;
+    ekfMs_ = -1;
 }
 
 void DeviceManager::handleStatusText(const MAVLink_MSG_STATUSTEXT& message)
@@ -281,6 +300,29 @@ void DeviceManager::emitStatusText(int severity, const QString& text)
     }
     core.consoleInfo(QString(">> FC [%1]: %2").arg(severity).arg(trimmed));
     emit autopilotStatusText(severity, trimmed);
+}
+
+void DeviceManager::sendCommandInt(uint16_t command, uint8_t frame, int32_t x, int32_t y, float z, float p1, float p2)
+{
+    if (!vru_.online || vru_.systemId < 0 || autopilotLink_ == nullptr) {
+        emit autopilotCommandAcked(command, MavResultNotSent);
+        return;
+    }
+
+    MAVLink_MSG_COMMAND_INT cmd;
+    cmd.param1 = p1;
+    cmd.param2 = p2;
+    cmd.x = x;
+    cmd.y = y;
+    cmd.z = z;
+    cmd.command = command;
+    cmd.target_system = uint8_t(vru_.systemId);
+    cmd.target_component = uint8_t(vru_.componentId);
+    cmd.frame = frame;
+
+    emit writeMavlinkBytes(autopilot::encodeFrame(vru_.mavlinkVersion, mavlinkSeq_++, MAVLink_MSG_COMMAND_INT::getID(),
+                                                autopilot::payloadOf(cmd), MAVLink_MSG_COMMAND_INT::v1Length()));
+    core.consoleInfo(QString("<< MAVLink: COMMAND_INT %1 frame %2 (%3, %4) to sys %5").arg(command).arg(frame).arg(x).arg(y).arg(vru_.systemId));
 }
 
 void DeviceManager::sendCommandLong(uint16_t command, float p1, float p2, float p3, float p4, float p5, float p6, float p7)
@@ -512,6 +554,7 @@ void DeviceManager::publishVru()
     state.gpsFixType = gpsFixType_;
     state.gpsSatellites = gpsSatellites_;
     state.gpsHdop = gpsHdop_;
+    state.ekfFlags = ekfFlags_;
     state.autopilotKind = autopilotKind_;
     state.vehicleType = vehicleType_;
     state.firmwareVersion = firmwareVersion_;
@@ -570,6 +613,11 @@ void DeviceManager::checkAutopilotOnline()
         gpsSatellites_ = -1;
         gpsHdop_ = NAN;
         gpsMs_ = -1;
+        publishVru();
+    }
+    if (ekfMs_ >= 0 && now - ekfMs_ > kEkfStatusTimeoutMs) {
+        ekfFlags_ = -1;
+        ekfMs_ = -1;
         publishVru();
     }
     if (missionTelemetry_.navValid && heartbeatClock_.elapsed() - navOutputMs_ > kNavOutputTimeoutMs) {
@@ -1202,6 +1250,22 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser fram
                     gpsHdop_ = hdop;
                     gpsMs_ = heartbeatClock_.elapsed();
                     if (changed) {
+                        publishVru();
+                    }
+                }
+
+                if (fromAutopilotComponent && msgId == MAVLink_MSG_EKF_STATUS_REPORT::getID()) {
+                    const auto ekf = mavlink_frame.read<MAVLink_MSG_EKF_STATUS_REPORT>();
+                    const int flags = int(ekf.flags);
+                    const bool changed = flags != ekfFlags_;
+                    ekfFlags_ = flags;
+                    ekfMs_ = heartbeatClock_.elapsed();
+                    if (changed) {
+                        core.consoleInfo(QString(">> MAVLink: EKF_STATUS_REPORT flags 0x%1 (velocity %2, position %3, compass %4)")
+                                             .arg(flags, 4, 16, QLatin1Char('0'))
+                                             .arg(double(ekf.velocity_variance), 0, 'f', 2)
+                                             .arg(double(ekf.pos_horiz_variance), 0, 'f', 2)
+                                             .arg(double(ekf.compass_variance), 0, 'f', 2));
                         publishVru();
                     }
                 }
