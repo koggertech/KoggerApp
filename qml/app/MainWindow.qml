@@ -373,6 +373,16 @@ ApplicationWindow {
             core.setContactPlacementArmed(false)
             return true
         },
+        function() {  // armed "go here" pick mode — Esc drops the pick, then disarms
+            if (typeof core === "undefined" || !core || !core.goToPlacementArmed) return false
+            var ctl = workspaceView.scene3dViewItem ? workspaceView.scene3dViewItem.missionRunController : null
+            if (ctl && ctl.goToPickValid) {
+                ctl.clearGoToPick()
+                return true
+            }
+            core.setGoToPlacementArmed(false)
+            return true
+        },
         function() {  // bottom-track edit palette — Esc closes it (resets tool)
             var toolActive = typeof core !== "undefined" && core && core.bottomTrackEditTool !== 0
             if (!workspaceStore.bottomTrackEditorOpen && !toolActive) return false
@@ -1667,6 +1677,14 @@ ApplicationWindow {
             usblPlan: appUsblPlan
             usblNetwork: appNodesStore
             secondaryPlotItem: secondaryContent ? secondaryContent.plot2DInstance : null
+        }
+
+        PlacementHint {
+            anchors.horizontalCenter: workspaceView.horizontalCenter
+            anchors.bottom: workspaceView.bottom
+            anchors.bottomMargin: Tokens.spaceLg
+            maxWidth: workspaceView.width - Tokens.spaceXl * 2
+            visible: workspaceView.visible && text.length > 0
         }
 
         ConsolePanelDrawer {

@@ -42,11 +42,19 @@ const QColor kSelectedRing(255, 255, 255, 255);
 const QColor kOutline(17, 24, 39, 230);
 
 constexpr float kVehicleLineWidthPx = 1.5f;
+constexpr float kVehicleFlowWidthPx = 2.0f;
 constexpr float kFenceWidthPx = 1.5f;
 constexpr float kLabelledPointPx = 7.0f;
 constexpr float kPathPointPx = 4.0f;
 constexpr float kTargetRingPx = 13.0f;
 constexpr float kSelectedRingPx = 17.0f;
+const QColor kGoToPickColor(255, 255, 255, 245);
+const QColor kGoToArrivedColor(34, 197, 94, 245);
+constexpr int kGoToAlpha = 245;
+constexpr int kGoToStillLineAlpha = 120;
+constexpr int kFlowAnimationIntervalMs = 33;
+constexpr float kGoToLineWidthPx = 2.0f;
+constexpr float kGoToPointPx = 6.0f;
 
 void appendPoint(MissionLayer::RenderData& rd, const QVector3D& world, const QColor& color, float sizePx, const QString& label,
                  MissionLayer::Marker::Shape shape = MissionLayer::Marker::Shape::Circle)
@@ -89,6 +97,12 @@ MissionRunController::MissionRunController(GraphicsScene3dView* view, MissionLay
     , view_(view)
     , layer_(layer)
 {
+    flowAnimation_.setInterval(kFlowAnimationIntervalMs);
+    connect(&flowAnimation_, &QTimer::timeout, this, [this]() {
+        if (view_) {
+            view_->update();
+        }
+    });
 }
 
 void MissionRunController::setTracker(mission::MissionRunTracker* tracker)
@@ -104,6 +118,7 @@ void MissionRunController::setTracker(mission::MissionRunTracker* tracker)
         connect(tracker_, &mission::MissionRunTracker::snapshotChanged, this, &MissionRunController::onSnapshotChanged);
         connect(tracker_, &mission::MissionRunTracker::progressChanged, this, &MissionRunController::markDirty);
         connect(tracker_, &mission::MissionRunTracker::vehicleMoved, this, &MissionRunController::markDirty);
+        connect(tracker_, &mission::MissionRunTracker::armedChanged, this, &MissionRunController::markDirty);
     }
     onSnapshotChanged();
 }
@@ -115,6 +130,7 @@ void MissionRunController::setEditorActive(bool active)
     }
     editorActive_ = active;
     updateShown();
+    updateGoToPickScreen();
     markDirty();
 }
 
@@ -235,6 +251,12 @@ QString MissionRunController::selectedLabel() const
 
 bool MissionRunController::onTap(qreal x, qreal y)
 {
+    if (hitGoToTarget(x, y)) {
+        clearSelection();
+        selectGoToTarget();
+        return true;
+    }
+    clearGoToTargetSelection();
     if (!shown() || !tracker_->actionable()) {
         clearSelection();
         return false;
@@ -268,6 +290,226 @@ bool MissionRunController::onTap(qreal x, qreal y)
     return true;
 }
 
+bool MissionRunController::onGoToTap(qreal x, qreal y)
+{
+    if (!view_ || !view_->m_camera || !view_->m_camera->viewLlaRef_.isInit || editorActive_) {
+        return false;
+    }
+    if (hitGoToTarget(x, y)) {
+        clearGoToPick();
+        selectGoToTarget();
+        return true;
+    }
+    clearGoToTargetSelection();
+    QVector3D p;
+    if (!view_->tryProjectScreenToPlane(x, y, 0.0f, p)) {
+        return false;
+    }
+    const GeoJsonCoord c = view_->sceneToGeojson(QVector3D(p.x(), p.y(), 0.0f));
+    const mission::GeoPoint g(c.lat, c.lon);
+    if (!g.isValid()) {
+        return false;
+    }
+    goToPick_ = g;
+    emit goToPickChanged();
+    updateGoToPickScreen();
+    markDirty();
+    return true;
+}
+
+void MissionRunController::setGoToArmed(bool armed)
+{
+    if (goToArmed_ == armed) {
+        return;
+    }
+    goToArmed_ = armed;
+    if (!armed) {
+        clearGoToPick();
+    }
+}
+
+void MissionRunController::clearGoToPick()
+{
+    if (!goToPick_.isValid()) {
+        return;
+    }
+    goToPick_ = mission::GeoPoint();
+    goToPickOnScreen_ = false;
+    emit goToPickChanged();
+    emit goToPickScreenChanged();
+    markDirty();
+}
+
+void MissionRunController::setGoToTarget(double lat, double lon)
+{
+    const mission::GeoPoint g(lat, lon);
+    if (!g.isValid()) {
+        clearGoToTarget();
+        return;
+    }
+    goToTarget_ = g;
+    goToArrived_ = false;
+    emit goToTargetChanged();
+    markDirty();
+}
+
+void MissionRunController::clearGoToTarget()
+{
+    if (!goToTarget_.isValid() && !goToArrived_) {
+        return;
+    }
+    goToTarget_ = mission::GeoPoint();
+    goToArrived_ = false;
+    emit goToTargetChanged();
+    clearGoToTargetSelection();
+    markDirty();
+}
+
+void MissionRunController::clearGoToTargetSelection()
+{
+    if (!goToTargetSelected_) {
+        return;
+    }
+    goToTargetSelected_ = false;
+    goToTargetOnScreen_ = false;
+    emit goToTargetSelectionChanged();
+    emit goToTargetScreenChanged();
+    markDirty();
+}
+
+void MissionRunController::selectGoToTarget()
+{
+    if (!goToTargetSelected_) {
+        goToTargetSelected_ = true;
+        emit goToTargetSelectionChanged();
+    }
+    updateGoToTargetScreen();
+    markDirty();
+}
+
+bool MissionRunController::screenOf(const mission::GeoPoint& point, QPointF& screen) const
+{
+    if (!point.isValid() || editorActive_ || !view_ || !view_->m_camera || view_->width() <= 0 || view_->height() <= 0) {
+        return false;
+    }
+    screen = toScreen(toScene(point));
+    return std::isfinite(screen.x()) && std::isfinite(screen.y())
+           && screen.x() >= 0.0 && screen.y() >= 0.0 && screen.x() <= view_->width() && screen.y() <= view_->height();
+}
+
+bool MissionRunController::hitGoToTarget(qreal x, qreal y) const
+{
+    QPointF screen;
+    if (!goToTarget_.isValid() || !screenOf(goToTarget_, screen)) {
+        return false;
+    }
+    return QLineF(screen, QPointF(x, y)).length() <= kTapRadiusPx * renderScale();
+}
+
+void MissionRunController::updateGoToTargetScreen()
+{
+    QPointF screen = goToTargetScreen_;
+    const bool onScreen = goToTargetSelected_ && screenOf(goToTarget_, screen);
+    const bool moved = QLineF(screen, goToTargetScreen_).length() > 0.5;
+    if (onScreen == goToTargetOnScreen_ && !moved) {
+        return;
+    }
+    goToTargetOnScreen_ = onScreen;
+    goToTargetScreen_ = screen;
+    if (!goToTargetNotifyQueued_) {
+        goToTargetNotifyQueued_ = true;
+        QMetaObject::invokeMethod(this, [this]() {
+            goToTargetNotifyQueued_ = false;
+            emit goToTargetScreenChanged();
+        }, Qt::QueuedConnection);
+    }
+}
+
+void MissionRunController::setGoToArrived(bool arrived)
+{
+    if (!goToTarget_.isValid() || goToArrived_ == arrived) {
+        return;
+    }
+    goToArrived_ = arrived;
+    emit goToTargetChanged();
+    markDirty();
+}
+
+void MissionRunController::setGoToColor(const QColor& color)
+{
+    setColorOption(goToColor_, color);
+}
+
+void MissionRunController::setFlowAnimating(bool animating)
+{
+    if (animating == flowAnimating_) {
+        return;
+    }
+    flowAnimating_ = animating;
+    QMetaObject::invokeMethod(this, [this, animating]() {
+        if (animating) {
+            flowAnimation_.start();
+        } else {
+            flowAnimation_.stop();
+        }
+    }, Qt::QueuedConnection);
+}
+
+bool MissionRunController::goToShown() const
+{
+    return !editorActive_ && (goToPick_.isValid() || goToTarget_.isValid());
+}
+
+void MissionRunController::updateGoToPickScreen()
+{
+    bool onScreen = false;
+    QPointF screen = goToPickScreen_;
+    if (goToPick_.isValid() && !editorActive_ && view_ && view_->m_camera && view_->width() > 0 && view_->height() > 0) {
+        screen = toScreen(toScene(goToPick_));
+        onScreen = std::isfinite(screen.x()) && std::isfinite(screen.y())
+                   && screen.x() >= 0.0 && screen.y() >= 0.0 && screen.x() <= view_->width() && screen.y() <= view_->height();
+    }
+    const bool moved = QLineF(screen, goToPickScreen_).length() > 0.5;
+    if (onScreen == goToPickOnScreen_ && !moved) {
+        return;
+    }
+    goToPickOnScreen_ = onScreen;
+    goToPickScreen_ = screen;
+    if (!goToScreenNotifyQueued_) {
+        goToScreenNotifyQueued_ = true;
+        QMetaObject::invokeMethod(this, [this]() {
+            goToScreenNotifyQueued_ = false;
+            emit goToPickScreenChanged();
+        }, Qt::QueuedConnection);
+    }
+}
+
+void MissionRunController::appendGoTo(MissionLayer::RenderData& rd) const
+{
+    if (goToTarget_.isValid()) {
+        const QColor color = goToArrived_ ? kGoToArrivedColor : withAlpha(goToColor_, kGoToAlpha);
+        const mission::GeoPoint vehicle = tracker_ ? tracker_->vehiclePosition() : mission::GeoPoint();
+        const QVector3D world = toScene(goToTarget_);
+        if (!goToArrived_ && vehicle.isValid()) {
+            if (tracker_->armed()) {
+                rd.flows.append(MissionLayer::Flow{toScene(vehicle), world, color, kGoToLineWidthPx});
+            } else {
+                appendLeg(rd, vehicle, goToTarget_, withAlpha(color, kGoToStillLineAlpha), kGoToLineWidthPx, false);
+            }
+        }
+        appendPoint(rd, world, color, kGoToPointPx, QString());
+        appendRing(rd, world, color, kTargetRingPx);
+        if (goToTargetSelected_) {
+            appendRing(rd, world, kSelectedRing, kSelectedRingPx);
+        }
+    }
+    if (goToPick_.isValid()) {
+        const QVector3D world = toScene(goToPick_);
+        appendPoint(rd, world, kGoToPickColor, kGoToPointPx, QString(), MissionLayer::Marker::Shape::Plus);
+        appendRing(rd, world, kGoToPickColor, kSelectedRingPx);
+    }
+}
+
 void MissionRunController::clearSelection()
 {
     if (selectedSeq_ < 0) {
@@ -286,6 +528,8 @@ void MissionRunController::rebuildIfNeeded()
         return;
     }
     updateSelectedScreen();
+    updateGoToPickScreen();
+    updateGoToTargetScreen();
     const bool persp = view_->m_camera->getIsPerspective();
     const bool viewRefChanged = (lastViewRef_ != view_->m_camera->viewLlaRef_);
     const bool perspChanged = (lastPerspective_ != persp);
@@ -419,11 +663,18 @@ QPointF MissionRunController::toScreen(const QVector3D& world) const
 void MissionRunController::rebuild()
 {
     MissionLayer::RenderData rd;
-    rd.enabled = shown();
+    rd.enabled = shown() || goToShown();
     if (!rd.enabled || !layer_) {
+        setFlowAnimating(false);
         if (layer_) {
             layer_->setRenderData(rd);
         }
+        return;
+    }
+    if (!shown()) {
+        appendGoTo(rd);
+        setFlowAnimating(!rd.flows.isEmpty());
+        layer_->setRenderData(rd);
         return;
     }
 
@@ -460,7 +711,11 @@ void MissionRunController::rebuild()
 
     const mission::GeoPoint vehicle = tracker_->vehiclePosition();
     if (showVehicleLine_ && targetIdx >= 0 && targetIdx < positions.size() && vehicle.isValid() && tracker_->running()) {
-        appendLeg(rd, vehicle, positions.at(targetIdx), withAlpha(currentColor_, kVehicleLineAlpha), kVehicleLineWidthPx, false);
+        if (tracker_->armed()) {
+            rd.flows.append(MissionLayer::Flow{toScene(vehicle), toScene(positions.at(targetIdx)), withAlpha(currentColor_, kCurrentAlpha), kVehicleFlowWidthPx});
+        } else {
+            appendLeg(rd, vehicle, positions.at(targetIdx), withAlpha(currentColor_, kVehicleLineAlpha), kVehicleLineWidthPx, false);
+        }
     }
 
     for (int k = 0; k < seqs.size(); ++k) {
@@ -509,5 +764,7 @@ void MissionRunController::rebuild()
         appendPoint(rd, toScene(home), kVehicleHomeColor, kLabelledPointPx + 1.0f, QStringLiteral("H"));
     }
 
+    appendGoTo(rd);
+    setFlowAnimating(!rd.flows.isEmpty());
     layer_->setRenderData(rd);
 }

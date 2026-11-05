@@ -7,6 +7,7 @@ Popup {
     id: dialog
 
     property var store: null
+    property string firmwareText: ""
 
     readonly property var params: (typeof autopilotParams !== "undefined") ? autopilotParams : null
     readonly property var dmw: (typeof deviceManagerWrapper !== "undefined") ? deviceManagerWrapper : null
@@ -19,10 +20,16 @@ Popup {
     property string selectedValue: ""
     property string selectedType: ""
     property string editError: ""
+    property string editWarning: ""
+    property var selectedInfo: ({})
     property string message: ""
     property bool rebootConfirmPending: false
 
-    readonly property string statusText: {
+    readonly property string statusText: loadStatusText.length && online && armed
+                                         ? loadStatusText + " · " + qsTr("reboot: disarm first")
+                                         : loadStatusText
+
+    readonly property string loadStatusText: {
         if (!params) return ""
         if (!params.online) return params.count > 0 ? qsTr("No link to the autopilot; values may be out of date") : qsTr("No link to the autopilot")
         if (params.loading) return params.total > 0 ? qsTr("Loading %1 / %2").arg(params.received).arg(params.total) : qsTr("Requesting the list…")
@@ -31,15 +38,32 @@ Popup {
         var text = qsTr("%1 parameters").arg(params.count)
         if (params.missing > 0) text += " · " + qsTr("not received: %1").arg(params.missing)
         if (params.pendingWrites > 0) text += " · " + qsTr("writing: %1").arg(params.pendingWrites)
+        if (params.metadataSource.length)
+            text += " · " + (params.metadataExact ? qsTr("descriptions: %1").arg(params.metadataSource)
+                                                  : qsTr("descriptions: %1 (closest available)").arg(params.metadataSource))
         return text
+    }
+
+    readonly property string limitsText: {
+        var info = selectedInfo
+        if (!info || !selectedName.length) return ""
+        var parts = []
+        var units = info.units && info.units.length ? " " + info.units : ""
+        if (info.hasRange) parts.push(qsTr("range %1…%2%3").arg(info.low).arg(info.high).arg(units))
+        else if (units.length) parts.push(qsTr("units:%1").arg(units))
+        if (info.increment > 0) parts.push(qsTr("step %1").arg(info.increment))
+        if (info.rebootRequired) parts.push(qsTr("reboot required"))
+        if (info.readOnly) parts.push(qsTr("read-only"))
+        return parts.join(" · ")
     }
 
     function select(name, value, type) {
         selectedName = name
         selectedValue = value
         selectedType = type
+        selectedInfo = params ? params.info(name) : ({})
         editField.text = value
-        editError = ""
+        checkEdit()
         editField.forceActiveFocus()
         editField.selectAll()
     }
@@ -48,9 +72,51 @@ Popup {
         selectedName = ""
         selectedValue = ""
         selectedType = ""
+        selectedInfo = ({})
         editError = ""
+        editWarning = ""
         editField.text = ""
         editField.focus = false
+    }
+
+    function checkEdit() {
+        if (!selectedName.length || !params) return
+        editError = params.validate(selectedName, editField.text)
+        editWarning = editError.length ? "" : params.rangeWarning(selectedName, editField.text)
+    }
+
+    function fieldNumber() {
+        var v = Number(editField.text.trim().replace(",", "."))
+        return editField.text.trim().length && isFinite(v) ? v : NaN
+    }
+
+    function valueChosen(value) {
+        return Math.abs(fieldNumber() - value) < 1e-6
+    }
+
+    function typeRange() {
+        return selectedType === "int8" || selectedType === "uint8" ? 256
+             : selectedType === "int16" || selectedType === "uint16" ? 65536
+             : 4294967296
+    }
+
+    function bitMask() {
+        var v = Math.round(fieldNumber())
+        return v < 0 ? v + typeRange() : v
+    }
+
+    function bitSet(bit) {
+        var m = bitMask()
+        return m > 0 && Math.floor(m / Math.pow(2, bit)) % 2 === 1
+    }
+
+    function toggleBit(bit) {
+        var m = bitMask()
+        if (!(m >= 0)) m = 0
+        var p = Math.pow(2, bit)
+        m = bitSet(bit) ? m - p : m + p
+        if (selectedType.indexOf("int") === 0 && m >= typeRange() / 2) m -= typeRange()
+        editField.text = String(m)
     }
 
     function writeSelected() {
@@ -126,11 +192,33 @@ Popup {
             dialog.message = qsTr("%1 was not confirmed; the vehicle reports %2").arg(name).arg(actual)
         }
         function onWriteConfirmed(name, value) {
-            dialog.message = qsTr("%1 = %2 written").arg(name).arg(value)
+            dialog.message = dialog.params.info(name).rebootRequired
+                ? qsTr("%1 = %2 written; reboot the autopilot to apply it").arg(name).arg(value)
+                : qsTr("%1 = %2 written").arg(name).arg(value)
+        }
+        function onMetadataChanged() {
+            if (!dialog.selectedName.length)
+                return
+            dialog.selectedInfo = dialog.params.info(dialog.selectedName)
+            dialog.checkEdit()
         }
         function onStateChanged() {
+            if (dialog.params.loading && dialog.selectedName.length)
+                dialog.clearSelection()
             if (dialog.opened && dialog.params.online && !dialog.params.loadFailed)
                 dialog.params.ensureLoaded()
+        }
+    }
+
+    Connections {
+        target: dialog.params ? dialog.params.params : null
+        ignoreUnknownSignals: true
+        function onDataChanged() {
+            if (!dialog.selectedName.length)
+                return
+            var now = dialog.params.valueText(dialog.selectedName)
+            if (now.length)
+                dialog.selectedValue = now
         }
     }
 
@@ -185,11 +273,25 @@ Popup {
 
         Text {
             id: titleText
-            width: parent.width
+            width: parent.width - (firmwareLabel.visible ? firmwareLabel.width + Tokens.spaceMd : 0)
             text: qsTr("Autopilot parameters")
             color: AppPalette.textStrong
             font.pixelSize: Tokens.fontXl
             font.bold: true
+            elide: Text.ElideRight
+        }
+
+        Text {
+            id: firmwareLabel
+            visible: dialog.firmwareText.length > 0
+            anchors.right: parent.right
+            anchors.baseline: titleText.baseline
+            width: Math.min(implicitWidth, parent.width * 0.5)
+            text: dialog.firmwareText
+            color: AppPalette.textSecond
+            font.pixelSize: Tokens.fontMd
+            horizontalAlignment: Text.AlignRight
+            elide: Text.ElideRight
         }
 
         Text {
@@ -249,8 +351,7 @@ Popup {
                 height: Tokens.controlHMd
                 width: Math.max(Math.round(150 * AppPalette.scale), implicitWidth)
                 danger: dialog.rebootConfirmPending
-                text: dialog.armed ? qsTr("Disarm to reboot")
-                                   : dialog.rebootConfirmPending ? qsTr("Tap again to reboot") : qsTr("Reboot")
+                text: dialog.rebootConfirmPending ? qsTr("Tap again to reboot") : qsTr("Reboot")
                 enabled: dialog.online && !dialog.armed
                 onClicked: dialog.requestReboot()
             }
@@ -273,14 +374,18 @@ Popup {
                 id: groupList
                 anchors.fill: parent
                 anchors.margins: Tokens.spaceXs
+                anchors.leftMargin: groupScroll.width + 2 * Tokens.spaceXs
+                anchors.rightMargin: groupScroll.width + 2 * Tokens.spaceXs
                 clip: true
-                model: dialog.params ? dialog.params.groups : []
+                model: dialog.params ? dialog.params.groupModel : null
                 boundsBehavior: Flickable.StopAtBounds
 
                 delegate: Rectangle {
                     id: groupRow
-                    required property var modelData
-                    readonly property bool current: !!dialog.params && dialog.params.currentGroup === modelData.key
+                    required property string key
+                    required property string title
+                    required property int count
+                    readonly property bool current: !!dialog.params && dialog.params.currentGroup === key
                     width: groupList.width
                     height: Tokens.rowH
                     radius: Tokens.radiusMd
@@ -292,7 +397,7 @@ Popup {
                         anchors.right: groupCount.left
                         anchors.rightMargin: Tokens.spaceSm
                         anchors.verticalCenter: parent.verticalCenter
-                        text: groupRow.modelData.title
+                        text: groupRow.title
                         color: groupRow.current ? AppPalette.textStrong : AppPalette.text
                         font.pixelSize: Tokens.fontBase
                         font.bold: groupRow.current
@@ -304,7 +409,7 @@ Popup {
                         anchors.right: parent.right
                         anchors.rightMargin: Tokens.spaceMd
                         anchors.verticalCenter: parent.verticalCenter
-                        text: groupRow.modelData.count
+                        text: groupRow.count
                         color: AppPalette.textMuted
                         font.pixelSize: Tokens.fontSm
                     }
@@ -313,17 +418,19 @@ Popup {
                         id: groupTap
                         onTapped: {
                             search.text = ""
-                            dialog.params.currentGroup = groupRow.modelData.key
+                            dialog.params.currentGroup = groupRow.key
                         }
                     }
                 }
             }
 
             KScrollBar {
+                id: groupScroll
                 flickable: groupList
                 anchors.top: groupList.top
                 anchors.bottom: groupList.bottom
-                anchors.right: groupList.right
+                anchors.right: parent.right
+                anchors.rightMargin: Tokens.spaceXs
             }
         }
 
@@ -345,6 +452,8 @@ Popup {
                 id: paramList
                 anchors.fill: parent
                 anchors.margins: Tokens.spaceXs
+                anchors.leftMargin: paramScroll.width + 2 * Tokens.spaceXs
+                anchors.rightMargin: paramScroll.width + 2 * Tokens.spaceXs
                 clip: true
                 model: dialog.params ? dialog.params.params : null
                 boundsBehavior: Flickable.StopAtBounds
@@ -356,37 +465,81 @@ Popup {
                     required property string typeText
                     required property bool pending
                     required property bool failed
+                    required property string displayName
+                    required property string units
+                    required property string valueLabel
+                    required property bool readOnly
                     readonly property bool current: dialog.selectedName === name
                     width: paramList.width
-                    height: Tokens.rowH
+                    height: Tokens.rowH + Tokens.fontSm + Tokens.spaceXs
                     radius: Tokens.radiusMd
                     color: current ? AppPalette.accentBg : paramTap.pressed ? AppPalette.cardHover : "transparent"
 
-                    Text {
+                    Column {
                         anchors.left: parent.left
                         anchors.leftMargin: Tokens.spaceMd
-                        anchors.right: valueLabel.left
+                        anchors.right: valueColumn.left
                         anchors.rightMargin: Tokens.spaceMd
                         anchors.verticalCenter: parent.verticalCenter
-                        text: paramRow.name
-                        color: AppPalette.text
-                        font.pixelSize: Tokens.fontBase
-                        font.family: "monospace"
-                        elide: Text.ElideRight
+
+                        Text {
+                            width: parent.width
+                            text: paramRow.name
+                            color: paramRow.readOnly ? AppPalette.textMuted : AppPalette.text
+                            font.pixelSize: Tokens.fontBase
+                            font.family: "monospace"
+                            elide: Text.ElideRight
+                        }
+
+                        Text {
+                            width: parent.width
+                            visible: paramRow.displayName.length > 0
+                            text: paramRow.displayName
+                            color: AppPalette.textMuted
+                            font.pixelSize: Tokens.fontSm
+                            elide: Text.ElideRight
+                        }
+                    }
+
+                    Column {
+                        id: valueColumn
+                        anchors.right: unitsLabel.left
+                        anchors.rightMargin: Tokens.spaceSm
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.round(170 * AppPalette.scale)
+
+                        Text {
+                            id: valueTextLabel
+                            width: parent.width
+                            horizontalAlignment: Text.AlignRight
+                            text: paramRow.valueText
+                            color: paramRow.failed ? AppPalette.dangerText : paramRow.pending ? AppPalette.accentText : AppPalette.textStrong
+                            font.pixelSize: Tokens.fontBase
+                            font.bold: true
+                            elide: Text.ElideLeft
+                        }
+
+                        Text {
+                            width: parent.width
+                            visible: paramRow.valueLabel.length > 0
+                            horizontalAlignment: Text.AlignRight
+                            text: paramRow.valueLabel
+                            color: AppPalette.textSecond
+                            font.pixelSize: Tokens.fontSm
+                            elide: Text.ElideRight
+                        }
                     }
 
                     Text {
-                        id: valueLabel
+                        id: unitsLabel
                         anchors.right: stateLabel.left
                         anchors.rightMargin: Tokens.spaceMd
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: Math.round(140 * AppPalette.scale)
-                        horizontalAlignment: Text.AlignRight
-                        text: paramRow.valueText
-                        color: paramRow.failed ? AppPalette.dangerText : paramRow.pending ? AppPalette.accentText : AppPalette.textStrong
-                        font.pixelSize: Tokens.fontBase
-                        font.bold: true
-                        elide: Text.ElideLeft
+                        y: valueColumn.y + valueTextLabel.y + valueTextLabel.baselineOffset - baselineOffset
+                        width: Math.round(76 * AppPalette.scale)
+                        text: paramRow.units
+                        color: AppPalette.textSecond
+                        font.pixelSize: Tokens.fontSm
+                        elide: Text.ElideRight
                     }
 
                     Text {
@@ -421,10 +574,12 @@ Popup {
             }
 
             KScrollBar {
+                id: paramScroll
                 flickable: paramList
                 anchors.top: paramList.top
                 anchors.bottom: paramList.bottom
-                anchors.right: paramList.right
+                anchors.right: parent.right
+                anchors.rightMargin: Tokens.spaceXs
             }
 
             Text {
@@ -448,106 +603,194 @@ Popup {
             anchors.right: parent.right
             anchors.bottom: footer.top
             anchors.bottomMargin: Tokens.spaceMd
-            height: Tokens.controlHMd + 2 * Tokens.spaceMd + (editErrorText.visible ? editErrorText.implicitHeight + Tokens.spaceXs : 0)
+            height: editorColumn.implicitHeight + 2 * Tokens.spaceMd
             radius: Tokens.radiusLg
             color: AppPalette.card
             border.color: AppPalette.border
             border.width: 1
 
-            Text {
-                id: editName
-                anchors.left: parent.left
-                anchors.leftMargin: Tokens.spaceMd
-                anchors.top: parent.top
-                anchors.topMargin: Tokens.spaceMd
-                height: Tokens.controlHMd
-                width: Math.round(200 * AppPalette.scale)
-                verticalAlignment: Text.AlignVCenter
-                text: dialog.selectedName.length ? dialog.selectedName : qsTr("Tap a parameter to change it")
-                color: dialog.selectedName.length ? AppPalette.textStrong : AppPalette.textMuted
-                font.pixelSize: Tokens.fontBase
-                font.bold: dialog.selectedName.length > 0
-                elide: Text.ElideRight
-            }
+            Column {
+                id: editorColumn
+                x: Tokens.spaceMd
+                y: Tokens.spaceMd
+                width: parent.width - 2 * Tokens.spaceMd
+                spacing: Tokens.spaceXs
 
-            Rectangle {
-                id: editBox
-                anchors.left: editName.right
-                anchors.leftMargin: Tokens.spaceMd
-                anchors.right: writeButton.left
-                anchors.rightMargin: Tokens.spaceSm
-                anchors.verticalCenter: editName.verticalCenter
-                height: Tokens.controlHMd
-                visible: dialog.selectedName.length > 0
-                radius: Tokens.radiusMd
-                color: AppPalette.bg
-                border.width: 1
-                border.color: dialog.editError.length ? AppPalette.dangerBorder
-                            : editField.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                Item {
+                    width: parent.width
+                    height: Tokens.controlHMd
 
-                TextInput {
-                    id: editField
-                    anchors.fill: parent
-                    anchors.leftMargin: Tokens.spaceMd
-                    anchors.rightMargin: Tokens.spaceMd
-                    verticalAlignment: TextInput.AlignVCenter
-                    clip: true
-                    selectByMouse: true
-                    color: AppPalette.text
-                    font.pixelSize: Tokens.fontBase
-                    inputMethodHints: Qt.ImhFormattedNumbersOnly
-                    onTextChanged: if (dialog.selectedName.length && dialog.params) dialog.editError = dialog.params.validate(dialog.selectedName, text)
-                    onAccepted: dialog.writeSelected()
-                    Keys.onEscapePressed: dialog.clearSelection()
+                    Text {
+                        id: editName
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: dialog.selectedName.length ? Math.round(200 * AppPalette.scale) : parent.width
+                        text: dialog.selectedName.length ? dialog.selectedName : qsTr("Tap a parameter to change it")
+                        color: dialog.selectedName.length ? AppPalette.textStrong : AppPalette.textMuted
+                        font.pixelSize: Tokens.fontBase
+                        font.bold: dialog.selectedName.length > 0
+                        elide: Text.ElideRight
+                    }
+
+                    Rectangle {
+                        id: editBox
+                        anchors.left: editName.right
+                        anchors.leftMargin: Tokens.spaceMd
+                        anchors.right: writeButton.left
+                        anchors.rightMargin: Tokens.spaceSm
+                        anchors.verticalCenter: parent.verticalCenter
+                        height: Tokens.controlHMd
+                        visible: dialog.selectedName.length > 0
+                        radius: Tokens.radiusMd
+                        color: AppPalette.bg
+                        border.width: 1
+                        border.color: dialog.editError.length ? AppPalette.dangerBorder
+                                    : editField.activeFocus ? AppPalette.accentBorder : AppPalette.border
+
+                        TextInput {
+                            id: editField
+                            anchors.left: parent.left
+                            anchors.leftMargin: Tokens.spaceMd
+                            anchors.right: nowText.left
+                            anchors.rightMargin: Tokens.spaceSm
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            verticalAlignment: TextInput.AlignVCenter
+                            clip: true
+                            selectByMouse: true
+                            readOnly: !!dialog.selectedInfo.readOnly
+                            color: AppPalette.text
+                            font.pixelSize: Tokens.fontBase
+                            inputMethodHints: Qt.ImhFormattedNumbersOnly
+                            onTextChanged: dialog.checkEdit()
+                            onAccepted: dialog.writeSelected()
+                            Keys.onEscapePressed: dialog.clearSelection()
+                        }
+
+                        Text {
+                            id: nowText
+                            anchors.right: parent.right
+                            anchors.rightMargin: Tokens.spaceMd
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: {
+                                var units = dialog.selectedInfo.units ? " " + dialog.selectedInfo.units : ""
+                                return qsTr("now %1 · %2").arg(dialog.selectedValue + units).arg(dialog.selectedType)
+                            }
+                            color: AppPalette.textMuted
+                            font.pixelSize: Tokens.fontSm
+                        }
+                    }
+
+                    KButton {
+                        id: writeButton
+                        anchors.right: cancelButton.left
+                        anchors.rightMargin: Tokens.spaceSm
+                        anchors.verticalCenter: parent.verticalCenter
+                        height: Tokens.controlHMd
+                        width: Math.max(Math.round(100 * AppPalette.scale), implicitWidth)
+                        visible: dialog.selectedName.length > 0
+                        enabled: dialog.online && !dialog.editError.length && editField.text.length > 0
+                        text: qsTr("Write")
+                        onClicked: dialog.writeSelected()
+                    }
+
+                    KButton {
+                        id: cancelButton
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        height: Tokens.controlHMd
+                        width: Math.max(Math.round(100 * AppPalette.scale), implicitWidth)
+                        visible: dialog.selectedName.length > 0
+                        text: qsTr("Cancel")
+                        onClicked: dialog.clearSelection()
+                    }
                 }
 
                 Text {
-                    anchors.right: parent.right
-                    anchors.rightMargin: Tokens.spaceMd
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: qsTr("now %1 · %2").arg(dialog.selectedValue).arg(dialog.selectedType)
+                    width: parent.width
+                    visible: dialog.selectedName.length > 0 && (dialog.editError.length > 0 || dialog.editWarning.length > 0)
+                    text: dialog.editError.length ? dialog.editError : dialog.editWarning
+                    color: dialog.editError.length ? AppPalette.dangerText : AppPalette.linkIdleText
+                    font.pixelSize: Tokens.fontSm
+                    wrapMode: Text.WordWrap
+                }
+
+                Text {
+                    width: parent.width
+                    visible: text.length > 0
+                    text: {
+                        var info = dialog.selectedInfo
+                        if (!dialog.selectedName.length || !info.displayName) return ""
+                        return info.description && info.description !== info.displayName
+                            ? info.displayName + " — " + info.description
+                            : info.displayName
+                    }
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontSm
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: 3
+                    elide: Text.ElideRight
+                }
+
+                Text {
+                    width: parent.width
+                    visible: text.length > 0
+                    text: dialog.limitsText
                     color: AppPalette.textMuted
                     font.pixelSize: Tokens.fontSm
+                    elide: Text.ElideRight
                 }
-            }
 
-            KButton {
-                id: writeButton
-                anchors.right: cancelButton.left
-                anchors.rightMargin: Tokens.spaceSm
-                anchors.verticalCenter: editName.verticalCenter
-                height: Tokens.controlHMd
-                width: Math.max(Math.round(100 * AppPalette.scale), implicitWidth)
-                visible: dialog.selectedName.length > 0
-                enabled: dialog.online && !dialog.editError.length && editField.text.length > 0
-                text: qsTr("Write")
-                onClicked: dialog.writeSelected()
-            }
+                Flickable {
+                    id: optionsFlick
+                    readonly property var values: dialog.selectedName.length && dialog.selectedInfo.values ? dialog.selectedInfo.values : []
+                    readonly property var bits: dialog.selectedName.length && dialog.selectedInfo.bits ? dialog.selectedInfo.bits : []
+                    width: parent.width
+                    height: Math.min(contentHeight, Math.round(116 * AppPalette.scale))
+                    visible: !dialog.selectedInfo.readOnly && (values.length > 0 || bits.length > 0)
+                    contentWidth: width
+                    contentHeight: optionsFlow.implicitHeight
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
 
-            KButton {
-                id: cancelButton
-                anchors.right: parent.right
-                anchors.rightMargin: Tokens.spaceMd
-                anchors.verticalCenter: editName.verticalCenter
-                height: Tokens.controlHMd
-                width: Math.max(Math.round(100 * AppPalette.scale), implicitWidth)
-                visible: dialog.selectedName.length > 0
-                text: qsTr("Cancel")
-                onClicked: dialog.clearSelection()
-            }
+                    Flow {
+                        id: optionsFlow
+                        width: optionsFlick.width - Tokens.spaceMd
+                        spacing: Tokens.spaceXs
 
-            Text {
-                id: editErrorText
-                anchors.left: editBox.left
-                anchors.right: parent.right
-                anchors.rightMargin: Tokens.spaceMd
-                anchors.top: editBox.bottom
-                anchors.topMargin: Tokens.spaceXs
-                visible: dialog.selectedName.length > 0 && dialog.editError.length > 0
-                text: dialog.editError
-                color: AppPalette.dangerText
-                font.pixelSize: Tokens.fontSm
-                wrapMode: Text.WordWrap
+                        Repeater {
+                            model: optionsFlick.values
+                            delegate: KButton {
+                                id: valueChip
+                                required property var modelData
+                                readonly property bool chosen: dialog.valueChosen(valueChip.modelData.value)
+                                height: Tokens.controlHMd
+                                fontPixelSize: Tokens.fontSm
+                                bold: chosen
+                                normalBg: chosen ? AppPalette.accentBg : AppPalette.card
+                                normalBorder: chosen ? AppPalette.accentBorder : AppPalette.border
+                                text: valueChip.modelData.value + " · " + valueChip.modelData.label
+                                onClicked: editField.text = String(valueChip.modelData.value)
+                            }
+                        }
+
+                        Repeater {
+                            model: optionsFlick.bits
+                            delegate: KButton {
+                                id: bitChip
+                                required property var modelData
+                                readonly property bool chosen: dialog.bitSet(bitChip.modelData.bit)
+                                height: Tokens.controlHMd
+                                fontPixelSize: Tokens.fontSm
+                                bold: chosen
+                                normalBg: chosen ? AppPalette.accentBg : AppPalette.card
+                                normalBorder: chosen ? AppPalette.accentBorder : AppPalette.border
+                                text: bitChip.modelData.bit + " · " + bitChip.modelData.label
+                                onClicked: dialog.toggleBit(bitChip.modelData.bit)
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -564,7 +807,9 @@ Popup {
                 anchors.rightMargin: Tokens.spaceMd
                 anchors.verticalCenter: parent.verticalCenter
                 text: dialog.message.length ? dialog.message
-                                            : qsTr("Names, values and types come from the autopilot; descriptions and limits are not shown yet.")
+                      : dialog.params && dialog.params.metadataSource.length
+                        ? qsTr("Values come from the autopilot; descriptions, units and limits from ArduPilot %1.").arg(dialog.params.metadataSource)
+                        : qsTr("Values come from the autopilot; descriptions and units are available for ArduRover only.")
                 color: dialog.message.length ? AppPalette.text : AppPalette.textMuted
                 font.pixelSize: Tokens.fontSm
                 elide: Text.ElideRight
@@ -679,6 +924,8 @@ Popup {
                     id: diffList
                     anchors.fill: parent
                     anchors.margins: Tokens.spaceXs
+                    anchors.leftMargin: diffScroll.width + 2 * Tokens.spaceXs
+                    anchors.rightMargin: diffScroll.width + 2 * Tokens.spaceXs
                     clip: true
                     model: diffPopup.rows
                     boundsBehavior: Flickable.StopAtBounds
@@ -733,10 +980,12 @@ Popup {
                 }
 
                 KScrollBar {
+                    id: diffScroll
                     flickable: diffList
                     anchors.top: diffList.top
                     anchors.bottom: diffList.bottom
-                    anchors.right: diffList.right
+                    anchors.right: parent.right
+                    anchors.rightMargin: Tokens.spaceXs
                 }
             }
 

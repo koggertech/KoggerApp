@@ -63,8 +63,15 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     QObject::connect(dm, &DeviceManager::autopilotParamFrame, params, &autopilot::AutopilotParams::handleParamValue);
     QObject::connect(params, &autopilot::AutopilotParams::sendMessage, dm, &DeviceManager::sendAutopilotMessage);
     QObject::connect(params, &autopilot::AutopilotParams::rebootRequested, dm, &DeviceManager::autopilotReboot);
-    QObject::connect(this, &DeviceManagerWrapper::vruChanged, params, [this, params]() {
+    linkLoss_ = std::make_unique<autopilot::LinkLossPolicy>(params);
+    autopilot::LinkLossPolicy* linkLoss = linkLoss_.get();
+    QObject::connect(this, &DeviceManagerWrapper::vruChanged, params, [this, params, linkLoss]() {
         params->setVehicle(autopilotState_.online, workerObject_->autopilotSystemId(), workerObject_->autopilotComponentId());
+        params->setFirmware(autopilotState_.autopilotKind, autopilotState_.vehicleType, autopilotState_.firmwareVersion,
+                            autopilotState_.firmwareVersionPending);
+        linkLoss->setVehicle(autopilotState_.online, workerObject_->autopilotSystemId(), workerObject_->autopilotComponentId(),
+                             autopilotState_.autopilotKind, autopilotState_.vehicleType, autopilotState_.flightMode,
+                             autopilotState_.proxyTraffic);
     });
 }
 
@@ -163,6 +170,21 @@ void DeviceManagerWrapper::autopilotSetMissionCurrent(int seq)
 void DeviceManagerWrapper::autopilotSetSpeed(double speed)
 {
     workerObject_->autopilotSetSpeed(float(speed));
+}
+
+int DeviceManagerWrapper::ekfPositionState() const
+{
+    const int flags = autopilotState_.ekfFlags;
+    if (flags < 0) {
+        return -1;
+    }
+    const bool position = (flags & (kMavEkfPosHorizAbs | kMavEkfPosHorizRel)) != 0;
+    return (position && (flags & kMavEkfConstPosMode) == 0) ? 1 : 0;
+}
+
+void DeviceManagerWrapper::autopilotGoTo(double latitude, double longitude)
+{
+    workerObject_->autopilotGoTo(latitude, longitude);
 }
 
 void DeviceManagerWrapper::autopilotManualControl(int steering, int throttle)

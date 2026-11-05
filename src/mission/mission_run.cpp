@@ -177,7 +177,11 @@ void MissionRunTracker::setTelemetry(const RunTelemetry& telemetry)
     const bool wasTransfer = telemetry_.transferActive;
     const int previousMode = wasOnline ? telemetry_.flightMode : -1;
     const int previousSeq = telemetry_.currentSeq;
+    const bool wasArmed = armed();
     telemetry_ = telemetry;
+    if (armed() != wasArmed) {
+        emit armedChanged();
+    }
     if (!telemetry_.online) {
         if (wasOnline) {
             readWanted_ = false;

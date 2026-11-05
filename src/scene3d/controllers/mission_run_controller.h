@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QPointF>
 #include <QString>
+#include <QTimer>
 #include <QVector>
 #include <QVector3D>
 
@@ -49,6 +50,23 @@ class MissionRunController : public QObject
     Q_PROPERTY(QString selectedLabel    READ selectedLabel                      NOTIFY selectionChanged)
     Q_PROPERTY(QPointF selectedScreen   READ selectedScreen                     NOTIFY selectedScreenChanged)
     Q_PROPERTY(bool    selectedOnScreen READ selectedOnScreen                   NOTIFY selectedScreenChanged)
+    /** "Go here": the point tapped while Core::goToPlacementArmed, waiting for confirmation, and where it is on screen. */
+    Q_PROPERTY(bool    goToPickValid    READ goToPickValid                      NOTIFY goToPickChanged)
+    Q_PROPERTY(double  goToPickLat      READ goToPickLat                        NOTIFY goToPickChanged)
+    Q_PROPERTY(double  goToPickLon      READ goToPickLon                        NOTIFY goToPickChanged)
+    Q_PROPERTY(QPointF goToPickScreen   READ goToPickScreen                     NOTIFY goToPickScreenChanged)
+    Q_PROPERTY(bool    goToPickOnScreen READ goToPickOnScreen                   NOTIFY goToPickScreenChanged)
+    /** "Go here": the point the vehicle was sent to and accepted, drawn with a line from the vehicle until cleared; arrived once it was reached. */
+    Q_PROPERTY(bool    goToTargetValid  READ goToTargetValid                    NOTIFY goToTargetChanged)
+    Q_PROPERTY(double  goToTargetLat    READ goToTargetLat                      NOTIFY goToTargetChanged)
+    Q_PROPERTY(double  goToTargetLon    READ goToTargetLon                      NOTIFY goToTargetChanged)
+    Q_PROPERTY(bool    goToArrived      READ goToArrived                        NOTIFY goToTargetChanged)
+    /** The accepted "Go here" target was tapped: the QML card offering "Stop" follows goToTargetScreen. */
+    Q_PROPERTY(bool    goToTargetSelected READ goToTargetSelected                NOTIFY goToTargetSelectionChanged)
+    Q_PROPERTY(QPointF goToTargetScreen   READ goToTargetScreen                  NOTIFY goToTargetScreenChanged)
+    Q_PROPERTY(bool    goToTargetOnScreen READ goToTargetOnScreen                NOTIFY goToTargetScreenChanged)
+    /** "Go here" colour (the app accent): the target ring and the animated line from the armed vehicle to it. */
+    Q_PROPERTY(QColor  goToColor        READ goToColor    WRITE setGoToColor    NOTIFY drawOptionsChanged)
 
 public:
     MissionRunController(GraphicsScene3dView* view, MissionLayer* layer, QObject* parent = nullptr);
@@ -86,11 +104,36 @@ public:
     QPointF selectedScreen() const { return selectedScreen_; }
     bool selectedOnScreen() const { return selectedOnScreen_; }
 
+    bool goToPickValid() const { return goToPick_.isValid(); }
+    double goToPickLat() const { return goToPick_.lat; }
+    double goToPickLon() const { return goToPick_.lon; }
+    QPointF goToPickScreen() const { return goToPickScreen_; }
+    bool goToPickOnScreen() const { return goToPickOnScreen_; }
+    bool goToTargetValid() const { return goToTarget_.isValid(); }
+    double goToTargetLat() const { return goToTarget_.lat; }
+    double goToTargetLon() const { return goToTarget_.lon; }
+    bool goToArrived() const { return goToArrived_; }
+    QColor goToColor() const { return goToColor_; }
+    bool goToTargetSelected() const { return goToTargetSelected_; }
+    QPointF goToTargetScreen() const { return goToTargetScreen_; }
+    bool goToTargetOnScreen() const { return goToTargetOnScreen_; }
+    void setGoToColor(const QColor& color);
+
     /** Selects the navigation point under (x, y); false when nothing was hit (the selection is then cleared). */
     bool onTap(qreal x, qreal y);
+    /** While go-to placement is armed every tap lands here: the water-surface point under (x, y) becomes the pick; false when it cannot be placed. */
+    bool onGoToTap(qreal x, qreal y);
+    bool goToArmed() const { return goToArmed_; }
+    /** Disarming also drops an unconfirmed pick; the accepted target stays. */
+    void setGoToArmed(bool armed);
     void rebuildIfNeeded();
 
     Q_INVOKABLE void clearSelection();
+    Q_INVOKABLE void clearGoToPick();
+    Q_INVOKABLE void setGoToTarget(double lat, double lon);
+    Q_INVOKABLE void clearGoToTarget();
+    Q_INVOKABLE void setGoToArrived(bool arrived);
+    Q_INVOKABLE void clearGoToTargetSelection();
 
 signals:
     void layerVisibleChanged();
@@ -98,6 +141,11 @@ signals:
     void shownChanged();
     void selectionChanged();
     void selectedScreenChanged();
+    void goToPickChanged();
+    void goToPickScreenChanged();
+    void goToTargetChanged();
+    void goToTargetSelectionChanged();
+    void goToTargetScreenChanged();
 
 private:
     void rebuild();
@@ -107,6 +155,14 @@ private:
     void setWidthOption(double& option, double value);
     void updateShown();
     void updateSelectedScreen();
+    void updateGoToPickScreen();
+    void updateGoToTargetScreen();
+    bool screenOf(const mission::GeoPoint& point, QPointF& screen) const;
+    bool hitGoToTarget(qreal x, qreal y) const;
+    void selectGoToTarget();
+    bool goToShown() const;
+    void appendGoTo(MissionLayer::RenderData& rd) const;
+    void setFlowAnimating(bool animating);
     void onSnapshotChanged();
     void appendLeg(MissionLayer::RenderData& rd, const mission::GeoPoint& a, const mission::GeoPoint& b, const QColor& color, float widthPx, bool arrow) const;
     QVector3D toScene(const mission::GeoPoint& p) const;
@@ -137,4 +193,18 @@ private:
     bool screenNotifyQueued_{false};
     QVector<mission::FencePolygon> fence_;
     QVector<mission::GeoPoint> rally_;
+    bool goToArmed_{false};
+    mission::GeoPoint goToPick_;
+    QPointF goToPickScreen_;
+    bool goToPickOnScreen_{false};
+    bool goToScreenNotifyQueued_{false};
+    mission::GeoPoint goToTarget_;
+    bool goToArrived_{false};
+    QColor goToColor_{34, 211, 238};
+    bool goToTargetSelected_{false};
+    QPointF goToTargetScreen_;
+    bool goToTargetOnScreen_{false};
+    bool goToTargetNotifyQueued_{false};
+    QTimer flowAnimation_;
+    bool flowAnimating_{false};
 };

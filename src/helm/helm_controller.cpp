@@ -703,7 +703,9 @@ void HelmController::onParam(const QString& name, float value)
     if (confirmationBusy_ && name == QLatin1String(kParamFsGcs) && int(value) == kFsGcsStopKeepAuto) {
         writeTimer_.stop();
         setConfirmation(ConfirmNone, false);
-        notify(tr("The boat now stops when the link drops"), kSeverityInfo);
+        const QString action = vehicle_ && vehicle_->linkLoss() ? vehicle_->linkLoss()->actionText() : QString();
+        notify(action.isEmpty() ? tr("The link-loss action is on")
+                                : tr("The link-loss action is on: %1").arg(action), kSeverityInfo);
         engage();
         return;
     }

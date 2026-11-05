@@ -30,6 +30,9 @@ ParamTransfer::ParamTransfer(QObject* parent)
     writeTimer_.setSingleShot(true);
     writeTimer_.setInterval(kWriteTimeoutMs);
     connect(&writeTimer_, &QTimer::timeout, this, &ParamTransfer::onWriteTimeout);
+    readTimer_.setSingleShot(true);
+    readTimer_.setInterval(kReadTimeoutMs);
+    connect(&readTimer_, &QTimer::timeout, this, &ParamTransfer::onReadTimeout);
 }
 
 void ParamTransfer::setTarget(int targetSystem, int targetComponent)
@@ -68,6 +71,48 @@ void ParamTransfer::write(const QString& name, float value, int type)
     }
 }
 
+void ParamTransfer::readNames(const QStringList& names)
+{
+    for (const QString& name : names) {
+        if (!name.isEmpty() && !readPending_.contains(name)) {
+            readPending_.append(name);
+        }
+    }
+    if (readPending_.isEmpty()) {
+        return;
+    }
+    readAttempts_ = 1;
+    for (const QString& name : std::as_const(readPending_)) {
+        sendReadName(name);
+    }
+    readTimer_.start();
+}
+
+void ParamTransfer::onReadTimeout()
+{
+    if (readPending_.isEmpty()) {
+        return;
+    }
+    if (readAttempts_ >= kReadAttempts) {
+        finishRead();
+        return;
+    }
+    ++readAttempts_;
+    for (const QString& name : std::as_const(readPending_)) {
+        sendReadName(name);
+    }
+    readTimer_.start();
+}
+
+void ParamTransfer::finishRead()
+{
+    readTimer_.stop();
+    const QStringList missing = readPending_;
+    readPending_.clear();
+    readAttempts_ = 0;
+    emit readFinished(missing);
+}
+
 void ParamTransfer::handleParamValue(const QByteArray& payload)
 {
     const auto value = decodePayload<MAVLink_MSG_PARAM_VALUE>(payload);
@@ -76,6 +121,10 @@ void ParamTransfer::handleParamValue(const QByteArray& payload)
         return;
     }
     emit valueReceived(name, value.param_value, value.param_type, value.param_index, value.param_count);
+
+    if (readPending_.removeOne(name) && readPending_.isEmpty()) {
+        finishRead();
+    }
 
     if (writing_ && name == current_.name && sameValue(value.param_value, current_.value, current_.type)) {
         finishWrite(true, ResultOk);
@@ -123,6 +172,9 @@ void ParamTransfer::abort(int result)
     }
     for (const auto& w : dropped) {
         emit writeFinished(w.name, false, result);
+    }
+    if (!readPending_.isEmpty()) {
+        finishRead();
     }
 }
 

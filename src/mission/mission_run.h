@@ -18,6 +18,7 @@ class MissionPlanController;
 /** Vehicle state the run tracker follows, filled by Core from DeviceManagerWrapper on every change. */
 struct RunTelemetry {
     bool online = false;
+    bool armed = false;
     bool transferActive = false;
     bool transferSilent = false;
     int flightMode = -1;
@@ -112,6 +113,7 @@ public:
     double  remainingDistance() const { return remainingDistance_; }
     double  remainingSeconds() const { return remainingSeconds_; }
     bool    running() const { return running_; }
+    bool    armed() const { return telemetry_.online && telemetry_.armed; }
     bool    complete() const { return complete_; }
     /** The route is past its last navigation item (MISSION_STATE COMPLETE or current seq beyond it). */
     bool    finished() const { return finished_; }
@@ -161,6 +163,7 @@ signals:
     void matchChanged();
     void progressChanged();
     void vehicleMoved();
+    void armedChanged();
     void readAutomaticallyChanged();
     void readRequested();
     void legSpeedRequested(double speed);

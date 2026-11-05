@@ -59,6 +59,14 @@ public:
         QVector3D b;
     };
 
+    struct Flow
+    {
+        QVector3D from;
+        QVector3D to;
+        QColor color;
+        float widthPx{2.0f};
+    };
+
     struct RenderData
     {
         bool enabled{false};
@@ -67,6 +75,7 @@ public:
         QVector<Arrow> arrows;
         QColor arrowColor{255, 255, 255, 220};
         QVector<Marker> markers;
+        QVector<Flow> flows;
         QColor labelColor{255, 255, 255, 255};
         QColor labelBackground{0, 0, 0, 160};
         QColor haloColor{17, 24, 39, 200};

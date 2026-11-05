@@ -11,14 +11,21 @@ constexpr uint8_t kMavModeFlagCustomModeEnabled = 1;
 constexpr float kMavArmForceMagic = 21196.0f;
 constexpr uint8_t kMavDataStreamExtendedStatus = 2;
 constexpr uint8_t kMavParamTypeInt8 = 2;
+constexpr uint8_t kMavAutopilotPx4 = 12;
 constexpr int kMavParamIdLength = 16;
 constexpr int16_t kMavAxisInvalid = INT16_MAX;
 constexpr uint8_t kMavStateActive = 4;
 constexpr uint8_t kMavProtocolVersion = 3;
+constexpr uint8_t kMavFrameGlobalRelativeAlt = 3;
+constexpr float kMavDoRepositionFlagsChangeMode = 1.0f;
+constexpr int kMavEkfPosHorizRel = 8;
+constexpr int kMavEkfPosHorizAbs = 16;
+constexpr int kMavEkfConstPosMode = 128;
 
 enum MavCommandId : uint16_t {
     MavCmdDoSetMode = 176,
     MavCmdDoChangeSpeed = 178,
+    MavCmdDoReposition = 192,
     MavCmdDoSetMissionCurrent = 224,
     MavCmdPreflightRebootShutdown = 246,
     MavCmdMissionStart = 300,
@@ -104,6 +111,38 @@ struct __attribute__((packed)) MAVLink_MSG_COMMAND_LONG
 
     static uint32_t getID() { return 76; }
     static int v1Length() { return 33; }
+};
+
+struct __attribute__((packed)) MAVLink_MSG_COMMAND_INT
+{
+    float param1 = 0.0f;
+    float param2 = 0.0f;
+    float param3 = 0.0f;
+    float param4 = 0.0f;
+    int32_t x = 0;
+    int32_t y = 0;
+    float z = 0.0f;
+    uint16_t command = 0;
+    uint8_t target_system = 0;
+    uint8_t target_component = 0;
+    uint8_t frame = 0;
+    uint8_t current = 0;
+    uint8_t autocontinue = 0;
+
+    static uint32_t getID() { return 75; }
+    static int v1Length() { return 35; }
+};
+
+struct __attribute__((packed)) MAVLink_MSG_EKF_STATUS_REPORT
+{
+    float velocity_variance = 0.0f;
+    float pos_horiz_variance = 0.0f;
+    float pos_vert_variance = 0.0f;
+    float compass_variance = 0.0f;
+    float terrain_alt_variance = 0.0f;
+    uint16_t flags = 0;
+
+    static uint32_t getID() { return 193; }
 };
 
 struct __attribute__((packed)) MAVLink_MSG_COMMAND_ACK
@@ -369,9 +408,30 @@ struct __attribute__((packed)) MAVLink_MSG_GCS_HEARTBEAT
     static int v1Length() { return 9; }
 };
 
+struct __attribute__((packed)) MAVLink_MSG_AUTOPILOT_VERSION
+{
+    uint64_t capabilities = 0;
+    uint64_t uid = 0;
+    uint32_t flight_sw_version = 0;
+    uint32_t middleware_sw_version = 0;
+    uint32_t os_sw_version = 0;
+    uint32_t board_version = 0;
+    uint16_t vendor_id = 0;
+    uint16_t product_id = 0;
+    uint8_t flight_custom_version[8] = {};
+    uint8_t middleware_custom_version[8] = {};
+    uint8_t os_custom_version[8] = {};
+    uint8_t uid2[18] = {};
+
+    static uint32_t getID() { return 148; }
+};
+
 static_assert(sizeof(MAVLink_MSG_COMMAND_LONG) == 33);
+static_assert(sizeof(MAVLink_MSG_AUTOPILOT_VERSION) == 78);
 static_assert(sizeof(MAVLink_MSG_PARAM_VALUE) == 25);
 static_assert(sizeof(MAVLink_MSG_PARAM_SET) == 23);
+static_assert(sizeof(MAVLink_MSG_COMMAND_INT) == 35);
+static_assert(sizeof(MAVLink_MSG_EKF_STATUS_REPORT) == 22);
 static_assert(sizeof(MAVLink_MSG_REQUEST_DATA_STREAM) == 6);
 static_assert(sizeof(MAVLink_MSG_MISSION_SET_CURRENT) == 4);
 static_assert(sizeof(MAVLink_MSG_MISSION_CURRENT) == 18);

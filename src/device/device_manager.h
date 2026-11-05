@@ -19,6 +19,7 @@
 
 class LocationReader;
 struct MAVLink_MSG_STATUSTEXT;
+struct MAVLink_MSG_AUTOPILOT_VERSION;
 
 /**
  * Mission execution as the vehicle reports it. seq / total / state / missionId come from
@@ -64,6 +65,17 @@ struct AutopilotState
     int gpsFixType = -1;
     int gpsSatellites = -1;
     double gpsHdop = NAN;
+    /** EKF_STATUS_REPORT flags of the latched vehicle (MAVLink EKF_STATUS_FLAGS), -1 while none arrived in the last 5 s. */
+    int ekfFlags = -1;
+    /** HEARTBEAT of the latched vehicle: MAV_AUTOPILOT and MAV_TYPE, -1 while none. */
+    int autopilotKind = -1;
+    int vehicleType = -1;
+    /** AUTOPILOT_VERSION: "major.minor.patch" (empty until received), FIRMWARE_VERSION_TYPE (-1 = unknown), git hash. */
+    QString firmwareVersion;
+    int firmwareVersionType = -1;
+    QString firmwareGitHash;
+    /** AUTOPILOT_VERSION is still being requested; false once it arrived or the requests gave up. */
+    bool firmwareVersionPending = false;
     MissionTelemetry mission;
 };
 
@@ -144,6 +156,13 @@ public slots:
     void autopilotStartMission();
     /** Sets the ground speed of the running mode in m/s (MAV_CMD_DO_CHANGE_SPEED, throttle unchanged); ignored unless positive. */
     void autopilotSetSpeed(float speed);
+    /**
+     * Sends the vehicle to @p latitude / @p longitude (degrees): MAV_CMD_DO_REPOSITION as COMMAND_INT
+     * (ArduPilot rejects it as COMMAND_LONG) with the change-mode flag, so the vehicle switches to
+     * Guided itself; speed 0 keeps the current one, altitude 0 relative to home. The answer arrives as
+     * autopilotCommandAcked(MavCmdDoReposition, result).
+     */
+    void autopilotGoTo(double latitude, double longitude);
     /**
      * Makes mission item @p seq (vehicle list index, 0 = home slot) the current one: the vehicle
      * goes to it on the shortest path, skipping the items in between. Sends
@@ -250,6 +269,7 @@ private:
     void delAllDev();
     void deleteDevicesByLink(QUuid uuid);
     DevQProperty* createDev(QUuid uuid, Link* link, uint8_t addr);
+    void sendCommandInt(uint16_t command, uint8_t frame, int32_t x, int32_t y, float z, float p1 = 0.0f, float p2 = 0.0f);
     void sendCommandLong(uint16_t command, float p1 = 0.0f, float p2 = 0.0f, float p3 = 0.0f, float p4 = 0.0f, float p5 = 0.0f, float p6 = 0.0f, float p7 = 0.0f);
     void checkAutopilotOnline();
     void publishVru();
@@ -263,6 +283,9 @@ private:
     void sendMissionSetCurrent(int seq);
     void sendGcsHeartbeat();
     void handleStatusText(const MAVLink_MSG_STATUSTEXT& message);
+    void requestAutopilotVersion();
+    void resetFirmwareInfo();
+    void handleAutopilotVersion(const MAVLink_MSG_AUTOPILOT_VERSION& message);
     void emitStatusText(int severity, const QString& text);
     void flushStatusText();
     void bindAutopilotLink(QUuid uuid, Link* link);
@@ -288,7 +311,7 @@ private:
             componentId(-1),
             mavlinkVersion(2),
             online(false),
-            lastHeartbeatMs(0)
+            lastSeenMs(0)
         {};
 
         void cleanVru()
@@ -307,7 +330,7 @@ private:
             componentId = -1;
             mavlinkVersion = 2;
             online = false;
-            lastHeartbeatMs = 0;
+            lastSeenMs = 0;
         };
 
         float voltage;
@@ -324,7 +347,7 @@ private:
         int componentId;
         int mavlinkVersion;
         bool online;
-        qint64 lastHeartbeatMs;
+        qint64 lastSeenMs;
     };
 
     VruData vru_;
@@ -369,8 +392,20 @@ private:
     int gpsSatellites_ = -1;
     double gpsHdop_ = NAN;
     qint64 gpsMs_ = -1;
+    int ekfFlags_ = -1;
+    qint64 ekfMs_ = -1;
     qint64 streamRequestMs_ = -1;
     int streamRequests_ = 0;
+    int autopilotKind_ = -1;
+    int vehicleType_ = -1;
+    QString firmwareVersion_;
+    int firmwareVersionType_ = -1;
+    QString firmwareGitHash_;
+    bool versionReceived_ = false;
+    bool versionGaveUp_ = false;
+    qint64 versionRequestMs_ = -1;
+    int versionRequests_ = 0;
+    qint64 lastOnlineCheckMs_ = -1;
     bool streamIntervalUnsupported_ = false;
     int statusTextId_ = 0;
     int statusTextSeverity_ = 0;
