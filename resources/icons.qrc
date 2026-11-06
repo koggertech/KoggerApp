@@ -72,6 +72,8 @@
         <file>icons/ui/gamepad-generic.svg</file>
         <file>icons/ui/helm-take.svg</file>
         <file>icons/ui/helm-release.svg</file>
+        <file>icons/ui/helm-auto.svg</file>
+        <file>icons/ui/alert-triangle.svg</file>
         <file>icons/ui/side_scan.svg</file>
         <file>icons/ui/speedboat.svg</file>
         <file>icons/ui/stack.svg</file>

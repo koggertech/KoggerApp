@@ -2362,6 +2362,21 @@
         <source>Firmware</source>
         <translation>Прошивка</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1367"/>
+        <source>Automatic take-over is on</source>
+        <translation>Автоматический захват управления включён</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1367"/>
+        <source>Take control automatically</source>
+        <translation>Брать управление автоматически</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="399"/>
+        <source>Mode change to %1: %2</source>
+        <translation>Смена режима на %1: %2</translation>
+    </message>
 </context>
 <context>
     <name>BottomTrackEditPopup</name>
@@ -3973,6 +3988,34 @@ udp://@:1234
         <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="433"/>
         <source>Timestamp</source>
         <translation>Временная метка</translation>
+    </message>
+</context>
+<context>
+    <name>DeviceManagerWrapper</name>
+    <message>
+        <location filename="../src/device/device_manager_wrapper.cpp" line="147"/>
+        <source>while armed it needs a position estimate (GPS fix and EKF)</source>
+        <translation>в ARM нужна оценка позиции (фикс GPS и EKF)</translation>
+    </message>
+    <message>
+        <location filename="../src/device/device_manager_wrapper.cpp" line="156"/>
+        <source>%1, and a mission on the boat</source>
+        <translation>%1, а также миссия на лодке</translation>
+    </message>
+    <message>
+        <location filename="../src/device/device_manager_wrapper.cpp" line="158"/>
+        <source>%1, and a home position</source>
+        <translation>%1, а также точка дома</translation>
+    </message>
+    <message>
+        <location filename="../src/device/device_manager_wrapper.cpp" line="160"/>
+        <source>%1, and a recorded return path</source>
+        <translation>%1, а также записанный путь возврата</translation>
+    </message>
+    <message>
+        <location filename="../src/device/device_manager_wrapper.cpp" line="163"/>
+        <source>while armed it needs a speed estimate (GPS fix and EKF)</source>
+        <translation>в ARM нужна оценка скорости (фикс GPS и EKF)</translation>
     </message>
 </context>
 <context>
@@ -6491,6 +6534,21 @@ udp://@:1234
         <location filename="../src/helm/helm_controller.cpp" line="473"/>
         <source>Release the throttle to drive again</source>
         <translation>Отпустите газ, чтобы продолжить управление</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="1180"/>
+        <source>Taking gamepad control automatically</source>
+        <translation>Управление с геймпада включается автоматически</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="1134"/>
+        <source>The gamepad keeps dropping — automatic take-over paused</source>
+        <translation>Геймпад отключается снова и снова — автозахват приостановлен</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="1058"/>
+        <source>The vehicle refused %1: %2</source>
+        <translation>Аппарат отклонил %1: %2</translation>
     </message>
 </context>
 <context>
