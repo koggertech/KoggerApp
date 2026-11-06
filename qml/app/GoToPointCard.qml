@@ -67,7 +67,9 @@ Item {
     readonly property real _maxDistanceM: 1000
     readonly property real _earthRadiusM: 6371008.8
     readonly property real _speedStep: 0.5
-    readonly property real _speedMin: typeof missionPlan !== "undefined" && missionPlan ? missionPlan.warnSpeed : 0.8
+    readonly property bool _hasPlanLimits: typeof missionPlan !== "undefined" && !!missionPlan
+    readonly property real _speedMin: _hasPlanLimits ? missionPlan.minSpeed : 0.3
+    readonly property real _speedWarn: _hasPlanLimits ? missionPlan.warnSpeed : 0.8
     readonly property real _speedMax: 10
     readonly property real _speedFallback: 2.0
     readonly property int _arrivalKeep: 0
@@ -531,7 +533,7 @@ Item {
                             horizontalAlignment: Text.AlignHCenter
                             text: root._storedSpeed > 0 ? root._fmtSpeed(root._storedSpeed)
                                 : (isFinite(root._wpSpeed) ? root._fmtSpeed(root._wpSpeed) : "—")
-                            color: AppPalette.textStrong
+                            color: root._storedSpeed > 0 && root._storedSpeed < root._speedWarn ? AppPalette.linkIdleText : AppPalette.textStrong
                             font.pixelSize: Tokens.fontBase
                             font.bold: true
                         }
