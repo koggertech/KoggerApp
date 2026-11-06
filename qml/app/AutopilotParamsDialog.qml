@@ -937,13 +937,14 @@ Popup {
                         width: diffList.width
                         height: Tokens.rowH
 
-                        KCheckBox {
+                        KSwitch {
                             id: diffCheck
                             anchors.left: parent.left
+                            anchors.leftMargin: Tokens.spaceSm
                             anchors.verticalCenter: parent.verticalCenter
-                            text: ""
+                            flat: true
                             checked: diffRow.modelData.selected
-                            onClicked: dialog.params.setDiffSelected(diffRow.index, checked)
+                            onToggled: dialog.params.setDiffSelected(diffRow.index, checked)
                         }
 
                         Text {
