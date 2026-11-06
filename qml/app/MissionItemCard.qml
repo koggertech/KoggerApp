@@ -16,6 +16,21 @@ Rectangle {
     readonly property bool shapeError: (type === "survey" || type === "corridor") && !!(info.error && info.error.length)
     readonly property real _s: AppPalette.scale
     readonly property int spinW: Math.round(110 * _s)
+    readonly property int minSpeedTenths: editor && editor.plan ? Math.round(editor.plan.minSpeed * 10) : 3
+    readonly property int warnSpeedTenths: editor && editor.plan ? Math.round(editor.plan.warnSpeed * 10) : 8
+    readonly property int maxSpeedTenths: 300
+    readonly property var speedSteps: {
+        var s = [0]
+        for (var v = minSpeedTenths; v <= maxSpeedTenths; ++v) s.push(v)
+        return s
+    }
+    readonly property color speedDefaultColor: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
+
+    function speedColor(tenths) {
+        if (tenths <= 0) return speedDefaultColor
+        if (tenths < minSpeedTenths) return AppPalette.linkDownText
+        return tenths < warnSpeedTenths ? AppPalette.linkIdleText : speedDefaultColor
+    }
 
     property Item dragLayer: null
     property int visualIndex: ordinal - 1
@@ -395,7 +410,8 @@ Rectangle {
                     anchors.rightMargin: card.actionsRightMargin
                     anchors.verticalCenter: parent.verticalCenter
                     width: card.spinW; height: Tokens.controlHMd
-                    from: 0; to: 300; stepSize: 1; divisor: 10; decimals: 1
+                    from: 0; to: card.maxSpeedTenths; stepValues: card.speedSteps; divisor: 10; decimals: 1
+                    textColor: card.speedColor(value)
                     toolTipText: qsTr("0 = plan cruise speed")
                     onValueModified: function(v) { card.patch({ speed: v > 0 ? v / 10 : null }) }
                 }
@@ -437,7 +453,8 @@ Rectangle {
                     anchors.rightMargin: card.actionsRightMargin
                     anchors.verticalCenter: parent.verticalCenter
                     width: card.spinW; height: Tokens.controlHMd
-                    from: 0; to: 300; stepSize: 1; divisor: 10; decimals: 1
+                    from: 0; to: card.maxSpeedTenths; stepValues: card.speedSteps; divisor: 10; decimals: 1
+                    textColor: card.speedColor(value)
                     toolTipText: qsTr("0 = plan cruise speed")
                     onValueModified: function(v) { card.patch({ speed: v > 0 ? v / 10 : null }) }
                 }

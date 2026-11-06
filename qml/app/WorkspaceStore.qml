@@ -1261,13 +1261,16 @@ property Settings scene3dPersistedSettings: Settings {
     property bool navigationViewButton: false
     property bool useAngleButton: false
     property bool trackLastDataButton: false
+    property bool smoothFollowButton: true
 }
 property alias navigationViewEnabled: scene3dPersistedSettings.navigationViewButton
 property alias useAngleEnabled: scene3dPersistedSettings.useAngleButton
 property alias trackLastDataEnabled: scene3dPersistedSettings.trackLastDataButton
+property alias smoothFollowEnabled: scene3dPersistedSettings.smoothFollowButton
 
 onNavigationViewEnabledChanged: Scene3dToolBarController.onNavigatorLocationButtonChanged(navigationViewEnabled)
 onUseAngleEnabledChanged: Scene3dToolBarController.onUseAngleLocationButtonChanged(useAngleEnabled)
+onSmoothFollowEnabledChanged: Scene3dToolBarController.onSmoothFollowChanged(smoothFollowEnabled)
 onTrackLastDataEnabledChanged: Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(trackLastDataEnabled)
 
 property Settings scene3dLayerVisibility: Settings {

@@ -12,6 +12,9 @@ BasePanePopup {
     readonly property int _controlH: Math.round(36 * _s)
     readonly property int _sidePad: Math.round(3 * _s)
     readonly property int _gap: Math.round(6 * _s)
+    readonly property int _autoPillInset: Math.round(2 * _s)
+    property bool _helmTakeFailed: false
+    readonly property int _helmTakeFailedMs: 10000
     readonly property int _pad: Math.round(12 * _s)
     readonly property int _armConfirmMinMs: 400
     readonly property int _armConfirmMs: 3000
@@ -279,6 +282,7 @@ BasePanePopup {
     property real _armFirstTapMs: 0
     property int _armFlash: 0
     property int pendingCommand: -1
+    property int _pendingModeTarget: -1
 
     readonly property real _pillW: _pad + statusDot.width + infoColumn.anchors.leftMargin + infoColumn.width
                                    + buttonRow.anchors.leftMargin + buttonRow.width + _sidePad
@@ -385,10 +389,17 @@ BasePanePopup {
     function requestMode(mode) {
         if (!_dmw || !_online || mode === _mode) return
         _cancelArmConfirm()
+        _pendingModeTarget = mode
         _send(176, function() { root._dmw.autopilotSetMode(mode) })
     }
 
     function _warnFailure(command, result) {
+        if (command === 176 && _pendingModeTarget >= 0 && _dmw) {
+            var reason = _dmw.modeRefusalReason(_pendingModeTarget)
+            var head = qsTr("Mode change to %1: %2").arg(_dmw.modeNameFor(_pendingModeTarget)).arg(resultText(result))
+            _log(_severityWarning, reason.length > 0 ? head + " — " + reason : head)
+            return
+        }
         _log(_severityWarning, qsTr("%1: %2").arg(commandText(command)).arg(resultText(result)))
     }
 
@@ -415,7 +426,10 @@ BasePanePopup {
     onInteractionStarted: _dragging = true
     on_OnlineChanged: if (!_online) { _cancelArmConfirm(); _cancelNextConfirm(); _lossNothingPending = false; expanded = false; _pendingJumpSeq = -1 }
     on_NextSeqChanged: _cancelNextConfirm()
-    onExpandedChanged: _cancelNextConfirm()
+    onExpandedChanged: {
+        _cancelNextConfirm()
+        if (expanded) _helmTakeFailed = false
+    }
     on_ArmedChanged: _cancelArmConfirm()
     onArmConfirmPendingChanged: {
         if (armConfirmPending) {
@@ -497,6 +511,26 @@ BasePanePopup {
         id: lossConfirmTimer
         interval: root._armConfirmMs
         onTriggered: root._lossNothingPending = false
+    }
+
+    Connections {
+        target: root._helm
+        ignoreUnknownSignals: true
+        function onEngageFailed(reason) {
+            if (root.expanded) return
+            root._helmTakeFailed = true
+            helmTakeFailedTimer.restart()
+        }
+        function onStateChanged() {
+            if (root._helm.state !== 0)
+                root._helmTakeFailed = false
+        }
+    }
+
+    Timer {
+        id: helmTakeFailedTimer
+        interval: root._helmTakeFailedMs
+        onTriggered: root._helmTakeFailed = false
     }
 
     Loader {
@@ -1139,18 +1173,8 @@ BasePanePopup {
 
                 PillSeparator {}
 
-                KCircleIconButton {
-                    width: root._controlH
-                    height: root._controlH
-                    enabled: root._online
-                    toolTipOnHold: true
+                PillButton {
                     iconSource: "qrc:/icons/ui/adjustments_horizontal.svg"
-                    iconTintColor: AppPalette.text
-                    fillColor: AppPalette.card
-                    fillHoverColor: AppPalette.cardHover
-                    fillPressedColor: AppPalette.bgDeep
-                    borderColor: AppPalette.border
-                    borderHoverColor: AppPalette.borderHover
                     toolTipText: qsTr("Autopilot parameters")
                     onClicked: root.openParamsDialog()
                 }
@@ -1244,8 +1268,9 @@ BasePanePopup {
 
                         anchors.left: helmPadIcon.right
                         anchors.leftMargin: root._gap
-                        anchors.right: helmBars.visible ? helmBars.left
-                                     : helmSettingsButton.visible ? helmSettingsButton.left : helmButton.left
+                        anchors.right: helmWarn.visible ? helmWarn.left
+                                     : helmBars.visible ? helmBars.left
+                                     : helmSettingsButton.visible ? helmSettingsButton.left : helmAutoButton.left
                         anchors.rightMargin: root._gap
                         anchors.verticalCenter: parent.verticalCenter
 
@@ -1319,9 +1344,42 @@ BasePanePopup {
                         }
                     }
 
+                    Item {
+                        id: helmWarn
+                        anchors.right: helmBars.visible ? helmBars.left
+                                     : helmSettingsButton.visible ? helmSettingsButton.left : helmAutoButton.left
+                        anchors.rightMargin: root._gap
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: root._controlH
+                        height: root._controlH
+                        visible: root._helmTakeFailed
+
+                        StatIcon {
+                            id: helmWarnIcon
+                            anchors.centerIn: parent
+                            width: Math.round(20 * root._s)
+                            source: "qrc:/icons/ui/alert-triangle.svg"
+                            tint: AppPalette.linkIdleText
+
+                            SequentialAnimation on opacity {
+                                running: helmWarn.visible
+                                loops: Animation.Infinite
+                                alwaysRunToEnd: true
+                                NumberAnimation { to: 0.25; duration: 550; easing.type: Easing.InOutSine }
+                                NumberAnimation { to: 1.0; duration: 550; easing.type: Easing.InOutSine }
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.expanded = true
+                        }
+                    }
+
                     Row {
                         id: helmBars
-                        anchors.right: helmSettingsButton.visible ? helmSettingsButton.left : helmButton.left
+                        anchors.right: helmSettingsButton.visible ? helmSettingsButton.left : helmAutoButton.left
                         anchors.rightMargin: root._gap
                         anchors.verticalCenter: parent.verticalCenter
                         visible: !!root._helm && root._helm.state === 3
@@ -1358,7 +1416,7 @@ BasePanePopup {
 
                     PillButton {
                         id: helmSettingsButton
-                        anchors.right: helmButton.left
+                        anchors.right: helmAutoButton.left
                         anchors.rightMargin: root._gap
                         anchors.verticalCenter: parent.verticalCenter
                         visible: typeof theme !== "undefined" && !!theme && theme.instrumentsGrade >= 1
@@ -1367,9 +1425,39 @@ BasePanePopup {
                         onClicked: if (root.store) root.store.openAppSettingsAtGroup("app.gamepadhelm")
                     }
 
+                    Rectangle {
+                        readonly property color tint: AppPalette.accent
+                        x: helmAutoButton.x - root._autoPillInset
+                        width: helmButton.x + helmButton.width - helmAutoButton.x + root._autoPillInset * 2
+                        height: root._controlH + root._autoPillInset * 2
+                        anchors.verticalCenter: parent.verticalCenter
+                        radius: height / 2
+                        color: Qt.rgba(tint.r, tint.g, tint.b, 0.32)
+                        border.width: Math.max(1, Math.round(1.5 * root._s))
+                        border.color: tint
+                        opacity: helmAutoButton.selected ? 1 : 0
+                        visible: opacity > 0
+
+                        Behavior on opacity {
+                            NumberAnimation { duration: Anim.fadeMs; easing.type: Anim.fadeEasing }
+                        }
+                    }
+
+                    PillButton {
+                        id: helmAutoButton
+                        anchors.right: helmButton.left
+                        anchors.rightMargin: root._gap
+                        anchors.verticalCenter: parent.verticalCenter
+                        selected: !!root._helm && root._helm.autoEngage
+                        iconSource: "qrc:/icons/ui/helm-auto.svg"
+                        toolTipText: selected ? qsTr("Automatic take-over is on") : qsTr("Take control automatically")
+                        onClicked: if (root._helm) root._helm.autoEngage = !root._helm.autoEngage
+                    }
+
                     PillButton {
                         id: helmButton
                         anchors.right: parent.right
+                        anchors.rightMargin: root._autoPillInset
                         anchors.verticalCenter: parent.verticalCenter
                         danger: root._helmActive
                         toolTipOnHold: false
@@ -1485,7 +1573,8 @@ BasePanePopup {
                     id: expandedArea
                     readonly property real gap: root._blockGap
                     readonly property real panelW: lossGrid.implicitWidth + lossPanel.pad * 2
-                    readonly property bool rightVisible: lossPanel.visible || messagesPanel.visible
+                    readonly property bool hasMessages: !!root._dmw && root._dmw.autopilotMessages.length > 0
+                    readonly property bool rightVisible: root._lossAvailable || hasMessages
                     readonly property bool sideBySide: rightVisible && width - panelW - gap >= Math.round(300 * root._s)
                     width: parent.width
                     visible: root.expanded
@@ -1712,7 +1801,7 @@ BasePanePopup {
                         Panel {
                             id: messagesPanel
                             width: parent.width
-                            visible: !!root._dmw && root._dmw.autopilotMessages.length > 0
+                            visible: expandedArea.hasMessages
                             title: qsTr("Messages")
                             icon: "qrc:/icons/ui/list-details.svg"
 

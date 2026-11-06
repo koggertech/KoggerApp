@@ -36,7 +36,7 @@ Item {
         return ""
     }
     readonly property bool _canSend: _blockReason.length === 0 && !_sending
-    readonly property real _storedSpeed: store ? store.goToSpeed : 0
+    readonly property real _storedSpeed: store && store.goToSpeed > 0 ? Math.max(_speedMin, store.goToSpeed) : 0
     readonly property int _arrival: store ? store.goToArrival : _arrivalKeep
     readonly property bool _missionOnBoat: !!_run && _run.known && !_run.vehicleEmpty
     readonly property var _arrivalItems: [
@@ -67,7 +67,7 @@ Item {
     readonly property real _maxDistanceM: 1000
     readonly property real _earthRadiusM: 6371008.8
     readonly property real _speedStep: 0.5
-    readonly property real _speedMin: 0.5
+    readonly property real _speedMin: typeof missionPlan !== "undefined" && missionPlan ? missionPlan.warnSpeed : 0.8
     readonly property real _speedMax: 10
     readonly property real _speedFallback: 2.0
     readonly property int _arrivalKeep: 0
@@ -164,7 +164,8 @@ Item {
     function _stepSpeed(direction) {
         if (!store) return
         var base = _storedSpeed > 0 ? _storedSpeed : (isFinite(_wpSpeed) ? _wpSpeed : _speedFallback)
-        var next = Math.round((base + direction * _speedStep) / _speedStep) * _speedStep
+        var grid = base / _speedStep
+        var next = (direction > 0 ? Math.floor(grid + 1e-6) + 1 : Math.ceil(grid - 1e-6) - 1) * _speedStep
         store.goToSpeed = Math.max(_speedMin, Math.min(_speedMax, next))
     }
 

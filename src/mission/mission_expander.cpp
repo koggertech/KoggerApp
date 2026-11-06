@@ -77,7 +77,16 @@ ExpandResult expandPlan(const MissionPlan& plan)
 
     std::optional<GeoPoint> previous = plan.home;
 
+    auto checkSpeed = [&](double speed, const QString& id) {
+        if (speed < kMinMissionSpeed) {
+            res.issues.append(PlanIssue{id, QCoreApplication::translate("MissionPlan", "Speed %1 m/s is below %2 m/s: drift outruns the boat and it circles in place").arg(speed, 0, 'g', 3).arg(kMinMissionSpeed, 0, 'f', 1), IssueLevel::Error});
+        } else if (speed < kWarnMissionSpeed) {
+            res.issues.append(PlanIssue{id, QCoreApplication::translate("MissionPlan", "Speed %1 m/s is below %2 m/s: the boat weaves off its course").arg(speed, 0, 'g', 3).arg(kWarnMissionSpeed, 0, 'f', 1), IssueLevel::Warning});
+        }
+    };
+
     if (!plan.items.isEmpty() && plan.settings.cruiseSpeed > 0.0) {
+        checkSpeed(plan.settings.cruiseSpeed, QString());
         m.items.append(changeSpeed(plan.settings.cruiseSpeed, QString()));
     }
     const bool homeValid = plan.home && plan.home->isValid();
@@ -104,6 +113,7 @@ ExpandResult expandPlan(const MissionPlan& plan)
 
     auto withShapeSpeed = [&](const std::optional<double>& speed, const QString& id, const std::function<void()>& body) {
         if (speed && *speed > 0.0) {
+            checkSpeed(*speed, id);
             m.items.append(changeSpeed(*speed, id));
         }
         body();
@@ -125,6 +135,7 @@ ExpandResult expandPlan(const MissionPlan& plan)
                     return;
                 }
                 if (it.speed && *it.speed > 0.0) {
+                    checkSpeed(*it.speed, it.id);
                     m.items.append(changeSpeed(*it.speed, it.id));
                 }
                 pushNav(waypointAt(it.pos, it.id, it.holdTime, it.acceptRadius));

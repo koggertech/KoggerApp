@@ -136,6 +136,12 @@ public:
     qreal                missionTransferProgress() const { return missionTransferProgress_; }
 
     Q_INVOKABLE static QString modeNameFor(int mode);
+    /**
+     * What an armed ArduRover needs to enter @p mode, for a refused mode change: a position estimate for
+     * Loiter, Auto, RTL, SmartRTL, Guided, Follow, Circle and Dock (plus a mission, home or a recorded path for
+     * the three return / mission modes), a speed estimate for Acro and Steering; empty for the rest.
+     */
+    Q_INVOKABLE static QString modeRefusalReason(int mode);
     Q_INVOKABLE void autopilotArm(bool arm);
     Q_INVOKABLE void autopilotArmForce(bool arm);
     Q_INVOKABLE void autopilotSetMode(int customMode);

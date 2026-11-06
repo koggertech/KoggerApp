@@ -56,6 +56,7 @@ class HelmController : public QObject
     Q_PROPERTY(int confirmation READ confirmation NOTIFY confirmationChanged)
     Q_PROPERTY(bool confirmationBusy READ confirmationBusy NOTIFY confirmationChanged)
     Q_PROPERTY(qreal overrideSeconds READ overrideSeconds NOTIFY confirmationChanged)
+    Q_PROPERTY(bool autoEngage READ autoEngage WRITE setAutoEngage NOTIFY autoEngageChanged)
 
 public:
     enum State {
@@ -199,6 +200,17 @@ public:
      */
     Q_INVOKABLE void disengage();
 
+    /**
+     * Takes control by itself, off by default and saved: a second after a pad and an online autopilot are both
+     * there, the throttle is released and the vehicle is in Manual or Acro, or still in the Loiter / Hold this
+     * controller put it in when the pad dropped or stopped responding. Never from another mode, never while
+     * the gamepad settings are open or a confirmation waits. Paused after the operator's own release, after a
+     * refused attempt, after a session ended by a mode change the pad did not ask for, and when a session it
+     * started drops within 10 s; a newly connected pad, a manual take and switching it on again clear the pause.
+     */
+    bool autoEngage() const { return autoEngage_; }
+    void setAutoEngage(bool autoEngage);
+
 signals:
     void availableChanged();
     void stateChanged();
@@ -212,6 +224,9 @@ signals:
     void configuringChanged();
     void layoutEditableChanged();
     void cuePlayed();
+    void autoEngageChanged();
+    /** A take ended before driving: refused at once, by the vehicle check, or by the vehicle's answer to Manual. */
+    void engageFailed(const QString& reason);
 
 private:
     static constexpr int kDefaultRateHz = 20;
@@ -254,6 +269,9 @@ private:
     void playCueStep();
     void stopCue();
     void syncRumblePreview();
+    bool autoEngageAllowed() const;
+    void scheduleAutoEngage();
+    void onAutoEngageTimer();
     qreal scaledRumble(qreal level) const;
     void notify(const QString& text, int severity);
     void loadTuning();
@@ -287,8 +305,10 @@ private:
     QTimer writeTimer_;
     QTimer cueTimer_;
     QTimer rumblePreviewTimer_;
+    QTimer autoTimer_;
     QElapsedTimer clock_;
     qint64 lastSampleMs_ = -1;
+    qint64 lastTickMs_ = -1;
     qint64 checkStartMs_ = -1;
     bool checkRetried_ = false;
     int previousButtons_ = 0;
@@ -315,6 +335,18 @@ private:
     bool transmitterConfirmed_ = false;
     bool writeRetried_ = false;
     qreal overrideSeconds_ = 0.0;
+    bool autoEngage_ = false;
+    bool userReleased_ = false;
+    bool autoBlocked_ = false;
+    bool autoAttempt_ = false;
+    bool autoSession_ = false;
+    bool padStop_ = false;
+    bool operatorStop_ = false;
+    int parkedMode_ = -1;
+    bool parkedSeen_ = false;
+    int stopModeReached_ = -1;
+    int autoPadId_ = 0;
+    qint64 autoSessionStartMs_ = -1;
 
     int pendingMode_ = -1;
     ModeIntent modeIntent_ = ModeIntent::None;

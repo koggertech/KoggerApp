@@ -1189,6 +1189,10 @@
         <translation>Вид навигатора</translation>
     </message>
     <message>
+        <source>Smooth follow</source>
+        <translation>Плавное слежение</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="261"/>
         <source>Export plot data as XTF, CSV (regular or complex) or USBL.</source>
         <translation>Экспорт датасета в XTF, CSV (обычный или комплексный) или USBL.</translation>
@@ -2357,6 +2361,21 @@
         <location filename="../qml/app/AutopilotPopup.qml" line="1531"/>
         <source>Firmware</source>
         <translation>Прошивка</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1367"/>
+        <source>Automatic take-over is on</source>
+        <translation>Автоматический захват управления включён</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1367"/>
+        <source>Take control automatically</source>
+        <translation>Брать управление автоматически</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="399"/>
+        <source>Mode change to %1: %2</source>
+        <translation>Смена режима на %1: %2</translation>
     </message>
 </context>
 <context>
@@ -3969,6 +3988,34 @@ udp://@:1234
         <location filename="../qml/legacy_qml/devices/DeviceItem.qml" line="433"/>
         <source>Timestamp</source>
         <translation>Временная метка</translation>
+    </message>
+</context>
+<context>
+    <name>DeviceManagerWrapper</name>
+    <message>
+        <location filename="../src/device/device_manager_wrapper.cpp" line="147"/>
+        <source>while armed it needs a position estimate (GPS fix and EKF)</source>
+        <translation>в ARM нужна оценка позиции (фикс GPS и EKF)</translation>
+    </message>
+    <message>
+        <location filename="../src/device/device_manager_wrapper.cpp" line="156"/>
+        <source>%1, and a mission on the boat</source>
+        <translation>%1, а также миссия на лодке</translation>
+    </message>
+    <message>
+        <location filename="../src/device/device_manager_wrapper.cpp" line="158"/>
+        <source>%1, and a home position</source>
+        <translation>%1, а также точка дома</translation>
+    </message>
+    <message>
+        <location filename="../src/device/device_manager_wrapper.cpp" line="160"/>
+        <source>%1, and a recorded return path</source>
+        <translation>%1, а также записанный путь возврата</translation>
+    </message>
+    <message>
+        <location filename="../src/device/device_manager_wrapper.cpp" line="163"/>
+        <source>while armed it needs a speed estimate (GPS fix and EKF)</source>
+        <translation>в ARM нужна оценка скорости (фикс GPS и EKF)</translation>
     </message>
 </context>
 <context>
@@ -6488,6 +6535,21 @@ udp://@:1234
         <source>Release the throttle to drive again</source>
         <translation>Отпустите газ, чтобы продолжить управление</translation>
     </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="1180"/>
+        <source>Taking gamepad control automatically</source>
+        <translation>Управление с геймпада включается автоматически</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="1134"/>
+        <source>The gamepad keeps dropping — automatic take-over paused</source>
+        <translation>Геймпад отключается снова и снова — автозахват приостановлен</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="1058"/>
+        <source>The vehicle refused %1: %2</source>
+        <translation>Аппарат отклонил %1: %2</translation>
+    </message>
 </context>
 <context>
     <name>HelmIndicator</name>
@@ -8910,6 +8972,16 @@ udp://@:1234
 </context>
 <context>
     <name>MissionPlan</name>
+    <message>
+        <location filename="../src/mission/mission_expander.cpp" line="82"/>
+        <source>Speed %1 m/s is below %2 m/s: drift outruns the boat and it circles in place</source>
+        <translation>Скорость %1 м/с ниже %2 м/с: снос обгоняет лодку, и она кружит на месте</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_expander.cpp" line="84"/>
+        <source>Speed %1 m/s is below %2 m/s: the boat weaves off its course</source>
+        <translation>Скорость %1 м/с ниже %2 м/с: лодка виляет и уходит с курса</translation>
+    </message>
     <message>
         <location filename="../src/mission/mission_expander.cpp" line="93"/>
         <source>Generated points leave the valid coordinate range</source>

@@ -35,6 +35,8 @@ class MissionPlanController : public QObject
     Q_PROPERTY(QStringList  warnings          READ warnings                                    NOTIFY planChanged)
     Q_PROPERTY(QVariantList issues            READ issues                                      NOTIFY planChanged)
     Q_PROPERTY(int          maxMissionItems   READ maxMissionItems                             CONSTANT)
+    Q_PROPERTY(double       minSpeed          READ minSpeed                                    CONSTANT)
+    Q_PROPERTY(double       warnSpeed         READ warnSpeed                                   CONSTANT)
     Q_PROPERTY(bool         exportable        READ exportable                                  NOTIFY planChanged)
     Q_PROPERTY(QString      exportBlocker     READ exportBlocker                               NOTIFY planChanged)
     Q_PROPERTY(QString      lastError         READ lastError                                   NOTIFY lastErrorChanged)
@@ -64,6 +66,8 @@ public:
     QStringList warnings() const { return expanded_.warnings(); }
     QVariantList issues() const;
     int         maxMissionItems() const { return kMaxMissionItems; }
+    double      minSpeed() const { return kMinMissionSpeed; }
+    double      warnSpeed() const { return kWarnMissionSpeed; }
     bool        exportable() const { return exportBlocker().isEmpty(); }
     QString     exportBlocker() const;
     QString     lastError() const { return lastError_; }

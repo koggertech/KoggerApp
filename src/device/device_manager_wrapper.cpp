@@ -142,6 +142,31 @@ QString DeviceManagerWrapper::modeNameFor(int mode)
     return mode < 0 ? QString() : QStringLiteral("Mode %1").arg(mode);
 }
 
+QString DeviceManagerWrapper::modeRefusalReason(int mode)
+{
+    const QString position = tr("while armed it needs a position estimate (GPS fix and EKF)");
+    switch (mode) {
+    case 5:
+    case 6:
+    case 8:
+    case 9:
+    case 15:
+        return position;
+    case 10:
+        return tr("%1, and a mission on the boat").arg(position);
+    case 11:
+        return tr("%1, and a home position").arg(position);
+    case 12:
+        return tr("%1, and a recorded return path").arg(position);
+    case 1:
+    case 3:
+        return tr("while armed it needs a speed estimate (GPS fix and EKF)");
+    default:
+        break;
+    }
+    return QString();
+}
+
 void DeviceManagerWrapper::autopilotArm(bool arm)
 {
     workerObject_->autopilotArm(arm, false);
