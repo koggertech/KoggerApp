@@ -1275,6 +1275,10 @@
         <translation>Navigator view</translation>
     </message>
     <message>
+        <source>Smooth follow</source>
+        <translation>Smooth follow</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="260"/>
         <source>Export</source>
         <translation></translation>

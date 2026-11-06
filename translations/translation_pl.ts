@@ -1189,6 +1189,10 @@
         <translation>Widok nawigatora</translation>
     </message>
     <message>
+        <source>Smooth follow</source>
+        <translation>Płynne śledzenie</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="261"/>
         <source>Export plot data as XTF, CSV (regular or complex) or USBL.</source>
         <translation>Eksport zbioru danych do XTF, CSV (zwykły lub złożony) lub USBL.</translation>

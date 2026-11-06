@@ -316,6 +316,7 @@ public:
     void setGridVisibility(bool state);
     void setUseAngleLocation(bool state);
     void setNavigatorViewLocation(bool state);
+    void setSmoothFollow(bool state);
 
     void setCompassState(bool state);
     void setCompassPos(int val);
@@ -365,7 +366,6 @@ public Q_SLOTS:
     void setCancelZoomView();
     void setMapView();
     void setMapViewAnimated();
-    void setLastEpochFocusView(bool useAngle, bool useNavigatorView);
     void setIdleMode();
     void setVerticalScale(float scale);
     void shiftCameraZAxis(float shift);
@@ -439,6 +439,14 @@ private:
     void cancelFollowReturn();
     void holdFollowForContact();
     void releaseFollowAfterContact();
+    void retargetFollow(const QVector3D& boatPos);
+    void snapFollow(const QVector3D& boatPos);
+    bool stepFollowRotation(bool instant);
+    void stepFollow();
+    void stopFollowTick();
+    QVector3D followSegmentPoint() const;
+    bool followSegmentDone() const;
+    QVector3D navigatorLeadOffset() const;
     void cancelCameraPoseAnim();
     void cancelVScaleAnim();
 
@@ -519,6 +527,7 @@ private:
     bool gridVisibility_;
     bool useAngleLocation_;
     bool navigatorViewLocation_;
+    bool smoothFollow_ = true;
     bool isNorth_;
     QTimer* testingTimer_;
 
@@ -548,6 +557,16 @@ private:
     QTimer* followTickTimer_ = nullptr;
     QTimer* positionsLiveTimer_ = nullptr;
     QVector3D followReturnStartLookAt_;
+    QTimer* followFrameTimer_ = nullptr;
+    QElapsedTimer followFixClock_;
+    QElapsedTimer followSegClock_;
+    QElapsedTimer followNotifyClock_;
+    QVector3D followSegFrom_;
+    QVector3D followSegTo_;
+    float followSegDurS_ = 0.0f;
+    float followFixIntervalS_ = -1.0f;
+    Smoother followNSmoother_;
+    Smoother followESmoother_;
     bool shadowsEnabled_;
     QVector3D shadowVector_;
     float shadowIntensity_;
@@ -607,6 +626,9 @@ private:
     qreal pinchPanZoomWeight_ = 1.0;
     qreal pinchTiltWeight_ = 0.0;
     qreal pinchRotateWeight_ = 0.0;
+    QPointF pinchPanAccumPx_;
+    qreal pinchTiltAccumPx_ = 0.0;
+    qreal pinchRotateAccumDeg_ = 0.0;
     QElapsedTimer pinchGestureTimer_;
 };
 
