@@ -18,6 +18,7 @@ BasePanePopup {
     readonly property int _pad: Math.round(12 * _s)
     readonly property int _armConfirmMinMs: 400
     readonly property int _armConfirmMs: 3000
+    readonly property int _lossPeekMs: 5000
     property real _armCountdown: 0
     readonly property int _severityCritical: 2
     readonly property int _severityWarning: 4
@@ -145,6 +146,14 @@ BasePanePopup {
         return null
     }
     property bool _lossNothingPending: false
+    property int _lossPeekChoice: -1
+    readonly property var _lossPeekOption: {
+        if (!_loss || _lossPeekChoice < 0) return null
+        var list = _loss.options
+        for (var i = 0; i < list.length; ++i)
+            if (list[i].choice === _lossPeekChoice) return list[i]
+        return null
+    }
     readonly property var _lossSegments: {
         if (!_loss) return []
         var out = []
@@ -154,7 +163,9 @@ BasePanePopup {
             var confirming = _lossNothingPending && o.choice === _lossChoiceNothing
             out.push({ value: o.choice,
                        label: confirming ? qsTr("Tap again") : o.label,
-                       enabled: o.enabled && _loss.known && !_loss.busy,
+                       enabled: o.enabled && _loss.known,
+                       locked: _loss.busy,
+                       unavailable: !o.enabled,
                        current: o.choice === _loss.choice,
                        danger: confirming })
         }
@@ -162,13 +173,15 @@ BasePanePopup {
     }
     readonly property var _lossMissionSegments: {
         if (!_loss) return []
-        var free = _loss.known && !_loss.busy
-        return [{ value: true, label: qsTr("Keep going"), enabled: free, current: _loss.continueMission, danger: false },
+        var known = _loss.known
+        var locked = _loss.busy
+        return [{ value: true, label: qsTr("Keep going"), enabled: known, locked: locked, current: _loss.continueMission, danger: false },
                 { value: false, label: qsTr("Abort → %1").arg(_loss.actionText.length > 0 ? _loss.actionText : "FS_ACTION"),
-                  enabled: free, current: !_loss.continueMission, danger: false }]
+                  enabled: known, locked: locked, current: !_loss.continueMission, danger: false }]
     }
     readonly property string _lossNote: {
         if (!_loss || !_loss.known) return ""
+        if (_lossPeekOption) return _lossPeekOption.note + "."
         var note = _lossCurrentOption ? _lossCurrentOption.note : _loss.choiceLabel
         return note + "."
     }
@@ -358,7 +371,14 @@ BasePanePopup {
         nextConfirmTimer.stop()
     }
 
+    function peekLinkLoss(choice) {
+        _lossPeekChoice = choice
+        lossPeekTimer.restart()
+    }
+
     function requestLinkLoss(choice) {
+        _lossPeekChoice = -1
+        lossPeekTimer.stop()
         if (!_loss || _loss.busy || !_loss.known) return
         if (choice === _lossChoiceNothing && _armed && _loss.choice !== _lossChoiceNothing && !_lossNothingPending) {
             _lossNothingPending = true
@@ -413,7 +433,10 @@ BasePanePopup {
     readonly property real _pillW: _pad + statusDot.width + infoColumn.anchors.leftMargin + infoColumn.width
                                    + buttonRow.anchors.leftMargin + buttonRow.width + _sidePad
     readonly property real _pillH: _controlH + _rowPad * 2
-    readonly property real _wantW: _pillW + contentPadding * 2
+    readonly property int _expandedLeftMinW: Math.round(300 * _s)
+    readonly property real _twoColumnW: expanded && expandedArea.rightVisible
+                                        ? _pad * 2 + _expandedLeftMinW + _blockGap + expandedArea.panelW + contentPadding * 2 : 0
+    readonly property real _wantW: Math.max(_pillW + contentPadding * 2, Math.min(_twoColumnW, width - Math.max(0, popupMargin) * 2))
     readonly property real _wantH: headerHeight + _pillH + (_trayVisible ? tray.height : 0) + contentPadding
 
     popupVisible: store.autopilotPopupOpen
@@ -551,7 +574,7 @@ BasePanePopup {
     on_WantWChanged: _applySize()
     on_WantHChanged: { _applySize(); Qt.callLater(_restorePlacement) }
     onInteractionStarted: _dragging = true
-    on_OnlineChanged: if (!_online) { _cancelArmConfirm(); _cancelNextConfirm(); _lossNothingPending = false; expanded = false; _pendingJumpSeq = -1 }
+    on_OnlineChanged: if (!_online) { _cancelArmConfirm(); _cancelNextConfirm(); _lossNothingPending = false; _lossPeekChoice = -1; expanded = false; _pendingJumpSeq = -1 }
     on_NextSeqChanged: _cancelNextConfirm()
     onExpandedChanged: {
         _cancelNextConfirm()
@@ -666,6 +689,12 @@ BasePanePopup {
         id: lossConfirmTimer
         interval: root._armConfirmMs
         onTriggered: root._lossNothingPending = false
+    }
+
+    Timer {
+        id: lossPeekTimer
+        interval: root._lossPeekMs
+        onTriggered: root._lossPeekChoice = -1
     }
 
     Connections {
@@ -922,6 +951,7 @@ BasePanePopup {
         id: segments
         property var items: []
         signal picked(var value)
+        signal blocked(var value)
         readonly property int inset: Math.max(2, Math.round(2 * root._s))
         implicitWidth: segmentRow.implicitWidth + inset * 2
         implicitHeight: Tokens.controlHMd
@@ -937,24 +967,26 @@ BasePanePopup {
             spacing: 0
 
             Repeater {
-                model: segments.items
+                model: segments.items.length
                 delegate: Rectangle {
                     id: segment
-                    required property var modelData
-                    readonly property bool tappable: modelData.danger || (modelData.enabled && !modelData.current)
+                    required property int index
+                    readonly property var entry: segments.items[index] || ({})
+                    readonly property bool tappable: entry.locked !== true
+                                                     && (entry.danger === true || (entry.enabled === true && entry.current !== true))
                     width: segmentLabel.implicitWidth + Math.round(18 * root._s)
                     height: segments.height - segments.inset * 2
                     radius: Math.max(2, segments.radius - segments.inset)
-                    opacity: modelData.enabled || modelData.current ? 1.0 : 0.4
-                    color: modelData.danger ? AppPalette.dangerBg
-                         : modelData.current ? AppPalette.accentBgStrong
+                    opacity: entry.enabled || entry.current ? 1.0 : 0.4
+                    color: entry.danger ? AppPalette.dangerBg
+                         : entry.current ? AppPalette.accentBgStrong
                          : segmentTap.containsMouse && tappable ? AppPalette.cardHover : "transparent"
 
                     Text {
                         id: segmentLabel
                         anchors.centerIn: parent
-                        text: segment.modelData.label
-                        color: segment.modelData.danger ? AppPalette.dangerText : AppPalette.textStrong
+                        text: segment.entry.label || ""
+                        color: segment.entry.danger ? AppPalette.dangerText : AppPalette.textStrong
                         font.pixelSize: Math.round(12 * root._s)
                         font.bold: true
                     }
@@ -962,9 +994,10 @@ BasePanePopup {
                         id: segmentTap
                         anchors.fill: parent
                         hoverEnabled: true
-                        enabled: segment.tappable
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: segments.picked(segment.modelData.value)
+                        enabled: segment.tappable || segment.entry.unavailable === true
+                        cursorShape: segment.tappable ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: segment.tappable ? segments.picked(segment.entry.value)
+                                                    : segments.blocked(segment.entry.value)
                     }
                 }
             }
@@ -1757,7 +1790,7 @@ BasePanePopup {
                     readonly property real panelW: lossGrid.implicitWidth + lossPanel.pad * 2
                     readonly property bool hasMessages: !!root._dmw && root._dmw.autopilotMessages.length > 0
                     readonly property bool rightVisible: root._lossAvailable || hasMessages
-                    readonly property bool sideBySide: rightVisible && width - panelW - gap >= Math.round(300 * root._s)
+                    readonly property bool sideBySide: rightVisible && width - panelW - gap >= root._expandedLeftMinW
                     width: parent.width
                     visible: root.expanded
                     height: sideBySide ? Math.max(expandedLeft.implicitHeight, expandedRight.implicitHeight)
@@ -1962,6 +1995,21 @@ BasePanePopup {
                             border.width: Tokens.cardBorderWidth
 
                             Column {
+                                id: lossStatusProbe
+                                opacity: 0
+                                enabled: false
+
+                                Repeater {
+                                    model: [qsTr("saving…"), qsTr("reading…")]
+                                    delegate: Text {
+                                        required property string modelData
+                                        text: modelData
+                                        font.pixelSize: Math.round(11 * root._s)
+                                    }
+                                }
+                            }
+
+                            Column {
                                 id: lossColumn
                                 x: lossPanel.pad
                                 y: lossPanel.pad
@@ -1993,6 +2041,7 @@ BasePanePopup {
                                         }
                                         Text {
                                             anchors.verticalCenter: parent.verticalCenter
+                                            width: Math.max(implicitWidth, lossStatusProbe.width)
                                             text: {
                                                 if (!root._loss) return ""
                                                 if (root._loss.busy) return qsTr("saving…")
@@ -2007,6 +2056,7 @@ BasePanePopup {
                                     Segments {
                                         items: root._lossSegments
                                         onPicked: function(value) { root.requestLinkLoss(value) }
+                                        onBlocked: function(value) { root.peekLinkLoss(value) }
                                     }
 
                                     Text {

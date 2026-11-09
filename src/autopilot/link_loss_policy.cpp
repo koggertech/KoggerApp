@@ -97,10 +97,16 @@ QVariantList LinkLossPolicy::options() const
     QVariantList out;
     out.append(option(ChoiceNothing, tr("Nothing"), true, tr("The boat keeps its mode and its last command")));
     out.append(option(ChoiceHold, QStringLiteral("Hold"), true, tr("The motors stop and the boat drifts")));
-    if (offersLoiter() || fsAction_ == kActionLoiterOrHold) {
-        out.append(option(ChoiceLoiter, QStringLiteral("Loiter"), offersLoiter(),
-                          tr("The boat holds its position; without a position fix it stops (Hold)")));
+    const bool loiter = offersLoiter();
+    QString loiterNote;
+    if (loiter || fsAction_ == kActionLoiterOrHold) {
+        loiterNote = tr("The boat holds its position; without a position fix it stops (Hold)");
+    } else if (params_->metadataOf(kFsAction)) {
+        loiterNote = tr("Loiter on link loss needs ArduRover 4.7 or newer");
+    } else {
+        loiterNote = tr("Unknown whether this firmware has Loiter on link loss");
     }
+    out.append(option(ChoiceLoiter, QStringLiteral("Loiter"), loiter, loiterNote));
     out.append(option(ChoiceRtl, QStringLiteral("RTL"), true,
                       tr("The boat returns to the nearest rally point or home and holds its position there")));
     const bool smartRtl = srtlPoints_ != 0;

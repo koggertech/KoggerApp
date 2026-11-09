@@ -16015,78 +16015,88 @@ udp://@:1234
         <translation>Моторы останавливаются, лодку сносит</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="102"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="103"/>
         <source>The boat holds its position; without a position fix it stops (Hold)</source>
         <translation>Лодка удерживает позицию; без координат останавливается (Hold)</translation>
     </message>
     <message>
         <location filename="../src/autopilot/link_loss_policy.cpp" line="105"/>
+        <source>Loiter on link loss needs ArduRover 4.7 or newer</source>
+        <translation>Для Loiter при потере связи нужна прошивка ArduRover 4.7 или новее</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="107"/>
+        <source>Unknown whether this firmware has Loiter on link loss</source>
+        <translation>Неизвестно, есть ли в этой прошивке Loiter при потере связи</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="111"/>
         <source>The boat returns to the nearest rally point or home and holds its position there</source>
         <translation>Лодка возвращается к ближайшей точке сбора или домой и удерживает там позицию</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="108"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="114"/>
         <source>The boat returns along its own track since arming and holds its position; without a track it does RTL</source>
         <translation>Лодка возвращается по своему следу с момента арма и удерживает позицию; без следа выполняет RTL</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="109"/>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="172"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="115"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="178"/>
         <source>SmartRTL is off on the boat (SRTL_POINTS = 0)</source>
         <translation>SmartRTL выключен на лодке (SRTL_POINTS = 0)</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="144"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="150"/>
         <source>no action</source>
         <translation>без действия</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="145"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="151"/>
         <source>mission goes on</source>
         <translation>миссия продолжится</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="146"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="152"/>
         <source>stays in %1</source>
         <translation>останется в %1</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="160"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="166"/>
         <source>No autopilot</source>
         <translation>Автопилот не найден</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="166"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="172"/>
         <source>The link-loss parameters have not been read yet</source>
         <translation>Параметры потери связи ещё не прочитаны</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="169"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="175"/>
         <source>This firmware has no Loiter link-loss action</source>
         <translation>В этой прошивке нет действия Loiter при потере связи</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="254"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="260"/>
         <source>The link was lost before the boat confirmed the change</source>
         <translation>Связь пропала раньше, чем лодка подтвердила изменение</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="279"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="285"/>
         <source>The boat did not answer FS_GCS_ENABLE / FS_ACTION</source>
         <translation>Лодка не ответила на запрос FS_GCS_ENABLE / FS_ACTION</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="289"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="295"/>
         <source>Not confirmed: the boat reports %1 = %2</source>
         <translation>Не подтверждено: лодка сообщает %1 = %2</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="295"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="301"/>
         <source>Not confirmed by the boat</source>
         <translation>Лодка не подтвердила</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="422"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="428"/>
         <source>Disarm</source>
         <translation>Disarm</translation>
     </message>

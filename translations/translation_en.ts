@@ -16007,78 +16007,88 @@ udp://@:1234
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="102"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="103"/>
         <source>The boat holds its position; without a position fix it stops (Hold)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/autopilot/link_loss_policy.cpp" line="105"/>
+        <source>Loiter on link loss needs ArduRover 4.7 or newer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="107"/>
+        <source>Unknown whether this firmware has Loiter on link loss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="111"/>
         <source>The boat returns to the nearest rally point or home and holds its position there</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="108"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="114"/>
         <source>The boat returns along its own track since arming and holds its position; without a track it does RTL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="109"/>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="172"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="115"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="178"/>
         <source>SmartRTL is off on the boat (SRTL_POINTS = 0)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="144"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="150"/>
         <source>no action</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="145"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="151"/>
         <source>mission goes on</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="146"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="152"/>
         <source>stays in %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="160"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="166"/>
         <source>No autopilot</source>
         <translation type="unfinished">No autopilot</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="166"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="172"/>
         <source>The link-loss parameters have not been read yet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="169"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="175"/>
         <source>This firmware has no Loiter link-loss action</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="254"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="260"/>
         <source>The link was lost before the boat confirmed the change</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="279"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="285"/>
         <source>The boat did not answer FS_GCS_ENABLE / FS_ACTION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="289"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="295"/>
         <source>Not confirmed: the boat reports %1 = %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="295"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="301"/>
         <source>Not confirmed by the boat</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="422"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="428"/>
         <source>Disarm</source>
         <translation type="unfinished"></translation>
     </message>
