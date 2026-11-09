@@ -6405,8 +6405,8 @@ udp://@:1234
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="770"/>
-        <source>Gamepad stopped responding — holding position</source>
+        <location filename="../src/helm/helm_controller.cpp" line="890"/>
+        <source>Gamepad stopped responding: no data for %1 ms — holding position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6535,8 +6535,8 @@ udp://@:1234
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="770"/>
-        <source>Gamepad stopped responding — the transmitter has the boat</source>
+        <location filename="../src/helm/helm_controller.cpp" line="891"/>
+        <source>Gamepad stopped responding: no data for %1 ms — the transmitter has the boat</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6592,6 +6592,56 @@ udp://@:1234
     <message>
         <location filename="../src/helm/helm_controller.cpp" line="1058"/>
         <source>The vehicle refused %1: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="671"/>
+        <source>Gamepad disconnected (%1) — holding position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="672"/>
+        <source>Gamepad disconnected (%1) — the transmitter has the boat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="708"/>
+        <source>wireless</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="711"/>
+        <source>wired</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="714"/>
+        <source>battery %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="717"/>
+        <source>input unchanged for %1 s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="857"/>
+        <source>App lost focus — holding position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="857"/>
+        <source>App lost focus — the transmitter has the boat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="622"/>
+        <source>Mode changed to %1 (not from the gamepad) — the gamepad does not drive in this mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="694"/>
+        <source>Gamepad back %1 s after the loss: %2</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

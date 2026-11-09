@@ -242,6 +242,8 @@ private:
     void onVehicleChanged();
     void onPadConnection();
     void onPadState();
+    void onPadReturned(const QString& name, qint64 afterMs);
+    QString lossDetail() const;
     void onParam(const QString& name, float value);
     void onRcChannelCount(int count);
     void requestPadMode(int mode);
@@ -349,5 +351,7 @@ private:
     qint64 autoSessionStartMs_ = -1;
 
     int pendingMode_ = -1;
+    int requestedMode_ = -1;
+    bool padLossPending_ = false;
     ModeIntent modeIntent_ = ModeIntent::None;
 };

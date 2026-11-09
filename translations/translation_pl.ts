@@ -6411,9 +6411,9 @@ udp://@:1234
         <translation>Aplikacja w tle — utrzymanie pozycji</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="770"/>
-        <source>Gamepad stopped responding — holding position</source>
-        <translation>Gamepad przestał odpowiadać — utrzymanie pozycji</translation>
+        <location filename="../src/helm/helm_controller.cpp" line="890"/>
+        <source>Gamepad stopped responding: no data for %1 ms — holding position</source>
+        <translation>Gamepad przestał odpowiadać: brak danych przez %1 ms — utrzymanie pozycji</translation>
     </message>
     <message>
         <location filename="../src/helm/helm_controller.cpp" line="864"/>
@@ -6541,9 +6541,9 @@ udp://@:1234
         <translation>Aplikacja w tle — łodzią steruje aparatura</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="770"/>
-        <source>Gamepad stopped responding — the transmitter has the boat</source>
-        <translation>Gamepad przestał odpowiadać — łodzią steruje aparatura</translation>
+        <location filename="../src/helm/helm_controller.cpp" line="891"/>
+        <source>Gamepad stopped responding: no data for %1 ms — the transmitter has the boat</source>
+        <translation>Gamepad przestał odpowiadać: brak danych przez %1 ms — łodzią steruje aparatura</translation>
     </message>
     <message>
         <location filename="../src/helm/helm_controller.cpp" line="414"/>
@@ -6599,6 +6599,56 @@ udp://@:1234
         <location filename="../src/helm/helm_controller.cpp" line="1058"/>
         <source>The vehicle refused %1: %2</source>
         <translation>Pojazd odrzucił %1: %2</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="671"/>
+        <source>Gamepad disconnected (%1) — holding position</source>
+        <translation>Gamepad odłączony (%1) — utrzymanie pozycji</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="672"/>
+        <source>Gamepad disconnected (%1) — the transmitter has the boat</source>
+        <translation>Gamepad odłączony (%1) — łodzią steruje aparatura</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="708"/>
+        <source>wireless</source>
+        <translation>bezprzewodowy</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="711"/>
+        <source>wired</source>
+        <translation>przewodowy</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="714"/>
+        <source>battery %1%</source>
+        <translation>bateria %1%</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="717"/>
+        <source>input unchanged for %1 s</source>
+        <translation>wejście bez zmian przez %1 s</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="857"/>
+        <source>App lost focus — holding position</source>
+        <translation>Aplikacja straciła fokus — utrzymanie pozycji</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="857"/>
+        <source>App lost focus — the transmitter has the boat</source>
+        <translation>Aplikacja straciła fokus — łodzią steruje aparatura</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="622"/>
+        <source>Mode changed to %1 (not from the gamepad) — the gamepad does not drive in this mode</source>
+        <translation>Tryb zmieniony na %1 (nie z gamepada) — w tym trybie gamepad nie steruje</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="694"/>
+        <source>Gamepad back %1 s after the loss: %2</source>
+        <translation>Gamepad wrócił %1 s po utracie: %2</translation>
     </message>
 </context>
 <context>

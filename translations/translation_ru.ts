@@ -6411,9 +6411,9 @@ udp://@:1234
         <translation>Приложение в фоне — удержание позиции</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="770"/>
-        <source>Gamepad stopped responding — holding position</source>
-        <translation>Геймпад перестал отвечать — удержание позиции</translation>
+        <location filename="../src/helm/helm_controller.cpp" line="890"/>
+        <source>Gamepad stopped responding: no data for %1 ms — holding position</source>
+        <translation>Геймпад перестал отвечать: нет данных %1 мс — удержание позиции</translation>
     </message>
     <message>
         <location filename="../src/helm/helm_controller.cpp" line="864"/>
@@ -6541,9 +6541,9 @@ udp://@:1234
         <translation>Приложение в фоне — лодкой управляет пульт</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="770"/>
-        <source>Gamepad stopped responding — the transmitter has the boat</source>
-        <translation>Геймпад перестал отвечать — лодкой управляет пульт</translation>
+        <location filename="../src/helm/helm_controller.cpp" line="891"/>
+        <source>Gamepad stopped responding: no data for %1 ms — the transmitter has the boat</source>
+        <translation>Геймпад перестал отвечать: нет данных %1 мс — лодкой управляет пульт</translation>
     </message>
     <message>
         <location filename="../src/helm/helm_controller.cpp" line="414"/>
@@ -6599,6 +6599,56 @@ udp://@:1234
         <location filename="../src/helm/helm_controller.cpp" line="1058"/>
         <source>The vehicle refused %1: %2</source>
         <translation>Аппарат отклонил %1: %2</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="671"/>
+        <source>Gamepad disconnected (%1) — holding position</source>
+        <translation>Геймпад отключён (%1) — удержание позиции</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="672"/>
+        <source>Gamepad disconnected (%1) — the transmitter has the boat</source>
+        <translation>Геймпад отключён (%1) — лодкой управляет пульт</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="708"/>
+        <source>wireless</source>
+        <translation>беспроводной</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="711"/>
+        <source>wired</source>
+        <translation>проводной</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="714"/>
+        <source>battery %1%</source>
+        <translation>батарея %1%</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="717"/>
+        <source>input unchanged for %1 s</source>
+        <translation>ввод не менялся %1 с</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="857"/>
+        <source>App lost focus — holding position</source>
+        <translation>Приложение потеряло фокус — удержание позиции</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="857"/>
+        <source>App lost focus — the transmitter has the boat</source>
+        <translation>Приложение потеряло фокус — лодкой управляет пульт</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="622"/>
+        <source>Mode changed to %1 (not from the gamepad) — the gamepad does not drive in this mode</source>
+        <translation>Режим сменился на %1 (не с геймпада) — в этом режиме геймпад не управляет</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="694"/>
+        <source>Gamepad back %1 s after the loss: %2</source>
+        <translation>Геймпад вернулся через %1 с после потери: %2</translation>
     </message>
 </context>
 <context>

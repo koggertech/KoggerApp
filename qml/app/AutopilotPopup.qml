@@ -84,7 +84,15 @@ BasePanePopup {
     readonly property var _run: (typeof missionRun !== "undefined") ? missionRun : null
     readonly property int _missionStatePaused: 4
     readonly property int _cmdSetMissionCurrent: 224
-    readonly property int _messagesShown: 5
+    readonly property int _messagesMinLines: 3
+    readonly property int _messagesStackedHeight: Math.round(220 * _s)
+    readonly property int _messageFontPx: Math.round(11 * _s)
+    readonly property int _messageGap: Math.round(6 * _s)
+    readonly property int _messageInset: Math.round(3 * _s)
+    readonly property real _messagesMinBody: Math.ceil(messageMetrics.lineSpacing) * _messagesMinLines + _messageGap * (_messagesMinLines - 1)
+    property bool _messagesSynced: false
+    property string _messagesNewestKey: ""
+    property bool _messagesFollowEnd: true
     readonly property real _earthRadiusM: 6371000.0
     readonly property bool _paused: (!!_run && _run.paused) || (!!_dmw && _dmw.missionState === _missionStatePaused)
     readonly property bool _autoDisarmed: !!_run && _run.running && !_paused && !_armed && _mode === _modeAuto
@@ -297,6 +305,42 @@ BasePanePopup {
         if (percent <= _levelCriticalPct) return AppPalette.dangerText
         if (percent <= _levelWarnPct) return AppPalette.linkIdleText
         return AppPalette.textSecond
+    }
+
+    function _messageKey(entry) {
+        return entry.time + "|" + entry.severity + "|" + entry.text
+    }
+
+    function _messageRow(entry, fresh) {
+        return { msgTime: entry.time, severity: entry.severity, msgText: entry.text, fresh: fresh }
+    }
+
+    function _syncMessages() {
+        const src = _dmw ? _dmw.autopilotMessages : []
+        let fresh = -1
+        if (_messagesSynced)
+            fresh = _messagesNewestKey === "" ? src.length : src.findIndex(e => _messageKey(e) === _messagesNewestKey)
+        if (fresh < 0) {
+            messagesModel.clear()
+            for (let i = src.length - 1; i >= 0; --i)
+                messagesModel.append(_messageRow(src[i], false))
+        } else {
+            for (let i = fresh - 1; i >= 0; --i)
+                messagesModel.append(_messageRow(src[i], true))
+            while (messagesModel.count > src.length)
+                messagesModel.remove(0)
+        }
+        _messagesSynced = true
+        _messagesNewestKey = src.length > 0 ? _messageKey(src[0]) : ""
+        if (fresh !== 0) {
+            _messagesFollowEnd = true
+            Qt.callLater(_scrollMessagesToEnd)
+        }
+    }
+
+    function _scrollMessagesToEnd() {
+        if (_messagesFollowEnd)
+            messagesFlick.contentY = Math.max(0, messagesFlick.contentHeight - messagesFlick.height)
     }
 
     function _severityColor(severity) {
@@ -524,8 +568,18 @@ BasePanePopup {
         }
     }
 
+    FontMetrics {
+        id: messageMetrics
+        font.pixelSize: root._messageFontPx
+    }
+
+    ListModel {
+        id: messagesModel
+    }
+
     Component.onCompleted: {
         _applySize()
+        _syncMessages()
         syncFromStore()
         Qt.callLater(syncFromStore)
         Qt.callLater(resolveOverlapWithSibling)
@@ -649,6 +703,9 @@ BasePanePopup {
     Connections {
         target: root._dmw
         ignoreUnknownSignals: true
+        function onAutopilotMessagesChanged() {
+            root._syncMessages()
+        }
         function onAutopilotCommandAcked(command, result) {
             if (command === root._cmdChangeSpeed && root._speedSendsInFlight > 0) {
                 if (result === 5) {
@@ -803,6 +860,7 @@ BasePanePopup {
         property string note: ""
         default property alias content: panelBody.data
         readonly property int pad: Math.round(8 * root._s)
+        readonly property real chromeHeight: pad * 2 + panelHeader.height + panelColumn.spacing
         implicitHeight: panelColumn.implicitHeight + pad * 2
         radius: Tokens.radiusLg
         color: AppPalette.bgDeep
@@ -817,6 +875,7 @@ BasePanePopup {
             spacing: Math.round(6 * root._s)
 
             Item {
+                id: panelHeader
                 width: parent.width
                 height: Math.max(panelTitle.implicitHeight, panelIcon.height)
 
@@ -1990,21 +2049,88 @@ BasePanePopup {
 
                         Panel {
                             id: messagesPanel
+                            readonly property real bodyMax: Math.max(root._messagesMinBody, expandedArea.sideBySide
+                                ? expandedLeft.implicitHeight - (lossPanel.visible ? lossPanel.height + expandedRight.spacing : 0) - messagesPanel.chromeHeight
+                                : root._messagesStackedHeight - messagesPanel.chromeHeight)
                             width: parent.width
                             visible: expandedArea.hasMessages
                             title: qsTr("Messages")
                             icon: "qrc:/icons/ui/list-details.svg"
 
-                            Repeater {
-                                model: root._dmw ? root._dmw.autopilotMessages.slice(0, root._messagesShown) : []
-                                delegate: Text {
-                                    required property var modelData
-                                    width: parent.width
-                                    textFormat: Text.PlainText
-                                    text: Qt.formatTime(new Date(modelData.time), "hh:mm:ss") + "  " + modelData.text
-                                    color: root._severityColor(modelData.severity)
-                                    font.pixelSize: Math.round(11 * root._s)
-                                    wrapMode: Text.WordWrap
+                            Item {
+                                width: parent.width
+                                height: Math.min(messagesList.implicitHeight, messagesPanel.bodyMax)
+
+                                Flickable {
+                                    id: messagesFlick
+                                    anchors.fill: parent
+                                    contentWidth: width
+                                    contentHeight: messagesList.implicitHeight
+                                    boundsBehavior: Flickable.StopAtBounds
+                                    clip: true
+                                    onContentHeightChanged: root._scrollMessagesToEnd()
+                                    onHeightChanged: root._scrollMessagesToEnd()
+                                    onMovementStarted: root._messagesFollowEnd = false
+                                    onMovementEnded: root._messagesFollowEnd = messagesFlick.atYEnd
+
+                                    Column {
+                                        id: messagesList
+                                        width: messagesFlick.width - messagesScroll.width - Tokens.spaceXs
+                                        spacing: root._messageGap
+
+                                        Repeater {
+                                            model: messagesModel
+                                            delegate: Item {
+                                                id: messageRow
+                                                required property real msgTime
+                                                required property int severity
+                                                required property string msgText
+                                                required property bool fresh
+                                                width: messagesList.width
+                                                height: messageLabel.implicitHeight
+
+                                                Text {
+                                                    id: messageLabel
+                                                    x: root._messageInset
+                                                    width: parent.width - root._messageInset * 2
+                                                    textFormat: Text.PlainText
+                                                    text: Qt.formatTime(new Date(messageRow.msgTime), "hh:mm:ss") + "  " + messageRow.msgText
+                                                    color: root._severityColor(messageRow.severity)
+                                                    font.pixelSize: root._messageFontPx
+                                                    wrapMode: Text.WordWrap
+                                                }
+
+                                                SequentialAnimation {
+                                                    id: flashAnimation
+                                                    loops: 2
+                                                    NumberAnimation {
+                                                        target: messageLabel
+                                                        property: "opacity"
+                                                        to: 0.2
+                                                        duration: 500
+                                                        easing.type: Easing.InOutSine
+                                                    }
+                                                    NumberAnimation {
+                                                        target: messageLabel
+                                                        property: "opacity"
+                                                        to: 1
+                                                        duration: 500
+                                                        easing.type: Easing.InOutSine
+                                                    }
+                                                }
+
+                                                Component.onCompleted: if (messageRow.fresh) flashAnimation.start()
+                                            }
+                                        }
+                                    }
+                                }
+
+                                KScrollBar {
+                                    id: messagesScroll
+                                    flickable: messagesFlick
+                                    anchors.top: parent.top
+                                    anchors.bottom: parent.bottom
+                                    anchors.right: parent.right
                                 }
                             }
                         }

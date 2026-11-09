@@ -222,6 +222,7 @@ HelmController::HelmController(GamepadMonitor* monitor, DeviceManagerWrapper* ve
 
     connect(monitor_, &GamepadMonitor::connectionChanged, this, &HelmController::onPadConnection);
     connect(monitor_, &GamepadMonitor::stateChanged, this, &HelmController::onPadState);
+    connect(monitor_, &GamepadMonitor::padReturned, this, &HelmController::onPadReturned);
     connect(vehicle_, &DeviceManagerWrapper::vruChanged, this, &HelmController::onVehicleChanged);
     connect(vehicle_, &DeviceManagerWrapper::autopilotParamReceived, this, &HelmController::onParam);
     connect(vehicle_, &DeviceManagerWrapper::autopilotRcChannelCount, this, &HelmController::onRcChannelCount);
@@ -457,6 +458,8 @@ void HelmController::engage()
     seenMode_ = modeBeforeEngage_;
     seenArm_ = vehicle_->pilotArmState();
     padMissionModes_ = 0;
+    requestedMode_ = -1;
+    padLossPending_ = false;
 
     monitor_->setHelmActive(true);
     setState(Checking);
@@ -608,11 +611,18 @@ void HelmController::onVehicleChanged()
     }
     if (mode != seenMode_) {
         seenMode_ = mode;
+        const bool asked = mode == requestedMode_;
+        requestedMode_ = -1;
         if (modeKeepsSession(mode)) {
             padMissionModes_ = 0;
         }
         if (state_ == Driving) {
             playCue(CueMode);
+            if (!asked && modeKeepsSession(mode) && !modeTakesPad(mode)) {
+                notify(tr("Mode changed to %1 (not from the gamepad) — the gamepad does not drive in this mode")
+                           .arg(DeviceManagerWrapper::modeNameFor(mode)),
+                       kSeverityWarning);
+            }
         }
     }
     const int arm = vehicle_->pilotArmState();
@@ -650,7 +660,17 @@ void HelmController::onPadConnection()
         if (state_ == Starting || state_ == Driving) {
             padStop_ = true;
         }
-        safeStop(tr("Gamepad disconnected — holding position"), tr("Gamepad disconnected — the transmitter has the boat"));
+        if (state_ != Off && state_ != Stopping) {
+            padLossPending_ = true;
+        }
+        const QString detail = lossDetail();
+        if (detail.isEmpty()) {
+            safeStop(tr("Gamepad disconnected — holding position"), tr("Gamepad disconnected — the transmitter has the boat"));
+        }
+        else {
+            safeStop(tr("Gamepad disconnected (%1) — holding position").arg(detail),
+                     tr("Gamepad disconnected (%1) — the transmitter has the boat").arg(detail));
+        }
         return;
     }
     if (state_ == Off && monitor_->family() != padFamily_) {
@@ -663,6 +683,40 @@ void HelmController::onPadConnection()
         emit bindingsChanged();
     }
     scheduleAutoEngage();
+}
+
+void HelmController::onPadReturned(const QString& name, qint64 afterMs)
+{
+    if (!padLossPending_) {
+        return;
+    }
+    padLossPending_ = false;
+    notify(tr("Gamepad back %1 s after the loss: %2").arg(afterMs / qreal(kMsPerSecond), 0, 'f', 1).arg(name), kSeverityInfo);
+}
+
+QString HelmController::lossDetail() const
+{
+    const GamepadMonitor::Loss& loss = monitor_->lastLoss();
+    if (loss.reason < 0) {
+        return QString();
+    }
+    QStringList parts;
+    if (!loss.name.isEmpty()) {
+        parts << loss.name;
+    }
+    if (loss.connection == QLatin1String("wireless")) {
+        parts << tr("wireless");
+    }
+    else if (loss.connection == QLatin1String("wired")) {
+        parts << tr("wired");
+    }
+    if (loss.batteryPercent >= 0) {
+        parts << tr("battery %1%").arg(loss.batteryPercent);
+    }
+    if (loss.idleMs >= 0) {
+        parts << tr("input unchanged for %1 s").arg(loss.idleMs / qreal(kMsPerSecond), 0, 'f', 1);
+    }
+    return parts.join(QStringLiteral(", "));
 }
 
 void HelmController::onPadState()
@@ -799,11 +853,18 @@ void HelmController::onCommandAcked(int command, int result)
 void HelmController::onApplicationStateChanged(Qt::ApplicationState appState)
 {
 #ifdef Q_OS_ANDROID
-    if (appState != Qt::ApplicationActive) {
+    if (appState == Qt::ApplicationInactive) {
+        safeStop(tr("App lost focus — holding position"), tr("App lost focus — the transmitter has the boat"));
+    }
+    else if (appState != Qt::ApplicationActive) {
         safeStop(tr("App in the background — holding position"), tr("App in the background — the transmitter has the boat"));
     }
 #else
-    setBackground(active() && appState != Qt::ApplicationActive);
+    const bool background = active() && appState != Qt::ApplicationActive;
+    if (background != background_) {
+        qInfo().noquote() << QStringLiteral("helm: application state %1 during a session, gamepad control goes on").arg(int(appState));
+    }
+    setBackground(background);
 #endif
 }
 
@@ -825,7 +886,9 @@ void HelmController::onSendTick()
         qWarning().noquote() << QStringLiteral("helm: no gamepad sample for %1 ms (send tick gap %2 ms)")
                                     .arg(now - lastSampleMs_).arg(tickGap);
         padStop_ = true;
-        safeStop(tr("Gamepad stopped responding — holding position"), tr("Gamepad stopped responding — the transmitter has the boat"));
+        const qint64 silence = now - lastSampleMs_;
+        safeStop(tr("Gamepad stopped responding: no data for %1 ms — holding position").arg(silence),
+                 tr("Gamepad stopped responding: no data for %1 ms — the transmitter has the boat").arg(silence));
         if (state_ == Off) {
             return;
         }
@@ -1024,6 +1087,7 @@ void HelmController::finishCheck()
 void HelmController::requestMode(int mode, ModeIntent intent)
 {
     pendingMode_ = mode;
+    requestedMode_ = mode;
     modeIntent_ = intent;
     modeTimer_.start();
     vehicle_->autopilotSetMode(mode);

@@ -19,6 +19,8 @@ GamepadMonitor::GamepadMonitor(QObject* parent)
     connect(worker_, &GamepadWorker::padsChanged, this, &GamepadMonitor::onWorkerPads);
     connect(worker_, &GamepadWorker::batteryChanged, this, &GamepadMonitor::onWorkerBattery);
     connect(worker_, &GamepadWorker::stateChanged, this, &GamepadMonitor::onWorkerState);
+    connect(worker_, &GamepadWorker::padLost, this, &GamepadMonitor::onWorkerPadLost);
+    connect(worker_, &GamepadWorker::padReturned, this, &GamepadMonitor::padReturned);
 }
 
 GamepadMonitor::~GamepadMonitor()
@@ -222,6 +224,11 @@ void GamepadMonitor::onWorkerBattery(int percent, const QString& state)
     batteryPercent_ = percent;
     batteryState_ = state;
     emit batteryChanged();
+}
+
+void GamepadMonitor::onWorkerPadLost(int reason, const QString& name, const QString& connection, int batteryPercent, qint64 idleMs)
+{
+    lastLoss_ = Loss{ reason, name, connection, batteryPercent, idleMs };
 }
 
 void GamepadMonitor::onWorkerState(int buttons, qreal leftX, qreal leftY, qreal rightX, qreal rightY, qreal leftTrigger, qreal rightTrigger)
