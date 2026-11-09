@@ -78,8 +78,9 @@ struct RunItem {
  * item the manual speed was last checked at and the new one, since a 1 Hz report can skip a short
  * leg and a link loss can hide several), or becomes one with a DO_CHANGE_SPEED right before it, the
  * manual speed is dropped (ArduRover has already applied that item). It is also dropped when the
- * route ends or the route on the vehicle changes; a link loss keeps it, and the first route read
- * after it must equal the one it was set on. It cannot be set while the route is unknown or finished.
+ * route ends or holds at its end, or the route on the vehicle changes; a link loss keeps it, and the
+ * first route read after it must equal the one it was set on. It cannot be set while the route is
+ * unknown, finished or holding at its end (ArduRover refuses a speed change in that loiter).
  */
 class MissionRunTracker : public QObject
 {
@@ -108,6 +109,15 @@ class MissionRunTracker : public QObject
      * paused until it has run, since an upload keeps the old index.
      */
     Q_PROPERTY(bool    paused            READ paused            NOTIFY progressChanged)
+    /**
+     * The route has ended in a NAV_LOITER_UNLIM and the boat holds position there, still in Auto:
+     * running and armed in Auto, the current item is a NAV_LOITER_UNLIM with no navigation item after
+     * it, and the boat has arrived — the loiter has no position (current position), the navigation
+     * item before it is at the same point, or the boat is within kHoldArrivalM of it. ArduRover sends
+     * no MISSION_ITEM_REACHED for this item, since it never completes. Once set it stays while that
+     * item is current, so drifting inside the loiter radius does not clear it.
+     */
+    Q_PROPERTY(bool    holdingAtEnd      READ holdingAtEnd      NOTIFY progressChanged)
     Q_PROPERTY(bool    actionable        READ actionable        NOTIFY snapshotChanged)
     /** Speed set by hand in m/s, NaN when the plan speeds apply. */
     Q_PROPERTY(double  manualSpeed       READ manualSpeed       NOTIFY manualSpeedChanged)
@@ -137,6 +147,7 @@ public:
     bool    armed() const { return telemetry_.online && telemetry_.armed; }
     bool    complete() const { return complete_; }
     bool    paused() const { return paused_; }
+    bool    holdingAtEnd() const { return holdingAtEnd_; }
     /** The route is past its last navigation item (MISSION_STATE COMPLETE or current seq beyond it). */
     bool    finished() const { return finished_; }
     /** A jump can be sent: the snapshot is known, not stale and not being read again. */
@@ -205,6 +216,13 @@ signals:
     void readRequested();
     void legSpeedRequested(double speed);
     void manualSpeedChanged();
+    /**
+     * A run event for the autopilot log (MAV_SEVERITY, translated text): the route ended holding
+     * position. Sent once per arrival at the hold — only when the run was followed up to it (not on a
+     * connect to a boat already holding), and not again for the same item after a disarm, a Hold or
+     * a link loss while it stays current.
+     */
+    void missionEvent(int severity, const QString& text);
 
 private:
     QVector<RunItem> buildItems(const autopilot::MissionBatches& batches, bool link) const;
@@ -213,6 +231,8 @@ private:
     void rebuildGeometry();
     void updateMatch();
     void updateProgress(bool force);
+    bool holdsAtEnd(bool running) const;
+    QString holdingText(int seq) const;
     void checkStale();
     void wantRead(int delayMs);
     void autoRead(int delayMs);
@@ -254,6 +274,9 @@ private:
     bool complete_ = false;
     bool finished_ = false;
     bool paused_ = false;
+    bool holdingAtEnd_ = false;
+    int holdSeq_ = -1;
+    int announcedHoldSeq_ = -1;
 
     bool hasPendingUpload_ = false;
     autopilot::MissionBatches pendingUpload_;

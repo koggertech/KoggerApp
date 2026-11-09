@@ -27,6 +27,8 @@ constexpr double kDistanceStep = 0.5;
 constexpr double kSecondsStep = 1.0;
 constexpr double kProgressStep = 0.001;
 constexpr double kVehicleMoveStepM = 0.5;
+constexpr double kHoldArrivalM = 5.0;
+constexpr double kSamePointM = 0.5;
 
 struct PlanOrigin {
     RunItem::Kind kind = RunItem::Kind::Other;
@@ -532,8 +534,20 @@ void MissionRunTracker::updateProgress(bool force)
                              && items_.at(target).command == int(MavCmd::NavLoiterUnlim);
     const bool paused = known_ && !running && !complete && !finished && !awaitStart_ && !atFinalHold
                         && !navSeqs_.isEmpty() && telemetry_.currentSeq >= navSeqs_.first();
+    const bool holding = holdsAtEnd(running);
+    if (holding) {
+        nav = int(navSeqs_.size());
+        progress = 1.0;
+        remaining = 0.0;
+        seconds = 0.0;
+    }
+    if (telemetry_.currentSeq != announcedHoldSeq_) {
+        announcedHoldSeq_ = -1;
+    }
+    const bool startedHolding = holding && !holdingAtEnd_ && running_ && announcedHoldSeq_ < 0;
     const bool changed = force || nav != currentNav_ || target != targetSeq_ || label != currentLabel_
                          || running != running_ || paused != paused_ || complete != complete_ || finished != finished_
+                         || holding != holdingAtEnd_
                          || changedBy(progress, progress_, kProgressStep)
                          || changedBy(remaining, remainingDistance_, kDistanceStep)
                          || changedBy(seconds, remainingSeconds_, kSecondsStep);
@@ -550,7 +564,58 @@ void MissionRunTracker::updateProgress(bool force)
     paused_ = paused;
     complete_ = complete;
     finished_ = finished;
+    holdingAtEnd_ = holding;
+    holdSeq_ = holding ? telemetry_.currentSeq : -1;
+    if (holding) {
+        announcedHoldSeq_ = telemetry_.currentSeq;
+    }
     emit progressChanged();
+    if (startedHolding) {
+        emit missionEvent(MavSeverityInfo, holdingText(telemetry_.currentSeq));
+    }
+}
+
+bool MissionRunTracker::holdsAtEnd(bool running) const
+{
+    const int seq = telemetry_.currentSeq;
+    if (!running || !telemetry_.armed || telemetry_.flightMode != kRoverModeAuto || seq < 1 || seq >= items_.size()
+        || items_.at(seq).command != int(MavCmd::NavLoiterUnlim) || nextNavSeq(seq) >= 0) {
+        return false;
+    }
+    if (holdingAtEnd_ && holdSeq_ == seq) {
+        return true;
+    }
+    const GeoPoint hold = items_.at(seq).pos;
+    if (!hold.isValid()) {
+        return true;
+    }
+    int previous = seq - 1;
+    while (previous >= 1 && !items_.at(previous).navigation) {
+        --previous;
+    }
+    if (previous >= 1 && items_.at(previous).pos.isValid() && geoDistance(items_.at(previous).pos, hold) <= kSamePointM) {
+        return true;
+    }
+    const GeoPoint vehicle = vehiclePosition();
+    return vehicle.isValid() && geoDistance(vehicle, hold) <= kHoldArrivalM;
+}
+
+QString MissionRunTracker::holdingText(int seq) const
+{
+    int previous = seq - 1;
+    while (previous >= 1 && !items_.at(previous).navigation) {
+        --previous;
+    }
+    const RunItem* before = previous >= 1 ? &items_.at(previous) : nullptr;
+    if (before && before->kind == RunItem::Kind::ReturnToLaunch) {
+        return tr("Mission complete, holding position after returning to launch");
+    }
+    const GeoPoint at = items_.at(seq).pos.isValid() ? items_.at(seq).pos : (before ? before->pos : GeoPoint());
+    const auto start = std::find_if(items_.cbegin(), items_.cend(), [](const RunItem& r) { return r.kind == RunItem::Kind::Start; });
+    if (at.isValid() && start != items_.cend() && start->pos.isValid() && geoDistance(at, start->pos) <= kSamePointM) {
+        return tr("Mission complete, holding position at the start point");
+    }
+    return tr("Mission complete, holding position at the last point");
 }
 
 void MissionRunTracker::checkStale()
@@ -630,7 +695,7 @@ double MissionRunTracker::planSpeed() const
 
 bool MissionRunTracker::setManualSpeed(double speed, bool send)
 {
-    if (!std::isfinite(speed) || !known_ || finished_) {
+    if (!std::isfinite(speed) || !known_ || finished_ || holdingAtEnd_) {
         return false;
     }
     const double clamped = std::clamp(speed, kMinMissionSpeed, kMaxCommandSpeed);
@@ -671,7 +736,7 @@ void MissionRunTracker::followPlanSpeed()
     if (!std::isfinite(manualSpeed_)) {
         return;
     }
-    if (finished_) {
+    if (finished_ || holdingAtEnd_) {
         clearManualSpeed(false);
         return;
     }

@@ -1921,6 +1921,16 @@
         <translation>Misja zakończona</translation>
     </message>
     <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="190"/>
+        <source>Holding position</source>
+        <translation>Utrzymanie pozycji</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1282"/>
+        <source>Loiter: the finished mission holds position in Auto</source>
+        <translation>Loiter: misja zakończona, łódź utrzymuje pozycję w trybie Auto</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AutopilotPopup.qml" line="165"/>
         <source>Paused</source>
         <translation>Wstrzymana</translation>
@@ -9282,7 +9292,7 @@ udp://@:1234
     </message>
 </context>
 <context>
-    <name>MissionRunTracker</name>
+    <name>mission::MissionRunTracker</name>
     <message>
         <location filename="../src/mission/mission_run.cpp" line="84"/>
         <source>Home</source>
@@ -9327,6 +9337,21 @@ udp://@:1234
         <location filename="../src/mission/mission_run.cpp" line="101"/>
         <source>Hold position</source>
         <translation type="unfinished">Pozostań na miejscu</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_run.cpp" line="611"/>
+        <source>Mission complete, holding position after returning to launch</source>
+        <translation>Misja zakończona, łódź utrzymuje pozycję po powrocie (RTL)</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_run.cpp" line="616"/>
+        <source>Mission complete, holding position at the start point</source>
+        <translation>Misja zakończona, łódź utrzymuje pozycję w punkcie startowym</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_run.cpp" line="618"/>
+        <source>Mission complete, holding position at the last point</source>
+        <translation>Misja zakończona, łódź utrzymuje pozycję w ostatnim punkcie</translation>
     </message>
     <message>
         <location filename="../src/mission/mission_run.cpp" line="106"/>

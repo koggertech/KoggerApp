@@ -90,6 +90,7 @@ BasePanePopup {
     readonly property bool _autoDisarmed: !!_run && _run.running && !_paused && !_armed && _mode === _modeAuto
     readonly property bool _missionKnown: _online && !!_run && _run.known && !_run.vehicleEmpty
     readonly property bool _missionRowVisible: _missionKnown && (_run.running || ((_paused || _run.complete) && _armed))
+    readonly property bool _holdingAtEnd: _missionKnown && _run.holdingAtEnd
     readonly property bool _hasPlanLimits: typeof missionPlan !== "undefined" && !!missionPlan
     readonly property real _speedMin: _hasPlanLimits ? missionPlan.minSpeed : 0.3
     readonly property real _speedWarn: _hasPlanLimits ? missionPlan.warnSpeed : 0.8
@@ -102,7 +103,7 @@ BasePanePopup {
     readonly property real _planSpeed: _run ? _run.planSpeed : NaN
     readonly property bool _speedManual: isFinite(_speedDraft) || isFinite(_manualSpeed)
     readonly property real _shownSpeed: isFinite(_speedDraft) ? _speedDraft : (isFinite(_manualSpeed) ? _manualSpeed : _planSpeed)
-    readonly property bool _speedRowVisible: _missionKnown && !_run.complete && (_run.running || _paused)
+    readonly property bool _speedRowVisible: _missionKnown && !_run.complete && !_holdingAtEnd && (_run.running || _paused)
     property int _speedSendsInFlight: 0
     property real _speedPrevious: NaN
     property bool _speedWasReset: false
@@ -123,6 +124,7 @@ BasePanePopup {
     readonly property int _lossOutcomeNothing: 1
     readonly property int _modeHold: 4
     readonly property int _modeAuto: 10
+    readonly property int _modeLoiter: 5
     readonly property int _blockGap: Math.round(8 * _s)
     readonly property int _lossActionHold: 2
     readonly property color _lossInk: !!_loss && _loss.outcome === _lossOutcomeNothing ? AppPalette.linkIdleText : AppPalette.textMuted
@@ -185,6 +187,7 @@ BasePanePopup {
     readonly property string _missionRowText: {
         if (!_run) return ""
         if (_run.complete) return qsTr("Mission complete")
+        if (_holdingAtEnd) return qsTr("Mission complete") + " · " + qsTr("Holding position")
         var parts = []
         if (_paused) parts.push(qsTr("Paused"))
         if (_autoDisarmed) parts.push(qsTr("Not armed, the boat is not moving"))
@@ -705,18 +708,19 @@ BasePanePopup {
 
     component PillButton: KCircleIconButton {
         property bool selected: false
+        property bool hinted: false
         property bool danger: false
         width: root._controlH
         height: root._controlH
         enabled: root._online
         opacity: enabled ? 1.0 : 0.5
-        iconTintColor: danger ? AppPalette.dangerText : AppPalette.text
+        iconTintColor: danger ? AppPalette.dangerText : (hinted && !selected ? AppPalette.accent : AppPalette.text)
         fillColor:        danger ? AppPalette.dangerBg : (selected ? AppPalette.accentBgStrong : AppPalette.card)
         fillHoverColor:   danger ? AppPalette.dangerBg : (selected ? AppPalette.accentBorder : AppPalette.cardHover)
         fillPressedColor: AppPalette.bgDeep
-        borderColor:      danger ? AppPalette.dangerBorder : (selected ? AppPalette.accentBorder : AppPalette.border)
-        borderHoverColor: danger ? AppPalette.dangerBorder : (selected ? AppPalette.accentBorder : AppPalette.borderHover)
-        borderWidth: danger || selected ? 1 : Tokens.cardBorderWidth
+        borderColor:      danger ? AppPalette.dangerBorder : (selected || hinted ? AppPalette.accentBorder : AppPalette.border)
+        borderHoverColor: danger ? AppPalette.dangerBorder : (selected || hinted ? AppPalette.accentBorder : AppPalette.borderHover)
+        borderWidth: danger || selected ? 1 : (hinted ? 2 : Tokens.cardBorderWidth)
         toolTipOnHold: true
     }
 
@@ -1272,9 +1276,10 @@ BasePanePopup {
 
                         PillButton {
                             selected: root._online && root._mode === modeCell.modelData.mode
+                            hinted: !selected && root._holdingAtEnd && modeCell.modelData.mode === root._modeLoiter
                             toolTipOnHold: modeCell.modelData.stop !== true
                             iconSource: modeCell.modelData.icon
-                            toolTipText: modeCell.modelData.tip
+                            toolTipText: hinted ? qsTr("Loiter: the finished mission holds position in Auto") : modeCell.modelData.tip
                             onClicked: root.requestMode(modeCell.modelData.offMode !== undefined && root._mode === modeCell.modelData.mode
                                                         ? modeCell.modelData.offMode : modeCell.modelData.mode)
                         }

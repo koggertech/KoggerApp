@@ -1921,6 +1921,16 @@
         <translation>Mission complete</translation>
     </message>
     <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="190"/>
+        <source>Holding position</source>
+        <translation>Holding position</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1282"/>
+        <source>Loiter: the finished mission holds position in Auto</source>
+        <translation>Loiter: the finished mission holds position in Auto</translation>
+    </message>
+    <message>
         <location filename="../qml/app/AutopilotPopup.qml" line="165"/>
         <source>Paused</source>
         <translation>Paused</translation>
@@ -9276,7 +9286,7 @@ udp://@:1234
     </message>
 </context>
 <context>
-    <name>MissionRunTracker</name>
+    <name>mission::MissionRunTracker</name>
     <message>
         <location filename="../src/mission/mission_run.cpp" line="84"/>
         <source>Home</source>
@@ -9321,6 +9331,21 @@ udp://@:1234
         <location filename="../src/mission/mission_run.cpp" line="101"/>
         <source>Hold position</source>
         <translation type="unfinished">Hold position</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_run.cpp" line="611"/>
+        <source>Mission complete, holding position after returning to launch</source>
+        <translation>Mission complete, holding position after returning to launch</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_run.cpp" line="616"/>
+        <source>Mission complete, holding position at the start point</source>
+        <translation>Mission complete, holding position at the start point</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_run.cpp" line="618"/>
+        <source>Mission complete, holding position at the last point</source>
+        <translation>Mission complete, holding position at the last point</translation>
     </message>
     <message>
         <location filename="../src/mission/mission_run.cpp" line="106"/>
