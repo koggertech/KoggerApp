@@ -2377,6 +2377,46 @@
         <source>Mode change to %1: %2</source>
         <translation>Смена режима на %1: %2</translation>
     </message>
+    <message>
+        <source>Speed</source>
+        <translation>Скорость</translation>
+    </message>
+    <message>
+        <source>%1 m/s</source>
+        <translation>%1 м/с</translation>
+    </message>
+    <message>
+        <source>plan</source>
+        <translation>по плану</translation>
+    </message>
+    <message>
+        <source>plan %1</source>
+        <translation>по плану %1</translation>
+    </message>
+    <message>
+        <source>manual</source>
+        <translation>вручную</translation>
+    </message>
+    <message>
+        <source>Return to the plan speeds</source>
+        <translation>Вернуть скорости из плана</translation>
+    </message>
+    <message>
+        <source>Applies when the mission resumes</source>
+        <translation>Применится при продолжении миссии</translation>
+    </message>
+    <message>
+        <source>Mission speed</source>
+        <translation>Скорость миссии</translation>
+    </message>
+    <message>
+        <source>Mission speed: not applied while the boat holds at a point; set it again once it moves on</source>
+        <translation>Скорость миссии: не применена, пока лодка стоит на точке; задайте её снова, когда лодка пойдёт дальше</translation>
+    </message>
+    <message>
+        <source>Mission speed: the reset was not applied while the boat holds at a point; tap ↺ again once it moves on</source>
+        <translation>Скорость миссии: сброс не применён, пока лодка стоит на точке; нажмите ↺ снова, когда лодка пойдёт дальше</translation>
+    </message>
 </context>
 <context>
     <name>BottomTrackEditPopup</name>

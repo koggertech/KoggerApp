@@ -66,11 +66,11 @@ Item {
     readonly property int _guidedWaitMs: 4000
     readonly property real _maxDistanceM: 1000
     readonly property real _earthRadiusM: 6371008.8
-    readonly property real _speedStep: 0.5
     readonly property bool _hasPlanLimits: typeof missionPlan !== "undefined" && !!missionPlan
+    readonly property real _speedStep: _hasPlanLimits ? missionPlan.speedStep : 0.1
     readonly property real _speedMin: _hasPlanLimits ? missionPlan.minSpeed : 0.3
     readonly property real _speedWarn: _hasPlanLimits ? missionPlan.warnSpeed : 0.8
-    readonly property real _speedMax: 10
+    readonly property real _speedMax: _hasPlanLimits ? missionPlan.maxSpeed : 10
     readonly property real _speedFallback: 2.0
     readonly property int _arrivalKeep: 0
     readonly property int _arrivalMission: 1
@@ -168,7 +168,7 @@ Item {
         var base = _storedSpeed > 0 ? _storedSpeed : (isFinite(_wpSpeed) ? _wpSpeed : _speedFallback)
         var grid = base / _speedStep
         var next = (direction > 0 ? Math.floor(grid + 1e-6) + 1 : Math.ceil(grid - 1e-6) - 1) * _speedStep
-        store.goToSpeed = Math.max(_speedMin, Math.min(_speedMax, next))
+        store.goToSpeed = Math.round(Math.max(_speedMin, Math.min(_speedMax, next)) * 100) / 100
     }
 
     function _sendMode(mode, label) {

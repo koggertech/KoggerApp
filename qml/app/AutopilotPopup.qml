@@ -86,10 +86,31 @@ BasePanePopup {
     readonly property int _cmdSetMissionCurrent: 224
     readonly property int _messagesShown: 5
     readonly property real _earthRadiusM: 6371000.0
-    readonly property bool _paused: !!_dmw && _dmw.missionState === _missionStatePaused
+    readonly property bool _paused: (!!_run && _run.paused) || (!!_dmw && _dmw.missionState === _missionStatePaused)
     readonly property bool _autoDisarmed: !!_run && _run.running && !_paused && !_armed && _mode === _modeAuto
     readonly property bool _missionKnown: _online && !!_run && _run.known && !_run.vehicleEmpty
-    readonly property bool _missionRowVisible: _missionKnown && (_run.running || _paused || (_run.complete && _armed))
+    readonly property bool _missionRowVisible: _missionKnown && (_run.running || ((_paused || _run.complete) && _armed))
+    readonly property bool _hasPlanLimits: typeof missionPlan !== "undefined" && !!missionPlan
+    readonly property real _speedMin: _hasPlanLimits ? missionPlan.minSpeed : 0.3
+    readonly property real _speedWarn: _hasPlanLimits ? missionPlan.warnSpeed : 0.8
+    readonly property real _speedStep: _hasPlanLimits ? missionPlan.speedStep : 0.1
+    readonly property real _speedMax: _hasPlanLimits ? missionPlan.maxSpeed : 10
+    readonly property int _cmdChangeSpeed: 178
+    readonly property int _speedSendDelayMs: 600
+    property real _speedDraft: NaN
+    readonly property real _manualSpeed: _run ? _run.manualSpeed : NaN
+    readonly property real _planSpeed: _run ? _run.planSpeed : NaN
+    readonly property bool _speedManual: isFinite(_speedDraft) || isFinite(_manualSpeed)
+    readonly property real _shownSpeed: isFinite(_speedDraft) ? _speedDraft : (isFinite(_manualSpeed) ? _manualSpeed : _planSpeed)
+    readonly property bool _speedRowVisible: _missionKnown && !_run.complete && (_run.running || _paused)
+    property int _speedSendsInFlight: 0
+    property real _speedPrevious: NaN
+    property bool _speedWasReset: false
+    on_SpeedRowVisibleChanged: {
+        if (_speedRowVisible) return
+        speedSendTimer.stop()
+        _speedDraft = NaN
+    }
     readonly property var _helm: (typeof helm !== "undefined") ? helm : null
     readonly property var _gamepad: (typeof gamepadMonitor !== "undefined") ? gamepadMonitor : null
     readonly property bool _helmActive: !!_helm && _helm.active
@@ -170,6 +191,7 @@ BasePanePopup {
         if (_run.currentNav > 0) parts.push(qsTr("Pt %1/%2").arg(_run.currentNav).arg(_run.navCount))
         if (isFinite(_run.remainingDistance)) parts.push(_fmtDist(_run.remainingDistance))
         if (isFinite(_run.remainingSeconds) && !_autoDisarmed) parts.push("~" + _fmtTime(_run.remainingSeconds))
+        if (isFinite(_manualSpeed)) parts.push(_fmtSpeed(_manualSpeed))
         return parts.join(" · ")
     }
 
@@ -197,6 +219,63 @@ BasePanePopup {
     function _fmtDist(m) {
         if (!isFinite(m)) return "—"
         return m < 1000 ? qsTr("%1 m").arg(Math.round(m)) : qsTr("%1 km").arg((m / 1000).toFixed(1))
+    }
+
+    function _fmtSpeed(v) {
+        return qsTr("%1 m/s").arg(v.toFixed(1))
+    }
+
+    function _stepSpeed(direction) {
+        if (!_run) return
+        var base = isFinite(_shownSpeed) ? _shownSpeed : (isFinite(_speed) && _speed > 0 ? _speed : _speedMin)
+        var grid = base / _speedStep
+        var next = (direction > 0 ? Math.floor(grid + 1e-6) + 1 : Math.ceil(grid - 1e-6) - 1) * _speedStep
+        _speedDraft = Math.round(Math.max(_speedMin, Math.min(_speedMax, next)) * 100) / 100
+        speedSendTimer.restart()
+    }
+
+    function _applySpeed() {
+        var v = _speedDraft
+        _speedDraft = NaN
+        if (!_run || !isFinite(v) || !_speedRowVisible) return
+        var previous = _run.manualSpeed
+        if (_run.setManualSpeed(v))
+            _speedSent(previous, false)
+    }
+
+    function _resetSpeed() {
+        speedSendTimer.stop()
+        _speedDraft = NaN
+        if (!_run) return
+        var previous = _run.manualSpeed
+        if (_run.clearManualSpeed(true))
+            _speedSent(previous, true)
+    }
+
+    function _speedSent(previous, reset) {
+        _speedSendsInFlight++
+        _speedPrevious = previous
+        _speedWasReset = reset
+        speedAckTimer.restart()
+    }
+
+    function _speedAcked(result) {
+        var previous = _speedPrevious
+        var reset = _speedWasReset
+        _speedPrevious = NaN
+        _speedWasReset = false
+        if (result === 0 || !_run) return
+        if (isFinite(previous))
+            _run.setManualSpeed(previous, false)
+        else
+            _run.clearManualSpeed(false)
+        if (result === 4) {
+            _log(_severityWarning, reset
+                 ? qsTr("Mission speed: the reset was not applied while the boat holds at a point; tap ↺ again once it moves on")
+                 : qsTr("Mission speed: not applied while the boat holds at a point; set it again once it moves on"))
+            return
+        }
+        _log(_severityWarning, qsTr("%1: %2").arg(commandText(_cmdChangeSpeed)).arg(resultText(result)))
     }
 
     function _fmtTime(sec) {
@@ -347,6 +426,7 @@ BasePanePopup {
         case 224: return qsTr("Go to point")
         case 192: return qsTr("Go here")
         case 246: return qsTr("Reboot")
+        case 178: return qsTr("Mission speed")
         }
         return qsTr("Command %1").arg(command)
     }
@@ -508,6 +588,24 @@ BasePanePopup {
     }
 
     Timer {
+        id: speedSendTimer
+        interval: root._speedSendDelayMs
+        onTriggered: root._applySpeed()
+    }
+
+    Timer {
+        id: speedAckTimer
+        interval: 3000
+        onTriggered: {
+            if (root._speedSendsInFlight === 0) return
+            root._speedSendsInFlight = 0
+            root._speedPrevious = NaN
+            root._speedWasReset = false
+            root._log(root._severityWarning, qsTr("%1: %2").arg(root.commandText(root._cmdChangeSpeed)).arg(root.resultText(-2)))
+        }
+    }
+
+    Timer {
         id: lossConfirmTimer
         interval: root._armConfirmMs
         onTriggered: root._lossNothingPending = false
@@ -549,6 +647,17 @@ BasePanePopup {
         target: root._dmw
         ignoreUnknownSignals: true
         function onAutopilotCommandAcked(command, result) {
+            if (command === root._cmdChangeSpeed && root._speedSendsInFlight > 0) {
+                if (result === 5) {
+                    speedAckTimer.restart()
+                    return
+                }
+                root._speedSendsInFlight--
+                if (root._speedSendsInFlight > 0) return
+                speedAckTimer.stop()
+                root._speedAcked(result)
+                return
+            }
             if (command !== root.pendingCommand) return
             if (result === 5) {
                 ackTimer.restart()
@@ -609,6 +718,15 @@ BasePanePopup {
         borderHoverColor: danger ? AppPalette.dangerBorder : (selected ? AppPalette.accentBorder : AppPalette.borderHover)
         borderWidth: danger || selected ? 1 : Tokens.cardBorderWidth
         toolTipOnHold: true
+    }
+
+    component StepButton: KCircleIconButton {
+        width: Tokens.controlHMd
+        height: Tokens.controlHMd
+        glyphPixelSize: Math.round(14 * root._s)
+        fillColor: AppPalette.card
+        fillHoverColor: AppPalette.cardHover
+        borderColor: AppPalette.border
     }
 
     component StatCell: Row {
@@ -1658,6 +1776,73 @@ BasePanePopup {
                                     value: root._dmw && root._dmw.navigationValid && isFinite(root._dmw.crossTrackError)
                                            ? qsTr("%1 m").arg(Math.abs(root._dmw.crossTrackError).toFixed(1)) : "—"
                                 }
+                            }
+
+                            Item {
+                                width: parent.width
+                                height: Tokens.controlHMd
+                                visible: root._speedRowVisible
+
+                                Text {
+                                    anchors.left: parent.left
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: qsTr("Speed")
+                                    color: AppPalette.textSecond
+                                    font.pixelSize: Math.round(12 * root._s)
+                                }
+
+                                Row {
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: Tokens.spaceSm
+
+                                    StepButton {
+                                        glyph: "−"
+                                        onClicked: root._stepSpeed(-1)
+                                    }
+                                    Column {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: Math.round(84 * root._s)
+                                        Text {
+                                            width: parent.width
+                                            horizontalAlignment: Text.AlignHCenter
+                                            text: isFinite(root._shownSpeed) ? root._fmtSpeed(root._shownSpeed) : "—"
+                                            color: isFinite(root._shownSpeed) && root._shownSpeed < root._speedWarn ? AppPalette.linkIdleText : AppPalette.textStrong
+                                            font.pixelSize: Tokens.fontBase
+                                            font.bold: true
+                                        }
+                                        Text {
+                                            width: parent.width
+                                            horizontalAlignment: Text.AlignHCenter
+                                            text: !root._speedManual ? qsTr("plan")
+                                                : (isFinite(root._planSpeed) ? qsTr("plan %1").arg(root._fmtSpeed(root._planSpeed)) : qsTr("manual"))
+                                            color: AppPalette.textMuted
+                                            font.pixelSize: Tokens.fontSm
+                                            elide: Text.ElideRight
+                                        }
+                                    }
+                                    StepButton {
+                                        glyph: "+"
+                                        onClicked: root._stepSpeed(1)
+                                    }
+                                    StepButton {
+                                        glyph: "↺"
+                                        toolTipOnHold: true
+                                        enabled: isFinite(root._speedDraft) || (isFinite(root._manualSpeed) && (isFinite(root._planSpeed) || root._mode !== root._modeAuto))
+                                        opacity: enabled ? 1.0 : 0.4
+                                        toolTipText: qsTr("Return to the plan speeds")
+                                        onClicked: root._resetSpeed()
+                                    }
+                                }
+                            }
+
+                            Text {
+                                width: parent.width
+                                visible: root._speedRowVisible && root._paused && root._speedManual
+                                text: qsTr("Applies when the mission resumes")
+                                color: AppPalette.textMuted
+                                font.pixelSize: Math.round(11 * root._s)
+                                wrapMode: Text.WordWrap
                             }
 
                             Text {

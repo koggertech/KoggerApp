@@ -2377,6 +2377,46 @@
         <source>Mode change to %1: %2</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Speed</source>
+        <translation>Speed</translation>
+    </message>
+    <message>
+        <source>%1 m/s</source>
+        <translation>%1 m/s</translation>
+    </message>
+    <message>
+        <source>plan</source>
+        <translation>plan</translation>
+    </message>
+    <message>
+        <source>plan %1</source>
+        <translation>plan %1</translation>
+    </message>
+    <message>
+        <source>manual</source>
+        <translation>manual</translation>
+    </message>
+    <message>
+        <source>Return to the plan speeds</source>
+        <translation>Return to the plan speeds</translation>
+    </message>
+    <message>
+        <source>Applies when the mission resumes</source>
+        <translation>Applies when the mission resumes</translation>
+    </message>
+    <message>
+        <source>Mission speed</source>
+        <translation>Mission speed</translation>
+    </message>
+    <message>
+        <source>Mission speed: not applied while the boat holds at a point; set it again once it moves on</source>
+        <translation>Mission speed: not applied while the boat holds at a point; set it again once it moves on</translation>
+    </message>
+    <message>
+        <source>Mission speed: the reset was not applied while the boat holds at a point; tap ↺ again once it moves on</source>
+        <translation>Mission speed: the reset was not applied while the boat holds at a point; tap ↺ again once it moves on</translation>
+    </message>
 </context>
 <context>
     <name>BottomTrackEditPopup</name>
