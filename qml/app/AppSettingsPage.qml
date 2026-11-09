@@ -728,6 +728,14 @@ Column {
             }
 
             KIslandRow {
+                label: qsTr("Autopilot card")
+                chevron: true
+                interactive: true
+                toolTipText: qsTr("Buttons, panels, size and opacity of the autopilot card")
+                onClicked: if (root.store) root.store.openAutopilotSettings()
+            }
+
+            KIslandRow {
                 label: qsTr("UI Saving")
                 chevron: true
                 interactive: true

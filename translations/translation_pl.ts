@@ -1577,6 +1577,16 @@
         <source>Gamepad</source>
         <translation>Gamepad</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="731"/>
+        <source>Autopilot card</source>
+        <translation>Karta autopilota</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="734"/>
+        <source>Buttons, panels, size and opacity of the autopilot card</source>
+        <translation>Przyciski, panele, rozmiar i nieprzezroczystość karty autopilota</translation>
+    </message>
 </context>
 <context>
     <name>AutopilotParamsDialog</name>
@@ -2426,6 +2436,124 @@
     <message>
         <source>Mission speed: the reset was not applied while the boat holds at a point; tap ↺ again once it moves on</source>
         <translation>Prędkość misji: reset nie został zastosowany, gdy łódź stoi w punkcie; naciśnij ↺ ponownie, gdy ruszy dalej</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="635"/>
+        <source>Mission: %1 points</source>
+        <translation>Punkty misji: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1931"/>
+        <source>Waypoint %1</source>
+        <translation>Punkt %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2066"/>
+        <source>Settings</source>
+        <translation>Ustawienia</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2076"/>
+        <source>Tutorial</source>
+        <translation>Samouczek</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2100"/>
+        <source>Autopilot settings</source>
+        <translation>Ustawienia autopilota</translation>
+    </message>
+</context>
+<context>
+    <name>AutopilotSettingsTab</name>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="11"/>
+        <source>Arm / disarm</source>
+        <translation>Uzbrojenie / rozbrojenie</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="18"/>
+        <source>Go here</source>
+        <translation>Płyń tutaj</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="19"/>
+        <source>Autopilot parameters</source>
+        <translation>Parametry autopilota</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="20"/>
+        <source>Mission editor</source>
+        <translation>Edytor misji</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="21"/>
+        <source>Close</source>
+        <translation>Zamknij</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="86"/>
+        <source>Tutorial</source>
+        <translation>Samouczek</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="144"/>
+        <source>Card size:</source>
+        <translation>Rozmiar karty:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="205"/>
+        <source>Show every button, 100 % size, fully opaque</source>
+        <translation>Wszystkie przyciski, rozmiar 100 %, bez przezroczystości</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="163"/>
+        <source>Opacity</source>
+        <translation>Nieprzezroczystość</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="129"/>
+        <source>Card buttons:</source>
+        <translation>Przyciski karty:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="130"/>
+        <source>Panels of the expanded card:</source>
+        <translation>Panele rozwiniętej karty:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="24"/>
+        <source>Boat</source>
+        <translation>Łódź</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="25"/>
+        <source>Mission</source>
+        <translation>Misja</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="26"/>
+        <source>Settings</source>
+        <translation>Ustawienia</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="27"/>
+        <source>On link loss</source>
+        <translation>Po utracie łączności</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="28"/>
+        <source>Messages</source>
+        <translation>Komunikaty</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="216"/>
+        <source>Defaults</source>
+        <translation>Domyślne</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="102"/>
+        <source>A short tour of the autopilot card</source>
+        <translation>Krótki przewodnik po karcie autopilota</translation>
     </message>
 </context>
 <context>
@@ -8172,6 +8300,11 @@ udp://@:1234
         <location filename="../qml/app/MainWindow.qml" line="1193"/>
         <source>Stand panel</source>
         <translation>Panel stanowiska</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MainWindow.qml" line="1202"/>
+        <source>Autopilot</source>
+        <translation>Autopilot</translation>
     </message>
 </context>
 <context>
@@ -16250,6 +16383,209 @@ udp://@:1234
         <location filename="../src/mission/mission_plan_controller.cpp" line="1305"/>
         <source>points: needs at least %1 vertices</source>
         <translation>points: wymaga co najmniej %1 wierzchołków</translation>
+    </message>
+</context>
+<context>
+    <name>tutorial_autopilot</name>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="6"/>
+        <source>Autopilot card</source>
+        <translation>Karta autopilota</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="8"/>
+        <source>Link and mode</source>
+        <translation>Łączność i tryb</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="9"/>
+        <source>The icon is grey without an autopilot, teal while it is connected and red while the boat is armed. Next to it, the current mode.</source>
+        <translation>Ikona jest szara bez autopilota, turkusowa, gdy jest połączony, i czerwona, gdy łódź jest uzbrojona. Obok — bieżący tryb.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="10"/>
+        <source>On link loss</source>
+        <translation>Po utracie łączności</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="11"/>
+        <source>What the boat does if the link drops. Amber means it does nothing.</source>
+        <translation>Co zrobi łódź po utracie łączności. Na żółto — jeśli nic.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="12"/>
+        <source>Telemetry</source>
+        <translation>Telemetria</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="14"/>
+        <source>Details</source>
+        <translation>Szczegóły</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="15"/>
+        <source>Opens the details below. A tap on the left part of the card does the same.</source>
+        <translation>Rozwija szczegóły poniżej. To samo robi dotknięcie lewej części karty.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="16"/>
+        <source>Arm</source>
+        <translation>Uzbrojenie</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="17"/>
+        <source>Tap ARM, then tap again while the ring runs (3 s). An armed boat shows the button red; one tap disarms.</source>
+        <translation>Dotknij ARM, a potem jeszcze raz, póki biegnie pierścień (3 s). Uzbrojona łódź ma czerwony przycisk; jedno dotknięcie rozbraja.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="18"/>
+        <source>Manual control</source>
+        <translation>Sterowanie ręczne</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="19"/>
+        <source>Manual: the transmitter or the gamepad drives directly. Acro keeps the heading; tap it again to go back to Manual.</source>
+        <translation>Manual: aparatura lub gamepad sterują bezpośrednio. Acro trzyma kurs; ponowne dotknięcie wraca do Manual.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="20"/>
+        <source>Stop</source>
+        <translation>Stop</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="21"/>
+        <source>Hold stops the motors and the boat drifts. Loiter keeps the boat on its spot by GPS.</source>
+        <translation>Hold zatrzymuje silniki i łódź dryfuje. Loiter utrzymuje łódź w miejscu według GPS.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="22"/>
+        <source>Mission and return</source>
+        <translation>Misja i powrót</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="23"/>
+        <source>Auto runs the mission stored on the boat. RTL returns to the nearest rally point or home.</source>
+        <translation>Auto wykonuje misję zapisaną w łodzi. RTL wraca do najbliższego punktu zbornego lub do domu.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="24"/>
+        <source>Go here</source>
+        <translation>Płyń tutaj</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="25"/>
+        <source>Turn it on, tap a point in the 3D view and confirm: the boat goes there.</source>
+        <translation>Włącz, dotknij punktu w widoku 3D i potwierdź: łódź tam popłynie.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="26"/>
+        <source>Parameters, planner, close</source>
+        <translation>Parametry, planer, zamknięcie</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="27"/>
+        <source>All autopilot parameters, the mission planner and closing the card.</source>
+        <translation>Wszystkie parametry autopilota, planer misji i zamknięcie karty.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="28"/>
+        <source>Gamepad</source>
+        <translation>Gamepad</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="29"/>
+        <source>Take or release control from a gamepad. The A button takes control by itself once a gamepad and the boat are connected.</source>
+        <translation>Przejmij lub oddaj sterowanie z gamepada. Przycisk A przejmuje sterowanie sam, gdy gamepad i łódź są połączone.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="30"/>
+        <source>Mission progress</source>
+        <translation>Postęp misji</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="31"/>
+        <source>Point, distance and time left. A tap on the row opens the details.</source>
+        <translation>Punkt, pozostały dystans i czas. Dotknięcie wiersza rozwija szczegóły.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="32"/>
+        <source>Boat</source>
+        <translation>Łódź</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="33"/>
+        <source>GPS fix, distance to home, radio signal and firmware.</source>
+        <translation>Fix GPS, odległość do domu, sygnał radia i oprogramowanie.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="34"/>
+        <source>Mission</source>
+        <translation>Misja</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="35"/>
+        <source>Current and next point, distance and cross-track error. Next point skips ahead after two taps; Read from the boat fetches the mission again.</source>
+        <translation>Bieżący i następny punkt, dystans i odchylenie od linii. „Następny punkt” przeskakuje dalej po dwóch dotknięciach; „Odczytaj z łodzi” pobiera misję ponownie.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="36"/>
+        <source>Speed</source>
+        <translation>Prędkość</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="37"/>
+        <source>Changes the mission speed on the go. ↺ returns to the plan speeds.</source>
+        <translation>Zmienia prędkość misji w trakcie. ↺ przywraca prędkości z planu.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="41"/>
+        <source>Messages</source>
+        <translation>Komunikaty</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="42"/>
+        <source>Reports from the boat and the app. Critical ones pop up even with the card closed.</source>
+        <translation>Komunikaty łodzi i aplikacji. Krytyczne pojawiają się nawet przy zamkniętej karcie.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="43"/>
+        <source>That&apos;s all</source>
+        <translation>To wszystko</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="44"/>
+        <source>Run this tour again from here.</source>
+        <translation>Stąd uruchomisz przewodnik ponownie.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="45"/>
+        <source>Finish</source>
+        <translation>Gotowe</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="38"/>
+        <source>Card settings</source>
+        <translation>Ustawienia karty</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="39"/>
+        <source>Choose which buttons and panels the card shows, its size and opacity. Also in Settings → Interface → Autopilot card.</source>
+        <translation>Wybierz, które przyciski i panele pokazuje karta, jej rozmiar i nieprzezroczystość. To samo w Ustawienia → Interfejs → Karta autopilota.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="7"/>
+        <source>Drives the boat: modes, the mission, a gamepad and the action on link loss.</source>
+        <translation>Sterowanie łodzią: tryby, misja, gamepad i reakcja na utratę łączności.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="13"/>
+        <source>Battery, speed, link, satellites, voltage and current.</source>
+        <translation>Bateria, prędkość, łączność, satelity, napięcie i prąd.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="40"/>
+        <source>What the boat does when the link drops; saved on the boat. Mission in Auto: keep going or abort.</source>
+        <translation>Co robi łódź po utracie łączności; zapisane w łodzi. „Misja w Auto”: kontynuuj lub przerwij.</translation>
     </message>
 </context>
 <context>

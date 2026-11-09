@@ -1391,6 +1391,54 @@ property Settings goToPrefs: Settings {
 property alias goToSpeed:   goToPrefs.speed
 property alias goToArrival: goToPrefs.arrival
 
+property Settings autopilotCardPrefs: Settings {
+    id: autopilotCardPrefs
+    category: "main/autopilotCard"
+    property string hiddenButtons: "[]"
+    property real cardOpacity: 1.0
+    property real cardScale: 1.0
+}
+readonly property var autopilotCardHidden: {
+    var list = []
+    try { list = JSON.parse(autopilotCardPrefs.hiddenButtons) } catch (e) { list = [] }
+    return Array.isArray(list) ? list : []
+}
+readonly property real autopilotCardOpacityMin: 0.3
+readonly property real autopilotCardOpacity: Math.max(autopilotCardOpacityMin, Math.min(1, autopilotCardPrefs.cardOpacity))
+readonly property var autopilotCardScales: [0.7, 0.8, 0.9, 1.0, 1.1, 1.2]
+readonly property real autopilotCardScale: {
+    var stored = Number(autopilotCardPrefs.cardScale)
+    for (var i = 0; i < autopilotCardScales.length; ++i)
+        if (Math.abs(autopilotCardScales[i] - stored) < 0.001) return autopilotCardScales[i]
+    return 1.0
+}
+readonly property bool autopilotCardPreview: settingsPanelOpen && settingsSubPageActive && settingsSubPageKind === "autopilot"
+property string autopilotCardRevealKey: ""
+property int autopilotCardRevealNonce: 0
+readonly property bool autopilotCardIsDefault: autopilotCardHidden.length === 0 && autopilotCardOpacity === 1 && autopilotCardScale === 1
+
+function autopilotCardButtonShown(key) {
+    return autopilotCardHidden.indexOf(key) < 0
+}
+function setAutopilotCardButtonShown(key, shown) {
+    var list = autopilotCardHidden.filter(function(k) { return k !== key })
+    if (!shown) list.push(key)
+    autopilotCardPrefs.hiddenButtons = JSON.stringify(list)
+    autopilotCardRevealKey = key
+    autopilotCardRevealNonce += 1
+}
+function setAutopilotCardOpacity(value) {
+    autopilotCardPrefs.cardOpacity = Math.round(Math.max(autopilotCardOpacityMin, Math.min(1, value)) * 100) / 100
+}
+function setAutopilotCardScale(value) {
+    autopilotCardPrefs.cardScale = value
+}
+function resetAutopilotCard() {
+    autopilotCardPrefs.hiddenButtons = "[]"
+    autopilotCardPrefs.cardOpacity = 1.0
+    autopilotCardPrefs.cardScale = 1.0
+}
+
 property Binding _missionRunReadBinding: Binding {
     target: (typeof missionRun !== "undefined") ? missionRun : null
     property: "readAutomatically"
@@ -2380,6 +2428,7 @@ function openConsoleSettings()      { _openSettingsSubPage("console") }
 function openAboutSettings()        { _openSettingsSubPage("about") }
 function openControlsHelp()         { _openSettingsSubPage("controls") }
 function openTutorialsSettings()    { _openSettingsSubPage("tutorials") }
+function openAutopilotSettings()    { _openSettingsSubPage("autopilot") }
 function openDeveloperSettings()    { _openSettingsSubPage("developer") }
 function openLicenseView(title, file) {
     licenseViewTitle = title

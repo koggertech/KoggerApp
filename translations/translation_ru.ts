@@ -1577,6 +1577,16 @@
         <source>Gamepad</source>
         <translation>Геймпад</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="731"/>
+        <source>Autopilot card</source>
+        <translation>Карточка автопилота</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="734"/>
+        <source>Buttons, panels, size and opacity of the autopilot card</source>
+        <translation>Кнопки, области, размер и непрозрачность карточки автопилота</translation>
+    </message>
 </context>
 <context>
     <name>AutopilotParamsDialog</name>
@@ -2426,6 +2436,124 @@
     <message>
         <source>Mission speed: the reset was not applied while the boat holds at a point; tap ↺ again once it moves on</source>
         <translation>Скорость миссии: сброс не применён, пока лодка стоит на точке; нажмите ↺ снова, когда лодка пойдёт дальше</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="635"/>
+        <source>Mission: %1 points</source>
+        <translation>Точек в миссии: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1931"/>
+        <source>Waypoint %1</source>
+        <translation>Точка %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2066"/>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2076"/>
+        <source>Tutorial</source>
+        <translation>Обучение</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2100"/>
+        <source>Autopilot settings</source>
+        <translation>Настройки автопилота</translation>
+    </message>
+</context>
+<context>
+    <name>AutopilotSettingsTab</name>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="11"/>
+        <source>Arm / disarm</source>
+        <translation>Арм / дизарм</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="18"/>
+        <source>Go here</source>
+        <translation>Перейти сюда</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="19"/>
+        <source>Autopilot parameters</source>
+        <translation>Параметры автопилота</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="20"/>
+        <source>Mission editor</source>
+        <translation>Редактор миссий</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="21"/>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="86"/>
+        <source>Tutorial</source>
+        <translation>Обучение</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="144"/>
+        <source>Card size:</source>
+        <translation>Размер карточки:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="205"/>
+        <source>Show every button, 100 % size, fully opaque</source>
+        <translation>Все кнопки, размер 100 %, без прозрачности</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="163"/>
+        <source>Opacity</source>
+        <translation>Непрозрачность</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="129"/>
+        <source>Card buttons:</source>
+        <translation>Кнопки карточки:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="130"/>
+        <source>Panels of the expanded card:</source>
+        <translation>Области развёрнутой карточки:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="24"/>
+        <source>Boat</source>
+        <translation>Лодка</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="25"/>
+        <source>Mission</source>
+        <translation>Миссия</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="26"/>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="27"/>
+        <source>On link loss</source>
+        <translation>При потере связи</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="28"/>
+        <source>Messages</source>
+        <translation>Сообщения</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="216"/>
+        <source>Defaults</source>
+        <translation>По умолчанию</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="102"/>
+        <source>A short tour of the autopilot card</source>
+        <translation>Короткий тур по карточке автопилота</translation>
     </message>
 </context>
 <context>
@@ -8172,6 +8300,11 @@ udp://@:1234
         <location filename="../qml/app/MainWindow.qml" line="1193"/>
         <source>Stand panel</source>
         <translation>Панель стенда</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MainWindow.qml" line="1202"/>
+        <source>Autopilot</source>
+        <translation>Автопилот</translation>
     </message>
 </context>
 <context>
@@ -16250,6 +16383,209 @@ udp://@:1234
         <location filename="../src/mission/mission_plan_controller.cpp" line="1305"/>
         <source>points: needs at least %1 vertices</source>
         <translation>points: нужно не меньше %1 вершин</translation>
+    </message>
+</context>
+<context>
+    <name>tutorial_autopilot</name>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="6"/>
+        <source>Autopilot card</source>
+        <translation>Карточка автопилота</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="8"/>
+        <source>Link and mode</source>
+        <translation>Связь и режим</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="9"/>
+        <source>The icon is grey without an autopilot, teal while it is connected and red while the boat is armed. Next to it, the current mode.</source>
+        <translation>Значок серый без автопилота, бирюзовый, пока он на связи, и красный, когда лодка в ARM. Рядом — текущий режим.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="10"/>
+        <source>On link loss</source>
+        <translation>При потере связи</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="11"/>
+        <source>What the boat does if the link drops. Amber means it does nothing.</source>
+        <translation>Что сделает лодка, если связь пропадёт. Жёлтым — если ничего.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="12"/>
+        <source>Telemetry</source>
+        <translation>Телеметрия</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="14"/>
+        <source>Details</source>
+        <translation>Подробнее</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="15"/>
+        <source>Opens the details below. A tap on the left part of the card does the same.</source>
+        <translation>Раскрывает подробности ниже. То же делает нажатие на левую часть карточки.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="16"/>
+        <source>Arm</source>
+        <translation>Арм</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="17"/>
+        <source>Tap ARM, then tap again while the ring runs (3 s). An armed boat shows the button red; one tap disarms.</source>
+        <translation>Нажмите ARM и ещё раз, пока бежит кольцо (3 с). Когда лодка в ARM, кнопка красная; одно нажатие — дизарм.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="18"/>
+        <source>Manual control</source>
+        <translation>Ручное управление</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="19"/>
+        <source>Manual: the transmitter or the gamepad drives directly. Acro keeps the heading; tap it again to go back to Manual.</source>
+        <translation>Manual — пульт или геймпад управляют напрямую. Acro держит курс; повторное нажатие возвращает Manual.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="20"/>
+        <source>Stop</source>
+        <translation>Стоп</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="21"/>
+        <source>Hold stops the motors and the boat drifts. Loiter keeps the boat on its spot by GPS.</source>
+        <translation>Hold останавливает моторы, лодку сносит. Loiter удерживает лодку на месте по GPS.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="22"/>
+        <source>Mission and return</source>
+        <translation>Миссия и возврат</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="23"/>
+        <source>Auto runs the mission stored on the boat. RTL returns to the nearest rally point or home.</source>
+        <translation>Auto выполняет миссию, записанную в лодку. RTL возвращает к ближайшей точке сбора или домой.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="24"/>
+        <source>Go here</source>
+        <translation>Перейти сюда</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="25"/>
+        <source>Turn it on, tap a point in the 3D view and confirm: the boat goes there.</source>
+        <translation>Включите, нажмите точку в 3D-виде и подтвердите — лодка пойдёт туда.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="26"/>
+        <source>Parameters, planner, close</source>
+        <translation>Параметры, планировщик, закрыть</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="27"/>
+        <source>All autopilot parameters, the mission planner and closing the card.</source>
+        <translation>Все параметры автопилота, планировщик миссий и закрытие карточки.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="28"/>
+        <source>Gamepad</source>
+        <translation>Геймпад</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="29"/>
+        <source>Take or release control from a gamepad. The A button takes control by itself once a gamepad and the boat are connected.</source>
+        <translation>Взять или отдать управление с геймпада. Кнопка A берёт управление сама, когда геймпад и лодка на связи.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="30"/>
+        <source>Mission progress</source>
+        <translation>Ход миссии</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="31"/>
+        <source>Point, distance and time left. A tap on the row opens the details.</source>
+        <translation>Точка, оставшиеся путь и время. Нажатие на строку раскрывает подробности.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="32"/>
+        <source>Boat</source>
+        <translation>Лодка</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="33"/>
+        <source>GPS fix, distance to home, radio signal and firmware.</source>
+        <translation>Фикс GPS, расстояние до дома, сигнал радио и прошивка.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="34"/>
+        <source>Mission</source>
+        <translation>Миссия</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="35"/>
+        <source>Current and next point, distance and cross-track error. Next point skips ahead after two taps; Read from the boat fetches the mission again.</source>
+        <translation>Текущая и следующая точка, расстояние и отклонение от линии. «Следующая точка» — переход дальше в два нажатия; «Прочитать с лодки» — заново загрузить миссию.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="36"/>
+        <source>Speed</source>
+        <translation>Скорость</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="37"/>
+        <source>Changes the mission speed on the go. ↺ returns to the plan speeds.</source>
+        <translation>Меняет скорость миссии на ходу. ↺ возвращает скорости плана.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="41"/>
+        <source>Messages</source>
+        <translation>Сообщения</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="42"/>
+        <source>Reports from the boat and the app. Critical ones pop up even with the card closed.</source>
+        <translation>Сообщения лодки и приложения. Критичные всплывают, даже когда карточка закрыта.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="43"/>
+        <source>That&apos;s all</source>
+        <translation>Вот и всё</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="44"/>
+        <source>Run this tour again from here.</source>
+        <translation>Пройти тур снова можно отсюда.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="45"/>
+        <source>Finish</source>
+        <translation>Готово</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="38"/>
+        <source>Card settings</source>
+        <translation>Настройки карточки</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="39"/>
+        <source>Choose which buttons and panels the card shows, its size and opacity. Also in Settings → Interface → Autopilot card.</source>
+        <translation>Выберите, какие кнопки и области показывает карточка, её размер и непрозрачность. То же — в Настройки → Интерфейс → Карточка автопилота.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="7"/>
+        <source>Drives the boat: modes, the mission, a gamepad and the action on link loss.</source>
+        <translation>Управление лодкой: режимы, миссия, геймпад и действие при потере связи.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="13"/>
+        <source>Battery, speed, link, satellites, voltage and current.</source>
+        <translation>Батарея, скорость, связь, спутники, напряжение и ток.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="40"/>
+        <source>What the boat does when the link drops; saved on the boat. Mission in Auto: keep going or abort.</source>
+        <translation>Что делает лодка при потере связи; хранится в лодке. «Миссия в Auto»: продолжить или прервать.</translation>
     </message>
 </context>
 <context>

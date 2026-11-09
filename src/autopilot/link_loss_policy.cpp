@@ -147,9 +147,9 @@ int LinkLossPolicy::outcome() const
 QString LinkLossPolicy::outcomeText() const
 {
     switch (outcome()) {
-    case OutcomeNothing: return tr("no action");
-    case OutcomeMission: return tr("mission goes on");
-    case OutcomeAlready: return tr("stays in %1").arg(mode_ == kModeRtl ? QStringLiteral("RTL") : QStringLiteral("Hold"));
+    case OutcomeNothing: return QStringLiteral("→ —");
+    case OutcomeMission: return QStringLiteral("→ Auto");
+    case OutcomeAlready: return QStringLiteral("→ %1").arg(mode_ == kModeRtl ? QStringLiteral("RTL") : QStringLiteral("Hold"));
     case OutcomeAction:  return QStringLiteral("→ %1").arg(actionWord(fsAction_));
     default:             return QStringLiteral("…");
     }
