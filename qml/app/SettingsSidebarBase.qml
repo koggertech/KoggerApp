@@ -559,7 +559,7 @@ Item {
             var arr = panelRoot.store._settingsGroupInstances
             for (var i = 0; i < arr.length; ++i) {
                 var g = arr[i]
-                if (!g || !g._bodyShown)
+                if (!g || !g.bodyShown)
                     continue
                 if (g._pinningToTop)
                     return true

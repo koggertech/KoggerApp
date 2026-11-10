@@ -79,7 +79,7 @@ CheckBox {
         border.color: control.borderColor
     }
 
-    KToolTip {
+    KLazyToolTip {
         text: control.toolTipText
         targetItem: control
         shown: control.hovered && control.enabled

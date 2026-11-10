@@ -31,7 +31,8 @@ Item {
     property alias headerActions: headerActionsRow.data
     readonly property int _headerH: Math.round(36 * AppPalette.scale)
     readonly property int headerActionSize: _headerH
-    readonly property bool _bodyShown: expandable && (!collapsible || expanded)
+    readonly property bool bodyShown: expandable && (!collapsible || expanded)
+    readonly property bool bodyRevealed: island.height > root._headerH + 0.5
 
     // ── Sticky header ─────────────────────────────────────────────────────
     // When an expanded group is taller than the viewport, its header floats down
@@ -41,7 +42,7 @@ Item {
     // on the group's own height change.
     property var _flick: null
     readonly property real _stickyHeaderY: {
-        if (!_flick || !root._bodyShown)
+        if (!_flick || !root.bodyShown)
             return 0
         var _dep = _flick.contentY + _flick.contentHeight   // re-eval on scroll / layout
         var vpY = root.mapToItem(_flick, 0, 0).y            // group top in the viewport
@@ -51,7 +52,7 @@ Item {
     // Fade the (sticky) header out over the last header-height of the group, so it
     // dissolves as the group's content scrolls past the top instead of jumping off.
     readonly property real _headerFade: {
-        if (!_flick || !root._bodyShown)
+        if (!_flick || !root.bodyShown)
             return 1
         var _dep = _flick.contentY + _flick.contentHeight
         var bottomVp = root.mapToItem(_flick, 0, island.height).y   // group bottom in viewport
@@ -59,7 +60,7 @@ Item {
     }
     readonly property bool _pinningToTop: scrollIntoViewAnim.running
     readonly property real _headerTopInFlick: {
-        if (!_flick || !root._bodyShown)
+        if (!_flick || !root.bodyShown)
             return 1e6
         var _dep = _flick.contentY + _flick.contentHeight
         var vpY = root.mapToItem(_flick, 0, 0).y
@@ -347,9 +348,9 @@ Item {
         readonly property color _bottomColor: !root.confirmed
                 ? AppPalette.dangerBg
                 : (root.uniformBody ? island._headerColor
-                                    : (root._bodyShown ? AppPalette.bgDeep : island._headerColor))
+                                    : (root.bodyShown ? AppPalette.bgDeep : island._headerColor))
 
-        height: root._bodyShown
+        height: root.bodyShown
                 ? headerRow.height + Tokens.spaceSm + bodyCol.implicitHeight + root.contentPadding
                 : headerRow.height
 
@@ -526,7 +527,7 @@ Item {
             x: root.contentPadding
             width: island.width - 2 * root.contentPadding
             spacing: Tokens.spaceSm
-            enabled: root._bodyShown
+            enabled: root.bodyShown
 
             Text {
                 id: descriptionLabel
@@ -553,7 +554,7 @@ Item {
         height: island.height - root._stickyHeaderY
         color: "transparent"
         radius: island.radius
-        border.width: (!root.confirmed || root._bodyShown) ? 1 : 0
+        border.width: (!root.confirmed || root.bodyShown) ? 1 : 0
         border.color: root.confirmed ? AppPalette.groupBorder : AppPalette.dangerBorder
     }
 }

@@ -184,28 +184,36 @@ void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, bool recei
             moveRow(size_ - 1, 0);
     }
     else {
-        int line = index_[uuid];
+        const int line = index_[uuid];
         const bool wasPinned = vectors_[static_cast<int>(LinkListModel::Roles::IsPinned)][line].toBool();
 
-        vectors_[static_cast<int>(LinkListModel::Roles::Uuid)][line] = uuid;
-        vectors_[static_cast<int>(LinkListModel::Roles::ConnectionStatus)][line] = connectionStatus;
-        vectors_[static_cast<int>(LinkListModel::Roles::ReceivesData)][line] = receivesData;
-        vectors_[static_cast<int>(LinkListModel::Roles::ControlType)][line] = static_cast<int>(controlType);
-        vectors_[static_cast<int>(LinkListModel::Roles::PortName)][line] = portName;
-        vectors_[static_cast<int>(LinkListModel::Roles::Baudrate)][line] = baudrate;
-        vectors_[static_cast<int>(LinkListModel::Roles::Parity)][line] = parity;
-        vectors_[static_cast<int>(LinkListModel::Roles::LinkType)][line] = static_cast<int>(linkType);
-        vectors_[static_cast<int>(LinkListModel::Roles::Address)][line] = address;
-        vectors_[static_cast<int>(LinkListModel::Roles::SourcePort)][line] = sourcePort;
-        vectors_[static_cast<int>(LinkListModel::Roles::DestinationPort)][line] = destinationPort;
-        vectors_[static_cast<int>(LinkListModel::Roles::IsPinned)][line] = isPinned;
-        vectors_[static_cast<int>(LinkListModel::Roles::IsHided)][line] = isHided;
-        vectors_[static_cast<int>(LinkListModel::Roles::IsNotAvailable)][line] = isNotAvailable;
-        vectors_[static_cast<int>(LinkListModel::Roles::AutoSpeedSelection)][line] = autoSpeedSelection;
-        vectors_[static_cast<int>(LinkListModel::Roles::IsUpgradingState)][line] = isUpgradingState;
-        vectors_[static_cast<int>(LinkListModel::Roles::CustomName)][line] = customName;
+        QList<int> changedRoles;
+        const auto assign = [&](Roles role, const QVariant& value) {
+            QVariant& slot = vectors_[static_cast<int>(role)][line];
+            if (slot == value)
+                return;
+            slot = value;
+            changedRoles.append(static_cast<int>(role));
+        };
 
-        emit dataChanged(index(line, 0), index(line, 0));
+        assign(Roles::ConnectionStatus,   connectionStatus);
+        assign(Roles::ReceivesData,       receivesData);
+        assign(Roles::ControlType,        static_cast<int>(controlType));
+        assign(Roles::PortName,           portName);
+        assign(Roles::Baudrate,           baudrate);
+        assign(Roles::Parity,             parity);
+        assign(Roles::LinkType,           static_cast<int>(linkType));
+        assign(Roles::Address,            address);
+        assign(Roles::SourcePort,         sourcePort);
+        assign(Roles::DestinationPort,    destinationPort);
+        assign(Roles::IsPinned,           isPinned);
+        assign(Roles::IsNotAvailable,     isNotAvailable);
+        assign(Roles::AutoSpeedSelection, autoSpeedSelection);
+        assign(Roles::IsUpgradingState,   isUpgradingState);
+        assign(Roles::CustomName,         customName);
+
+        if (!changedRoles.isEmpty())
+            emit dataChanged(index(line, 0), index(line, 0), changedRoles);
 
         if (isPinned != wasPinned)
             moveRow(line, isPinned ? 0 : pinnedCount());

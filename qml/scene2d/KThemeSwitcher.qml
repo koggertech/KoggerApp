@@ -103,7 +103,7 @@ Item {
             onClicked: sw.activated()
         }
 
-        KToolTip {
+        KLazyToolTip {
             text: (root.themeNames && root.themeNames.length > sw.themeId) ? root.themeNames[sw.themeId] : ""
             targetItem: sw
             shown: sw.hovered && text.length > 0

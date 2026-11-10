@@ -145,7 +145,7 @@ Switch {
             highlightOverlay.opacity = 0.0
     }
 
-    KToolTip {
+    KLazyToolTip {
         text: control.toolTipText
         targetItem: control
         shown: control.hovered && control.enabled

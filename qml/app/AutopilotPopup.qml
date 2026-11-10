@@ -1306,10 +1306,10 @@ BasePanePopup {
                     id: statusTipTimer
                     interval: 2000
                 }
-                KToolTip {
+                KLazyToolTip {
                     text: qsTr("No autopilot")
                     targetItem: statusDot
-                    delay: statusTipTimer.running ? 0 : 520
+                    delay: statusTipTimer.running ? 0 : Anim.tooltipDelayMs
                     shown: !root._online && (statusTipArea.containsMouse || statusTipTimer.running)
                 }
 

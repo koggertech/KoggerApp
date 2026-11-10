@@ -82,7 +82,7 @@ Slider {
         }
     }
 
-    KToolTip {
+    KLazyToolTip {
         targetItem: control
         shown: control.showValueTip && (control.pressed || control.hovered) && control.enabled
         text: control.toolTipText.length > 0
