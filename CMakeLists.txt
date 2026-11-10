@@ -202,6 +202,11 @@ target_link_libraries(KoggerApp PRIVATE
 
 set_target_properties(KoggerApp PROPERTIES AUTOGEN_ORIGIN_DEPENDS OFF)
 
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 4.1)
+    set_property(TARGET KoggerApp PROPERTY AUTOMOC_INCLUDE_DIRECTORIES
+        "$<TARGET_PROPERTY:KoggerApp,INCLUDE_DIRECTORIES>")
+endif()
+
 get_target_property(_kogger_qtcore_type Qt6::Core TYPE)
 if(_kogger_qtcore_type STREQUAL "SHARED_LIBRARY")
     set_target_properties(KoggerApp PROPERTIES QT_QML_MODULE_NO_IMPORT_SCAN TRUE)
