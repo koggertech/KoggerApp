@@ -134,8 +134,11 @@ qt_add_executable(KoggerApp
 
 target_compile_features(KoggerApp PRIVATE cxx_std_23)
 
-configure_file(src/kogger_revision.h.in
-    "${CMAKE_CURRENT_BINARY_DIR}/generated/kogger_revision.h" @ONLY)
+configure_file(src/kogger_revision.cpp.in
+    "${CMAKE_CURRENT_BINARY_DIR}/generated/kogger_revision.cpp" @ONLY)
+target_sources(KoggerApp PRIVATE
+    src/kogger_revision.h
+    "${CMAKE_CURRENT_BINARY_DIR}/generated/kogger_revision.cpp")
 
 target_include_directories(KoggerApp PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/generated

@@ -1,0 +1,6 @@
+#include "kogger_revision.h"
+
+const char* koggerGitRevision()
+{
+    return "@KOGGER_GIT_REVISION@";
+}
