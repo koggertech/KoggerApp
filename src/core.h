@@ -425,7 +425,7 @@ private:
     bool metered_ = false;
     bool deferTilesOnMetered_ = true;
     bool mapTileLoadingEnabled_ = true;
-    bool bringWindowToFrontEnabled_ = true;
+    bool bringWindowToFrontEnabled_ = false;
     bool needForceZooming_ = false; // debug
 
     bool fixBlackStripesState_;

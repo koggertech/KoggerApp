@@ -76,7 +76,7 @@ Core::Core() :
     qRegisterMetaType<uint8_t>("uint8_t");
     {
         QSettings settings("KOGGER", "KoggerApp");
-        bringWindowToFrontEnabled_ = settings.value("main/bringWindowToFrontEnabled", true).toBool();
+        bringWindowToFrontEnabled_ = settings.value("main/bringWindowToFrontEnabled", false).toBool();
         previousMapTileProviderId_ = settings.value("scene3d/map/PreviousTileProviderId", -1).toInt();
     }
     logger_.setDatasetPtr(datasetPtr_);
