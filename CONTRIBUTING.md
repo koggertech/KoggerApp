@@ -1,6 +1,6 @@
 # Contributing to KoggerApp
 
-Thank you for considering a contribution to KoggerApp. We appreciate all contributions, no matter how small or large. This document provides guidelines to ensure a smooth collaboration process.
+Thank you for considering a contribution to KoggerApp. We appreciate all contributions, no matter how small or large. This document provides guidelines to ensure a smooth collaboration process. 
 
 ## Code of Conduct
 
