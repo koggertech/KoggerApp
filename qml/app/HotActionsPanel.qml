@@ -569,7 +569,9 @@ Item {
     function _wheelStrip(event) {
         _userScrollsStrip()
         var px = event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.pixelDelta.x
-        if (px !== 0) {
+        var touchpad = event.phase !== Qt.NoScrollPhase
+                    || (event.device && event.device.type === PointerDevice.TouchPad)
+        if (touchpad && px !== 0) {
             stripScrollAnim.stop()
             strip.contentX = _clampStripX(strip.contentX - px)
             return

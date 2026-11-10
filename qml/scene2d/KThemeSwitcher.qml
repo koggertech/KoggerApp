@@ -201,7 +201,9 @@ Item {
                 onWheel: function(event) {
                     var maxX = Math.max(0, strip.contentWidth - strip.width)
                     var px = event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.pixelDelta.x
-                    if (px !== 0) {
+                    var touchpad = event.phase !== Qt.NoScrollPhase
+                                || (event.device && event.device.type === PointerDevice.TouchPad)
+                    if (touchpad && px !== 0) {
                         stripScrollAnim.stop()
                         strip.contentX = Math.max(0, Math.min(maxX, strip.contentX - px))
                         return
