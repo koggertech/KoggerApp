@@ -98,7 +98,7 @@ readonly property int settingsFocusLeafId: {
 }
 property bool modeSettingsPanelOpen: false
 property bool pointerOverSidebar: false
-property bool settingsPushContent: false
+property bool settingsPushContent: true
 property bool resizeActive: false
 property bool layoutTransitionSuspended: false
 property string settingsSide: "left"
@@ -1898,7 +1898,7 @@ property Settings layoutStore: Settings {
     property int nextLeafSerialStored: 0
     property int nextSplitSerialStored: 0
     property int activeLeafIdStored: -1
-    property bool settingsPushContentStored: false
+    property bool settingsPushContentStored: true
     property string settingsSideStored: "left"
     property bool rotateLayoutEnabledStored: true
     property bool quickActionLayoutsEnabledStored: true
