@@ -1420,6 +1420,7 @@ bool Plot2D::setContact(int indx, const QString& text)
         // update rect
     }
 
+    emit datasetPtr_->contactsChanged();
     sendSyncEvent(currIndx, ContactCreated);
 
     plotUpdate();
@@ -1475,6 +1476,7 @@ bool Plot2D::deleteContact(int indx)
         datasetPtr_->setActiveContactIndx(-1);
     }
 
+    emit datasetPtr_->contactsChanged();
     sendSyncEvent(indx, ContactDeleted);
 
     plotUpdate();
