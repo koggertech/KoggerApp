@@ -188,6 +188,8 @@ add_subdirectory(qml/app)
 target_link_libraries(KoggerApp PRIVATE
     "$<LINK_LIBRARY:WHOLE_ARCHIVE,kogger_kqml_types,kogger_controls,kogger_menus,kogger_settings,kogger_devices,kogger_scene2d,kogger_scene3d,kogger_app>")
 
+set_target_properties(KoggerApp PROPERTIES AUTOGEN_ORIGIN_DEPENDS OFF)
+
 qt_add_translations(KoggerApp
     TS_FILES
         translations/translation_en.ts
