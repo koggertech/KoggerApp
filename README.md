@@ -126,6 +126,12 @@ cmake --build build -j"$(nproc)"
 ./build/KoggerApp
 ```
 
+⚡ Faster rebuilds (optional)  
+If [ccache](https://ccache.dev) is installed, CMake picks it up automatically and objects whose sources did not change (after switching branches, `git reset`, a clean rebuild) are taken from the cache instead of being recompiled. Without it the build works as before.
+- Windows: `choco install ccache` (as administrator), then restart Qt Creator so it sees the new `PATH`
+- Linux: `sudo apt install ccache` / `sudo dnf install ccache` / `sudo pacman -S ccache` / `sudo zypper install ccache`
+- Re-run CMake once: the configure output says `ccache: <path>`, and every build that relinks the app prints the ccache hit/miss statistics for that build at the end of the compile output
+
 ---
 
 ### 💻 *Get Involved!*
