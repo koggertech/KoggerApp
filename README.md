@@ -84,7 +84,7 @@ and run:
 ---
 
 ### 🧱 *Build Instructions*
-*KoggerApp* is a cross-platform C++ Qt QML project, built with **CMake** (CMake ≥ 3.22, Qt 6.8.3, C++23). You can build it on Windows, Linux, and Android using the appropriate Qt kits and compilers. The easiest way is to open the top-level `CMakeLists.txt` in Qt Creator, select a kit, and build; a command-line example is given for Linux below.
+*KoggerApp* is a cross-platform C++ Qt QML project, built with **CMake** (CMake ≥ 3.22, 4.1+ recommended, Qt 6.8.3, C++23). You can build it on Windows, Linux, and Android using the appropriate Qt kits and compilers. The easiest way is to open the top-level `CMakeLists.txt` in Qt Creator, select a kit, and build; a command-line example is given for Linux below.
 
 🪟 Windows (x86_64):  
 Compiler: LLVM-MinGW 17.0.6  
