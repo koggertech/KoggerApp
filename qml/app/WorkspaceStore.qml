@@ -1285,7 +1285,7 @@ property Settings scene3dLayerVisibility: Settings {
     property bool usblHeadTrackDots: false
     property bool usblSignalDetails: true
     property bool usblMessageBytes: true
-    property bool missionRunCheckButton: true
+    property bool missionRunCheckButton: false
 }
 property alias boatTrackVisible:   scene3dLayerVisibility.boatTrackCheckButton
 property alias bottomTrackVisible: scene3dLayerVisibility.bottomTrackCheckButton

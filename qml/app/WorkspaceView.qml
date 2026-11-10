@@ -587,7 +587,7 @@ Item {
             Binding {
                 target: scene3dView.missionRunController
                 property: "layerVisible"
-                value: workspace.store ? workspace.store.missionRunVisible : true
+                value: workspace.store ? workspace.store.missionRunVisible : false
             }
             Binding {
                 target: scene3dView.missionRunController
