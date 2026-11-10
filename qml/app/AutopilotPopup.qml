@@ -1233,6 +1233,16 @@ BasePanePopup {
         anchors.fill: parent
         opacity: root._tour || !root.store ? 1 : root.store.autopilotCardOpacity
 
+        MouseArea {
+            anchors.fill: parent
+            z: 100
+            visible: root._preview && !root._tour
+            hoverEnabled: true
+            preventStealing: true
+            acceptedButtons: Qt.AllButtons
+            onWheel: function(wheel) { wheel.accepted = false }
+        }
+
         Rectangle {
             width: parent.width
             height: root._pillH + (root._trayVisible ? tray.height : 0)
