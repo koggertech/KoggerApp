@@ -79,7 +79,7 @@ ApplicationWindow {
         id: startupSettings
         category: "main/ui"
         property int appTheme: 0
-        property int instrumentsGradeList: 0
+        property int instrumentsGradeList: 2
     }
     Settings {
         id: consoleVisibilitySettings
