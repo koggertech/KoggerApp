@@ -111,7 +111,7 @@ function isDiagField(key) {
 // as its group's.
 var ADDRESS_COLORS = [
     "#64748B",  // 0 promiscuous — neutral
-    "#3E8FD6",  // 1 blue
+    "#DC2626",  // 1 red
     "#16A34A",  // 2 green
     "#E0902B",  // 3 amber
     "#8B5CF6",  // 4 violet
