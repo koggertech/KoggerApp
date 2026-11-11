@@ -62,7 +62,7 @@ public:
         void updateBounds() final;
         void drawBall(QOpenGLFunctions* ctx, QOpenGLShaderProgram* prog, int posLoc, int colorLoc,
                       int widthLoc, const QVector3D& at, const QColor& fill, float radiusPx,
-                      float opacity) const;
+                      float ringPx, float opacity) const;
 
         friend class UsblLayer;
         RenderData data_;

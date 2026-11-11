@@ -19,6 +19,9 @@ constexpr float kHeadBallPx    = 24.0f;
 // as a second ring rather than as an edge. This is a DIAMETER increment: half of it is the ring's
 // visible thickness on each side.
 constexpr float kHaloPx        = 1.5f;
+constexpr float kSurfaceRingPx = 4.0f;
+constexpr float kDeepRingPx    = 2.5f;
+const QColor kRingColor{255, 255, 255};
 
 constexpr float kTrackWidth    = 5.0f;
 // Thinner than a track, because it is not a path: nothing travelled along it.
@@ -33,7 +36,7 @@ constexpr float kYawDartSize      = 0.90f;
 
 constexpr float kTrackDotPx    = 5.0f;
 
-constexpr float kLabelOffsetPx = 9.0f;
+constexpr float kLabelOffsetPx = 11.0f;
 constexpr float kLabelScale    = 1.0f;
 
 const QColor kLabelColor{0xE0, 0x90, 0x2B};
@@ -64,12 +67,6 @@ QVector4D toVec4(const QColor& c, float opacity)
 
 // The contour every ball gets, because a saturated dot on a satellite basemap can land on a patch
 // of its own colour and vanish -- which is the one thing a position marker must not do.
-//
-// It is a DARKENED VERSION OF THE BALL rather than a neutral light ring. White separated the mark
-// from the chart but also from the beacon: eight addresses in eight colours all wearing the same
-// bright halo, and at a glance the halo is what you see. Darkening the fill keeps the ring reading
-// as that beacon's edge, and dark holds its own against a basemap that is mostly mid-tones and
-// sunlight.
 QColor contourOf(const QColor& fill)
 {
     return fill.darker(250);
@@ -149,7 +146,7 @@ void UsblLayer::UsblLayerRenderImplementation::drawBall(QOpenGLFunctions* ctx,
                                                         QOpenGLShaderProgram* prog,
                                                         int posLoc, int colorLoc, int widthLoc,
                                                         const QVector3D& at, const QColor& fill,
-                                                        float radiusPx, float opacity) const
+                                                        float radiusPx, float ringPx, float opacity) const
 {
     const QVector<QVector3D> one{ at };
     const float scale = static_cast<float>(renderScale());
@@ -157,8 +154,14 @@ void UsblLayer::UsblLayerRenderImplementation::drawBall(QOpenGLFunctions* ctx,
     prog->setAttributeArray(posLoc, one.constData());
 
     prog->setUniformValue(colorLoc, toVec4(contourOf(fill), opacity));
-    prog->setUniformValue(widthLoc, (radiusPx + kHaloPx) * scale);
+    prog->setUniformValue(widthLoc, (radiusPx + ringPx + kHaloPx) * scale);
     ctx->glDrawArrays(GL_POINTS, 0, 1);
+
+    if (ringPx > 0.0f) {
+        prog->setUniformValue(colorLoc, toVec4(kRingColor, opacity));
+        prog->setUniformValue(widthLoc, (radiusPx + ringPx) * scale);
+        ctx->glDrawArrays(GL_POINTS, 0, 1);
+    }
 
     prog->setUniformValue(colorLoc, toVec4(fill, opacity));
     prog->setUniformValue(widthLoc, radiusPx * scale);
@@ -272,15 +275,15 @@ void UsblLayer::UsblLayerRenderImplementation::render(QOpenGLFunctions* ctx, con
 
         if (b.hasDeep) {
             drawBall(ctx, shaderProgram.get(), posLoc, colorLoc, widthLoc,
-                     b.deep, b.color, kDeepBallPx, 1.0f);
+                     b.deep, b.color, kDeepBallPx, kDeepRingPx, 1.0f);
         }
         drawBall(ctx, shaderProgram.get(), posLoc, colorLoc, widthLoc,
-                 b.surface, b.color, kSurfaceBallPx, 1.0f);
+                 b.surface, b.color, kSurfaceBallPx, kSurfaceRingPx, 1.0f);
     }
 
     if (data_.head.hasFix) {
         drawBall(ctx, shaderProgram.get(), posLoc, colorLoc, widthLoc,
-                 data_.head.pos, QColor(60, 70, 82), kHeadBallPx, 1.0f);
+                 data_.head.pos, QColor(60, 70, 82), kHeadBallPx, 0.0f, 1.0f);
     }
 
     shaderProgram->setUniformValue(isPointLoc, false);
