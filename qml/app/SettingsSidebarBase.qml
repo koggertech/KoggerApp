@@ -248,18 +248,27 @@ Item {
     }
 
     property real wheelSpeed: 1.3
+    property real _fineWheelAt: 0
+    property bool _wheelFine: false
 
     function _wheelScroll(f, event) {
+        var dy = event.angleDelta.y
+        var now = Date.now()
+        if (dy % 120 !== 0)
+            _fineWheelAt = now
+        var fine = now - _fineWheelAt < 300
         var maxY = Math.max(0, f.contentHeight - f.height)
-        var base = (wheelScrollAnim.running && wheelScrollAnim.target === f) ? wheelScrollAnim.to : f.contentY
-        var step = Qt.styleHints.wheelScrollLines * 24 * wheelSpeed * AppPalette.scale
-        var y = Math.max(0, Math.min(maxY, base - event.angleDelta.y / 120 * step))
+        var chained = !fine && wheelScrollAnim.running && wheelScrollAnim.target === f
+        var base = chained ? wheelScrollAnim.to : f.contentY
+        var step = Qt.styleHints.wheelScrollLines * 24 * (fine ? 1 : wheelSpeed * AppPalette.scale)
+        var y = Math.max(0, Math.min(maxY, base - dy / 120 * step))
         if (Math.abs(y - base) < 0.5)
             return
         focusScrollAnim.stop()
         kbdScrollAnim.stop()
         scrollToTopAnim.stop()
         wheelScrollAnim.stop()
+        _wheelFine = fine
         wheelScrollAnim.target = f
         wheelScrollAnim.from = f.contentY
         wheelScrollAnim.to = y
@@ -269,8 +278,8 @@ Item {
     NumberAnimation {
         id: wheelScrollAnim
         property: "contentY"
-        duration: 180
-        easing.type: Easing.OutCubic
+        duration: panelRoot._wheelFine ? 300 : 180
+        easing.type: panelRoot._wheelFine ? Easing.OutExpo : Easing.OutCubic
     }
 
     onOpenChanged: {
