@@ -28,18 +28,9 @@ Rectangle {
     property var groupedIssues: []
     property string _issuesKey: ""
 
-    component ToolButton: KCircleIconButton {
-        property bool armed: false
+    component ToolButton: KToolIconButton {
         width: root.toolSize
         height: root.toolSize
-        iconTintColor: enabled ? AppPalette.text : AppPalette.textMuted
-        glyphColor: enabled ? AppPalette.text : AppPalette.textMuted
-        fillColor: armed ? AppPalette.accentBgStrong : AppPalette.card
-        fillHoverColor: armed ? AppPalette.accentBorder : AppPalette.cardHover
-        fillPressedColor: AppPalette.bgHover
-        borderColor: armed ? AppPalette.accentBorder : AppPalette.border
-        borderHoverColor: armed ? AppPalette.accentBorder : AppPalette.borderHover
-        borderWidth: 1
     }
 
     component ScrollArrow: KCircleIconButton {

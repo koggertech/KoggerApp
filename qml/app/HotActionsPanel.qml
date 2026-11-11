@@ -2106,7 +2106,7 @@ Item {
             readonly property bool _open: root.store && root.store.nodesConfiguratorOpen
             width: root.controlHeight
             height: root.controlHeight
-            iconSource: "qrc:/icons/ui/device-usbl.svg"
+            iconSource: "qrc:/icons/ui/usbl-head.svg"
             iconTintColor: AppPalette.text
             toolTipText: _open ? qsTr("Close Nodes-Configurator") : qsTr("Nodes-Configurator")
             fillColor:        _open ? AppPalette.accentBgStrong : root.buttonFillColor

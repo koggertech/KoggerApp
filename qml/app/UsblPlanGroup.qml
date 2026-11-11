@@ -600,13 +600,17 @@ DeviceSettingsGroup {
                         spacing: Tokens.spaceSm
                         UsblButton {
                             visible: !!(planGroup._g && !planGroup._g.ini.send)
-                            text: qsTr("+ Send request")
+                            text: qsTr("Send request")
+                            iconSource: "qrc:/icons/ui/plus.svg"
+                            toolTipText: qsTr("Add a request this group sends")
                             implicitHeight: Tokens.controlHSm; fontPixelSize: Tokens.fontXs
                             onClicked: if (plan && planGroup._g) plan.attachSend(planGroup._g.id)
                         }
                         UsblButton {
                             visible: !!(planGroup._g && !planGroup._g.ini.reply)
-                            text: qsTr("+ Handle reply")
+                            text: qsTr("Handle reply")
+                            iconSource: "qrc:/icons/ui/plus.svg"
+                            toolTipText: qsTr("Add handling of the reply")
                             implicitHeight: Tokens.controlHSm; fontPixelSize: Tokens.fontXs
                             onClicked: if (plan && planGroup._g) plan.attachTrigger(planGroup._g.id, "reply")
                         }
@@ -665,7 +669,9 @@ DeviceSettingsGroup {
 
                     UsblButton {
                         visible: !!(planGroup._g && !planGroup._g.tr.request)
-                        text: qsTr("+ Handle request")
+                        text: qsTr("Handle request")
+                        iconSource: "qrc:/icons/ui/plus.svg"
+                        toolTipText: qsTr("Add handling of an incoming request")
                         implicitHeight: Tokens.controlHSm; fontPixelSize: Tokens.fontXs
                         onClicked: if (plan && planGroup._g) plan.attachTrigger(planGroup._g.id, "request")
                     }
@@ -757,6 +763,7 @@ DeviceSettingsGroup {
                     UsblButton {
                         visible: issueRow.modelData.action.length > 0
                         text: issueRow.modelData.fixLabel
+                        iconSource: "qrc:/icons/ui/wand.svg"
                         implicitHeight: Tokens.controlHSm
                         fontPixelSize: Tokens.fontXs
                         onClicked: {

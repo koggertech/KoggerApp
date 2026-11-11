@@ -12,6 +12,8 @@ Item {
     property int verticalPadding: Math.round(4 * AppPalette.scale)
     property int cornerRadius: Math.round(8 * AppPalette.scale)
     property int fontPixelSize: Tokens.fontLg
+    property int iconPixelSize: Math.round(fontPixelSize * 1.35)
+    property int segmentMinWidth: Math.round(92 * AppPalette.scale)
     property color trackColor: AppPalette.bg
     property bool dragSelectEnabled: true
     signal valueSelected(var value)
@@ -26,8 +28,8 @@ Item {
     readonly property int visualIndex: dragPreviewIndex >= 0 ? dragPreviewIndex : selectedIndex
     property bool syncingFromValue: false
 
-    implicitWidth: Math.max(Math.round(120 * AppPalette.scale),
-                            optionCount * Math.round(92 * AppPalette.scale)
+    implicitWidth: Math.max(optionCount > 1 ? 0 : Math.round(120 * AppPalette.scale),
+                            optionCount * segmentMinWidth
                             + Math.max(0, optionCount - 1) * buttonSpacing
                             + horizontalPadding * 2)
     implicitHeight: buttonHeight + verticalPadding * 2
@@ -40,8 +42,8 @@ Item {
 
     function optionLabelAt(idx) {
         var option = optionAt(idx)
-        if (option && option.label !== undefined)
-            return String(option.label)
+        if (option && typeof option === "object")
+            return option.label !== undefined ? String(option.label) : ""
         return String(option)
     }
 
@@ -50,6 +52,13 @@ Item {
         if (option && option.value !== undefined)
             return option.value
         return option
+    }
+
+    function optionIconAt(idx) {
+        var option = optionAt(idx)
+        if (option && option.icon !== undefined)
+            return String(option.icon)
+        return ""
     }
 
     function optionTipAt(idx) {
@@ -204,6 +213,7 @@ Item {
                 width: root.segmentWidth
                 height: root.buttonHeight
                 text: root.optionLabelAt(optionIndex)
+                readonly property string iconUrl: root.optionIconAt(optionIndex)
                 padding: 0
                 topPadding: 0
                 bottomPadding: 0
@@ -228,6 +238,17 @@ Item {
                         font.pixelSize: root.fontPixelSize
                         font.bold: true
                         elide: Text.ElideRight
+                        leftPadding: tabButton.iconUrl.length ? root.iconPixelSize + (text.length ? Tokens.spaceXs : 0) : 0
+
+                        KIcon {
+                            visible: tabButton.iconUrl.length > 0
+                            width: root.iconPixelSize
+                            height: root.iconPixelSize
+                            x: Math.round((label.width - label.leftPadding - label.rightPadding - label.contentWidth) / 2)
+                            y: Math.round((label.height - height) / 2)
+                            source: tabButton.iconUrl
+                            color: label.color
+                        }
                     }
                 }
 

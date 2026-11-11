@@ -112,6 +112,9 @@ Item {
         implicitHeight: Tokens.controlHMd
         fontPixelSize: Tokens.fontSm
     }
+    component Tool: KToolIconButton {
+        toolTipOnHold: true
+    }
 
     Flickable {
         id: flick
@@ -169,9 +172,11 @@ Item {
                             }
                         }
                         Actions {
-                            Btn { text: qsTr("Fit to measured"); onClicked: root.store.fitMaxRangeToMeasured()
+                            Btn { text: qsTr("Fit to measured"); iconSource: "qrc:/icons/ui/ruler_measure.svg"
+                                  onClicked: root.store.fitMaxRangeToMeasured()
                                   toolTipText: qsTr("Max range = the farthest measured beacon × 1.2") }
-                            Btn { text: qsTr("Use measured ranges"); onClicked: root.store.useMeasuredRanges()
+                            Btn { text: qsTr("Use measured ranges"); iconSource: "qrc:/icons/ui/copy.svg"
+                                  onClicked: root.store.useMeasuredRanges()
                                   toolTipText: qsTr("Copy each beacon's last measured range into its planned range") }
                         }
                         TabsRow {
@@ -262,8 +267,18 @@ Item {
                                             color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm
                                             anchors.verticalCenter: parent.verticalCenter
                                         }
-                                        Btn { text: fmtItem.open ? qsTr("Close") : qsTr("Fields"); onClicked: fmtItem.open = !fmtItem.open }
-                                        Btn { text: "×"; danger: true; toolTipText: qsTr("Delete format"); onClicked: root.store.removeFormat(fmtItem.modelData.id) }
+                                        Tool {
+                                            iconSource: "qrc:/icons/ui/list-details.svg"
+                                            armed: fmtItem.open
+                                            toolTipText: fmtItem.open ? qsTr("Hide the fields") : qsTr("Fields")
+                                            onClicked: fmtItem.open = !fmtItem.open
+                                        }
+                                        Tool {
+                                            iconSource: "qrc:/icons/ui/trash.svg"
+                                            tone: "danger"
+                                            toolTipText: qsTr("Delete format")
+                                            onClicked: root.store.removeFormat(fmtItem.modelData.id)
+                                        }
                                     }
                                     Repeater {
                                         model: fmtItem.open ? fmtItem.modelData.fields : []
@@ -288,22 +303,24 @@ Item {
                                                              onCommitted: function (v) { parent._set("scale", Number(v) || 1) } }
                                             NodesTextField { implicitWidth: Math.round(44 * AppPalette.scale); value: modelData.unit || ""; placeholder: qsTr("unit")
                                                              onCommitted: function (v) { parent._set("unit", v) } }
-                                            Btn {
-                                                text: "×"; toolTipText: qsTr("Remove field")
+                                            Tool {
+                                                iconSource: "qrc:/icons/ui/x.svg"; toolTipText: qsTr("Remove field")
                                                 onClicked: { var f = Model.clone(fmtItem.modelData); f.fields.splice(index, 1); root.store.setFormat(f.id, f) }
                                             }
                                         }
                                     }
                                     Btn {
                                         visible: fmtItem.open
-                                        text: qsTr("+ Field")
+                                        text: qsTr("Field")
+                                        iconSource: "qrc:/icons/ui/plus.svg"
+                                        toolTipText: qsTr("Add a field")
                                         onClicked: { var f = Model.clone(fmtItem.modelData); f.fields.push({ name: "f" + f.fields.length, bits: 8, type: "uint" }); root.store.setFormat(f.id, f) }
                                     }
                                 }
                             }
                         }
                         Actions {
-                            Btn { text: qsTr("+ Format"); onClicked: root.store.addFormat("") }
+                            Btn { text: qsTr("Format"); iconSource: "qrc:/icons/ui/plus.svg"; toolTipText: qsTr("Add a format"); onClicked: root.store.addFormat("") }
                         }
                     }
                 }
@@ -343,8 +360,9 @@ Item {
                         }
                         TabsRow {
                             label: qsTr("Kind")
-                            options: [ { label: qsTr("Head"), value: "head" }, { label: qsTr("Beacon"), value: "beacon" },
-                                       { label: qsTr("External"), value: "external", tip: qsTr("a party this app does not configure or bind") } ]
+                            options: [ { icon: "qrc:/icons/ui/usbl-head.svg", label: "", value: "head", tip: qsTr("Head: interrogates the beacons") },
+                                       { icon: "qrc:/icons/ui/building-lighthouse.svg", label: "", value: "beacon", tip: qsTr("Beacon: answers the head") },
+                                       { icon: "qrc:/icons/ui/speedboat.svg", label: "", value: "external", tip: qsTr("External: a party this app does not configure or bind") } ]
                             currentValue: root.ll ? root.ll.kind : "beacon"
                             onValueSelected: function (v) { root.store.setLifelineField(root.ll.id, "kind", v) }
                         }
@@ -393,19 +411,20 @@ Item {
                                  : llCol._rx.verdict === "differs" ? AppPalette.dangerText : AppPalette.textSecond
                         }
                         Actions {
-                            Btn {
-                                text: "◀"; toolTipText: qsTr("Move left")
+                            Tool {
+                                iconSource: "qrc:/icons/ui/chevron-left.svg"; toolTipText: qsTr("Move left")
                                 onClicked: root.store.moveLifeline(root.ll.id, Math.max(0, root.store.lifelines.indexOf(root.ll) - 1))
                             }
-                            Btn {
-                                text: "▶"; toolTipText: qsTr("Move right")
+                            Tool {
+                                iconSource: "qrc:/icons/ui/chevron-right.svg"; toolTipText: qsTr("Move right")
                                 onClicked: {
                                     var i = -1
                                     for (var k = 0; k < root.store.lifelines.length; ++k) if (root.store.lifelines[k].id === root.ll.id) i = k
                                     root.store.moveLifeline(root.ll.id, i + 1)
                                 }
                             }
-                            Btn { text: qsTr("Delete lifeline"); danger: true; onClicked: root.store.removeLifeline(root.ll.id) }
+                            Tool { iconSource: "qrc:/icons/ui/trash.svg"; tone: "danger"
+                                   toolTipText: qsTr("Delete lifeline, with its exchanges and steps"); onClicked: root.store.removeLifeline(root.ll.id) }
                         }
                     }
                 }
@@ -457,6 +476,8 @@ Item {
                                         required property int index
                                         readonly property bool _on: !!root.ll && Array.isArray(root.ll.filter) && root.ll.filter.indexOf(index) >= 0
                                         text: String(index)
+                                        toolTipText: _on ? qsTr("Hears address %1. Click to stop hearing it").arg(index)
+                                                         : qsTr("Does not hear address %1. Click to hear it").arg(index)
                                         checkable: true
                                         checked: _on
                                         normalBg: AppPalette.controlRaised
@@ -560,16 +581,19 @@ Item {
                             }
                         }
                         Actions {
-                            Btn {
+                            Tool {
                                 readonly property bool _on: !!root.engine && root.engine.isRunningFor(root.ll ? root.ll.id : -1)
-                                text: _on ? qsTr("■ Stop") : qsTr("▶ Run this head")
-                                checked: _on
+                                iconSource: _on ? "qrc:/icons/ui/player-stop.svg" : "qrc:/icons/ui/player-play.svg"
+                                armed: _on
                                 enabled: _on || (!!root.engine && root.engine.runnableFor(root.ll ? root.ll.id : -1).length > 0)
-                                toolTipText: enabled ? qsTr("Interrogate only this head's steps") : qsTr("Bind and connect this head first")
+                                toolTipText: _on ? qsTr("Stop")
+                                                 : enabled ? qsTr("Run this head: interrogate only its steps")
+                                                           : qsTr("Run this head: bind and connect it first")
                                 onClicked: _on ? root.engine.stop() : root.engine.start(root.ll.id)
                             }
-                            Btn {
-                                text: qsTr("Step")
+                            Tool {
+                                iconSource: "qrc:/icons/ui/step-into.svg"
+                                toolTipText: qsTr("Step: send this head's next interrogation and stop there")
                                 enabled: !!root.engine && root.engine.runnableFor(root.ll ? root.ll.id : -1).length > 0
                                 onClicked: root.engine.step(root.ll.id)
                             }
@@ -636,12 +660,14 @@ Item {
                         Actions {
                             Btn {
                                 text: qsTr("Write")
+                                iconSource: "qrc:/icons/ui/upload.svg"
                                 enabled: !!llCol._dev && !!root.writer && !root.writer.busy
                                 toolTipText: qsTr("Send this lifeline's whole configuration to its device, frame by frame, with confirmation")
                                 onClicked: root.writer.writeLifeline(root.ll.id)
                             }
                             Btn {
                                 text: qsTr("Reset to baseline")
+                                iconSource: "qrc:/icons/ui/eraser.svg"
                                 enabled: !!llCol._dev && !!root.writer && !root.writer.busy
                                 toolTipText: qsTr("Silent, hears no address, every slot at defaults")
                                 onClicked: root.writer.resetToBaseline(root.ll.id)
@@ -649,11 +675,15 @@ Item {
                             Btn {
                                 visible: !!llCol._dev
                                 text: qsTr("Quick interrogate…")
+                                iconSource: "qrc:/icons/ui/speakerphone.svg"
+                                toolTipText: qsTr("Interrogate addresses from this lifeline's device now")
                                 onClicked: root.quickInterrogateRequested(llCol._dev)
                             }
                             Btn {
                                 visible: !!root.ll && !!root.ll.binding
                                 text: qsTr("Unbind")
+                                iconSource: "qrc:/icons/ui/plug_x.svg"
+                                toolTipText: qsTr("Detach the device from this lifeline")
                                 onClicked: root.store.unbindLifeline(root.ll.id)
                             }
                         }
@@ -759,10 +789,13 @@ Item {
                         Actions {
                             Btn {
                                 visible: !root.stp && !!root.ex
-                                text: qsTr("+ Step running it")
+                                text: qsTr("Step running it")
+                                iconSource: "qrc:/icons/ui/timeline_event_plus.svg"
+                                toolTipText: qsTr("Add a step to the cycle that runs this exchange")
                                 onClicked: root.store.addStep(root.ex.id)
                             }
-                            Btn { text: qsTr("Delete exchange"); danger: true; onClicked: root.store.removeExchange(root.ex.id) }
+                            Tool { iconSource: "qrc:/icons/ui/trash.svg"; tone: "danger"
+                                   toolTipText: qsTr("Delete exchange, with the steps that run it"); onClicked: root.store.removeExchange(root.ex.id) }
                         }
                     }
                 }
@@ -1054,10 +1087,12 @@ Item {
                             value: exCol._L ? root.store.beaconText(exCol._L) : ""
                         }
                         Actions {
-                            Btn { text: qsTr("Send now"); enabled: !!root.engine; onClicked: root.engine.interrogateNow(root.stp.id) }
-                            Btn { text: qsTr("Send with payload…"); enabled: !!root.engine; onClicked: root.payloadSendRequested(root.stp.id) }
-                            Btn { text: qsTr("Duplicate"); onClicked: root.store.duplicateStep(root.stp.id) }
-                            Btn { text: qsTr("Delete step"); danger: true; onClicked: root.store.removeStep(root.stp.id) }
+                            Btn { text: qsTr("Send now"); iconSource: "qrc:/icons/ui/player-play.svg"; enabled: !!root.engine
+                                  toolTipText: qsTr("Send this step's request once, now"); onClicked: root.engine.interrogateNow(root.stp.id) }
+                            Btn { text: qsTr("Send with payload…"); iconSource: "qrc:/icons/ui/edit.svg"; enabled: !!root.engine
+                                  toolTipText: qsTr("Send this step's request once with other data"); onClicked: root.payloadSendRequested(root.stp.id) }
+                            Btn { text: qsTr("Duplicate"); iconSource: "qrc:/icons/ui/copy.svg"; toolTipText: qsTr("Duplicate (Ctrl+D)"); onClicked: root.store.duplicateStep(root.stp.id) }
+                            Tool { iconSource: "qrc:/icons/ui/trash.svg"; tone: "danger"; toolTipText: qsTr("Delete step (Del)"); onClicked: root.store.removeStep(root.stp.id) }
                         }
                     }
                 }

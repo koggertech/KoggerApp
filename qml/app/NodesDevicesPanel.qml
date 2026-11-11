@@ -22,6 +22,9 @@ Item {
         implicitHeight: Tokens.controlHMd
         fontPixelSize: Tokens.fontSm
     }
+    component Tool: KToolIconButton {
+        toolTipOnHold: true
+    }
 
     Flickable {
         id: flick
@@ -51,6 +54,7 @@ Item {
                     radius: Tokens.radiusSm
                     color: _sel ? AppPalette.accentBg : (rowTap.containsMouse ? AppPalette.cardHover : "transparent")
                     Row {
+                        z: 1
                         anchors.left: parent.left
                         anchors.leftMargin: Tokens.spaceXs
                         anchors.verticalCenter: parent.verticalCenter
@@ -61,6 +65,14 @@ Item {
                             color: row._dev ? AppPalette.linkOkBorder : "transparent"
                             border.width: row._dev ? 0 : 1
                             border.color: row.modelData.binding ? AppPalette.linkIdleBorder : AppPalette.textMuted
+                        }
+                        KIcon {
+                            source: row.modelData.kind === "head" ? "qrc:/icons/ui/usbl-head.svg"
+                                  : row.modelData.kind === "external" ? "qrc:/icons/ui/speedboat.svg" : "qrc:/icons/ui/building-lighthouse.svg"
+                            color: row._sel ? AppPalette.accentText : AppPalette.textSecond
+                            toolTipText: row.modelData.kind === "head" ? qsTr("Head")
+                                       : row.modelData.kind === "external" ? qsTr("External") : qsTr("Beacon")
+                            anchors.verticalCenter: parent.verticalCenter
                         }
                         UsblAddressBadge {
                             visible: typeof row.modelData.address === "number"
@@ -73,14 +85,14 @@ Item {
                             Text {
                                 text: row.modelData.label
                                 color: AppPalette.textStrong; font.pixelSize: Tokens.fontXs; font.bold: true
-                                width: col.width - Math.round(54 * AppPalette.scale); elide: Text.ElideRight
+                                width: col.width - Math.round(74 * AppPalette.scale); elide: Text.ElideRight
                             }
                             Text {
                                 text: row._dev ? ("SN " + row._dev.devSN + " · " + root.store.linkLabelOf(row._dev))
                                      : row.modelData.binding ? qsTr("SN %1 · not connected").arg(row.modelData.binding.serial)
-                                     : row.modelData.kind === "external" ? qsTr("external") : qsTr("unbound")
+                                     : row.modelData.kind === "external" ? qsTr("not bindable") : qsTr("unbound")
                                 color: AppPalette.textMuted; font.pixelSize: Tokens.fontXxs
-                                width: col.width - Math.round(54 * AppPalette.scale); elide: Text.ElideRight
+                                width: col.width - Math.round(74 * AppPalette.scale); elide: Text.ElideRight
                             }
                         }
                     }
@@ -95,9 +107,9 @@ Item {
             Flow {
                 width: col.width
                 spacing: Tokens.spaceXs
-                Btn { text: qsTr("+ Head"); onClicked: root.store.addLifeline("head") }
-                Btn { text: qsTr("+ Beacon"); onClicked: root.store.addLifeline("beacon") }
-                Btn { text: qsTr("+ External"); toolTipText: qsTr("A party this app does not configure, e.g. another vessel's interrogator"); onClicked: root.store.addLifeline("external") }
+                Tool { iconSource: "qrc:/icons/ui/usbl-head.svg"; plusBadge: true; toolTipText: qsTr("Add a head: the device that interrogates"); onClicked: root.store.addLifeline("head") }
+                Tool { iconSource: "qrc:/icons/ui/building-lighthouse.svg"; plusBadge: true; toolTipText: qsTr("Add a beacon: a device that answers"); onClicked: root.store.addLifeline("beacon") }
+                Tool { iconSource: "qrc:/icons/ui/speedboat.svg"; plusBadge: true; toolTipText: qsTr("Add an external party: one this app does not configure, e.g. another vessel's interrogator"); onClicked: root.store.addLifeline("external") }
             }
 
             Heading { text: qsTr("CONNECTED, NOT IN THIS NETWORK") }
@@ -141,17 +153,27 @@ Item {
                                 readonly property var _l: root.store.selLifeline
                                 visible: !!_l && _l.kind !== "external"
                                 text: _l ? qsTr("Bind to %1").arg(_l.label) : ""
+                                iconSource: "qrc:/icons/ui/plug.svg"
+                                toolTipText: _l ? qsTr("Bind this device to the selected lifeline %1").arg(_l.label) : ""
                                 onClicked: root.store.bindLifeline(_l.id, drow.modelData)
                             }
-                            Btn {
-                                text: qsTr("Add as head")
+                            Tool {
+                                iconSource: "qrc:/icons/ui/usbl-head.svg"
+                                plusBadge: true
+                                toolTipText: qsTr("Add as head: a new head lifeline bound to this device")
                                 onClicked: { var id = root.store.addLifeline("head"); root.store.bindLifeline(id, drow.modelData) }
                             }
-                            Btn {
-                                text: qsTr("Add as beacon")
+                            Tool {
+                                iconSource: "qrc:/icons/ui/building-lighthouse.svg"
+                                plusBadge: true
+                                toolTipText: qsTr("Add as beacon: a new beacon lifeline bound to this device")
                                 onClicked: { var id = root.store.addLifeline("beacon"); root.store.bindLifeline(id, drow.modelData) }
                             }
-                            Btn { text: qsTr("Quick…"); toolTipText: qsTr("Interrogate addresses from this device now"); onClicked: root.quickInterrogateRequested(drow.modelData) }
+                            Tool {
+                                iconSource: "qrc:/icons/ui/speakerphone.svg"
+                                toolTipText: qsTr("Quick interrogate: ask addresses from this device now")
+                                onClicked: root.quickInterrogateRequested(drow.modelData)
+                            }
                         }
                     }
                 }
@@ -164,6 +186,7 @@ Item {
                 Btn {
                     enabled: !!parent._info && parent._info.count > 0
                     text: parent._info && parent._info.allOpen ? qsTr("Disconnect links") : qsTr("Connect recent links")
+                    iconSource: parent._info && parent._info.allOpen ? "qrc:/icons/ui/plug_off.svg" : "qrc:/icons/ui/plug.svg"
                     toolTipText: parent._info ? qsTr("%1 recently used links, %2 open").arg(parent._info.count).arg(parent._info.open) : ""
                     onClicked: root.workspaceStore.toggleRememberedLinks()
                 }
@@ -201,10 +224,13 @@ Item {
                         KToolTip { text: root.store.writeStateText(qrow._ws); shown: qtip.hovered }
                         HoverHandler { id: qtip }
                     }
-                    Btn {
+                    Tool {
                         id: writeBtn
-                        text: qrow._ws === "writing" && root.writer ? (root.writer.progressDone + "/" + root.writer.progressTotal) : qsTr("Write")
+                        readonly property bool _writing: qrow._ws === "writing" && !!root.writer
+                        iconSource: "qrc:/icons/ui/upload.svg"
+                        progress: _writing && root.writer.progressTotal > 0 ? root.writer.progressDone / root.writer.progressTotal : -1
                         enabled: !!qrow._dev && !!root.writer && !root.writer.busy
+                        toolTipText: qsTr("Write %1").arg(qrow.modelData.label)
                         onClicked: root.writer.writeLifeline(qrow.modelData.id)
                     }
                 }

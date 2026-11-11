@@ -271,9 +271,10 @@ Item {
                     }
                 }
                 KCircleIconButton {
-                    glyph: root.collapsed ? "▢" : "–"
+                    iconSource: root.collapsed ? "qrc:/icons/ui/chevron-down.svg" : "qrc:/icons/ui/minus.svg"
+                    iconTintColor: AppPalette.text
+                    iconPixelSize: Tokens.iconSm
                     width: Tokens.controlHMd; height: Tokens.controlHMd
-                    glyphPixelSize: Math.round(13 * AppPalette.scale)
                     borderWidth: Tokens.cardBorderWidth
                     toolTipText: root.collapsed ? qsTr("Expand") : qsTr("Collapse to the title bar")
                     anchors.verticalCenter: parent.verticalCenter

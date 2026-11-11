@@ -331,21 +331,25 @@ DeviceSettingsGroup {
             elide: Text.ElideRight
             anchors.verticalCenter: parent.verticalCenter
         }
-        UsblButton {
+        KToolIconButton {
             id: _stepBtn
-            text: qsTr("Step"); implicitHeight: Tokens.controlHSm; fontPixelSize: Tokens.fontXs
+            width: Tokens.controlHSm; height: Tokens.controlHSm
+            iconSource: "qrc:/icons/ui/step-into.svg"
+            toolTipOnHold: true
             anchors.verticalCenter: parent.verticalCenter
             enabled: !!(usblGroup.engine && usblGroup.engine.canRun)
             toolTipText: qsTr("Send the next interrogation and stop there")
             onClicked: if (usblGroup.engine) usblGroup.engine.step()
         }
-        UsblButton {
+        KToolIconButton {
             id: _runBtn
             // The loop now outlives this pane, so the button reports the engine rather than a
             // timer of its own -- and closing the settings panel no longer stops it.
-            text: usblGroup._running ? qsTr("■ Stop") : qsTr("▶ Start")
-            implicitHeight: Tokens.controlHSm; fontPixelSize: Tokens.fontXs
-            checked: usblGroup._running
+            width: Tokens.controlHSm; height: Tokens.controlHSm
+            iconSource: usblGroup._running ? "qrc:/icons/ui/player-stop.svg" : "qrc:/icons/ui/player-play.svg"
+            armed: usblGroup._running
+            toolTipText: usblGroup._running ? qsTr("Stop the schedule") : qsTr("Start the schedule")
+            toolTipOnHold: true
             anchors.verticalCenter: parent.verticalCenter
             enabled: usblGroup._running || !!(usblGroup.engine && usblGroup.engine.canRun)
             onClicked: if (usblGroup.engine) usblGroup.engine.toggleRun()
@@ -396,11 +400,13 @@ DeviceSettingsGroup {
         KTabBar {
             buttonHeight: Tokens.controlHSm
             fontPixelSize: Tokens.fontSm
+            iconPixelSize: Tokens.iconSm
+            segmentMinWidth: Tokens.controlHMd + Tokens.spaceMd
             trackColor: AppPalette.bgDeep
             options: [
-                { label: qsTr("Immediately"), value: "now" },
-                { label: qsTr("On PPS"), value: "pps" },
-                { label: qsTr("Device timer"), value: "device" }
+                { icon: "qrc:/icons/ui/bolt.svg", label: "", value: "now", tip: qsTr("Immediately: transmit on command") },
+                { icon: "qrc:/icons/ui/satellite.svg", label: "", value: "pps", tip: qsTr("On PPS: transmit on the next PPS pulse") },
+                { icon: "qrc:/icons/ui/cpu.svg", label: "", value: "device", tip: qsTr("Device timer: the schedule is written to the head and the head runs it") }
             ]
             currentValue: !usblGroup.engine ? "now"
                           : usblGroup.engine.onDevice ? "device" : usblGroup.engine.fireOnPps ? "pps" : "now"
@@ -656,9 +662,10 @@ DeviceSettingsGroup {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Tokens.spaceXs
                             KCircleIconButton {
-                                glyph: "⧉"
+                                iconSource: "qrc:/icons/ui/copy.svg"
+                                iconTintColor: enabled ? AppPalette.text : AppPalette.textMuted
+                                iconPixelSize: Math.round(14 * AppPalette.scale)
                                 width: Tokens.controlHSm; height: Tokens.controlHSm
-                                glyphPixelSize: Math.round(13 * AppPalette.scale)
                                 borderWidth: Tokens.cardBorderWidth
                                 anchors.verticalCenter: parent.verticalCenter
                                 enabled: !!(nodeCard._e && nodeCard._e.coordValid)
@@ -936,14 +943,14 @@ DeviceSettingsGroup {
                                     // the node's switch stops the node, this mutes one command and
                                     // keeps its place in the cycle.
                                     //
-                                    // The cycle glyph says what membership means; colour and
+                                    // The cycle icon says what membership means; colour and
                                     // opacity say which way it is set.
                                     KCircleIconButton {
-                                        glyph: "⟳"
+                                        iconSource: "qrc:/icons/ui/repeat.svg"
                                         width: Tokens.controlHSm; height: Tokens.controlHSm
-                                        glyphPixelSize: Math.round(13 * AppPalette.scale)
-                                        glyphColor: _cmdRow.modelData.on ? AppPalette.accentBorder
-                                                                         : AppPalette.textMuted
+                                        iconPixelSize: Math.round(14 * AppPalette.scale)
+                                        iconTintColor: _cmdRow.modelData.on ? AppPalette.accentBorder
+                                                                            : AppPalette.textMuted
                                         borderWidth: _cmdRow.modelData.on
                                                      ? Math.max(1, Math.round(1.5 * AppPalette.scale))
                                                      : Tokens.cardBorderWidth
@@ -986,9 +993,10 @@ DeviceSettingsGroup {
                                     anchors.verticalCenter: parent.verticalCenter
                                     spacing: Tokens.spaceXs
                                     KCircleIconButton {
-                                        glyph: "▶"
+                                        iconSource: "qrc:/icons/ui/player-play.svg"
+                                        iconTintColor: enabled ? AppPalette.text : AppPalette.textMuted
+                                        iconPixelSize: Math.round(12 * AppPalette.scale)
                                         width: Tokens.controlHSm; height: Tokens.controlHSm
-                                        glyphPixelSize: Math.round(10 * AppPalette.scale)
                                         borderWidth: _cmdRow._queued
                                                      ? Math.max(1, Math.round(1.5 * AppPalette.scale))
                                                      : Tokens.cardBorderWidth
@@ -1093,11 +1101,19 @@ DeviceSettingsGroup {
             color: "transparent"
             border.width: Math.max(1, Math.round(1 * AppPalette.scale))
             border.color: AppPalette.border
-            Text {
+            Row {
                 anchors.centerIn: parent
-                text: qsTr("+ Add node")
-                color: AppPalette.textSecond
-                font.pixelSize: Tokens.fontSm; font.bold: true
+                spacing: Tokens.spaceXs
+                KIcon {
+                    source: "qrc:/icons/ui/plus.svg"
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Text {
+                    text: qsTr("Add node")
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontSm; font.bold: true
+                    anchors.verticalCenter: parent.verticalCenter
+                }
             }
             KTapArea { anchors.fill: parent; onTapped: if (plan) plan.addNode() }
         }

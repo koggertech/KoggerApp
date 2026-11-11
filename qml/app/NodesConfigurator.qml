@@ -110,6 +110,23 @@ Item {
         height: Tokens.controlHMd
         color: AppPalette.border
     }
+    component Tool: KToolIconButton {
+        toolTipOnHold: true
+    }
+    component IconTabs: KTabBar {
+        buttonHeight: Tokens.controlHMd; verticalPadding: 0; horizontalPadding: 0; buttonSpacing: 0
+        cornerRadius: Tokens.radiusMd; trackColor: AppPalette.controlRaised
+        fontPixelSize: Tokens.fontSm; iconPixelSize: Tokens.iconSm
+        segmentMinWidth: Tokens.controlHMd + Tokens.spaceMd
+    }
+
+    function _menuAt(button, menu) {
+        var p = button.mapToItem(null, 0, button.height + Tokens.spaceXxs)
+        menu.openAt(p.x, p.y)
+    }
+    function openFileDialog() {
+        guardUnsaved(function () { _prepare(openDialog, store.openFolder); openDialog.open() })
+    }
 
     function guardUnsaved(action) {
         if (store && store.dirty && store.lifelines.length) {
@@ -157,7 +174,7 @@ Item {
     Shortcut { sequences: [StandardKey.Redo]; enabled: root._keys; onActivated: root.store.redo() }
     Shortcut { sequences: [StandardKey.Save]; enabled: root._keys; onActivated: root.save() }
     Shortcut { sequence: "Ctrl+Shift+S"; enabled: root._keys; onActivated: { root._prepare(saveDialog, root.store.saveFolder, root._safeName()); saveDialog.open() } }
-    Shortcut { sequences: [StandardKey.Open]; enabled: root._keys; onActivated: root.guardUnsaved(function () { root._prepare(openDialog, root.store.openFolder); openDialog.open() }) }
+    Shortcut { sequences: [StandardKey.Open]; enabled: root._keys; onActivated: root.openFileDialog() }
     Shortcut {
         sequences: [StandardKey.Delete]
         enabled: root._keys && !!root.store && root.store.selKind === "step"
@@ -177,45 +194,66 @@ Item {
         width: parent.width - 2 * Tokens.spaceSm
         spacing: Tokens.spaceSm
 
-        Btn {
-            id: fileBtn
-            text: qsTr("File ▾")
-            onClicked: {
-                var p = fileBtn.mapToItem(null, 0, fileBtn.height + Tokens.spaceXxs)
-                fileMenu.openAt(p.x, p.y)
-            }
+        Tool {
+            id: newBtn
+            iconSource: "qrc:/icons/ui/file_plus.svg"
+            toolTipText: qsTr("New network")
+            onClicked: root._menuAt(newBtn, newMenu)
             NodesMenu {
-                id: fileMenu
+                id: newMenu
                 function _template(text, kind) {
                     return { text: text, onTriggered: function () { root.openTemplate(kind) } }
                 }
                 groups: !visible || !root.store ? [] : [
-                    [ { text: qsTr("New"),
-                        items: function () {
-                            return [ [ { text: qsTr("Empty network"),
-                                         onTriggered: function () { root.guardUnsaved(function () { root.store.newNetwork("empty") }) } } ],
-                                     [ fileMenu._template(qsTr("Ranging: head + beacons…"), "ranging"),
-                                       fileMenu._template(qsTr("Telemetry from beacons…"), "telemetry"),
-                                       fileMenu._template(qsTr("Command with acknowledge…"), "command"),
-                                       fileMenu._template(qsTr("Position transfer…"), "position"),
-                                       fileMenu._template(qsTr("Pinger and listeners…"), "pinger"),
-                                       fileMenu._template(qsTr("Swarm: interrogators, one transponder…"), "swarm"),
-                                       fileMenu._template(qsTr("Bench pair…"), "bench"),
-                                       fileMenu._template(qsTr("Bench pair, delayed beacon…"), "benchDelayed") ],
-                                     [ { text: qsTr("From the current command plan"),
-                                         onTriggered: function () { root.guardUnsaved(function () { root.store.migrateFromPlan() }) } } ] ]
-                        } },
-                      { text: qsTr("Open…"),
-                        onTriggered: function () { root.guardUnsaved(function () { root._prepare(openDialog, root.store.openFolder); openDialog.open() }) } },
-                      { text: qsTr("Open recent"), enabled: root.store.recentFiles.length > 0,
-                        items: function () {
-                            return [ root.store.recentFiles.map(function (path) {
-                                return { text: path, elideLeft: true,
-                                         onTriggered: function () { root.guardUnsaved(function () { if (!root.store.openFile(path)) root.store.removeRecent(path) }) } }
-                            }) ]
-                        } } ],
-                    [ { text: qsTr("Save"), onTriggered: function () { root.save() } },
-                      { text: qsTr("Save as…"),
+                    [ { text: qsTr("Empty network"),
+                        onTriggered: function () { root.guardUnsaved(function () { root.store.newNetwork("empty") }) } } ],
+                    [ newMenu._template(qsTr("Ranging: head + beacons…"), "ranging"),
+                      newMenu._template(qsTr("Telemetry from beacons…"), "telemetry"),
+                      newMenu._template(qsTr("Command with acknowledge…"), "command"),
+                      newMenu._template(qsTr("Position transfer…"), "position"),
+                      newMenu._template(qsTr("Pinger and listeners…"), "pinger"),
+                      newMenu._template(qsTr("Swarm: interrogators, one transponder…"), "swarm"),
+                      newMenu._template(qsTr("Bench pair…"), "bench"),
+                      newMenu._template(qsTr("Bench pair, delayed beacon…"), "benchDelayed") ],
+                    [ { text: qsTr("From the current command plan"),
+                        onTriggered: function () { root.guardUnsaved(function () { root.store.migrateFromPlan() }) } } ]
+                ]
+            }
+        }
+        Tool {
+            id: openBtn
+            iconSource: "qrc:/icons/ui/folder-open.svg"
+            toolTipText: qsTr("Open (Ctrl+O)")
+            onClicked: {
+                if (root.store && root.store.recentFiles.length) root._menuAt(openBtn, openMenu)
+                else root.openFileDialog()
+            }
+            NodesMenu {
+                id: openMenu
+                groups: !visible || !root.store ? [] : [
+                    [ { text: qsTr("Open…"), onTriggered: function () { root.openFileDialog() } } ],
+                    root.store.recentFiles.map(function (path) {
+                        return { text: path, elideLeft: true,
+                                 onTriggered: function () { root.guardUnsaved(function () { if (!root.store.openFile(path)) root.store.removeRecent(path) }) } }
+                    })
+                ]
+            }
+        }
+        Tool {
+            iconSource: "qrc:/icons/ui/file-check.svg"
+            armed: !!root.store && root.store.dirty
+            toolTipText: root.store && root.store.dirty ? qsTr("Save the unsaved changes (Ctrl+S)") : qsTr("Save (Ctrl+S)")
+            onClicked: root.save()
+        }
+        Tool {
+            id: moreBtn
+            iconSource: "qrc:/icons/ui/menu-2.svg"
+            toolTipText: qsTr("Save as, revert, export")
+            onClicked: root._menuAt(moreBtn, moreMenu)
+            NodesMenu {
+                id: moreMenu
+                groups: !visible || !root.store ? [] : [
+                    [ { text: qsTr("Save as…"),
                         onTriggered: function () { root._prepare(saveDialog, root.store.saveFolder, root._safeName()); saveDialog.open() } },
                       { text: qsTr("Save a copy without bindings…"),
                         onTriggered: function () { root._prepare(copyDialog, root.store.saveFolder, root._safeName() + "_shared"); copyDialog.open() } },
@@ -227,43 +265,51 @@ Item {
                 ]
             }
         }
-        KCircleIconButton {
-            glyph: "↶"; width: Tokens.controlHMd; height: Tokens.controlHMd
-            glyphPixelSize: Math.round(14 * AppPalette.scale); borderWidth: Tokens.cardBorderWidth
-            enabled: !!root.store && root.store.canUndo; toolTipText: qsTr("Undo (Ctrl+Z)")
+        Divider {}
+        Tool {
+            iconSource: "qrc:/icons/ui/arrow-back-up.svg"
+            enabled: !!root.store && root.store.canUndo
+            toolTipText: qsTr("Undo (Ctrl+Z)")
             onClicked: root.store.undo()
         }
-        KCircleIconButton {
-            glyph: "↷"; width: Tokens.controlHMd; height: Tokens.controlHMd
-            glyphPixelSize: Math.round(14 * AppPalette.scale); borderWidth: Tokens.cardBorderWidth
-            enabled: !!root.store && root.store.canRedo; toolTipText: qsTr("Redo (Ctrl+Y)")
+        Tool {
+            iconSource: "qrc:/icons/ui/arrow-forward-up.svg"
+            enabled: !!root.store && root.store.canRedo
+            toolTipText: qsTr("Redo (Ctrl+Y)")
             onClicked: root.store.redo()
         }
         Divider {}
-        KTabBar {
-            buttonHeight: Tokens.controlHMd; verticalPadding: 0; horizontalPadding: 0; buttonSpacing: 0
-            cornerRadius: Tokens.radiusMd; trackColor: AppPalette.controlRaised; fontPixelSize: Tokens.fontSm
-            options: [ { label: qsTr("Design"), value: "design" }, { label: qsTr("Live"), value: "live", tip: qsTr("overlay what really happens on the diagram") } ]
+        IconTabs {
+            options: [ { icon: "qrc:/icons/ui/pencil.svg", label: "", value: "design", tip: qsTr("Design: edit the network") },
+                       { icon: "qrc:/icons/ui/radar.svg", label: "", value: "live", tip: qsTr("Live: overlay what really happens on the diagram") } ]
             currentValue: root.mode
             onValueSelected: function (v) { root.mode = v }
         }
         Divider {}
-        Btn {
-            text: root.engine && root.engine.running ? qsTr("■ Stop") : qsTr("▶ Start")
-            checked: !!root.engine && root.engine.running
+        Tool {
+            readonly property bool _on: !!root.engine && root.engine.running
+            iconSource: _on ? "qrc:/icons/ui/player-stop.svg" : "qrc:/icons/ui/player-play.svg"
+            armed: _on
             enabled: !!root.engine && (root.engine.running || root.engine.canRun)
-            toolTipText: root.engine && root.engine.canRun ? qsTr("Run the whole cycle on the bound heads") : qsTr("No step can run: bind and connect a head first")
+            toolTipText: _on ? qsTr("Stop the cycle")
+                             : root.engine && root.engine.canRun ? qsTr("Run the whole cycle on the bound heads")
+                                                                 : qsTr("No step can run: bind and connect a head first")
             onClicked: { if (root.engine.running) root.engine.stop(); else { root.engine.start(-1); root.mode = "live" } }
         }
-        Btn {
-            text: qsTr("Step")
+        Tool {
+            iconSource: "qrc:/icons/ui/step-into.svg"
             enabled: !!root.engine && root.engine.canRun
+            toolTipText: qsTr("Step: send the next interrogation and stop there")
             onClicked: { root.engine.step(-1); root.mode = "live" }
         }
         Row {
             height: Tokens.controlHMd
             spacing: Tokens.spaceXs
-            Text { text: qsTr("Max range"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
+            KIcon {
+                source: "qrc:/icons/ui/ruler_measure.svg"
+                toolTipText: qsTr("Max range, m")
+                anchors.verticalCenter: parent.verticalCenter
+            }
             UsblSpin {
                 from: Model.MIN_RANGE_M; to: Model.MAX_RANGE_M; stepSize: 10
                 devValue: root.store ? root.store.st.maxRangeM : 300
@@ -277,7 +323,11 @@ Item {
         Row {
             height: Tokens.controlHMd
             spacing: Tokens.spaceXs
-            Text { text: qsTr("Period"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
+            KIcon {
+                source: "qrc:/icons/ui/repeat.svg"
+                toolTipText: qsTr("Period between steps, s")
+                anchors.verticalCenter: parent.verticalCenter
+            }
             KSpinBox {
                 from: root.store ? root.store.periodFloorMs : Model.DEFAULT_PERIOD_MS
                 to: Model.MAX_PERIOD_MS; stepSize: 100
@@ -292,18 +342,17 @@ Item {
                 onValueModified: function (v) { if (root.store) root.store.setPeriodMs(v) }
             }
             Text { text: qsTr("s"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
-            Btn {
-                text: qsTr("Auto")
-                checked: !!root.store && !root.store.periodMode
+            Tool {
+                iconSource: "qrc:/icons/ui/wand.svg"
+                armed: !!root.store && !root.store.periodMode
                 anchors.verticalCenter: parent.verticalCenter
-                toolTipText: qsTr("Each step as long as its own exchange needs; the period is not used")
+                toolTipText: qsTr("Auto: each step as long as its own exchange needs; the period is not used")
                 onClicked: root.store.setNetworkField("stepMode", "auto")
             }
         }
-        KTabBar {
-            buttonHeight: Tokens.controlHMd; verticalPadding: 0; horizontalPadding: 0; buttonSpacing: 0
-            cornerRadius: Tokens.radiusMd; trackColor: AppPalette.controlRaised; fontPixelSize: Tokens.fontSm
-            options: [ { label: qsTr("Now"), value: "immediately", tip: qsTr("transmit on command") }, { label: qsTr("PPS"), value: "pps", tip: qsTr("transmit on the next PPS pulse") } ]
+        IconTabs {
+            options: [ { icon: "qrc:/icons/ui/bolt.svg", label: "", value: "immediately", tip: qsTr("Now: transmit on command") },
+                       { icon: "qrc:/icons/ui/satellite.svg", label: "", value: "pps", tip: qsTr("PPS: transmit on the next PPS pulse") } ]
             currentValue: root.store ? root.store.st.transmit : "immediately"
             onValueSelected: function (v) { root.store.setNetworkField("transmit", v) }
         }
@@ -313,6 +362,7 @@ Item {
             height: Tokens.controlHMd; verticalAlignment: Text.AlignVCenter
         }
         Rectangle {
+            id: problemsPill
             readonly property var _c: root.store ? root.store.problemCounts : { error: 0, warning: 0 }
             visible: _c.error + _c.warning > 0
             height: Tokens.controlHMd
@@ -321,45 +371,80 @@ Item {
             color: _c.error ? AppPalette.dangerBg : AppPalette.linkIdleBg
             border.width: 1
             border.color: _c.error ? AppPalette.dangerBorder : AppPalette.linkIdleBorder
-            Text {
+            Row {
                 id: _pc
                 anchors.centerIn: parent
-                text: (parent._c.error ? "✕ " + parent._c.error : "") + (parent._c.error && parent._c.warning ? "  " : "") + (parent._c.warning ? "! " + parent._c.warning : "")
-                color: parent._c.error ? AppPalette.dangerText : AppPalette.linkIdleText
-                font.pixelSize: Tokens.fontSm; font.bold: true
+                spacing: Tokens.spaceXs
+                KIcon {
+                    visible: problemsPill._c.error > 0
+                    source: "qrc:/icons/ui/circle-x.svg"
+                    color: AppPalette.dangerText
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Text {
+                    visible: problemsPill._c.error > 0
+                    text: String(problemsPill._c.error)
+                    color: AppPalette.dangerText
+                    font.pixelSize: Tokens.fontSm; font.bold: true
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Item { visible: problemsPill._c.error > 0 && problemsPill._c.warning > 0; width: Tokens.spaceXs; height: 1 }
+                KIcon {
+                    visible: problemsPill._c.warning > 0
+                    source: "qrc:/icons/ui/alert-triangle.svg"
+                    color: problemsPill._c.error ? AppPalette.dangerText : AppPalette.linkIdleText
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Text {
+                    visible: problemsPill._c.warning > 0
+                    text: String(problemsPill._c.warning)
+                    color: problemsPill._c.error ? AppPalette.dangerText : AppPalette.linkIdleText
+                    font.pixelSize: Tokens.fontSm; font.bold: true
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+            HoverHandler { id: problemsHover }
+            KToolTip {
+                text: qsTr("Errors: %1, warnings: %2. Click to open the list").arg(problemsPill._c.error).arg(problemsPill._c.warning)
+                shown: problemsHover.hovered
             }
             KTapArea { onTapped: { root.bottomShown = true; bottom.tab = "problems" } }
         }
         Divider {}
-        Btn {
-            text: qsTr("Write changed")
-            enabled: !!root.writer && !root.writer.busy
-            toolTipText: qsTr("Write every connected device whose state differs from the network")
+        Tool {
+            readonly property int _n: root.store ? root.store.unwrittenLifelines.length : 0
+            readonly property bool _busy: !!root.writer && root.writer.busy
+            iconSource: "qrc:/icons/ui/upload.svg"
+            badge: !_busy && _n > 0 ? String(_n) : ""
+            progress: _busy && root.writer.progressTotal > 0 ? root.writer.progressDone / root.writer.progressTotal : -1
+            enabled: !!root.writer && !_busy
+            toolTipText: _n > 0 ? qsTr("Write changed: %1 not written to their devices yet").arg(_n)
+                                : qsTr("Write every connected device whose state differs from the network")
             onClicked: { root.writer.writeChanged(); root.bottomShown = true; bottom.tab = "write" }
         }
-        Btn {
-            text: qsTr("■ Silence all")
-            danger: true
-            toolTipText: qsTr("Stop the cycle and make every connected device stop answering")
+        Tool {
+            iconSource: "qrc:/icons/ui/access_point_off.svg"
+            tone: "danger"
+            toolTipText: qsTr("Silence all: stop the cycle and make every connected device stop answering")
             onClicked: { if (root.engine) root.engine.stop(); if (root.writer) root.writer.silenceAll() }
         }
         Divider {}
-        KCircleIconButton {
-            glyph: "▤"; width: Tokens.controlHMd; height: Tokens.controlHMd
-            glyphPixelSize: Math.round(12 * AppPalette.scale); borderWidth: Tokens.cardBorderWidth
-            highlightHold: root.devicesShown; toolTipText: qsTr("Devices panel")
+        Tool {
+            iconSource: "qrc:/icons/ui/layout-sidebar.svg"
+            armed: root.devicesShown
+            toolTipText: qsTr("Devices panel")
             onClicked: root.devicesShown = !root.devicesShown
         }
-        KCircleIconButton {
-            glyph: "☰"; width: Tokens.controlHMd; height: Tokens.controlHMd
-            glyphPixelSize: Math.round(12 * AppPalette.scale); borderWidth: Tokens.cardBorderWidth
-            highlightHold: root.inspectorShown; toolTipText: qsTr("Inspector")
+        Tool {
+            iconSource: "qrc:/icons/ui/layout-sidebar-right.svg"
+            armed: root.inspectorShown
+            toolTipText: qsTr("Inspector")
             onClicked: root.inspectorShown = !root.inspectorShown
         }
-        KCircleIconButton {
-            glyph: "▁"; width: Tokens.controlHMd; height: Tokens.controlHMd
-            glyphPixelSize: Math.round(12 * AppPalette.scale); borderWidth: Tokens.cardBorderWidth
-            highlightHold: root.bottomShown; toolTipText: qsTr("Problems and writing")
+        Tool {
+            iconSource: "qrc:/icons/ui/layout-bottombar.svg"
+            armed: root.bottomShown
+            toolTipText: qsTr("Problems and writing")
             onClicked: root.bottomShown = !root.bottomShown
         }
     }
@@ -384,6 +469,8 @@ Item {
             aside: Component {
                 Btn {
                     text: qsTr("Write changed")
+                    iconSource: "qrc:/icons/ui/upload.svg"
+                    toolTipText: qsTr("Write every connected device whose state differs from the network")
                     onClicked: { root.writer.writeChanged(); root.bottomShown = true; bottom.tab = "write" }
                 }
             }
@@ -399,8 +486,8 @@ Item {
                 x: Tokens.spaceSm
                 spacing: Tokens.spaceSm
                 Text { text: qsTr("The file changed on disk."); color: AppPalette.linkIdleText; font.pixelSize: Tokens.fontXs; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
-                Btn { text: qsTr("Reload"); onClicked: root.store.revert() }
-                Btn { text: qsTr("Keep mine"); onClicked: root.store.keepMine() }
+                Btn { text: qsTr("Reload"); iconSource: "qrc:/icons/ui/refresh.svg"; toolTipText: qsTr("Load the file from disk; the changes made here are lost"); onClicked: root.store.revert() }
+                Btn { text: qsTr("Keep mine"); iconSource: "qrc:/icons/ui/check.svg"; toolTipText: qsTr("Keep the network as it is here; the next save overwrites the file"); onClicked: root.store.keepMine() }
             }
         }
         Rectangle {
@@ -419,7 +506,14 @@ Item {
                 text: errBanner.text
                 color: AppPalette.dangerText; font.pixelSize: Tokens.fontXs
             }
-            Btn { id: errClose; anchors.right: parent.right; anchors.rightMargin: Tokens.spaceXs; anchors.verticalCenter: parent.verticalCenter; text: "×"; onClicked: errBanner.text = "" }
+            Tool {
+                id: errClose
+                width: Tokens.controlHSm; height: Tokens.controlHSm
+                anchors.right: parent.right; anchors.rightMargin: Tokens.spaceXs; anchors.verticalCenter: parent.verticalCenter
+                iconSource: "qrc:/icons/ui/x.svg"
+                toolTipText: qsTr("Dismiss")
+                onClicked: errBanner.text = ""
+            }
             Connections {
                 target: root.store
                 function onErrorRaised(text) { errBanner.text = text }
@@ -450,7 +544,13 @@ Item {
                     color: AppPalette.textSecond; font.pixelSize: Tokens.fontXs
                     anchors.verticalCenter: parent.verticalCenter
                 }
-                Btn { text: "×"; onClicked: root.store.lastNotes = [] }
+                Tool {
+                    width: Tokens.controlHSm; height: Tokens.controlHSm
+                    anchors.verticalCenter: parent.verticalCenter
+                    iconSource: "qrc:/icons/ui/x.svg"
+                    toolTipText: qsTr("Dismiss")
+                    onClicked: root.store.lastNotes = []
+                }
             }
         }
     }
@@ -623,9 +723,9 @@ Item {
             }
             Row {
                 spacing: Tokens.spaceSm
-                Btn { text: qsTr("Save"); onClicked: { var a = unsavedPopup.pending; unsavedPopup.close(); root.save(a) } }
-                Btn { text: qsTr("Discard"); danger: true; onClicked: { var a = unsavedPopup.pending; unsavedPopup.close(); if (a) a() } }
-                Btn { text: qsTr("Cancel"); onClicked: unsavedPopup.close() }
+                Btn { text: qsTr("Save"); toolTipText: qsTr("Save the changes, then continue"); onClicked: { var a = unsavedPopup.pending; unsavedPopup.close(); root.save(a) } }
+                Btn { text: qsTr("Discard"); danger: true; toolTipText: qsTr("Continue without saving; the changes are lost"); onClicked: { var a = unsavedPopup.pending; unsavedPopup.close(); if (a) a() } }
+                Btn { text: qsTr("Cancel"); toolTipText: qsTr("Go back to the network"); onClicked: unsavedPopup.close() }
             }
         }
     }
@@ -645,6 +745,11 @@ Item {
                 border.width: 1
                 border.color: _on ? AppPalette.accentBorder : AppPalette.border
                 Text { anchors.centerIn: parent; text: String(index); color: parent._on ? "#FFFFFF" : AppPalette.textStrong; font.pixelSize: Tokens.fontXs; font.bold: true }
+                HoverHandler { id: chipHover }
+                KToolTip {
+                    text: parent._on ? qsTr("Address %1 is chosen. Click to leave it out").arg(index) : qsTr("Address %1. Click to choose it").arg(index)
+                    shown: chipHover.hovered
+                }
                 KTapArea {
                     onTapped: {
                         var s = chips.selected.slice(), i = s.indexOf(index)
@@ -676,6 +781,7 @@ Item {
                 spacing: Tokens.spaceSm
                 Btn {
                     text: qsTr("Create")
+                    toolTipText: qsTr("Replace the current network with this template")
                     enabled: tplAddrs.selected.length > 0
                     onClicked: {
                         var k = templatePopup.kind
@@ -686,7 +792,7 @@ Item {
                         root.guardUnsaved(function () { root.store.newNetwork(k, p) })
                     }
                 }
-                Btn { text: qsTr("Cancel"); onClicked: templatePopup.close() }
+                Btn { text: qsTr("Cancel"); toolTipText: qsTr("Close without creating a network"); onClicked: templatePopup.close() }
             }
         }
     }
@@ -717,7 +823,9 @@ Item {
             Row {
                 spacing: Tokens.spaceSm
                 Btn {
-                    text: qsTr("▶ Start")
+                    text: qsTr("Start")
+                    iconSource: "qrc:/icons/ui/player-play.svg"
+                    toolTipText: qsTr("Add this device as a head and start interrogating the chosen addresses")
                     enabled: !!quickPopup.dev && quickAddrs.selected.length > 0
                     onClicked: {
                         var head = root.store.quickInterrogate(quickPopup.dev, quickAddrs.selected, quickRange.devValue)
@@ -725,7 +833,7 @@ Item {
                         if (head >= 0 && root.engine) { root.engine.start(head); root.mode = "live" }
                     }
                 }
-                Btn { text: qsTr("Cancel"); onClicked: quickPopup.close() }
+                Btn { text: qsTr("Cancel"); toolTipText: qsTr("Close without interrogating"); onClicked: quickPopup.close() }
             }
         }
     }
@@ -750,6 +858,7 @@ Item {
                 spacing: Tokens.spaceSm
                 Btn {
                     text: qsTr("Send")
+                    toolTipText: qsTr("Send the request once with this data")
                     onClicked: {
                         var enc = Payload.encode(payloadPopup.payloadSpec, root.store.formats)
                         if (root.engine) root.engine.sendWithPayload(payloadPopup.stepId, enc.hex, enc.bits)
@@ -757,7 +866,7 @@ Item {
                         payloadPopup.close()
                     }
                 }
-                Btn { text: qsTr("Cancel"); onClicked: payloadPopup.close() }
+                Btn { text: qsTr("Cancel"); toolTipText: qsTr("Close without sending"); onClicked: payloadPopup.close() }
             }
         }
     }

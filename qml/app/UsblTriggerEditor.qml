@@ -247,13 +247,17 @@ Rectangle {
             visible: !!root._t && (!root._t.recv || !root._t.send)
             UsblButton {
                 visible: !!root._t && !root._t.recv
-                text: qsTr("+ Receive payload")
+                text: qsTr("Receive payload")
+                iconSource: "qrc:/icons/ui/plus.svg"
+                toolTipText: qsTr("Add a section that receives a payload")
                 implicitHeight: Tokens.controlHSm; fontPixelSize: Tokens.fontXs
                 onClicked: if (root.plan) root.plan.attachSection(root.groupId, root.which, "recv")
             }
             UsblButton {
                 visible: !!root._t && !root._t.send
-                text: qsTr("+ Send payload")
+                text: qsTr("Send payload")
+                iconSource: "qrc:/icons/ui/plus.svg"
+                toolTipText: qsTr("Add a section that sends a payload")
                 implicitHeight: Tokens.controlHSm; fontPixelSize: Tokens.fontXs
                 onClicked: if (root.plan) root.plan.attachSection(root.groupId, root.which, "send")
             }
@@ -262,7 +266,9 @@ Rectangle {
         // ── per-trigger advanced: USBLCmdConfig rewrite rules ─────────────
         UsblButton {
             visible: !!root._t && !root._t.advOpen
-            text: qsTr("+ advanced")
+            text: qsTr("Advanced")
+            iconSource: "qrc:/icons/ui/adjustments_horizontal.svg"
+            toolTipText: qsTr("Show the advanced rewrite rules")
             implicitHeight: Tokens.controlHSm; fontPixelSize: Tokens.fontXs
             onClicked: if (root.plan) root.plan.setAdvOpen(root.groupId, root.which, true)
         }

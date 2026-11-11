@@ -12,6 +12,7 @@ Item {
     property color crossColor: AppPalette.text
     property color fillColor: AppPalette.bgDeep
     property color ringColor: AppPalette.border
+    property real glyphRotation: 45
 
     width: _d
     height: _d
@@ -40,7 +41,7 @@ Item {
             height: parent._t
             radius: height / 2
             color: badge.crossColor
-            rotation: 45
+            rotation: badge.glyphRotation
         }
         Rectangle {
             anchors.centerIn: parent
@@ -48,7 +49,7 @@ Item {
             height: parent._t
             radius: height / 2
             color: badge.crossColor
-            rotation: -45
+            rotation: badge.glyphRotation - 90
         }
     }
 }

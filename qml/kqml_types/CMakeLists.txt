@@ -24,6 +24,7 @@ qt_add_qml_module(kogger_kqml_types
         KDragBar.qml
         KFocusRing.qml
         KGamepadIcon.qml
+        KIcon.qml
         KIsland.qml
         KIslandRow.qml
         KIslandSection.qml
@@ -36,6 +37,7 @@ qt_add_qml_module(kogger_kqml_types
         KTabBar.qml
         KTapArea.qml
         KToggleRow.qml
+        KToolIconButton.qml
         KToolTip.qml
         KTutorialAnchor.qml
         Tokens.qml

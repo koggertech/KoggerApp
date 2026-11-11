@@ -21,6 +21,9 @@ Button {
     property color dangerBorder: AppPalette.dangerBorder
     property color textColor: danger ? AppPalette.dangerText : AppPalette.textStrong
     property real hoverWhiteness: 0.08
+    property url iconSource: ""
+    property int iconPixelSize: Math.round(fontPixelSize * 1.3)
+    readonly property bool _hasIcon: iconSource.toString().length > 0
 
     property bool _tipSuppressed: false
     onPressedChanged: if (pressed) _tipSuppressed = true
@@ -51,12 +54,23 @@ Button {
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
+        leftPadding: control._hasIcon ? control.iconPixelSize + (text.length ? Tokens.spaceSm : 0) : 0
 
         Behavior on color {
             ColorAnimation {
                 duration: Anim.controlMs
                 easing.type: Anim.controlEasing
             }
+        }
+
+        KIcon {
+            visible: control._hasIcon
+            width: control.iconPixelSize
+            height: control.iconPixelSize
+            x: Math.round((label.width - label.leftPadding - label.rightPadding - label.contentWidth) / 2)
+            y: Math.round((label.height - height) / 2)
+            source: control.iconSource
+            color: label.color
         }
     }
 

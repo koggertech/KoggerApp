@@ -155,14 +155,23 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                         }
-                        Text {
-                            text: {
-                                var k = hdr.modelData.kind === "head" ? qsTr("head") : (hdr.modelData.kind === "external" ? qsTr("external") : qsTr("beacon"))
-                                var r = hdr.modelData.respond === "off" ? qsTr("silent") : qsTr("answers")
-                                return k + " · " + r
+                        Row {
+                            spacing: Tokens.spaceXs
+                            KIcon {
+                                width: Math.round(Tokens.fontXxs * 1.4); height: width
+                                source: hdr.modelData.kind === "head" ? "qrc:/icons/ui/usbl-head.svg"
+                                      : hdr.modelData.kind === "external" ? "qrc:/icons/ui/speedboat.svg" : "qrc:/icons/ui/building-lighthouse.svg"
+                                color: AppPalette.textMuted
+                                toolTipText: hdr.modelData.kind === "head" ? qsTr("Head")
+                                           : hdr.modelData.kind === "external" ? qsTr("External") : qsTr("Beacon")
+                                anchors.verticalCenter: parent.verticalCenter
                             }
-                            color: AppPalette.textMuted
-                            font.pixelSize: Tokens.fontXxs
+                            Text {
+                                text: hdr.modelData.respond === "off" ? qsTr("silent") : qsTr("answers")
+                                color: AppPalette.textMuted
+                                font.pixelSize: Tokens.fontXxs
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
                         }
                         Row {
                             spacing: Tokens.spaceXs

@@ -15,6 +15,9 @@ Item {
         implicitHeight: Tokens.controlHMd
         fontPixelSize: Tokens.fontSm
     }
+    component Tool: KToolIconButton {
+        toolTipOnHold: true
+    }
 
     Row {
         id: tabs
@@ -22,13 +25,14 @@ Item {
         height: Tokens.controlHMd
         spacing: Tokens.spaceSm
         KTabBar {
-            buttonHeight: Tokens.controlHSm; fontPixelSize: Tokens.fontXs
+            buttonHeight: Tokens.controlHSm; fontPixelSize: Tokens.fontXs; iconPixelSize: Tokens.iconSm
+            segmentMinWidth: Math.round(112 * AppPalette.scale)
             anchors.verticalCenter: parent.verticalCenter
             options: [
-                { label: root.store ? qsTr("Problems %1").arg(root.store.problemCounts.error + root.store.problemCounts.warning) : qsTr("Problems"), value: "problems" },
-                { label: qsTr("Write"), value: "write" },
-                { label: qsTr("Frames"), value: "frames" },
-                { label: qsTr("Slots"), value: "slots" }
+                { icon: "qrc:/icons/ui/alert-triangle.svg", label: root.store ? qsTr("Problems %1").arg(root.store.problemCounts.error + root.store.problemCounts.warning) : qsTr("Problems"), value: "problems" },
+                { icon: "qrc:/icons/ui/upload.svg", label: qsTr("Write"), value: "write" },
+                { icon: "qrc:/icons/ui/list-details.svg", label: qsTr("Frames"), value: "frames" },
+                { icon: "qrc:/icons/ui/clock-edit.svg", label: qsTr("Slots"), value: "slots" }
             ]
             currentValue: root.tab
             onValueSelected: function (v) { root.tab = v }
@@ -68,18 +72,18 @@ Item {
                     implicitHeight: Math.max(Tokens.controlHMd, ptext.implicitHeight + Tokens.spaceXs * 2)
                     radius: Tokens.radiusSm
                     color: modelData.sev === "error" ? AppPalette.dangerBg : modelData.sev === "warning" ? AppPalette.linkIdleBg : "transparent"
-                    Text {
+                    KIcon {
                         id: picon
                         x: Tokens.spaceSm
                         anchors.verticalCenter: parent.verticalCenter
-                        text: prow.modelData.sev === "error" ? "✕" : prow.modelData.sev === "warning" ? "!" : "i"
+                        source: prow.modelData.sev === "error" ? "qrc:/icons/ui/circle-x.svg"
+                              : prow.modelData.sev === "warning" ? "qrc:/icons/ui/alert-triangle.svg" : "qrc:/icons/ui/info-circle.svg"
                         color: prow.modelData.sev === "error" ? AppPalette.dangerText : prow.modelData.sev === "warning" ? AppPalette.linkIdleText : AppPalette.textMuted
-                        font.pixelSize: Tokens.fontSm; font.bold: true
-                        width: Math.round(16 * AppPalette.scale)
                     }
                     Text {
                         id: ptext
                         anchors.left: picon.right
+                        anchors.leftMargin: Tokens.spaceSm
                         anchors.right: fixBtn.left
                         anchors.rightMargin: Tokens.spaceSm
                         anchors.verticalCenter: parent.verticalCenter
@@ -111,6 +115,8 @@ Item {
                         visible: text.length > 0
                         width: visible ? implicitWidth : 0
                         text: root.store.fixLabel(prow.modelData)
+                        iconSource: "qrc:/icons/ui/wand.svg"
+                        toolTipText: qsTr("Fix: %1").arg(text)
                         onClicked: root.store.applyFix(prow.modelData)
                     }
                 }
@@ -126,9 +132,12 @@ Item {
             Row {
                 visible: root.tab === "write"
                 spacing: Tokens.spaceSm
-                Btn { text: qsTr("Write changed"); enabled: !!root.writer && !root.writer.busy; onClicked: root.writer.writeChanged() }
-                Btn { text: qsTr("Write all connected"); enabled: !!root.writer && !root.writer.busy; onClicked: root.writer.writeAllConnected() }
-                Btn { text: qsTr("Cancel"); visible: !!root.writer && root.writer.busy; onClicked: root.writer.cancel() }
+                Btn { text: qsTr("Write changed"); iconSource: "qrc:/icons/ui/upload.svg"; enabled: !!root.writer && !root.writer.busy
+                      toolTipText: qsTr("Write every connected device whose state differs from the network"); onClicked: root.writer.writeChanged() }
+                Btn { text: qsTr("Write all connected"); iconSource: "qrc:/icons/ui/upload.svg"; enabled: !!root.writer && !root.writer.busy
+                      toolTipText: qsTr("Write every bound, connected device, changed or not"); onClicked: root.writer.writeAllConnected() }
+                Btn { text: qsTr("Cancel"); iconSource: "qrc:/icons/ui/x.svg"; visible: !!root.writer && root.writer.busy
+                      toolTipText: qsTr("Stop writing; the rest of the queue is dropped"); onClicked: root.writer.cancel() }
             }
             Repeater {
                 model: root.tab === "write" && root.store ? root.store.lifelines.filter(function (l) { return l.kind !== "external" }) : []
@@ -165,8 +174,20 @@ Item {
                         font.pixelSize: Tokens.fontXs
                         anchors.verticalCenter: parent.verticalCenter
                     }
-                    Btn { text: qsTr("Write"); enabled: !!wrow._dev && !!root.writer && !root.writer.busy; anchors.verticalCenter: parent.verticalCenter; onClicked: root.writer.writeLifeline(wrow.modelData.id) }
-                    Btn { text: qsTr("Baseline"); enabled: !!wrow._dev && !!root.writer && !root.writer.busy; anchors.verticalCenter: parent.verticalCenter; onClicked: root.writer.resetToBaseline(wrow.modelData.id) }
+                    Tool {
+                        iconSource: "qrc:/icons/ui/upload.svg"
+                        enabled: !!wrow._dev && !!root.writer && !root.writer.busy
+                        anchors.verticalCenter: parent.verticalCenter
+                        toolTipText: qsTr("Write %1").arg(wrow.modelData.label)
+                        onClicked: root.writer.writeLifeline(wrow.modelData.id)
+                    }
+                    Tool {
+                        iconSource: "qrc:/icons/ui/eraser.svg"
+                        enabled: !!wrow._dev && !!root.writer && !root.writer.busy
+                        anchors.verticalCenter: parent.verticalCenter
+                        toolTipText: qsTr("Reset %1 to baseline: silent, hears no address, every slot at defaults").arg(wrow.modelData.label)
+                        onClicked: root.writer.resetToBaseline(wrow.modelData.id)
+                    }
                 }
             }
             Text {

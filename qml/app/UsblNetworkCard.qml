@@ -31,6 +31,9 @@ DeviceSettingsGroup {
         implicitHeight: Tokens.controlHMd
         fontPixelSize: Tokens.fontSm
     }
+    component Tool: KToolIconButton {
+        toolTipOnHold: true
+    }
 
     headerActions: Row {
         spacing: Tokens.spaceSm
@@ -65,18 +68,27 @@ DeviceSettingsGroup {
 
     Row {
         spacing: Tokens.spaceSm
-        Btn {
-            text: card.engine && card.engine.running ? qsTr("■ Stop") : qsTr("▶ Start")
-            checked: !!card.engine && card.engine.running
+        Tool {
+            readonly property bool _on: !!card.engine && card.engine.running
+            iconSource: _on ? "qrc:/icons/ui/player-stop.svg" : "qrc:/icons/ui/player-play.svg"
+            armed: _on
             enabled: !!card.engine && (card.engine.running || card.engine.canRun)
+            toolTipText: _on ? qsTr("Stop the cycle") : qsTr("Start the cycle")
+            anchors.verticalCenter: parent.verticalCenter
             onClicked: card.engine.running ? card.engine.stop() : card.engine.start(card._isHead ? card._ll.id : -1)
         }
-        Btn {
-            text: qsTr("Step")
+        Tool {
+            iconSource: "qrc:/icons/ui/step-into.svg"
             enabled: !!card.engine && card.engine.canRun
+            toolTipText: qsTr("Step: send the next interrogation and stop there")
+            anchors.verticalCenter: parent.verticalCenter
             onClicked: card.engine.step(card._isHead ? card._ll.id : -1)
         }
-        Text { text: qsTr("Max range"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
+        KIcon {
+            source: "qrc:/icons/ui/ruler_measure.svg"
+            toolTipText: qsTr("Max range, m")
+            anchors.verticalCenter: parent.verticalCenter
+        }
         UsblSpin {
             from: Model.MIN_RANGE_M; to: Model.MAX_RANGE_M; stepSize: 10
             devValue: card.network ? card.network.st.maxRangeM : 300
@@ -89,7 +101,11 @@ DeviceSettingsGroup {
     }
     Row {
         spacing: Tokens.spaceSm
-        Text { text: qsTr("Period"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
+        KIcon {
+            source: "qrc:/icons/ui/repeat.svg"
+            toolTipText: qsTr("Period between steps, s")
+            anchors.verticalCenter: parent.verticalCenter
+        }
         KSpinBox {
             from: card.network ? card.network.periodFloorMs : Model.DEFAULT_PERIOD_MS
             to: Model.MAX_PERIOD_MS; stepSize: 100
@@ -103,10 +119,11 @@ DeviceSettingsGroup {
             onValueModified: function (v) { if (card.network) card.network.setPeriodMs(v) }
         }
         Text { text: qsTr("s between steps"); color: AppPalette.textSecond; font.pixelSize: Tokens.fontSm; anchors.verticalCenter: parent.verticalCenter }
-        Btn {
-            text: qsTr("Auto")
-            checked: !!card.network && !card.network.periodMode
-            toolTipText: qsTr("Each step as long as its own exchange needs; the period is not used")
+        Tool {
+            iconSource: "qrc:/icons/ui/wand.svg"
+            armed: !!card.network && !card.network.periodMode
+            toolTipText: qsTr("Auto: each step as long as its own exchange needs; the period is not used")
+            anchors.verticalCenter: parent.verticalCenter
             onClicked: card.network.setNetworkField("stepMode", "auto")
         }
     }
@@ -151,9 +168,10 @@ DeviceSettingsGroup {
                 font.pixelSize: Tokens.fontSm
                 anchors.verticalCenter: parent.verticalCenter
             }
-            Btn {
-                text: qsTr("Ask")
+            Tool {
+                iconSource: "qrc:/icons/ui/speakerphone.svg"
                 enabled: !!trow._step
+                anchors.verticalCenter: parent.verticalCenter
                 toolTipText: trow._step ? qsTr("Interrogate this beacon once") : qsTr("No connected head asks this beacon: add an exchange to it in the Nodes-Configurator")
                 onClicked: card.engine.interrogateNow(trow._step.stepId)
             }
@@ -164,11 +182,13 @@ DeviceSettingsGroup {
         spacing: Tokens.spaceSm
         Btn {
             text: qsTr("Open Nodes-Configurator")
+            iconSource: "qrc:/icons/ui/topology-ring-3.svg"
             onClicked: if (card.store) card.store.nodesConfiguratorOpen = true
         }
         Btn {
             visible: !card._ll
             text: qsTr("Interrogate from this device")
+            iconSource: "qrc:/icons/ui/speakerphone.svg"
             toolTipText: qsTr("Adds this device as a head ranging address 1 and starts it")
             onClicked: {
                 var head = card.network.quickInterrogate(card.dev, [1], card.network.st.maxRangeM)

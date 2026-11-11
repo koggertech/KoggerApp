@@ -209,6 +209,7 @@ DeviceSettingsGroup {
             fontPixelSize: Tokens.fontMd
             enabled: !!respGroup.dev
             text: qsTr("Apply")
+            iconSource: "qrc:/icons/ui/check.svg"
             toolTipText: qsTr("Send all settings of this group to the device")
             normalBorder: respGroup._needsApply ? AppPalette.linkIdleBorder : AppPalette.border
             borderWidth: respGroup._needsApply ? Math.max(1, Math.round(1.5 * AppPalette.scale)) : Tokens.cardBorderWidth
@@ -220,6 +221,7 @@ DeviceSettingsGroup {
             fontPixelSize: Tokens.fontMd
             visible: respGroup._edited
             text: qsTr("Revert")
+            iconSource: "qrc:/icons/ui/arrow-back-up.svg"
             toolTipText: qsTr("Discard the changes made here")
             anchors.verticalCenter: parent.verticalCenter
             onClicked: respGroup._loadFromDevice()
