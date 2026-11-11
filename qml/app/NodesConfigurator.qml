@@ -404,7 +404,8 @@ Item {
                 }
             }
             HoverHandler { id: problemsHover }
-            KToolTip {
+            KLazyToolTip {
+                targetItem: problemsPill
                 text: qsTr("Errors: %1, warnings: %2. Click to open the list").arg(problemsPill._c.error).arg(problemsPill._c.warning)
                 shown: problemsHover.hovered
             }
@@ -737,6 +738,7 @@ Item {
         Repeater {
             model: 8
             delegate: Rectangle {
+                id: chipRect
                 required property int index
                 readonly property bool _on: chips.selected.indexOf(index) >= 0
                 width: Math.round(26 * AppPalette.scale); height: width
@@ -746,8 +748,9 @@ Item {
                 border.color: _on ? AppPalette.accentBorder : AppPalette.border
                 Text { anchors.centerIn: parent; text: String(index); color: parent._on ? "#FFFFFF" : AppPalette.textStrong; font.pixelSize: Tokens.fontXs; font.bold: true }
                 HoverHandler { id: chipHover }
-                KToolTip {
-                    text: parent._on ? qsTr("Address %1 is chosen. Click to leave it out").arg(index) : qsTr("Address %1. Click to choose it").arg(index)
+                KLazyToolTip {
+                    targetItem: chipRect
+                    text: chipRect._on ? qsTr("Address %1 is chosen. Click to leave it out").arg(chipRect.index) : qsTr("Address %1. Click to choose it").arg(chipRect.index)
                     shown: chipHover.hovered
                 }
                 KTapArea {

@@ -40,7 +40,7 @@ Item {
         enabled: root.toolTipText.length > 0
     }
 
-    KToolTip {
+    KLazyToolTip {
         text: root.toolTipText
         targetItem: root
         shown: hover.hovered

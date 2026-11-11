@@ -79,7 +79,7 @@ KCircleIconButton {
         enabled: !root.enabled
     }
 
-    KToolTip {
+    KLazyToolTip {
         text: root.resolvedToolTipText
         targetItem: root
         shown: !root.enabled && disabledHover.hovered && !root.toolTipSuppressed
