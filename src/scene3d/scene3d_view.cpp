@@ -38,6 +38,7 @@ constexpr float kFollowMaxSegmentS = 1.0f;
 constexpr float kFollowIntervalBlend = 0.25f;
 constexpr float kFollowSettleM = 0.01f;
 constexpr float kFollowSettleRad = 0.001f;
+constexpr float kNavigatorBoatFrameFraction = 0.6f;
 
 struct ZoomDistanceRange {
     float min;
@@ -2893,7 +2894,15 @@ QVector3D GraphicsScene3dView::navigatorLeadOffset() const
     }
     const float dist = std::max(1.0f, m_camera->distForMapView()) * 0.7f;
     const float offset = std::min(std::max(10.0f, dist * 0.30f), dist * 0.85f);
-    return forwardXY * offset;
+
+    const float fixFovDeg = static_cast<float>(m_camera->fov()) * (1.0f + m_camera->getHeightAboveGround() / perspectiveEdge_);
+    const float halfFovRad = qDegreesToRadians(fixFovDeg) * 0.5f;
+    const float boatOffAxisRad = std::atan(kNavigatorBoatFrameFraction * std::tan(halfFovRad));
+    const float pitch = m_camera->m_rotAngle.y();
+    const float inFrameOffset = m_camera->m_distToFocusPoint * std::sin(boatOffAxisRad)
+        / std::max(std::cos(pitch - boatOffAxisRad), 0.01f);
+
+    return forwardXY * std::min(offset, inFrameOffset);
 }
 
 QVector3D GraphicsScene3dView::followSegmentPoint() const
@@ -4811,7 +4820,7 @@ void GraphicsScene3dView::Camera::resetRotationAngle()
 void GraphicsScene3dView::Camera::updateCameraParams()
 {
     if (viewPtr_) { // zoom limit
-        const float kMinGroundDist = 1.0f;
+        const float kMinGroundDist = 10.0f;
         const float kMinCos = 0.01f;
         const float cosPitch = std::fabs(cosf(m_rotAngle.y()));
 

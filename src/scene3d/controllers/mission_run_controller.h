@@ -171,7 +171,7 @@ private:
     GraphicsScene3dView* view_{nullptr};
     MissionLayer* layer_{nullptr};
     mission::MissionRunTracker* tracker_{nullptr};
-    bool layerVisible_{true};
+    bool layerVisible_{false};
     bool showFence_{true};
     bool showRally_{true};
     bool showHome_{true};

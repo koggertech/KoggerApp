@@ -651,6 +651,7 @@ int main(int argc, char *argv[])
                 controlServer.registerObject(QStringLiteral("deviceManagerWrapper"), core.getDeviceManagerWrapperPtr());
                 controlServer.registerObject(QStringLiteral("deviceTopology"),       core.getDeviceTopologyModelPtr());
                 controlServer.registerObject(QStringLiteral("missionPlan"),            core.getMissionPlanControllerPtr());
+                controlServer.registerObject(QStringLiteral("missionRun"),           core.getMissionRunTrackerPtr());
                 controlServer.registerObject(QStringLiteral("autopilotParams"),      core.getDeviceManagerWrapperPtr()->autopilotParams());
                 controlServer.registerObject(QStringLiteral("linkLoss"),             core.getDeviceManagerWrapperPtr()->linkLoss());
                 controlServer.registerObject(QStringLiteral("videoStreams"),         &videoStreams);

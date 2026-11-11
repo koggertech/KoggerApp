@@ -71,6 +71,16 @@ struct RunItem {
  * of a known current item in Auto that is not the step to the next navigation item (judged only
  * while actionable()), legSpeedRequested carries the planned speed of the current navigation item
  * once the snapshot is actionable().
+ *
+ * setManualSpeed() sets a speed by hand while the mission runs: sent at once in Auto, kept while
+ * paused and sent by the same sync instead of the planned speed. The plan wins at its next speed
+ * item: when the current navigation item moves forward past a DO_CHANGE_SPEED (anywhere between the
+ * item the manual speed was last checked at and the new one, since a 1 Hz report can skip a short
+ * leg and a link loss can hide several), or becomes one with a DO_CHANGE_SPEED right before it, the
+ * manual speed is dropped (ArduRover has already applied that item). It is also dropped when the
+ * route ends or holds at its end, or the route on the vehicle changes; a link loss keeps it, and the
+ * first route read after it must equal the one it was set on. It cannot be set while the route is
+ * unknown, finished or holding at its end (ArduRover refuses a speed change in that loiter).
  */
 class MissionRunTracker : public QObject
 {
@@ -91,7 +101,28 @@ class MissionRunTracker : public QObject
     Q_PROPERTY(double  remainingSeconds  READ remainingSeconds  NOTIFY progressChanged)
     Q_PROPERTY(bool    running           READ running           NOTIFY progressChanged)
     Q_PROPERTY(bool    complete          READ complete          NOTIFY progressChanged)
+    /**
+     * The route is stopped short of its end after it was started: not running, not complete, not at
+     * a final NAV_LOITER_UNLIM, and the current item is a navigation item (ArduPilot reports seq 0
+     * until the first start and keeps the index when the mission stops; it never reports
+     * MISSION_STATE_PAUSED, a stopped route is NOT_STARTED). A route that replaced a known one is not
+     * paused until it has run, since an upload keeps the old index.
+     */
+    Q_PROPERTY(bool    paused            READ paused            NOTIFY progressChanged)
+    /**
+     * The route has ended in a NAV_LOITER_UNLIM and the boat holds position there, still in Auto:
+     * running and armed in Auto, the current item is a NAV_LOITER_UNLIM with no navigation item after
+     * it, and the boat has arrived — the loiter has no position (current position), the navigation
+     * item before it is at the same point, or the boat is within kHoldArrivalM of it. ArduRover sends
+     * no MISSION_ITEM_REACHED for this item, since it never completes. Once set it stays while that
+     * item is current, so drifting inside the loiter radius does not clear it.
+     */
+    Q_PROPERTY(bool    holdingAtEnd      READ holdingAtEnd      NOTIFY progressChanged)
     Q_PROPERTY(bool    actionable        READ actionable        NOTIFY snapshotChanged)
+    /** Speed set by hand in m/s, NaN when the plan speeds apply. */
+    Q_PROPERTY(double  manualSpeed       READ manualSpeed       NOTIFY manualSpeedChanged)
+    /** Planned speed of the current target leg in m/s, NaN when the route sets none. */
+    Q_PROPERTY(double  planSpeed         READ planSpeed         NOTIFY progressChanged)
     /** Read the vehicle's lists by itself (on connect, when they change on the vehicle, after a failed read); refresh() always reads. */
     Q_PROPERTY(bool    readAutomatically READ readAutomatically WRITE setReadAutomatically NOTIFY readAutomaticallyChanged)
 
@@ -115,12 +146,29 @@ public:
     bool    running() const { return running_; }
     bool    armed() const { return telemetry_.online && telemetry_.armed; }
     bool    complete() const { return complete_; }
+    bool    paused() const { return paused_; }
+    bool    holdingAtEnd() const { return holdingAtEnd_; }
     /** The route is past its last navigation item (MISSION_STATE COMPLETE or current seq beyond it). */
     bool    finished() const { return finished_; }
     /** A jump can be sent: the snapshot is known, not stale and not being read again. */
     bool    actionable() const { return known_ && !stale_ && !reading(); }
     bool    readAutomatically() const { return readAutomatically_; }
     void    setReadAutomatically(bool read);
+    double  manualSpeed() const { return manualSpeed_; }
+    double  planSpeed() const;
+
+    /**
+     * Sets the manual speed, clamped to kMinMissionSpeed…kMaxCommandSpeed. Returns true when it was
+     * sent (the vehicle is in Auto and @p send), false when it is only kept (until the mission
+     * resumes, or because the vehicle still has it after a rejected reset) or, with the route
+     * unknown or finished, ignored.
+     */
+    Q_INVOKABLE bool setManualSpeed(double speed, bool send = true);
+    /**
+     * Drops the manual speed. With @p restorePlan, sends the planned speed of the current leg in Auto
+     * and returns true when it did.
+     */
+    Q_INVOKABLE bool clearManualSpeed(bool restorePlan = true);
 
     const autopilot::MissionBatches& snapshot() const { return snapshot_; }
     const QVector<RunItem>& items() const { return items_; }
@@ -167,6 +215,14 @@ signals:
     void readAutomaticallyChanged();
     void readRequested();
     void legSpeedRequested(double speed);
+    void manualSpeedChanged();
+    /**
+     * A run event for the autopilot log (MAV_SEVERITY, translated text): the route ended holding
+     * position. Sent once per arrival at the hold — only when the run was followed up to it (not on a
+     * connect to a boat already holding), and not again for the same item after a disarm, a Hold or
+     * a link loss while it stays current.
+     */
+    void missionEvent(int severity, const QString& text);
 
 private:
     QVector<RunItem> buildItems(const autopilot::MissionBatches& batches, bool link) const;
@@ -175,6 +231,8 @@ private:
     void rebuildGeometry();
     void updateMatch();
     void updateProgress(bool force);
+    bool holdsAtEnd(bool running) const;
+    QString holdingText(int seq) const;
     void checkStale();
     void wantRead(int delayMs);
     void autoRead(int delayMs);
@@ -182,6 +240,10 @@ private:
     void onPlanChanged();
     int nextNavSeq(int seq) const;
     void syncLegSpeed(int previousMode, int previousSeq);
+    void followPlanSpeed();
+    bool speedChangeBefore(int seq) const;
+    bool speedChangeBetween(int from, int to) const;
+    double manualRemainingSeconds(int navIndex, double toTarget) const;
 
     MissionPlanController* plan_ = nullptr;
     RunTelemetry telemetry_;
@@ -197,6 +259,7 @@ private:
     QVector<GeoPoint> navPos_;
     QVector<double> legLength_;
     QVector<double> legSpeed_;
+    QVector<bool> legSpeedChange_;
     QVector<double> suffixLength_;
     QVector<double> suffixTime_;
     double totalLength_ = 0.0;
@@ -210,6 +273,10 @@ private:
     bool running_ = false;
     bool complete_ = false;
     bool finished_ = false;
+    bool paused_ = false;
+    bool holdingAtEnd_ = false;
+    int holdSeq_ = -1;
+    int announcedHoldSeq_ = -1;
 
     bool hasPendingUpload_ = false;
     autopilot::MissionBatches pendingUpload_;
@@ -223,6 +290,10 @@ private:
     bool readWanted_ = false;
     bool readAutomatically_ = true;
     bool speedSyncPending_ = false;
+    double manualSpeed_ = NAN;
+    int manualSeq_ = -1;
+    autopilot::MissionBatches lastRoute_;
+    bool awaitStart_ = false;
     int failedReads_ = 0;
     QTimer readTimer_{ this };
     QElapsedTimer lastRead_;

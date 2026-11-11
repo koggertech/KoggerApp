@@ -27,6 +27,8 @@ constexpr double kDistanceStep = 0.5;
 constexpr double kSecondsStep = 1.0;
 constexpr double kProgressStep = 0.001;
 constexpr double kVehicleMoveStepM = 0.5;
+constexpr double kHoldArrivalM = 5.0;
+constexpr double kSamePointM = 0.5;
 
 struct PlanOrigin {
     RunItem::Kind kind = RunItem::Kind::Other;
@@ -210,6 +212,7 @@ void MissionRunTracker::setTelemetry(const RunTelemetry& telemetry)
     }
     checkStale();
     updateProgress(false);
+    followPlanSpeed();
     syncLegSpeed(previousMode, previousSeq);
     const GeoPoint vehicle = vehiclePosition();
     const GeoPoint home = vehicleHome();
@@ -377,6 +380,12 @@ QVector<RunItem> MissionRunTracker::buildItems(const autopilot::MissionBatches& 
 
 void MissionRunTracker::setSnapshot(const autopilot::MissionBatches& batches, const QVector<RunItem>& items, bool linked)
 {
+    const bool hadRoute = known_ || !lastRoute_.isEmpty();
+    if (!sameRouteOnVehicle(known_ ? snapshot_ : lastRoute_, batches)) {
+        clearManualSpeed(false);
+        awaitStart_ = hadRoute;
+    }
+    lastRoute_.clear();
     snapshot_ = batches;
     items_ = items;
     linked_ = linked;
@@ -397,6 +406,9 @@ void MissionRunTracker::setSnapshot(const autopilot::MissionBatches& batches, co
 void MissionRunTracker::clearSnapshot()
 {
     const bool had = known_ || !items_.isEmpty();
+    if (known_) {
+        lastRoute_ = snapshot_;
+    }
     snapshot_.clear();
     items_.clear();
     linked_ = false;
@@ -418,6 +430,7 @@ void MissionRunTracker::rebuildGeometry()
     navPos_.clear();
     legLength_.clear();
     legSpeed_.clear();
+    legSpeedChange_.clear();
     const GeoPoint home = items_.isEmpty() ? GeoPoint() : items_.first().pos;
     for (const auto& r : std::as_const(items_)) {
         if (!r.navigation) {
@@ -431,6 +444,7 @@ void MissionRunTracker::rebuildGeometry()
         navSeqs_.append(r.seq);
         navPos_.append(p);
         legSpeed_.append(r.plannedSpeed);
+        legSpeedChange_.append(speedChangeBefore(r.seq));
     }
     const int n = int(navSeqs_.size());
     suffixLength_.fill(0.0, n);
@@ -480,6 +494,9 @@ void MissionRunTracker::updateProgress(bool force)
                                     || (telemetry_.state == MavMissionStateUnknown && telemetry_.flightMode == kRoverModeAuto && telemetry_.currentSeq >= 1));
     const bool complete = known_ && telemetry_.state == MavMissionStateComplete;
     bool finished = false;
+    if (running) {
+        awaitStart_ = false;
+    }
 
     if (known_ && !navSeqs_.isEmpty() && telemetry_.currentSeq >= 0) {
         const int last = int(navSeqs_.size()) - 1;
@@ -497,10 +514,15 @@ void MissionRunTracker::updateProgress(bool force)
             remaining = toTarget + suffixLength_.at(k);
             progress = totalLength_ > 0.0 ? std::clamp(1.0 - remaining / totalLength_, 0.0, 1.0) : -1.0;
             const double v = legSpeed_.at(k);
-            if (v > 0.0 && std::isfinite(suffixTime_.at(k))) {
-                seconds = toTarget / v + suffixTime_.at(k);
-            } else if (telemetry_.groundSpeed > kMinGroundSpeed) {
-                seconds = remaining / telemetry_.groundSpeed;
+            if (std::isfinite(manualSpeed_)) {
+                seconds = manualRemainingSeconds(k, toTarget);
+            }
+            if (!std::isfinite(seconds)) {
+                if (v > 0.0 && std::isfinite(suffixTime_.at(k))) {
+                    seconds = toTarget / v + suffixTime_.at(k);
+                } else if (telemetry_.groundSpeed > kMinGroundSpeed) {
+                    seconds = remaining / telemetry_.groundSpeed;
+                }
             }
             nav = k + 1;
             target = navSeqs_.at(k);
@@ -508,8 +530,24 @@ void MissionRunTracker::updateProgress(bool force)
         label = labelFor(items_.at(target));
     }
 
+    const bool atFinalHold = target >= 0 && !navSeqs_.isEmpty() && target == navSeqs_.last()
+                             && items_.at(target).command == int(MavCmd::NavLoiterUnlim);
+    const bool paused = known_ && !running && !complete && !finished && !awaitStart_ && !atFinalHold
+                        && !navSeqs_.isEmpty() && telemetry_.currentSeq >= navSeqs_.first();
+    const bool holding = holdsAtEnd(running);
+    if (holding) {
+        nav = int(navSeqs_.size());
+        progress = 1.0;
+        remaining = 0.0;
+        seconds = 0.0;
+    }
+    if (telemetry_.currentSeq != announcedHoldSeq_) {
+        announcedHoldSeq_ = -1;
+    }
+    const bool startedHolding = holding && !holdingAtEnd_ && running_ && announcedHoldSeq_ < 0;
     const bool changed = force || nav != currentNav_ || target != targetSeq_ || label != currentLabel_
-                         || running != running_ || complete != complete_ || finished != finished_
+                         || running != running_ || paused != paused_ || complete != complete_ || finished != finished_
+                         || holding != holdingAtEnd_
                          || changedBy(progress, progress_, kProgressStep)
                          || changedBy(remaining, remainingDistance_, kDistanceStep)
                          || changedBy(seconds, remainingSeconds_, kSecondsStep);
@@ -523,9 +561,61 @@ void MissionRunTracker::updateProgress(bool force)
     remainingDistance_ = remaining;
     remainingSeconds_ = seconds;
     running_ = running;
+    paused_ = paused;
     complete_ = complete;
     finished_ = finished;
+    holdingAtEnd_ = holding;
+    holdSeq_ = holding ? telemetry_.currentSeq : -1;
+    if (holding) {
+        announcedHoldSeq_ = telemetry_.currentSeq;
+    }
     emit progressChanged();
+    if (startedHolding) {
+        emit missionEvent(MavSeverityInfo, holdingText(telemetry_.currentSeq));
+    }
+}
+
+bool MissionRunTracker::holdsAtEnd(bool running) const
+{
+    const int seq = telemetry_.currentSeq;
+    if (!running || !telemetry_.armed || telemetry_.flightMode != kRoverModeAuto || seq < 1 || seq >= items_.size()
+        || items_.at(seq).command != int(MavCmd::NavLoiterUnlim) || nextNavSeq(seq) >= 0) {
+        return false;
+    }
+    if (holdingAtEnd_ && holdSeq_ == seq) {
+        return true;
+    }
+    const GeoPoint hold = items_.at(seq).pos;
+    if (!hold.isValid()) {
+        return true;
+    }
+    int previous = seq - 1;
+    while (previous >= 1 && !items_.at(previous).navigation) {
+        --previous;
+    }
+    if (previous >= 1 && items_.at(previous).pos.isValid() && geoDistance(items_.at(previous).pos, hold) <= kSamePointM) {
+        return true;
+    }
+    const GeoPoint vehicle = vehiclePosition();
+    return vehicle.isValid() && geoDistance(vehicle, hold) <= kHoldArrivalM;
+}
+
+QString MissionRunTracker::holdingText(int seq) const
+{
+    int previous = seq - 1;
+    while (previous >= 1 && !items_.at(previous).navigation) {
+        --previous;
+    }
+    const RunItem* before = previous >= 1 ? &items_.at(previous) : nullptr;
+    if (before && before->kind == RunItem::Kind::ReturnToLaunch) {
+        return tr("Mission complete, holding position after returning to launch");
+    }
+    const GeoPoint at = items_.at(seq).pos.isValid() ? items_.at(seq).pos : (before ? before->pos : GeoPoint());
+    const auto start = std::find_if(items_.cbegin(), items_.cend(), [](const RunItem& r) { return r.kind == RunItem::Kind::Start; });
+    if (at.isValid() && start != items_.cend() && start->pos.isValid() && geoDistance(at, start->pos) <= kSamePointM) {
+        return tr("Mission complete, holding position at the start point");
+    }
+    return tr("Mission complete, holding position at the last point");
 }
 
 void MissionRunTracker::checkStale()
@@ -592,10 +682,110 @@ void MissionRunTracker::syncLegSpeed(int previousMode, int previousSeq)
         return;
     }
     speedSyncPending_ = false;
-    const double speed = items_.at(seq).plannedSpeed;
+    const double speed = std::isfinite(manualSpeed_) ? manualSpeed_ : items_.at(seq).plannedSpeed;
     if (std::isfinite(speed) && speed > 0.0) {
         emit legSpeedRequested(speed);
     }
+}
+
+double MissionRunTracker::planSpeed() const
+{
+    return (targetSeq_ >= 0 && targetSeq_ < items_.size()) ? items_.at(targetSeq_).plannedSpeed : NAN;
+}
+
+bool MissionRunTracker::setManualSpeed(double speed, bool send)
+{
+    if (!std::isfinite(speed) || !known_ || finished_ || holdingAtEnd_) {
+        return false;
+    }
+    const double clamped = std::clamp(speed, kMinMissionSpeed, kMaxCommandSpeed);
+    manualSeq_ = telemetry_.currentSeq;
+    if (manualSpeed_ != clamped) {
+        manualSpeed_ = clamped;
+        emit manualSpeedChanged();
+        updateProgress(true);
+    }
+    if (!send || !telemetry_.online || telemetry_.flightMode != kRoverModeAuto) {
+        return false;
+    }
+    emit legSpeedRequested(manualSpeed_);
+    return true;
+}
+
+bool MissionRunTracker::clearManualSpeed(bool restorePlan)
+{
+    if (!std::isfinite(manualSpeed_)) {
+        return false;
+    }
+    manualSpeed_ = NAN;
+    emit manualSpeedChanged();
+    updateProgress(true);
+    if (!restorePlan || !telemetry_.online || telemetry_.flightMode != kRoverModeAuto) {
+        return false;
+    }
+    const double speed = planSpeed();
+    if (!std::isfinite(speed) || speed <= 0.0) {
+        return false;
+    }
+    emit legSpeedRequested(speed);
+    return true;
+}
+
+void MissionRunTracker::followPlanSpeed()
+{
+    if (!std::isfinite(manualSpeed_)) {
+        return;
+    }
+    if (finished_ || holdingAtEnd_) {
+        clearManualSpeed(false);
+        return;
+    }
+    const int seq = telemetry_.currentSeq;
+    if (seq == manualSeq_ || telemetry_.flightMode != kRoverModeAuto || !actionable() || seq < 1 || seq >= items_.size()
+        || !items_.at(seq).navigation) {
+        return;
+    }
+    int from = manualSeq_;
+    while (from >= 1 && from < items_.size() && !items_.at(from).navigation) {
+        --from;
+    }
+    const bool planApplied = (from >= 1 && seq > from) ? speedChangeBetween(from, seq) : speedChangeBefore(seq);
+    manualSeq_ = seq;
+    if (planApplied) {
+        clearManualSpeed(false);
+    }
+}
+
+bool MissionRunTracker::speedChangeBetween(int from, int to) const
+{
+    for (int i = std::max(from + 1, 1); i < std::min(to, int(items_.size())); ++i) {
+        if (items_.at(i).command == int(MavCmd::DoChangeSpeed)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool MissionRunTracker::speedChangeBefore(int seq) const
+{
+    for (int i = std::min(seq, int(items_.size())) - 1; i >= 1 && !items_.at(i).navigation; --i) {
+        if (items_.at(i).command == int(MavCmd::DoChangeSpeed)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+double MissionRunTracker::manualRemainingSeconds(int navIndex, double toTarget) const
+{
+    double seconds = toTarget / manualSpeed_;
+    for (int j = navIndex + 1; j < legLength_.size(); ++j) {
+        if (legSpeedChange_.at(j)) {
+            return std::isfinite(suffixTime_.at(j - 1)) ? seconds + suffixTime_.at(j - 1) : NAN;
+        }
+        seconds += legLength_.at(j) / manualSpeed_;
+    }
+    return seconds;
 }
 
 void MissionRunTracker::onReadTimer()

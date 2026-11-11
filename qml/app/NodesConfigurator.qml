@@ -95,7 +95,7 @@ Item {
             }
             onDoubleClicked: sp.reset()
         }
-        KToolTip {
+        KLazyToolTip {
             text: qsTr("Drag to resize · double-click for the default size")
             shown: spArea.containsMouse && !spArea.pressed
         }

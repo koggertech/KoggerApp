@@ -26,6 +26,11 @@ Item {
                                       ? root.workspaceRoot.plotItemForLeaf(root.leafId)
                                       : null
 
+    function textEditorHasFocus() {
+        const item = root.Window.activeFocusItem
+        return !!item && item.readOnly === false && typeof item.cursorPosition === "number"
+    }
+
     function markMouseKeyboardInput() {
         if (root.workspaceRoot
                 && root.workspaceRoot.inputState
@@ -205,7 +210,7 @@ Item {
                           && (((root.paneKind === "2D" || root.paneKind === "3D") && core.contactPlacementArmed)
                               || (root.paneKind === "3D" && core.goToPlacementArmed))) ? Qt.CrossCursor : Qt.ArrowCursor
 
-            onEntered: if (root.focusOnPointer) overlay.forceActiveFocus()
+            onEntered: if (root.focusOnPointer && !root.textEditorHasFocus()) overlay.forceActiveFocus()
 
             // Manual double-tap detection — Qt's MouseArea.onDoubleClicked
             // uses tight thresholds (~5 px, ~400ms) that synthesised touch on

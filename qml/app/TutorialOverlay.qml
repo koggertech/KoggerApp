@@ -227,7 +227,8 @@ Item {
             return null
         const rects = items.map(function (it) { return it ? root._visibleRect(it) : null })
         const clipped = items.some(function (it, i) { return !!it && root._isClipped(it, rects[i]) })
-        if (clipped && root._scrolledSerial !== root._serial) {
+        const stillHidden = root._waiting && !root._shownOnce && !rects[0]
+        if (clipped && (root._scrolledSerial !== root._serial || stillHidden)) {
             root._scrolledSerial = root._serial
             let moved = false
             for (let k = items.length - 1; k >= 0; --k) {

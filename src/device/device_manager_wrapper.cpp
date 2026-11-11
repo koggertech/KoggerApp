@@ -1,12 +1,16 @@
 #include "device_manager_wrapper.h"
 #include "device_defs.h"
 #include "autopilot_messages.h"
+#include "core.h"
 #include <QDateTime>
 #include <QVariantMap>
+
+extern Core core;
 
 namespace {
 
 constexpr int kAutopilotMessagesKept = 20;
+constexpr int kSeverityWarning = 4;
 constexpr int kRoverModeAuto = 10;
 constexpr int kMissionRestartSeq = 0;
 
@@ -330,6 +334,13 @@ void DeviceManagerWrapper::onAutopilotStatusText(int severity, const QString& te
 
 void DeviceManagerWrapper::logAutopilotEvent(int severity, const QString& text)
 {
+    const QString line = QStringLiteral("Autopilot log [%1]: %2").arg(severity).arg(text);
+    if (severity <= kSeverityWarning) {
+        core.consoleWarning(line);
+    }
+    else {
+        core.consoleInfo(line);
+    }
     appendAutopilotMessage(severity, text, true);
     emit autopilotAppMessage(severity, text);
 }

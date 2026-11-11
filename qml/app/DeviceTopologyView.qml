@@ -251,7 +251,7 @@ Item {
             onClicked: view.deviceClicked(pill.device)
         }
 
-        KToolTip {
+        KLazyToolTip {
             text: pill.linkLabel
             targetItem: pill
             shown: pillMouse.containsMouse && pill._linkTrunc

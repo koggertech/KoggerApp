@@ -34,26 +34,17 @@ Column {
                            core.openLogFile(_last, false, false)
         }
 
-        Loader {
+        SettingsViewerLoader {
             id: filesLoader
+            objectName: "filesViewerLoader"
             width: parent.width
-            active: filesGroup.expanded
-                    && (root.store ? root.store.settingsPanelOpen === true : false)
-            asynchronous: true
+            group: filesGroup
+            store: root.store
             source: "qrc:/qml/devices/FilesViewer.qml"
 
             onLoaded: {
-                if (item) {
-                    item.width = width
-                    item.store = root.store
-                }
                 if (item && item.filePath && item.filePath.length > 0)
                     root.store.selectedConnectionFilePath = item.filePath
-            }
-
-            onWidthChanged: {
-                if (item)
-                    item.width = width
             }
         }
 

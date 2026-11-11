@@ -836,7 +836,7 @@ DeviceSettingsGroup {
                                     enabled: !!dev
                                     onClicked: usblGroup.requestEmit(nodeCard._n.id, modelData.cmd)
                                 }
-                                KToolTip {
+                                KLazyToolTip {
                                     text: _refChip._queued
                                           ? qsTr("queued — goes out when the current answer window closes")
                                           : qsTr("Interrogate cmd %1 now").arg(modelData.cmd)

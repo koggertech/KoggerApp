@@ -159,42 +159,42 @@
         <translation>Подсказки по навигации в приложении</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="746"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="754"/>
         <source>About</source>
         <translation>О программе</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2569"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2577"/>
         <source>Video</source>
         <translation>Видео</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2570"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2578"/>
         <source>Per-window video settings.</source>
         <translation>Настройки видео по окнам.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2589"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2597"/>
         <source>No video windows displayed. You can add one while editing the workspace.</source>
         <translation>Видеоокна не отображаются. Добавить видеоокно можно при редактировании рабочего пространства.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="820"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="828"/>
         <source>Layout %1</source>
         <translation>Компоновка %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="822"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="830"/>
         <source>Active</source>
         <translation>Активно</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2205"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2213"/>
         <source>Dataset: with position zeroing on</source>
         <translation>Датасет: зануление координат</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="934"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="942"/>
         <source>Servo</source>
         <translation>Серво</translation>
     </message>
@@ -209,92 +209,92 @@
         <translation>Автоматически скрывать предупреждающие уведомления, как информационные</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3214"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3222"/>
         <source>Show the scale bar in the 3D scene</source>
         <translation>Показывать масштабную линейку в 3D-сцене</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2812"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2820"/>
         <source>Show the surface quality label in the 3D scene</source>
         <translation>Показывать метку качества поверхности в 3D-сцене</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2929"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2937"/>
         <source>Orient the 3D view to north (north stays up)</source>
         <translation>Ориентировать 3D-вид на север (север сверху)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2948"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2956"/>
         <source>Sync the cursor between the 2D echogram and the 3D scene</source>
         <translation>Синхронизировать курсор между 2D-эхограммой и 3D-сценой</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2082"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2090"/>
         <source>Left-side beam angle offset for the mosaic, °</source>
         <translation>Угловое смещение левого борта мозаики, °</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2098"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2106"/>
         <source>Right-side beam angle offset for the mosaic, °</source>
         <translation>Угловое смещение правого борта мозаики, °</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2117"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2125"/>
         <source>Show the current mosaic trace line</source>
         <translation>Показывать текущую линию трассировки мозайки</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2742"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2750"/>
         <source>Sync the cursor position across all echograms</source>
         <translation>Синхронизировать положение курсора между всеми эхограммами</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2759"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2767"/>
         <source>Sync scroll and zoom across echograms</source>
         <translation>Синхронизировать прокрутку и масштаб между эхограммами</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2775"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2783"/>
         <source>Configure the information panel</source>
         <translation>Настроить информационную панель</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1625"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1633"/>
         <source>Colour theme for isobaths (palette by depth)</source>
         <translation>Цветовая тема изобат (палитра по глубине)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1684"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1692"/>
         <source>Max triangulation edge length</source>
         <translation>Макс. длина ребра триангуляции</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1706"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1714"/>
         <source>Isobath interval — spacing between depth lines</source>
         <translation>Интервал изобат — расстояние между линиями глубины</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1730"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1738"/>
         <source>Surface extrapolation radius around the track</source>
         <translation>Радиус экстраполяции поверхности вокруг трека</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1776"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1784"/>
         <source>Choose the surface .csv file</source>
         <translation>Выбрать файл .csv для поверхности</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1809"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1817"/>
         <source>Export the surface to CSV</source>
         <translation>Экспортировать поверхность в CSV</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="784"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="792"/>
         <source>Edit workspace panes</source>
         <translation>Изменение панелей рабочей области</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="797"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="805"/>
         <source>Floating window over the workspace, independent of the layout</source>
         <translation>Плавающее окно поверх рабочей области, независимое от компоновки</translation>
     </message>
@@ -319,62 +319,62 @@
         <translation>Открыть вкладку экспорта CSV</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3468"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3490"/>
         <source>Data</source>
         <translation>Данные</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3511"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3533"/>
         <source>Cancel</source>
         <translation>Отмена</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1824"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1832"/>
         <source>Surface exported to %1</source>
         <translation>Поверхность экспортирована в %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1825"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1833"/>
         <source>Surface export failed</source>
         <translation>Не удалось экспортировать поверхность</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1819"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1827"/>
         <source>Invalid characters in file name</source>
         <translation>Недопустимые символы в имени файла</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1052"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1060"/>
         <source>Fills black stripes in the echogram by interpolating the given number of steps forward / backward.</source>
         <translation>Заполняет чёрные полосы на эхограмме, интерполируя заданное число шагов вперёд / назад.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1100"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1108"/>
         <source>Sonar mount-point offset along the X / Y axes, in millimeters.</source>
         <translation>Смещение точки крепления сонара по осям X / Y, в миллиметрах.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1156"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1164"/>
         <source>Zeroes position coordinates relative to the start point.</source>
         <translation>Обнуляет координаты позиции относительно начальной точки.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1170"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1178"/>
         <source>Zeroes the bottom-track depth reference.</source>
         <translation>Обнуляет отсчёт глубины трека дна.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2773"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2781"/>
         <source>Information panel</source>
         <translation>Информационная плашка</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2740"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2748"/>
         <source>Sync echograms</source>
         <translation>Синхронизация эхограмм</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2755"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2763"/>
         <source>Sync view</source>
         <translation>Синхронизация отображения</translation>
     </message>
@@ -384,33 +384,33 @@
         <translation>Поворачивать раскладку с устройством</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3285"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3293"/>
         <source>Limit downloads on metered networks</source>
         <translation>Ограничить загрузки в лимитированной сети</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3329"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3337"/>
         <source>Metered network (limited)</source>
         <translation>Лимитированная сеть</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3500"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3522"/>
         <source>Clear?</source>
         <translation>Очистить?</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1184"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2145"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1192"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2153"/>
         <source>Open TGC settings</source>
         <translation>Открыть настройки TGC</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1154"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1162"/>
         <source>Pos zeroing</source>
         <translation>Обнуление координат</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1168"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1176"/>
         <source>Bottom track zeroing</source>
         <translation>Обнуление трека дна</translation>
     </message>
@@ -426,8 +426,8 @@
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="488"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1618"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1934"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1626"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1942"/>
         <source>Theme:</source>
         <translation>Тема оформления:</translation>
     </message>
@@ -437,13 +437,13 @@
         <translation>Интерфейс</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1031"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1039"/>
         <source>Dataset</source>
         <translation>Датасет</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="573"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1228"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1236"/>
         <source>Bottom Track</source>
         <translation>Трек дна</translation>
     </message>
@@ -453,7 +453,7 @@
         <translation>Экспорт</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="731"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="739"/>
         <source>UI Saving</source>
         <translation>Сохранение UI</translation>
     </message>
@@ -468,17 +468,17 @@
         <translation>Масштаб интерфейса:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1032"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1040"/>
         <source>Black-stripe filtering and sonar mount-point offset.</source>
         <translation>Фильтр чёрных полос и смещение точки крепления сонара.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1209"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1217"/>
         <source>Boat track</source>
         <translation>Трек лодки</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1210"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1218"/>
         <source>Vessel track displayed in the 3D scene.</source>
         <translation>Трек лодки в 3D-сцене.</translation>
     </message>
@@ -533,234 +533,234 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="757"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="765"/>
         <source>Developer switches and diagnostics. Turning the mode off hides this row again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="776"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="784"/>
         <source>Workspace</source>
         <translation>Рабочее пространство</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="777"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="785"/>
         <source>Workspace layouts and pane editing.</source>
         <translation>Компоновки рабочего пространства и редактирование панелей.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="842"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="850"/>
         <source>Delete layout</source>
         <translation>Удалить компоновку</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="851"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="859"/>
         <source>Create layout</source>
         <translation>Создать компоновку</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1229"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1237"/>
         <source>Bottom detection presets, thresholds and search window.</source>
         <translation>Пресеты определения дна, пороги и окно поиска.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1543"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1551"/>
         <source>Isobaths</source>
         <translation>Изобаты</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1544"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1552"/>
         <source>Equal-depth contour lines on the surface.</source>
         <translation>Линии равных глубин на поверхности.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1627"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1942"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1635"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1950"/>
         <source>Midnight</source>
         <translation>Полночь</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1627"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1635"/>
         <source>Default</source>
         <translation>Обычная</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1627"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1942"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1635"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1950"/>
         <source>Blue</source>
         <translation>Синий</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1627"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1942"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1635"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1950"/>
         <source>Sepia</source>
         <translation>Сепия</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1627"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1942"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1635"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1950"/>
         <source>Sepia New</source>
         <translation>Сепия новая</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1627"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1942"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1635"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1950"/>
         <source>WRGBD</source>
         <translation>WRGBD</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1627"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1942"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1635"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1950"/>
         <source>WhiteBlack</source>
         <translation>Бело-черный</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1627"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1635"/>
         <source>Standard</source>
         <translation>Стандарт</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1627"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1942"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1635"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1950"/>
         <source>DeepBlue</source>
         <translation>Глубокий синий</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1627"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1942"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1635"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1950"/>
         <source>Ice</source>
         <translation>Лёд</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1627"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1942"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1635"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1950"/>
         <source>Green</source>
         <translation>Зелёный</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1677"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1685"/>
         <source>Edge limit, m:</source>
         <translation>Предел грани, м:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1699"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1707"/>
         <source>Step, m:</source>
         <translation>Шаг, м:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1723"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1731"/>
         <source>Extra width, m:</source>
         <translation>Экстра ширина, м:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1766"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1774"/>
         <source>Enter path</source>
         <translation>Введите путь</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1791"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1799"/>
         <source>Select folder and set .csv file name</source>
         <translation>Выберите папку и установите имя файла.csv</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="353"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1808"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1816"/>
         <source>Export to CSV</source>
         <translation>Экспорт в CSV</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1859"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1867"/>
         <source>Mosaic</source>
         <translation>Мозаика</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1860"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1868"/>
         <source>Side-scan mosaic visualisation.</source>
         <translation>Визуализация мозаики бокового обзора.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1942"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1950"/>
         <source>BlackWhite</source>
         <translation>Черно-белый</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1959"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1967"/>
         <source>Channels:</source>
         <translation>Каналы:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2070"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2078"/>
         <source>Angle, °:</source>
         <translation>Угол, °:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2116"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2124"/>
         <source>Trace line</source>
         <translation>Линия трассировки</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2128"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2136"/>
         <source>Data source:</source>
         <translation>Источник данных:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1183"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2151"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1191"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2159"/>
         <source>TGC</source>
         <translation>TGC</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2151"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2159"/>
         <source>Raw</source>
         <translation>Исходный</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2221"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2229"/>
         <source>Calc last N epochs:</source>
         <translation>Расч. посл. N эпох:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2243"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2251"/>
         <source>All</source>
         <translation>Все</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2249"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2257"/>
         <source>Clear old data (*)</source>
         <translation>Удалять стар. данные (*)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2786"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2794"/>
         <source>3D scene</source>
         <translation>3D-сцена</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2787"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2795"/>
         <source>3D scene settings, map provider switching.</source>
         <translation>Настройки 3D-сцены, смена провайдера карт.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2802"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2810"/>
         <source>Rendering</source>
         <translation>Рендеринг</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3484"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3506"/>
         <source>Reset surface</source>
         <translation>Сбросить поверхность</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2810"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2818"/>
         <source>Show surface quality</source>
         <translation>Показать качество поверхности</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2826"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2834"/>
         <source>Force zoom</source>
         <translation>Константный зум</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2666"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2844"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2674"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2852"/>
         <source>Loupe</source>
         <translation>Лупа</translation>
     </message>
@@ -775,420 +775,421 @@
         <translation>Пошаговые подсказки по приложению</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2286"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2294"/>
         <source>Acoustic nodes and their tracks displayed in the 3D scene.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2300"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2308"/>
         <source>Beacon tracks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2301"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2309"/>
         <source>Draw each beacon&apos;s track as a continuous line, or as a dot at every fix</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2309"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2327"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2317"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2335"/>
         <source>Line</source>
         <translation type="unfinished">Линия</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2310"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2328"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2318"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2336"/>
         <source>Dots</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2318"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2326"/>
         <source>USBL track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2319"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2327"/>
         <source>Draw the acoustic head&apos;s own track as a continuous line, or as a dot at every fix</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2336"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2344"/>
         <source>Signal quality details</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2337"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2345"/>
         <source>Show the sync peak readings under each node&apos;s RSRQ in the USBL panel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2350"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2358"/>
         <source>Received message bytes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2351"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2359"/>
         <source>Show the payload last received from each node in the USBL panel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2364"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2372"/>
         <source>Antenna diagnostics</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2365"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2373"/>
         <source>Show the array fit and the channel levels under each node in the USBL panel; click the line for the per-channel view</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2378"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2386"/>
         <source>Fit misfit above</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2379"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2387"/>
         <source>Antenna diagnostics: a misfit above this marks the antenna for a check</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2397"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2405"/>
         <source>Amplitude part above</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2398"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2406"/>
         <source>Antenna diagnostics: the share of the misfit from unequal channel amplitudes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2416"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2424"/>
         <source>Phase part above</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2417"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2425"/>
         <source>Antenna diagnostics: the share of the misfit from channel phases off a plane wave</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2435"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2443"/>
         <source>Alt. margin below, dB</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2436"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2444"/>
         <source>Antenna diagnostics: how much worse the best other direction must fit than the reported one</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2454"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2462"/>
         <source>Channel level below, dB</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2455"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2463"/>
         <source>Antenna diagnostics: a channel this far below the strongest is marked low, and 10 dB further down, dead</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2473"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2481"/>
         <source>Antenna thresholds</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2474"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2482"/>
         <source>Restore the default antenna diagnostics thresholds</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2493"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2501"/>
         <source>No acoustic nodes yet. Open a file containing beacon fixes, or add an address below.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2505"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2513"/>
         <source>Address %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2507"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2515"/>
         <source>detected in the opened file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2508"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2516"/>
         <source>from the interrogation plan</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2532"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2540"/>
         <source>Add an address the plan does not name yet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2554"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2562"/>
         <source>Add a node at address %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2680"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2865"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3028"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3140"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3196"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2688"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2873"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3036"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3148"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3204"/>
         <source>Size</source>
         <translation>Размер</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2697"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2705"/>
         <source>Zoom</source>
         <translation>Масштаб</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3568"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3591"/>
         <source>Vehicle mission</source>
         <translation>Миссия лодки</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3569"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3592"/>
         <source>The mission read from the autopilot, followed in the 3D scene while it runs.</source>
         <translation>Миссия, прочитанная с автопилота; отслеживается в 3D-сцене во время выполнения.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3584"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3607"/>
         <source>In the 3D scene</source>
         <translation>В 3D-сцене</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3592"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3615"/>
         <source>Geofence</source>
         <translation>Геозона</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3605"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3628"/>
         <source>Rally points</source>
         <translation>Ралли-точки</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3618"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3641"/>
         <source>Vehicle home (H)</source>
         <translation>Дом лодки (H)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3631"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3654"/>
         <source>Line from the boat to the target</source>
         <translation>Линия от лодки к цели</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3644"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3667"/>
         <source>Point numbers</source>
         <translation>Номера точек</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3660"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3683"/>
         <source>Route lines</source>
         <translation>Линии маршрута</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3668"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3691"/>
         <source>Ahead</source>
         <translation>Впереди</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3678"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3701"/>
         <source>Current leg</source>
         <translation>Текущий отрезок</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3688"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3711"/>
         <source>Flown</source>
         <translation>Пройденное</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3699"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3722"/>
         <source>Line width</source>
         <translation>Толщина линии</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3722"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3754"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3745"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3777"/>
         <source>%1 px</source>
         <translation>%1 px</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3731"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3754"/>
         <source>Current leg width</source>
         <translation>Толщина текущего отрезка</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2480"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3766"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3937"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2488"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3789"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3960"/>
         <source>Defaults</source>
         <translation>По умолчанию</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3772"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3795"/>
         <source>Behaviour</source>
         <translation>Поведение</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3780"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3803"/>
         <source>Read the mission automatically</source>
         <translation>Читать миссию автоматически</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3781"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3804"/>
         <source>When the vehicle connects and when its mission changes. Off: read it by hand from the editor or the autopilot card</source>
         <translation>При подключении лодки и когда её миссия меняется. Если выключено — читайте вручную из редактора или плашки автопилота</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3794"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3817"/>
         <source>Start an uploaded mission from its beginning</source>
         <translation>Начинать загруженную миссию с начала</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3795"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3818"/>
         <source>After an upload outside Auto the vehicle&apos;s current item is reset, so Auto starts at the first point instead of the item number left from an earlier run</source>
         <translation>После загрузки вне режима Auto текущий пункт на лодке сбрасывается, и Auto начинается с первой точки, а не с номера, оставшегося от прошлого прохода</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2885"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2893"/>
         <source>Zoom, %:</source>
         <translation>Масштаб, %:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2927"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2935"/>
         <source>North mode</source>
         <translation>Режим Север</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2946"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2954"/>
         <source>Sync echogram</source>
         <translation>Синхр. эхограммы</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2965"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2973"/>
         <source>Grid</source>
         <translation>Сетка</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2986"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2994"/>
         <source>Circle</source>
         <translation>Круговая</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3007"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3015"/>
         <source>Labels</source>
         <translation>Метки</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3047"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3055"/>
         <source>Step</source>
         <translation>Шаг</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3066"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3074"/>
         <source>Angle</source>
         <translation>Угол</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3082"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3090"/>
         <source>Shadows</source>
         <translation>Тени</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3127"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3135"/>
         <source>Boat</source>
         <translation>Лодка</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3100"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3108"/>
         <source>Navigation arrow</source>
         <translation>Стрелка навигации</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3121"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3129"/>
         <source>Shape</source>
         <translation>Форма</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3127"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3135"/>
         <source>Arrow</source>
         <translation>Стрелка</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3156"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3164"/>
         <source>Compass</source>
         <translation>Компас</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3212"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3220"/>
         <source>Scale bar</source>
         <translation>Масштаб</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3177"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3185"/>
         <source>Position</source>
         <translation>Позиция</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3812"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3835"/>
         <source>Mission editor</source>
         <translation>Редактор миссий</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3258"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3266"/>
         <source>Map</source>
         <translation>Карта</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3266"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3274"/>
         <source>Show map tiles</source>
         <translation>Показывать тайлы карты</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3352"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3360"/>
         <source>Internet available</source>
         <translation>Интернет доступен</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3353"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3361"/>
         <source>Internet unavailable</source>
         <translation>Интернет недоступен</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3361"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3369"/>
         <source>Providers</source>
         <translation>Провайдеры</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3386"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3394"/>
         <source>Cache: empty</source>
         <translation>Кэш: пуст</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3393"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3401"/>
         <source>Cache since %1  •  %2 MB</source>
         <translation>Кэш с %1  •  %2 МБ</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3422"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3430"/>
         <source>Navigator</source>
         <translation>Навигатор</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3430"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3438"/>
         <source>Use angle</source>
         <translation>Использовать ориентацию</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3448"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3456"/>
         <source>Navigator view</source>
         <translation>Вид навигатора</translation>
     </message>
     <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3474"/>
         <source>Smooth follow</source>
         <translation>Плавное слежение</translation>
     </message>
@@ -1198,7 +1199,7 @@
         <translation>Экспорт датасета в XTF, CSV (обычный или комплексный) или USBL.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="783"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="791"/>
         <source>Edit</source>
         <translation>Правка</translation>
     </message>
@@ -1223,42 +1224,42 @@
         <translation>Меню быстрых действий</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3949"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3972"/>
         <source>Test</source>
         <translation>Тест</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3950"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3973"/>
         <source>Developer knobs — visible only in MANUAL_TESTING builds.</source>
         <translation>Параметры для разработчиков — видны только в сборках MANUAL_TESTING.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3964"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3987"/>
         <source>Double-tap tolerance, px:</source>
         <translation>Допуск двойного нажатия, пкс:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3994"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="4017"/>
         <source>Split grab thickness, px:</source>
         <translation>Толщина захвата границы, пкс:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="4023"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="4046"/>
         <source>Sidebar slide, ms:</source>
         <translation>Анимация боковой панели, мс:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="4052"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="4075"/>
         <source>Workspace adjust, ms:</source>
         <translation>Подстройка рабочей области, мс:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1286"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1294"/>
         <source>Normal 2D</source>
         <translation>Обычный 2D</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1288"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1296"/>
         <source>Narrow 2D</source>
         <translation>Узкий 2D</translation>
     </message>
@@ -1278,7 +1279,7 @@
         <translation>Поднимать и фокусировать окно приложения при ключевых событиях</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="796"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="804"/>
         <source>Global pop-up</source>
         <translation>Глобальное всплывающее окно</translation>
     </message>
@@ -1288,47 +1289,47 @@
         <translation>Привязка клавиш</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="738"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="746"/>
         <source>Console</source>
         <translation>Консоль</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="741"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="749"/>
         <source>Colour marking and log buffer size</source>
         <translation>Маркировка цветом и размер буфера лога</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1531"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1539"/>
         <source>Processing</source>
         <translation>Обработка</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1373"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1381"/>
         <source>Horizontal window</source>
         <translation>Горизонтальное окно</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1407"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1415"/>
         <source>Vertical gap, %</source>
         <translation>Вертикальный зазор, %</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1475"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1483"/>
         <source>Max range, m</source>
         <translation>Макс. дальность, м</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1441"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1449"/>
         <source>Min range, m</source>
         <translation>Мин. дальность, м</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1302"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1310"/>
         <source>Gain slope</source>
         <translation>Наклон усиления</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1339"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1347"/>
         <source>Threshold</source>
         <translation>Порог</translation>
     </message>
@@ -1338,13 +1339,13 @@
         <translation>Набор инструментов:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1290"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2151"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1298"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2159"/>
         <source>Side-Scan</source>
         <translation>Сайд скан</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1098"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1106"/>
         <source>S.offset XY, mm:</source>
         <translation>Смещение XY, мм:</translation>
     </message>
@@ -1354,7 +1355,7 @@
         <translation>Для Рыболова</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1050"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1058"/>
         <source>FBS forward / backward:</source>
         <translation>ФЧП вперёд / назад:</translation>
     </message>
@@ -1389,193 +1390,203 @@
         <translation>Экспорт в XTF</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2620"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2628"/>
         <source>Echograms</source>
         <translation>Эхограммы</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2621"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2629"/>
         <source>Per-echogram display settings.</source>
         <translation>Настройки отображения каждой эхограммы.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2637"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2645"/>
         <source>No echograms displayed</source>
         <translation>Нет отображённых эхограмм</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="861"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="869"/>
         <source>Widget panels</source>
         <translation>Панели виджетов</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="862"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="870"/>
         <source>On-scene data panels: grid size and drag-in widgets.</source>
         <translation>Панели данных на сцене: сетка и перетаскивание виджетов.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="971"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="979"/>
         <source>Panel %1</source>
         <translation>Панель %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="872"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="2285"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="880"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2293"/>
         <source>USBL</source>
         <translation>USBL</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1008"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1016"/>
         <source>Delete panel</source>
         <translation>Удалить панель</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="893"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="924"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="955"/>
-        <location filename="../qml/app/AppSettingsPage.qml" line="999"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="901"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="932"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="963"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1007"/>
         <source>Edit panel</source>
         <translation>Редактировать панель</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1018"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1026"/>
         <source>Create panel</source>
         <translation>Создать панель</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1287"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1295"/>
         <source>Bottom search settings for an ordinary sounder with one beam pointing down.</source>
         <translation>Настройки поиска дна для обычного эхолота с одним лучом вниз.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1289"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1297"/>
         <source>For a sounder with a narrow beam: the bottom echo is shorter, so the search is finer.</source>
         <translation>Для эхолота с узким лучом: эхо от дна короче, поиск ведётся точнее.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1291"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1299"/>
         <source>For a side-scan sonar: the beam looks sideways, not down.</source>
         <translation>Для сонара бокового обзора: луч смотрит в сторону, а не вниз.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1303"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1311"/>
         <source>Lifts the weak echo at long range so the bottom is found far out too.</source>
         <translation>Подтягивает слабое эхо на большой дальности, чтобы дно находилось и вдали.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1340"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1348"/>
         <source>How clear the echo must be to count as bottom. Where it is weaker, the bottom line breaks.</source>
         <translation>Насколько явным должно быть эхо, чтобы считаться дном. Где эхо слабее — линия дна прерывается.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1374"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1382"/>
         <source>Smooths the bottom line over neighbouring pings. Wider is smoother but lags more.</source>
         <translation>Сглаживает линию дна по соседним зондированиям. Шире — ровнее, но с большим запаздыванием.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1408"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1416"/>
         <source>Refines the depth near the one already found and rejects false bottoms from re-reflections. 0 is off.</source>
         <translation>Уточняет глубину рядом с найденной и отсекает ложное дно от переотражений. 0 — выключено.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1442"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1450"/>
         <source>The bottom is not searched for closer than this.</source>
         <translation>Дно не ищется ближе этой дальности.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1476"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1484"/>
         <source>The bottom is not searched for further than this.</source>
         <translation>Дно не ищется дальше этой дальности.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1532"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1540"/>
         <source>Recompute the bottom over the whole open file. Manual edits are left alone.</source>
         <translation>Пересчитать дно по всему открытому файлу. Ручные правки не затрагиваются.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="754"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="762"/>
         <source>Developer mode</source>
         <translation>Режим разработчика</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="903"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="911"/>
         <source>Stand</source>
         <translation>Стенд</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1645"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1653"/>
         <source>Surface colouring:</source>
         <translation>Окраска поверхности:</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1652"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1660"/>
         <source>Gradient</source>
         <translation>Градиент</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1653"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1661"/>
         <source>Bands</source>
         <translation>Секторы</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1665"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1673"/>
         <source>Depth legend</source>
         <translation>Легенда глубин</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="1666"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="1674"/>
         <source>Show the depth colour scale over the 3D scene</source>
         <translation>Показывать цветовую шкалу глубин поверх 3D-сцены</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3907"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3930"/>
         <source>Reverse limit</source>
         <translation>Предел назад</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3925"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3948"/>
         <source>Send rate</source>
         <translation>Частота отправки</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3928"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3951"/>
         <source>%1 Hz</source>
         <translation>%1 Гц</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3854"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3877"/>
         <source>Driving the boat from a gamepad.</source>
         <translation>Управление лодкой с геймпада.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3865"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3888"/>
         <source>Gamepad layout</source>
         <translation>Раскладка геймпада</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3875"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3898"/>
         <source>Controller test and which button does what</source>
         <translation>Проверка контроллера и назначение кнопок</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3919"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3942"/>
         <source>Throttle softness</source>
         <translation>Плавность газа</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3901"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3924"/>
         <source>Forward limit</source>
         <translation>Предел вперёд</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3913"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3936"/>
         <source>Steering limit</source>
         <translation>Предел поворота</translation>
     </message>
     <message>
-        <location filename="../qml/app/AppSettingsPage.qml" line="3853"/>
+        <location filename="../qml/app/AppSettingsPage.qml" line="3876"/>
         <source>Gamepad</source>
         <translation>Геймпад</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="731"/>
+        <source>Autopilot card</source>
+        <translation>Карточка автопилота</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="734"/>
+        <source>Buttons, panels, size and opacity of the autopilot card</source>
+        <translation>Кнопки, области, размер и непрозрачность карточки автопилота</translation>
     </message>
 </context>
 <context>
@@ -1772,7 +1783,7 @@
     </message>
     <message>
         <location filename="../qml/app/AutopilotParamsDialog.qml" line="704"/>
-        <location filename="../qml/app/AutopilotParamsDialog.qml" line="1009"/>
+        <location filename="../qml/app/AutopilotParamsDialog.qml" line="1010"/>
         <source>Cancel</source>
         <translation>Отмена</translation>
     </message>
@@ -1848,32 +1859,32 @@
         <translation>недопустимое значение: %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotParamsDialog.qml" line="967"/>
+        <location filename="../qml/app/AutopilotParamsDialog.qml" line="968"/>
         <source>%1 → %2</source>
         <translation>%1 → %2</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotParamsDialog.qml" line="977"/>
+        <location filename="../qml/app/AutopilotParamsDialog.qml" line="978"/>
         <source>The vehicle already has every value from the file</source>
         <translation>На автопилоте уже все значения из файла</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotParamsDialog.qml" line="1002"/>
+        <location filename="../qml/app/AutopilotParamsDialog.qml" line="1003"/>
         <source>Select none</source>
         <translation>Снять все</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotParamsDialog.qml" line="1002"/>
+        <location filename="../qml/app/AutopilotParamsDialog.qml" line="1003"/>
         <source>Select all</source>
         <translation>Выбрать все</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotParamsDialog.qml" line="1017"/>
+        <location filename="../qml/app/AutopilotParamsDialog.qml" line="1018"/>
         <source>Write selected (%1)</source>
         <translation>Записать выбранные (%1)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotParamsDialog.qml" line="1020"/>
+        <location filename="../qml/app/AutopilotParamsDialog.qml" line="1021"/>
         <source>Writing %1 parameters</source>
         <translation>Запись параметров: %1</translation>
     </message>
@@ -1881,501 +1892,683 @@
 <context>
     <name>AutopilotPopup</name>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="327"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="574"/>
         <source>no autopilot link</source>
         <translation>нет связи с автопилотом</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="270"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="508"/>
         <source>Manual</source>
         <translation>Ручной (Manual)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="68"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="138"/>
         <source>No GPS</source>
         <translation>Нет GPS</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="69"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="139"/>
         <source>No fix</source>
         <translation>Нет фикса</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="73"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="143"/>
         <source>RTK float</source>
         <translation>RTK float</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="74"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="144"/>
         <source>RTK fixed</source>
         <translation>RTK fixed</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="75"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="145"/>
         <source>Static</source>
         <translation>Статический</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="163"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="290"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="291"/>
         <source>Mission complete</source>
         <translation>Миссия завершена</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="165"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="291"/>
+        <source>Holding position</source>
+        <translation>Удержание позиции</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1631"/>
+        <source>Loiter: the finished mission holds position in Auto</source>
+        <translation>Loiter: миссия завершена, лодка держит позицию в режиме Auto</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="293"/>
         <source>Paused</source>
         <translation>Пауза</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="167"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="295"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="302"/>
         <source>Pt %1/%2</source>
         <translation>Т %1/%2</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="176"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="310"/>
         <source>Reading the vehicle mission…</source>
         <translation>Чтение миссии с лодки…</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="177"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="311"/>
         <source>The mission on the vehicle has changed; read it again</source>
         <translation>Миссия на лодке изменилась, прочитайте её заново</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="178"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="312"/>
         <source>The vehicle mission has not been read</source>
         <translation>Миссия с лодки ещё не прочитана</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="179"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="313"/>
         <source>No mission on the vehicle</source>
         <translation>На лодке нет миссии</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="180"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="308"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="314"/>
         <source>This plan is on the vehicle</source>
         <translation>Этот план на лодке</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="180"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="314"/>
         <source>The vehicle has another mission than the open plan</source>
         <translation>На лодке другая миссия, не открытый план</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="196"/>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1570"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="331"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2215"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2217"/>
         <source>%1 m</source>
         <translation>%1 м</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="196"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="331"/>
         <source>%1 km</source>
         <translation>%1 км</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="201"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="393"/>
         <source>&lt;1 min</source>
         <translation>&lt;1 мин</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="203"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="395"/>
         <source>%1 min</source>
         <translation>%1 мин</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="204"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="396"/>
         <source>%1 h %2 min</source>
         <translation>%1 ч %2 мин</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="259"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="494"/>
         <source>Going to %1</source>
         <translation>Переход: %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1527"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2178"/>
         <source>%1 dBm</source>
         <translation>%1 дБм</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="272"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="510"/>
         <source>Hold</source>
         <translation>Стоп (Hold)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="122"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="239"/>
         <source>Tap again</source>
         <translation>Ещё раз</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="132"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="252"/>
         <source>Keep going</source>
         <translation>Продолжить</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="133"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="253"/>
         <source>Abort → %1</source>
         <translation>Прервать → %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="144"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="265"/>
         <source>Closing KoggerApp also counts as a link loss.</source>
         <translation>Закрытие KoggerApp тоже считается потерей связи.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="145"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="266"/>
         <source>The same happens when the RC transmitter is lost.</source>
         <translation>То же произойдёт при потере связи с пультом.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="146"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="267"/>
         <source>In Hold the boat ignores a link loss and stays in Hold (FS_OPTIONS bit 0 is off).</source>
         <translation>В Hold лодка не реагирует на потерю связи и остаётся в Hold (бит 0 FS_OPTIONS выключен).</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="147"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="268"/>
         <source>A ground station behind the MAVLink proxy can hide the loss from the boat.</source>
         <translation>Наземная станция за MAVLink-прокси может скрыть потерю связи от лодки.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="166"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="294"/>
         <source>Not armed, the boat is not moving</source>
         <translation>Не армлена, лодка стоит</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="273"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="511"/>
         <source>Loiter</source>
         <translation>Удержание точки (Loiter)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="274"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="512"/>
         <source>Auto</source>
         <translation>Миссия (Auto)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="275"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="513"/>
         <source>RTL</source>
         <translation>Возврат (RTL)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="328"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="575"/>
         <source>no response</source>
         <translation>нет ответа</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="329"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="576"/>
         <source>temporarily rejected</source>
         <translation>временно отклонено</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="330"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="577"/>
         <source>denied</source>
         <translation>запрещено</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="331"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="578"/>
         <source>unsupported</source>
         <translation>не поддерживается</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="332"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="579"/>
         <source>failed</source>
         <translation>ошибка</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="333"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="580"/>
         <source>cancelled</source>
         <translation>отменено</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="340"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="587"/>
         <source>Arm/disarm</source>
         <translation>Арм/дизарм</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="341"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="588"/>
         <source>Mode change</source>
         <translation>Смена режима</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="342"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="589"/>
         <source>Mission start</source>
         <translation>Запуск миссии</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="343"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="590"/>
         <source>Go to point</source>
         <translation>Переход к точке</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="344"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="591"/>
         <source>Go here</source>
         <translation>Перейти сюда</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="345"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="592"/>
         <source>Reboot</source>
         <translation>Перезагрузка</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="347"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="595"/>
         <source>Command %1</source>
         <translation>Команда %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="392"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="388"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="647"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="796"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="537"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="881"/>
         <source>Vehicle: %1</source>
         <translation>Лодка: %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1136"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1646"/>
         <source>Stop picking a point</source>
         <translation>Перестать выбирать точку</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1136"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1646"/>
         <source>Go here: tap a point in the 3D view</source>
         <translation>Перейти сюда: коснитесь точки в 3D-виде</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1407"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1994"/>
         <source>Without a transmitter the boat would keep the last gamepad command. Turn on the link-loss action (%1)? Missions in Auto go on. The setting is saved on the boat.</source>
         <translation>Без пульта лодка продолжит выполнять последнюю команду с геймпада. Включить действие при потере связи (%1)? Миссии в Auto продолжатся. Настройка сохранится на лодке.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1502"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2152"/>
         <source>Boat</source>
         <translation>Лодка</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1540"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2190"/>
         <source>Mission</source>
         <translation>Миссия</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1564"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2209"/>
         <source>To point</source>
         <translation>До точки</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1568"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2214"/>
         <source>Cross-track</source>
         <translation>Отклонение</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1592"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2328"/>
         <source>Tap again to skip</source>
         <translation>Нажмите ещё раз</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1592"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2328"/>
         <source>Next point</source>
         <translation>Следующая точка</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1599"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2336"/>
         <source>Read from the boat</source>
         <translation>Прочитать с лодки</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1600"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2337"/>
         <source>Read the mission from the vehicle again</source>
         <translation>Прочитать миссию с лодки заново</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1716"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2536"/>
         <source>Messages</source>
         <translation>Сообщения</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1651"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2462"/>
         <source>On link loss</source>
         <translation>При потере связи</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1660"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2427"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2472"/>
         <source>saving…</source>
         <translation>сохранение…</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1661"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2427"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2473"/>
         <source>reading…</source>
         <translation>чтение…</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1663"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2475"/>
         <source>%1 s</source>
         <translation>%1 с</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1676"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2491"/>
         <source>Mission in Auto</source>
         <translation>Миссия в Auto</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1510"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2161"/>
         <source>GPS</source>
         <translation>GPS</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1515"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2166"/>
         <source>%1 sat.</source>
         <translation>%1 спут.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1521"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2172"/>
         <source>To home</source>
         <translation>До дома</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="833"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1310"/>
         <source>No autopilot</source>
         <translation>Автопилот не найден</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="265"/>
-        <location filename="../qml/app/AutopilotPopup.qml" line="977"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="503"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1471"/>
         <source>m/s</source>
         <translation>м/с</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1169"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1680"/>
         <source>Mission editor</source>
         <translation>Редактор миссий</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1257"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1780"/>
         <source>Checking vehicle parameters…</source>
         <translation>Проверка параметров аппарата…</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1258"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1781"/>
         <source>Switching to Manual…</source>
         <translation>Переключение в Manual…</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1260"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1783"/>
         <source>Holding position…</source>
         <translation>Удержание позиции…</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1259"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1782"/>
         <source>Gamepad control</source>
         <translation>Управление с геймпада</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="370"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="618"/>
         <source>Release the throttle before arming</source>
         <translation>Сбросьте газ перед включением моторов</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1154"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1660"/>
         <source>Autopilot parameters</source>
         <translation>Параметры автопилота</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1394"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1981"/>
         <source>If the link drops, the transmitter takes over</source>
         <translation>При обрыве связи управление перейдёт к пульту</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1395"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1982"/>
         <source>The boat does not stop when the link drops</source>
         <translation>Лодка не остановится при потере связи</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1405"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1992"/>
         <source>%1 s after the last gamepad command the boat follows the transmitter sticks again. Keep the transmitter on.</source>
         <translation>Через %1 с после последней команды с геймпада лодка снова слушается стиков пульта. Не выключайте пульт.</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1424"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2012"/>
         <source>Transmitter is on — start</source>
         <translation>Пульт включён — начать</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1425"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2013"/>
         <source>Saving…</source>
         <translation>Сохранение…</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1426"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2014"/>
         <source>Turn on and start</source>
         <translation>Включить и начать</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1435"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2024"/>
         <source>Cancel</source>
         <translation>Отмена</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1366"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1922"/>
         <source>Gamepad settings</source>
         <translation>Настройки геймпада</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1377"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1963"/>
         <source>Take control</source>
         <translation>Взять управление</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1377"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1963"/>
         <source>Release control</source>
         <translation>Отдать управление</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1259"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1782"/>
         <source>Gamepad control · background</source>
         <translation>Управление с геймпада · фон</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1337"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1893"/>
         <source>Throttle</source>
         <translation>Газ</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1347"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1903"/>
         <source>Turn</source>
         <translation>Поворот</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="271"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="509"/>
         <source>Course hold (Acro)</source>
         <translation>Удержание курса (Acro)</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1298"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1821"/>
         <source>Gamepad that drives the boat</source>
         <translation>Геймпад, которым управляется лодка</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1261"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1784"/>
         <source>Gamepad ready</source>
         <translation>Геймпад готов</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1531"/>
-        <source>Firmware</source>
-        <translation>Прошивка</translation>
-    </message>
-    <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1367"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1951"/>
         <source>Automatic take-over is on</source>
         <translation>Автоматический захват управления включён</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="1367"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="1951"/>
         <source>Take control automatically</source>
         <translation>Брать управление автоматически</translation>
     </message>
     <message>
-        <location filename="../qml/app/AutopilotPopup.qml" line="399"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="643"/>
+        <location filename="../qml/app/AutopilotPopup.qml" line="707"/>
         <source>Mode change to %1: %2</source>
         <translation>Смена режима на %1: %2</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2233"/>
+        <source>Speed</source>
+        <translation>Скорость</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="335"/>
+        <source>%1 m/s</source>
+        <translation>%1 м/с</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2263"/>
+        <source>plan</source>
+        <translation>по плану</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2264"/>
+        <source>plan %1</source>
+        <translation>по плану %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2264"/>
+        <source>manual</source>
+        <translation>вручную</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2279"/>
+        <source>Return to the plan speeds</source>
+        <translation>Вернуть скорости из плана</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2288"/>
+        <source>Applies when the mission resumes</source>
+        <translation>Применится при продолжении миссии</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="593"/>
+        <source>Mission speed</source>
+        <translation>Скорость миссии</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="385"/>
+        <source>Mission speed: not applied while the boat holds at a point; set it again once it moves on</source>
+        <translation>Скорость миссии: не применена, пока лодка стоит на точке; задайте её снова, когда лодка пойдёт дальше</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="384"/>
+        <source>Mission speed: the reset was not applied while the boat holds at a point; tap ↺ again once it moves on</source>
+        <translation>Скорость миссии: сброс не применён, пока лодка стоит на точке; нажмите ↺ снова, когда лодка пойдёт дальше</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="705"/>
+        <source>Mission: %1 points</source>
+        <translation>Точек в миссии: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2196"/>
+        <source>Waypoint %1</source>
+        <translation>Точка %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2351"/>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2368"/>
+        <source>Tutorial</source>
+        <translation>Обучение</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotPopup.qml" line="2384"/>
+        <source>Autopilot settings</source>
+        <translation>Настройки автопилота</translation>
+    </message>
+</context>
+<context>
+    <name>AutopilotSettingsTab</name>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="11"/>
+        <source>Arm / disarm</source>
+        <translation>Арм / дизарм</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="18"/>
+        <source>Go here</source>
+        <translation>Перейти сюда</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="19"/>
+        <source>Autopilot parameters</source>
+        <translation>Параметры автопилота</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="20"/>
+        <source>Mission editor</source>
+        <translation>Редактор миссий</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="21"/>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="101"/>
+        <source>Tutorial</source>
+        <translation>Обучение</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="143"/>
+        <source>Card size:</source>
+        <translation>Размер карточки:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="199"/>
+        <source>Show every button, 100 % size, fully opaque</source>
+        <translation>Все кнопки, размер 100 %, без прозрачности</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="162"/>
+        <source>Opacity</source>
+        <translation>Непрозрачность</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="111"/>
+        <source>Card buttons:</source>
+        <translation>Кнопки карточки:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="112"/>
+        <source>Panels of the expanded card:</source>
+        <translation>Области развёрнутой карточки:</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="24"/>
+        <source>Boat</source>
+        <translation>Лодка</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="25"/>
+        <source>Mission</source>
+        <translation>Миссия</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="26"/>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="27"/>
+        <source>On link loss</source>
+        <translation>При потере связи</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="28"/>
+        <source>Messages</source>
+        <translation>Сообщения</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="198"/>
+        <source>Defaults</source>
+        <translation>По умолчанию</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AutopilotSettingsTab.qml" line="102"/>
+        <source>A short tour of the autopilot card</source>
+        <translation>Короткий тур по карточке автопилота</translation>
     </message>
 </context>
 <context>
@@ -2482,22 +2675,22 @@
 <context>
     <name>ConnectionViewer</name>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="574"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="613"/>
         <source>Name</source>
         <translation>Имя</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="611"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="650"/>
         <source>Clear name</source>
         <translation>Очистить имя</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="672"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="714"/>
         <source>URL</source>
         <translation>URL</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="690"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="732"/>
         <source>Any URL that FFmpeg can open:
 rtsp://192.168.1.10:554/stream
 http://camera.local/video.cgi  (MJPEG, HLS, DASH)
@@ -2512,22 +2705,22 @@ udp://@:1234
 %1  (локальный файл)</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="878"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="928"/>
         <source>+Video</source>
         <translation>+Видео</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1124"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1176"/>
         <source>Choose recording folder</source>
         <translation>Выбор директории для записи</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="886"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="936"/>
         <source>Proxy MAVLink telemetry to 127.0.0.1:14550</source>
         <translation>Прокси MAVLink телеметрии на 127.0.0.1:14550</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="385"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="415"/>
         <source>Connection settings</source>
         <translation>Настройки подключения</translation>
     </message>
@@ -2536,189 +2729,189 @@ udp://@:1234
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="279"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="296"/>
         <source>Connections:</source>
         <translation>Подключения:</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="494"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="531"/>
         <source>Unpin</source>
         <translation>Открепить</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="494"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="531"/>
         <source>Pin</source>
         <translation>Закрепить</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="503"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="539"/>
         <source>Auto reconnect</source>
         <translation>Авто-переподключение</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="516"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="552"/>
         <source>Delete</source>
         <translation>Удалить</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="510"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="546"/>
         <source>Remove from recent</source>
         <translation>Убрать из недавних</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="826"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="874"/>
         <source>Auto search baudrate</source>
         <translation>Авто-поиск скорости</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="625"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="665"/>
         <source>IP</source>
         <translation>IP</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="723"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="767"/>
         <source>src</source>
         <translation>src</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="746"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="790"/>
         <source>dst</source>
         <translation>dst</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="776"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="822"/>
         <source>srv</source>
         <translation>srv</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="807"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="855"/>
         <source>baudrate</source>
         <translation>Скорость</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="531"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="568"/>
         <source>Close</source>
         <translation>Закрыть</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="531"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="568"/>
         <source>Open</source>
         <translation>Открыть</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="866"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="916"/>
         <source>+UDP</source>
         <translation>+UDP</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="872"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="922"/>
         <source>+TCP</source>
         <translation>+TCP</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="885"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="935"/>
         <source>MAVProxy</source>
         <translation>MAVProxy</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="897"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="947"/>
         <source>Import</source>
         <translation>Импорт</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1204"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1256"/>
         <source>Separator:</source>
         <translation>Разделитель:</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1216"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1268"/>
         <source>Row:</source>
         <translation>Ряд:</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1226"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1278"/>
         <source>Time col:</source>
         <translation>Колонка времени:</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1247"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1299"/>
         <source>Lat/Lon/Alt:</source>
         <translation>Шир/Долг/Выс:</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1259"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1311"/>
         <source>NEU:</source>
         <translation>NEU:</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1279"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1331"/>
         <source>CSV path...</source>
         <translation>Путь к CSV...</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1296"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1348"/>
         <source>Please choose a file</source>
         <translation>Выберите файл</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="849"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="899"/>
         <source>Add connection:</source>
         <translation>Добавить подключение:</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="905"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="955"/>
         <source>Recording:</source>
         <translation>Запись:</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="968"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1020"/>
         <source>Recording settings</source>
         <translation>Настройки записи</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="984"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1036"/>
         <source>Press REC to record KLF and CSV logs</source>
         <translation>Нажмите REC для записи KLF и CSV логов</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="985"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1037"/>
         <source>Press REC to record CSV log</source>
         <translation>Нажмите REC для записи CSV лога</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="986"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1038"/>
         <source>Press REC to record KLF log</source>
         <translation>Нажмите REC для записи KLF лога</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1047"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1099"/>
         <source>■ STOP</source>
         <translation>■ STOP</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1047"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1099"/>
         <source>● REC</source>
         <translation>● REC</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1076"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1128"/>
         <source>Log folder:</source>
         <translation>Папка логов:</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1183"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1235"/>
         <source>Select log folder</source>
         <translation>Выберите папку логов</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1150"/>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1152"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1202"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1204"/>
         <source>KLF</source>
         <translation>KLF</translation>
     </message>
     <message>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1151"/>
-        <location filename="../qml/devices/ConnectionViewer.qml" line="1152"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1203"/>
+        <location filename="../qml/devices/ConnectionViewer.qml" line="1204"/>
         <source>CSV</source>
         <translation>CSV</translation>
     </message>
@@ -2736,32 +2929,32 @@ udp://@:1234
         <translation>Подключения и логгирование.</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="98"/>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="99"/>
         <source>Stop recording</source>
         <translation>Остановить запись</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="98"/>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="99"/>
         <source>Start recording</source>
         <translation>Начать запись</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="124"/>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="125"/>
         <source>Disconnect</source>
         <translation>Отключить</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="124"/>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="125"/>
         <source>Open last link</source>
         <translation>Открыть последнее подключение</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="74"/>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="75"/>
         <source>Searching the local network…</source>
         <translation>Поиск в локальной сети…</translation>
     </message>
     <message>
-        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="74"/>
+        <location filename="../qml/app/ConnectionsSettingsPage.qml" line="75"/>
         <source>Find KOGGER devices in the local network (UDP)</source>
         <translation>Найти устройства KOGGER в локальной сети (UDP)</translation>
     </message>
@@ -3107,200 +3300,200 @@ udp://@:1234
 <context>
     <name>Core</name>
     <message>
-        <location filename="../src/core.cpp" line="3604"/>
+        <location filename="../src/core.cpp" line="3606"/>
         <source>Internet connection restored</source>
         <translation>Интернет-соединение восстановлено</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="3605"/>
+        <location filename="../src/core.cpp" line="3607"/>
         <source>Internet connection lost</source>
         <translation>Интернет-соединение потеряно</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="3617"/>
+        <location filename="../src/core.cpp" line="3619"/>
         <source>Metered network detected</source>
         <translation>Обнаружена лимитированная сеть</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2741"/>
-        <location filename="../src/core.cpp" line="2765"/>
+        <location filename="../src/core.cpp" line="2743"/>
+        <location filename="../src/core.cpp" line="2767"/>
         <source>street</source>
         <translation>схема</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1482"/>
+        <location filename="../src/core.cpp" line="1484"/>
         <source>USBL diagnostics exported to CSV (%1 reports): %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1991"/>
+        <location filename="../src/core.cpp" line="1993"/>
         <source>Export failed: no log file is open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2004"/>
+        <location filename="../src/core.cpp" line="2006"/>
         <source>Export failed: this file has no epoch index</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2018"/>
-        <location filename="../src/core.cpp" line="2029"/>
+        <location filename="../src/core.cpp" line="2020"/>
+        <location filename="../src/core.cpp" line="2031"/>
         <source>Export failed: cannot read %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2065"/>
+        <location filename="../src/core.cpp" line="2067"/>
         <source>KLF fragment saved: %1 (%2 epochs, %3 MB)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2747"/>
-        <location filename="../src/core.cpp" line="2753"/>
-        <location filename="../src/core.cpp" line="2759"/>
+        <location filename="../src/core.cpp" line="2749"/>
+        <location filename="../src/core.cpp" line="2755"/>
+        <location filename="../src/core.cpp" line="2761"/>
         <source>satellite</source>
         <translation>спутник</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="3206"/>
+        <location filename="../src/core.cpp" line="3208"/>
         <source>Connected</source>
         <translation>Подключено</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="3206"/>
+        <location filename="../src/core.cpp" line="3208"/>
         <source>Connected: %1</source>
         <translation>Подключено: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="3217"/>
+        <location filename="../src/core.cpp" line="3219"/>
         <source>Disconnected</source>
         <translation>Отключено</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="3217"/>
+        <location filename="../src/core.cpp" line="3219"/>
         <source>Disconnected: %1</source>
         <translation>Отключено: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="971"/>
+        <location filename="../src/core.cpp" line="973"/>
         <source>KLF logging disabled</source>
         <translation>Логирование KLF выключено</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="963"/>
+        <location filename="../src/core.cpp" line="965"/>
         <source>KLF logging not started</source>
         <translation>Логирование KLF не запустилось</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1278"/>
+        <location filename="../src/core.cpp" line="1280"/>
         <source>CSV logging disabled</source>
         <translation>Логирование CSV выключено</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1270"/>
+        <location filename="../src/core.cpp" line="1272"/>
         <source>CSV logging not started</source>
         <translation>Логирование CSV не запустилось</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="960"/>
+        <location filename="../src/core.cpp" line="962"/>
         <source>KLF logging started:
 %1</source>
         <translation>Логирование KLF начато:
 %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="969"/>
+        <location filename="../src/core.cpp" line="971"/>
         <source>KLF log saved:
 %1</source>
         <translation>Лог KLF сохранён:
 %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1267"/>
+        <location filename="../src/core.cpp" line="1269"/>
         <source>CSV logging started:
 %1</source>
         <translation>Логирование CSV начато:
 %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1276"/>
+        <location filename="../src/core.cpp" line="1278"/>
         <source>CSV log saved:
 %1</source>
         <translation>Лог CSV сохранён:
 %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1163"/>
+        <location filename="../src/core.cpp" line="1165"/>
         <source>Invalid log folder:
 %1</source>
         <translation>Неверный путь папки логов:
 %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1169"/>
+        <location filename="../src/core.cpp" line="1171"/>
         <source>Log folder is not writable:
 %1</source>
         <translation>Нет доступа на запись в папку логов:
 %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2928"/>
+        <location filename="../src/core.cpp" line="2930"/>
         <source>File opened</source>
         <translation>Файл открыт</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2929"/>
+        <location filename="../src/core.cpp" line="2931"/>
         <source>File opened: %1</source>
         <translation>Файл открыт: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="749"/>
+        <location filename="../src/core.cpp" line="751"/>
         <source>File closed</source>
         <translation>Файл закрыт</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="750"/>
+        <location filename="../src/core.cpp" line="752"/>
         <source>File closed: %1</source>
         <translation>Файл закрыт: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1896"/>
+        <location filename="../src/core.cpp" line="1898"/>
         <source>Exported to CSV: %1</source>
         <translation>Экспорт в CSV выполнен: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="2100"/>
+        <location filename="../src/core.cpp" line="2102"/>
         <source>Exported to XTF: %1</source>
         <translation>Экспорт в XTF выполнен: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1366"/>
+        <location filename="../src/core.cpp" line="1368"/>
         <source>Complex signals exported to CSV: %1</source>
         <translation>Комплексные сигналы экспортированы в CSV: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1529"/>
+        <location filename="../src/core.cpp" line="1531"/>
         <source>USBL exported to CSV: %1</source>
         <translation>USBL экспортирован в CSV: %1</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1998"/>
-        <location filename="../src/core.cpp" line="2077"/>
+        <location filename="../src/core.cpp" line="2000"/>
+        <location filename="../src/core.cpp" line="2079"/>
         <source>Export failed</source>
         <translation>Экспорт не выполнен</translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1314"/>
-        <location filename="../src/core.cpp" line="1363"/>
-        <location filename="../src/core.cpp" line="1458"/>
-        <location filename="../src/core.cpp" line="1479"/>
-        <location filename="../src/core.cpp" line="1493"/>
-        <location filename="../src/core.cpp" line="1526"/>
-        <location filename="../src/core.cpp" line="1621"/>
-        <location filename="../src/core.cpp" line="1893"/>
-        <location filename="../src/core.cpp" line="2040"/>
-        <location filename="../src/core.cpp" line="2061"/>
-        <location filename="../src/core.cpp" line="2085"/>
-        <location filename="../src/core.cpp" line="2097"/>
+        <location filename="../src/core.cpp" line="1316"/>
+        <location filename="../src/core.cpp" line="1365"/>
+        <location filename="../src/core.cpp" line="1460"/>
+        <location filename="../src/core.cpp" line="1481"/>
+        <location filename="../src/core.cpp" line="1495"/>
+        <location filename="../src/core.cpp" line="1528"/>
+        <location filename="../src/core.cpp" line="1623"/>
+        <location filename="../src/core.cpp" line="1895"/>
+        <location filename="../src/core.cpp" line="2042"/>
+        <location filename="../src/core.cpp" line="2063"/>
+        <location filename="../src/core.cpp" line="2087"/>
+        <location filename="../src/core.cpp" line="2099"/>
         <source>Export failed: %1</source>
         <translation>Экспорт не выполнен: %1</translation>
     </message>
@@ -3993,27 +4186,27 @@ udp://@:1234
 <context>
     <name>DeviceManagerWrapper</name>
     <message>
-        <location filename="../src/device/device_manager_wrapper.cpp" line="147"/>
+        <location filename="../src/device/device_manager_wrapper.cpp" line="151"/>
         <source>while armed it needs a position estimate (GPS fix and EKF)</source>
         <translation>в ARM нужна оценка позиции (фикс GPS и EKF)</translation>
     </message>
     <message>
-        <location filename="../src/device/device_manager_wrapper.cpp" line="156"/>
+        <location filename="../src/device/device_manager_wrapper.cpp" line="160"/>
         <source>%1, and a mission on the boat</source>
         <translation>%1, а также миссия на лодке</translation>
     </message>
     <message>
-        <location filename="../src/device/device_manager_wrapper.cpp" line="158"/>
+        <location filename="../src/device/device_manager_wrapper.cpp" line="162"/>
         <source>%1, and a home position</source>
         <translation>%1, а также точка дома</translation>
     </message>
     <message>
-        <location filename="../src/device/device_manager_wrapper.cpp" line="160"/>
+        <location filename="../src/device/device_manager_wrapper.cpp" line="164"/>
         <source>%1, and a recorded return path</source>
         <translation>%1, а также записанный путь возврата</translation>
     </message>
     <message>
-        <location filename="../src/device/device_manager_wrapper.cpp" line="163"/>
+        <location filename="../src/device/device_manager_wrapper.cpp" line="167"/>
         <source>while armed it needs a speed estimate (GPS fix and EKF)</source>
         <translation>в ARM нужна оценка скорости (фикс GPS и EKF)</translation>
     </message>
@@ -5689,43 +5882,43 @@ udp://@:1234
 <context>
     <name>FilesViewer</name>
     <message>
-        <location filename="../qml/devices/FilesViewer.qml" line="330"/>
+        <location filename="../qml/devices/FilesViewer.qml" line="337"/>
         <source>Open %1</source>
         <translation>Открыть %1</translation>
     </message>
     <message>
-        <location filename="../qml/devices/FilesViewer.qml" line="202"/>
+        <location filename="../qml/devices/FilesViewer.qml" line="208"/>
         <source>Open file:</source>
         <translation>Открыть файл:</translation>
     </message>
     <message>
-        <location filename="../qml/devices/FilesViewer.qml" line="226"/>
+        <location filename="../qml/devices/FilesViewer.qml" line="233"/>
         <source>File path...</source>
         <translation>Путь к файлу...</translation>
     </message>
     <message>
-        <location filename="../qml/devices/FilesViewer.qml" line="241"/>
+        <location filename="../qml/devices/FilesViewer.qml" line="248"/>
         <source>Open file</source>
         <translation>Открыть файл</translation>
     </message>
     <message>
-        <location filename="../qml/devices/FilesViewer.qml" line="247"/>
-        <location filename="../qml/devices/FilesViewer.qml" line="270"/>
+        <location filename="../qml/devices/FilesViewer.qml" line="254"/>
+        <location filename="../qml/devices/FilesViewer.qml" line="277"/>
         <source>Please choose a file</source>
         <translation>Выберите файл</translation>
     </message>
     <message>
-        <location filename="../qml/devices/FilesViewer.qml" line="264"/>
+        <location filename="../qml/devices/FilesViewer.qml" line="271"/>
         <source>Append file</source>
         <translation>Добавить файл</translation>
     </message>
     <message>
-        <location filename="../qml/devices/FilesViewer.qml" line="285"/>
+        <location filename="../qml/devices/FilesViewer.qml" line="292"/>
         <source>Close file</source>
         <translation>Закрыть файл</translation>
     </message>
     <message>
-        <location filename="../qml/devices/FilesViewer.qml" line="305"/>
+        <location filename="../qml/devices/FilesViewer.qml" line="312"/>
         <source>Recently opened:</source>
         <translation>Недавно открытые:</translation>
     </message>
@@ -6134,181 +6327,181 @@ udp://@:1234
         <translation>Слишком далеко: предел %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="98"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="107"/>
         <source>%1 m</source>
         <translation>%1 м</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="98"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="107"/>
         <source>%1 km</source>
         <translation>%1 км</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="102"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="111"/>
         <source>%1 m/s</source>
         <translation>%1 м/с</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="107"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="116"/>
         <source>Then the mission continues</source>
         <translation>Затем миссия продолжится</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="108"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="117"/>
         <source>Then the boat returns home</source>
         <translation>Затем лодка вернётся домой</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="109"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="118"/>
         <source>Then the boat stops and drifts</source>
         <translation>Затем лодка остановится и будет дрейфовать</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="111"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="120"/>
         <source>Then the boat holds the point</source>
         <translation>Затем лодка удерживает точку</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="125"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="134"/>
         <source>no autopilot link</source>
         <translation>нет связи с автопилотом</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="126"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="135"/>
         <source>no response</source>
         <translation>нет ответа</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="127"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="136"/>
         <source>temporarily rejected</source>
         <translation>временно отклонено</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="128"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="137"/>
         <source>denied</source>
         <translation>запрещено</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="129"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="138"/>
         <source>unsupported</source>
         <translation>не поддерживается</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="130"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="139"/>
         <source>failed</source>
         <translation>ошибка</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="131"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="140"/>
         <source>cancelled</source>
         <translation>отменено</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="175"/>
-        <location filename="../qml/app/GoToPointCard.qml" line="623"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="185"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="662"/>
         <source>Stop</source>
         <translation>Стоп</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="253"/>
-        <location filename="../qml/app/GoToPointCard.qml" line="317"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="263"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="327"/>
         <source>Go here: %1</source>
         <translation>Перейти сюда: %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="273"/>
-        <location filename="../qml/app/GoToPointCard.qml" line="295"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="283"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="305"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="302"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="312"/>
         <source>Go here speed: %1</source>
         <translation>Скорость перехода: %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="313"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="323"/>
         <source>Go here failed: the boat could not enter Guided or take the point, usually because the autopilot has no position estimate yet (EKF/GPS)</source>
         <translation>Не удалось перейти: лодка не включила Guided или не приняла точку, обычно потому, что у автопилота ещё нет оценки позиции (EKF/GPS)</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="336"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="346"/>
         <source>Going to %1, %2</source>
         <translation>Идём к точке %1, %2</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="341"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="351"/>
         <source>The boat reached the point</source>
         <translation>Лодка дошла до точки</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="345"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="355"/>
         <source>After arrival</source>
         <translation>После прибытия</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="443"/>
-        <location filename="../qml/app/GoToPointCard.qml" line="574"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="502"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="613"/>
         <source>Go here</source>
         <translation>Перейти сюда</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="450"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="503"/>
         <source>%1 from the boat</source>
         <translation>%1 от лодки</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="463"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="514"/>
         <source>Speed</source>
         <translation>Скорость</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="493"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="544"/>
         <source>boat default</source>
         <translation>по умолчанию</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="507"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="558"/>
         <source>Use the boat default speed (WP_SPEED)</source>
         <translation>Скорость лодки по умолчанию (WP_SPEED)</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="514"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="569"/>
         <source>On arrival</source>
         <translation>По прибытии</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="545"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="582"/>
         <source>No mission on the boat: it will hold the point</source>
         <translation>На лодке нет миссии: она будет держать точку</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="563"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="602"/>
         <source>The boat switches to Guided and the mission pauses; Auto continues it</source>
         <translation>Лодка перейдёт в Guided, миссия встанет на паузу; Auto продолжит её</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="596"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="635"/>
         <source>The boat is at the point</source>
         <translation>Лодка на точке</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="596"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="635"/>
         <source>The boat is going here</source>
         <translation>Лодка идёт сюда</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="603"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="642"/>
         <source>%1 to go</source>
         <translation>осталось %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="624"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="663"/>
         <source>Loiter: the boat stops and holds its position</source>
         <translation>Loiter: лодка останавливается и удерживает позицию</translation>
     </message>
     <message>
-        <location filename="../qml/app/GoToPointCard.qml" line="574"/>
+        <location filename="../qml/app/GoToPointCard.qml" line="613"/>
         <source>Tap again to go</source>
         <translation>Нажмите ещё раз</translation>
     </message>
@@ -6316,239 +6509,284 @@ udp://@:1234
 <context>
     <name>HelmController</name>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="418"/>
+        <location filename="../src/helm/helm_controller.cpp" line="431"/>
         <source>Gamepad control needs a connected gamepad and an online autopilot</source>
         <translation>Для управления с геймпада нужны подключённый геймпад и автопилот на связи</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="545"/>
+        <location filename="../src/helm/helm_controller.cpp" line="566"/>
         <source>Gamepad control cancelled</source>
         <translation>Управление с геймпада отменено</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="548"/>
+        <location filename="../src/helm/helm_controller.cpp" line="569"/>
         <source>Gamepad control off</source>
         <translation>Управление с геймпада выключено</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="569"/>
+        <location filename="../src/helm/helm_controller.cpp" line="604"/>
         <source>Link to the vehicle lost — gamepad control off</source>
         <translation>Связь с аппаратом потеряна — управление с геймпада выключено</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="596"/>
+        <location filename="../src/helm/helm_controller.cpp" line="639"/>
         <source>Mode changed to %1 — gamepad control off</source>
         <translation>Режим сменился на %1 — управление с геймпада выключено</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="610"/>
+        <location filename="../src/helm/helm_controller.cpp" line="668"/>
         <source>Gamepad disconnected — holding position</source>
         <translation>Геймпад отключён — удержание позиции</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="707"/>
+        <location filename="../src/helm/helm_controller.cpp" line="808"/>
         <source>The link-loss action is on</source>
         <translation>Действие при потере связи включено</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="708"/>
+        <location filename="../src/helm/helm_controller.cpp" line="809"/>
         <source>The link-loss action is on: %1</source>
         <translation>Действие при потере связи включено: %1</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="756"/>
+        <location filename="../src/helm/helm_controller.cpp" line="860"/>
         <source>App in the background — holding position</source>
         <translation>Приложение в фоне — удержание позиции</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="770"/>
-        <source>Gamepad stopped responding — holding position</source>
-        <translation>Геймпад перестал отвечать — удержание позиции</translation>
+        <location filename="../src/helm/helm_controller.cpp" line="890"/>
+        <source>Gamepad stopped responding: no data for %1 ms — holding position</source>
+        <translation>Геймпад перестал отвечать: нет данных %1 мс — удержание позиции</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="864"/>
+        <location filename="../src/helm/helm_controller.cpp" line="985"/>
         <source>%1: no answer from the vehicle</source>
         <translation>%1: аппарат не ответил</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="868"/>
+        <location filename="../src/helm/helm_controller.cpp" line="989"/>
         <source>RC_OVERRIDE_TIME is 0: the vehicle ignores gamepad control</source>
         <translation>RC_OVERRIDE_TIME равен 0: аппарат игнорирует управление с геймпада</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="871"/>
+        <location filename="../src/helm/helm_controller.cpp" line="992"/>
         <source>RC_OPTIONS bit 1 is set: the vehicle ignores gamepad control</source>
         <translation>В RC_OPTIONS установлен бит 1: аппарат игнорирует управление с геймпада</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="890"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1011"/>
         <source>MAV_GCS_SYSID does not include %1: the vehicle ignores gamepad control</source>
         <translation>MAV_GCS_SYSID не включает %1: аппарат игнорирует управление с геймпада</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="895"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1016"/>
         <source>SYSID_MYGCS is not %1: the vehicle ignores gamepad control</source>
         <translation>SYSID_MYGCS не равен %1: аппарат игнорирует управление с геймпада</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="899"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1020"/>
         <source>GCS system id: no answer from the vehicle</source>
         <translation>Системный id наземной станции: аппарат не ответил</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="909"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1030"/>
         <source>Transmitter switch RC_OVERRIDE_ENABLE: set up</source>
         <translation>Переключатель пульта RC_OVERRIDE_ENABLE: настроен</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="910"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1031"/>
         <source>Transmitter switch RC_OVERRIDE_ENABLE: not set up</source>
         <translation>Переключатель пульта RC_OVERRIDE_ENABLE: не настроен</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="912"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1033"/>
         <source>PILOT_STEER_TYPE: %1</source>
         <translation>PILOT_STEER_TYPE: %1</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="932"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1053"/>
         <source>Gamepad disconnected</source>
         <translation>Геймпад отключён</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="945"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1066"/>
         <source>Gamepad control refused: %1</source>
         <translation>Управление с геймпада отклонено: %1</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="990"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1112"/>
         <source>The vehicle refused Manual — gamepad control off</source>
         <translation>Аппарат отклонил Manual — управление с геймпада выключено</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="999"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1121"/>
         <source>The vehicle refused %1</source>
         <translation>Аппарат отклонил %1</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="1012"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1138"/>
         <source>%1. The vehicle refused Loiter and Hold</source>
         <translation>%1. Аппарат отклонил Loiter и Hold</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="929"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1050"/>
         <source>Gamepad layout: forward throttle or steering has no input</source>
         <translation>Раскладка геймпада: газу вперёд или рулю ничего не назначено</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="935"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1056"/>
         <source>Release the throttle</source>
         <translation>Сбросьте газ</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="518"/>
+        <location filename="../src/helm/helm_controller.cpp" line="536"/>
         <source>The boat did not confirm the setting — gamepad control not started</source>
         <translation>Лодка не подтвердила настройку — управление с геймпада не запущено</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="878"/>
+        <location filename="../src/helm/helm_controller.cpp" line="999"/>
         <source>Stop on link loss (FS_THR_ENABLE, FS_GCS_ENABLE): off</source>
         <translation>Остановка при потере связи (FS_THR_ENABLE, FS_GCS_ENABLE): выключена</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="879"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1000"/>
         <source>RC receiver: %1 channels</source>
         <translation>Приёмник пульта: каналов %1</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="879"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1000"/>
         <source>RC receiver: none</source>
         <translation>Приёмник пульта: нет</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="882"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1003"/>
         <source>RC_OVERRIDE_TIME is negative: the transmitter never takes over from the gamepad</source>
         <translation>RC_OVERRIDE_TIME отрицательный: пульт никогда не перехватит управление у геймпада</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="998"/>
-        <source>The boat refused Loiter — no position (GPS/EKF)</source>
-        <translation>Лодка отклонила Loiter — нет позиции (GPS/EKF)</translation>
-    </message>
-    <message>
-        <location filename="../src/helm/helm_controller.cpp" line="548"/>
+        <location filename="../src/helm/helm_controller.cpp" line="569"/>
         <source>Gamepad control off — the transmitter has the boat</source>
         <translation>Управление с геймпада выключено — лодкой управляет пульт</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="610"/>
+        <location filename="../src/helm/helm_controller.cpp" line="668"/>
         <source>Gamepad disconnected — the transmitter has the boat</source>
         <translation>Геймпад отключён — лодкой управляет пульт</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="756"/>
+        <location filename="../src/helm/helm_controller.cpp" line="860"/>
         <source>App in the background — the transmitter has the boat</source>
         <translation>Приложение в фоне — лодкой управляет пульт</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="770"/>
-        <source>Gamepad stopped responding — the transmitter has the boat</source>
-        <translation>Геймпад перестал отвечать — лодкой управляет пульт</translation>
+        <location filename="../src/helm/helm_controller.cpp" line="891"/>
+        <source>Gamepad stopped responding: no data for %1 ms — the transmitter has the boat</source>
+        <translation>Геймпад перестал отвечать: нет данных %1 мс — лодкой управляет пульт</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="414"/>
+        <location filename="../src/helm/helm_controller.cpp" line="425"/>
         <source>Close the gamepad settings to take control</source>
         <translation>Закройте настройки геймпада, чтобы взять управление</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="466"/>
+        <location filename="../src/helm/helm_controller.cpp" line="484"/>
         <source>Gamepad settings opened — gamepad control off</source>
         <translation>Открыты настройки геймпада — управление с геймпада выключено</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="467"/>
+        <location filename="../src/helm/helm_controller.cpp" line="485"/>
         <source>Gamepad settings opened — the transmitter has the boat</source>
         <translation>Открыты настройки геймпада — лодкой управляет пульт</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="690"/>
+        <location filename="../src/helm/helm_controller.cpp" line="791"/>
         <source>Disarm from the gamepad</source>
         <translation>Disarm с геймпада</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="698"/>
+        <location filename="../src/helm/helm_controller.cpp" line="799"/>
         <source>Arm from the gamepad</source>
         <translation>Arm с геймпада</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="694"/>
+        <location filename="../src/helm/helm_controller.cpp" line="795"/>
         <source>Release the throttle before arming</source>
         <translation>Сбросьте газ перед включением моторов</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="941"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1062"/>
         <source>Vehicle check: %1</source>
         <translation>Проверка аппарата: %1</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="473"/>
+        <location filename="../src/helm/helm_controller.cpp" line="491"/>
         <source>Release the throttle to drive again</source>
         <translation>Отпустите газ, чтобы продолжить управление</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="1180"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1257"/>
         <source>Taking gamepad control automatically</source>
         <translation>Управление с геймпада включается автоматически</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="1134"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1211"/>
         <source>The gamepad keeps dropping — automatic take-over paused</source>
         <translation>Геймпад отключается снова и снова — автозахват приостановлен</translation>
     </message>
     <message>
-        <location filename="../src/helm/helm_controller.cpp" line="1058"/>
+        <location filename="../src/helm/helm_controller.cpp" line="1122"/>
         <source>The vehicle refused %1: %2</source>
         <translation>Аппарат отклонил %1: %2</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="671"/>
+        <source>Gamepad disconnected (%1) — holding position</source>
+        <translation>Геймпад отключён (%1) — удержание позиции</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="672"/>
+        <source>Gamepad disconnected (%1) — the transmitter has the boat</source>
+        <translation>Геймпад отключён (%1) — лодкой управляет пульт</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="708"/>
+        <source>wireless</source>
+        <translation>беспроводной</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="711"/>
+        <source>wired</source>
+        <translation>проводной</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="714"/>
+        <source>battery %1%</source>
+        <translation>батарея %1%</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="717"/>
+        <source>input unchanged for %1 s</source>
+        <translation>ввод не менялся %1 с</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="857"/>
+        <source>App lost focus — holding position</source>
+        <translation>Приложение потеряло фокус — удержание позиции</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="857"/>
+        <source>App lost focus — the transmitter has the boat</source>
+        <translation>Приложение потеряло фокус — лодкой управляет пульт</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="622"/>
+        <source>Mode changed to %1 (not from the gamepad) — the gamepad does not drive in this mode</source>
+        <translation>Режим сменился на %1 (не с геймпада) — в этом режиме геймпад не управляет</translation>
+    </message>
+    <message>
+        <location filename="../src/helm/helm_controller.cpp" line="694"/>
+        <source>Gamepad back %1 s after the loss: %2</source>
+        <translation>Геймпад вернулся через %1 с после потери: %2</translation>
     </message>
 </context>
 <context>
@@ -7932,7 +8170,7 @@ udp://@:1234
         <translation>Панель серво</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1205"/>
+        <location filename="../qml/app/MainWindow.qml" line="1206"/>
         <source>Devices</source>
         <translation>Устройства</translation>
     </message>
@@ -7947,17 +8185,17 @@ udp://@:1234
         <translation>Информационная плашка</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1809"/>
+        <location filename="../qml/app/MainWindow.qml" line="1819"/>
         <source>Language:</source>
         <translation>Язык:</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1853"/>
+        <location filename="../qml/app/MainWindow.qml" line="1863"/>
         <source>Continue</source>
         <translation>Продолжить</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1800"/>
+        <location filename="../qml/app/MainWindow.qml" line="1810"/>
         <source>Welcome to KoggerApp!</source>
         <translation>Добро пожаловать в KoggerApp!</translation>
     </message>
@@ -7967,47 +8205,47 @@ udp://@:1234
         <translation>Обучение</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1202"/>
+        <location filename="../qml/app/MainWindow.qml" line="1203"/>
         <source>Developer mode</source>
         <translation>Режим разработчика</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1204"/>
+        <location filename="../qml/app/MainWindow.qml" line="1205"/>
         <source>Create layout</source>
         <translation>Создать компоновку</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1433"/>
+        <location filename="../qml/app/MainWindow.qml" line="1435"/>
         <source>Nodes-Configurator</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1435"/>
+        <location filename="../qml/app/MainWindow.qml" line="1437"/>
         <source>running</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1826"/>
+        <location filename="../qml/app/MainWindow.qml" line="1836"/>
         <source>Choose which settings to show</source>
         <translation>Выберите, какие настройки показывать</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1833"/>
+        <location filename="../qml/app/MainWindow.qml" line="1843"/>
         <source>Fish Finders</source>
         <translation>Для Рыболова</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1834"/>
+        <location filename="../qml/app/MainWindow.qml" line="1844"/>
         <source>Bottom Track</source>
         <translation>Трек дна</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1835"/>
+        <location filename="../qml/app/MainWindow.qml" line="1845"/>
         <source>Maximum</source>
         <translation>Максимум</translation>
     </message>
     <message>
-        <location filename="../qml/app/MainWindow.qml" line="1843"/>
+        <location filename="../qml/app/MainWindow.qml" line="1853"/>
         <source>You can change this later in settings.</source>
         <translation>Это можно изменить позже в настройках.</translation>
     </message>
@@ -8024,7 +8262,7 @@ udp://@:1234
     </message>
     <message>
         <location filename="../qml/app/MainWindow.qml" line="1188"/>
-        <location filename="../qml/app/MainWindow.qml" line="1207"/>
+        <location filename="../qml/app/MainWindow.qml" line="1208"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
@@ -8072,6 +8310,11 @@ udp://@:1234
         <location filename="../qml/app/MainWindow.qml" line="1193"/>
         <source>Stand panel</source>
         <translation>Панель стенда</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MainWindow.qml" line="1202"/>
+        <source>Autopilot</source>
+        <translation>Автопилот</translation>
     </message>
 </context>
 <context>
@@ -8134,7 +8377,7 @@ udp://@:1234
     <message>
         <location filename="../qml/app/MissionEditorOverlay.qml" line="217"/>
         <location filename="../qml/app/MissionEditorOverlay.qml" line="964"/>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1732"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1737"/>
         <source>Corridor</source>
         <translation>Коридор</translation>
     </message>
@@ -8147,8 +8390,8 @@ udp://@:1234
     <message>
         <location filename="../qml/app/MissionEditorOverlay.qml" line="219"/>
         <location filename="../qml/app/MissionEditorOverlay.qml" line="966"/>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1612"/>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1732"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1617"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1737"/>
         <source>Geofence</source>
         <translation>Геозона</translation>
     </message>
@@ -8389,7 +8632,7 @@ udp://@:1234
     </message>
     <message>
         <location filename="../qml/app/MissionEditorOverlay.qml" line="694"/>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1655"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1660"/>
         <source>Mission</source>
         <translation>Миссия</translation>
     </message>
@@ -8460,7 +8703,7 @@ udp://@:1234
     </message>
     <message>
         <location filename="../qml/app/MissionEditorOverlay.qml" line="961"/>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1476"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1481"/>
         <source>Start point</source>
         <translation>Точка старта</translation>
     </message>
@@ -8477,7 +8720,7 @@ udp://@:1234
     </message>
     <message>
         <location filename="../qml/app/MissionEditorOverlay.qml" line="963"/>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1732"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1737"/>
         <source>Survey area</source>
         <translation>Полигон</translation>
     </message>
@@ -8597,188 +8840,188 @@ udp://@:1234
         <translation>Крейсерская скорость, м/с</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1446"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1451"/>
         <source>At the end</source>
         <translation>В конце</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1451"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1456"/>
         <source>Hold position</source>
         <translation>Остаться на месте</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1451"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1456"/>
         <source>Return to start point</source>
         <translation>Вернуться к точке старта</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1451"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1456"/>
         <source>Return to launch (RTL)</source>
         <translation>Вернуться к месту запуска (RTL)</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1451"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1456"/>
         <source>Nothing (autopilot setting)</source>
         <translation>Ничего (по настройке автопилота)</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1739"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1744"/>
         <source>Rectangle</source>
         <translation>Прямоугольник</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1740"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1745"/>
         <source>Circle</source>
         <translation>Круг</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1743"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1748"/>
         <source>Straight line</source>
         <translation>Прямая</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1744"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1749"/>
         <source>Draw point by point</source>
         <translation>Провести по точкам</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1745"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1750"/>
         <source>Inclusion zone: rectangle</source>
         <translation>Разрешённая зона: прямоугольник</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1747"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1752"/>
         <source>Exclusion zone: rectangle</source>
         <translation>Запретная зона: прямоугольник</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1748"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1753"/>
         <source>Exclusion zone: circle</source>
         <translation>Запретная зона: круг</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1477"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1482"/>
         <source>first point of the route, not the boat&apos;s home (H)</source>
         <translation>первая точка маршрута, не дом лодки (H)</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1462"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1467"/>
         <source>RTL goes to the autopilot&apos;s arming position or to a closer rally point within RALLY_LIMIT_KM, not to the start point; the boat then holds position there</source>
         <translation>RTL ведёт к месту, где автопилот был взведён, или к более близкой точке сбора в пределах RALLY_LIMIT_KM, а не к точке старта; там лодка удерживает позицию</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1468"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1473"/>
         <source>No end command is added: after the last point the autopilot follows its MIS_DONE_BEHAVE parameter. By default (0) the boat cuts the throttle and drifts; 1 makes it hold position (Loiter)</source>
         <translation>Команда завершения не добавляется: после последней точки автопилот действует по параметру MIS_DONE_BEHAVE. По умолчанию (0) лодка сбрасывает газ и её сносит; при 1 она удерживает позицию (Loiter)</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1477"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1482"/>
         <source>not set — tap the tool</source>
         <translation>не задана — нажмите на инструмент</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1507"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1512"/>
         <source>Show on map</source>
         <translation>Показать на карте</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1531"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1536"/>
         <source>Route</source>
         <translation>Маршрут</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1533"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1538"/>
         <source>No items yet. Use the tools on the left.</source>
         <translation>Элементов пока нет. Используйте инструменты слева.</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1591"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1596"/>
         <source>Rally points</source>
         <translation>Точки сбора</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1633"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1638"/>
         <source>Summary</source>
         <translation>Сводка</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1638"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1643"/>
         <source>Length</source>
         <translation>Длина</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1639"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1644"/>
         <source>Time</source>
         <translation>Время</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1640"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1645"/>
         <source>Waypoints</source>
         <translation>Путевые точки</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1644"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1649"/>
         <source>Mission items</source>
         <translation>Элементы миссии</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1741"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1746"/>
         <source>Outline it point by point</source>
         <translation>Обвести по точкам</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1746"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1751"/>
         <source>Inclusion zone: outline point by point</source>
         <translation>Разрешённая зона: обвести по точкам</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1749"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1754"/>
         <source>Exclusion zone: outline point by point</source>
         <translation>Запретная зона: обвести по точкам</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1813"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1818"/>
         <source>Save as…</source>
         <translation>Сохранить как…</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1814"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1819"/>
         <source>Export for QGroundControl (.plan)</source>
         <translation>Экспорт для QGroundControl (.plan)</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1815"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1820"/>
         <source>Export for Mission Planner (.waypoints)</source>
         <translation>Экспорт для Mission Planner (.waypoints)</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1889"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1894"/>
         <source>Upload the mission to the vehicle?</source>
         <translation>Загрузить миссию в лодку?</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1911"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1916"/>
         <source>Upload</source>
         <translation>Загрузить</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1951"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1956"/>
         <source>The mission has unsaved changes.</source>
         <translation>В миссии есть несохранённые изменения.</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1960"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1965"/>
         <source>Save</source>
         <translation>Сохранить</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1976"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1981"/>
         <source>Discard</source>
         <translation>Не сохранять</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1916"/>
-        <location filename="../qml/app/MissionEditorOverlay.qml" line="1986"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1921"/>
+        <location filename="../qml/app/MissionEditorOverlay.qml" line="1991"/>
         <source>Cancel</source>
         <translation>Отмена</translation>
     </message>
@@ -8811,161 +9054,161 @@ udp://@:1234
 <context>
     <name>MissionItemCard</name>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="99"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="114"/>
         <source>Coordinates copied</source>
         <translation>Координаты скопированы</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="180"/>
-        <location filename="../qml/app/MissionItemCard.qml" line="362"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="195"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="377"/>
         <source>Inclusion zone</source>
         <translation>Разрешённая зона</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="180"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="195"/>
         <source>Exclusion zone</source>
         <translation>Запретная зона</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="181"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="196"/>
         <source>Not generated</source>
         <translation>Не построено</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="182"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="197"/>
         <source>%1 lines, %2 waypoints</source>
         <translation>%1 галсов, %2 точек</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="194"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="209"/>
         <source>Move up</source>
         <translation>Вверх</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="201"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="216"/>
         <source>Move down</source>
         <translation>Вниз</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="211"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="226"/>
         <source>Delete</source>
         <translation>Удалить</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="327"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="342"/>
         <source>%1 corners</source>
         <translation>углов: %1</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="328"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="343"/>
         <source>%1 axis points</source>
         <translation>%1 точек оси</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="337"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="352"/>
         <source>Copy coordinates</source>
         <translation>Скопировать координаты</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="345"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="360"/>
         <source>Show on map</source>
         <translation>Показать на карте</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="371"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="386"/>
         <source>Hold, s</source>
         <translation>Задержка, с</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="391"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="406"/>
         <source>Speed, m/s</source>
         <translation>Скорость, м/с</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="399"/>
-        <location filename="../qml/app/MissionItemCard.qml" line="441"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="415"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="458"/>
         <source>0 = plan cruise speed</source>
         <translation>0 = крейсерская скорость плана</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="412"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="428"/>
         <source>Accept radius, m</source>
         <translation>Радиус захвата, м</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="420"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="436"/>
         <source>0 = autopilot default (WP_RADIUS)</source>
         <translation>0 = значение автопилота (WP_RADIUS)</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="433"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="449"/>
         <source>Survey speed, m/s</source>
         <translation>Скорость на полигоне, м/с</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="454"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="471"/>
         <source>Line spacing</source>
         <translation>Шаг галсов</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="455"/>
-        <location filename="../qml/app/MissionItemCard.qml" line="489"/>
-        <location filename="../qml/app/MissionItemCard.qml" line="501"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="472"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="506"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="518"/>
         <source>m</source>
         <translation>м</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="469"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="486"/>
         <source>Angle, °</source>
         <translation>Угол, °</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="488"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="505"/>
         <source>Width</source>
         <translation>Ширина</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="500"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="517"/>
         <source>Turnaround</source>
         <translation>Вылет галсов</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="513"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="530"/>
         <source>Entry</source>
         <translation>Вход</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="519"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="536"/>
         <source>auto</source>
         <translation>авто</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="519"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="536"/>
         <source>manual</source>
         <translation>вручную</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="531"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="548"/>
         <source>Auto</source>
         <translation>Авто</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="543"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="560"/>
         <source>Crosshatch</source>
         <translation>Перекрёстные галсы</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="554"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="571"/>
         <source>Length %1 m</source>
         <translation>Длина %1 м</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="555"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="572"/>
         <source>, area %1 ha</source>
         <translation>, площадь %1 га</translation>
     </message>
     <message>
-        <location filename="../qml/app/MissionItemCard.qml" line="556"/>
+        <location filename="../qml/app/MissionItemCard.qml" line="573"/>
         <source>, spacing raised to %1 m</source>
         <translation>, шаг увеличен до %1 м</translation>
     </message>
@@ -8983,68 +9226,68 @@ udp://@:1234
         <translation>Скорость %1 м/с ниже %2 м/с: лодка виляет и уходит с курса</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_expander.cpp" line="93"/>
+        <location filename="../src/mission/mission_expander.cpp" line="102"/>
         <source>Generated points leave the valid coordinate range</source>
         <translation>Построенные точки выходят за допустимый диапазон координат</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_expander.cpp" line="124"/>
+        <location filename="../src/mission/mission_expander.cpp" line="134"/>
         <source>Invalid position</source>
         <translation>Недопустимые координаты</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_expander.cpp" line="137"/>
-        <location filename="../src/mission/mission_expander.cpp" line="151"/>
+        <location filename="../src/mission/mission_expander.cpp" line="148"/>
+        <location filename="../src/mission/mission_expander.cpp" line="162"/>
         <source>Line spacing raised to %1 m to stay within %2 lines</source>
         <translation>Шаг галсов увеличен до %1 м, чтобы уложиться в %2 линий</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_expander.cpp" line="140"/>
+        <location filename="../src/mission/mission_expander.cpp" line="151"/>
         <source>Survey area %1 km² is unusually large</source>
         <translation>Полигон %1 км² необычно велик</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_expander.cpp" line="203"/>
+        <location filename="../src/mission/mission_expander.cpp" line="214"/>
         <source>Fence needs at least %1 vertices</source>
         <translation>Геозоне нужно не меньше %1 вершин</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_expander.cpp" line="213"/>
+        <location filename="../src/mission/mission_expander.cpp" line="224"/>
         <source>Fence polygon is self-intersecting</source>
         <translation>Полигон геозоны самопересекается</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_expander.cpp" line="247"/>
+        <location filename="../src/mission/mission_expander.cpp" line="258"/>
         <source>%1 waypoints lie outside the inclusion fence</source>
         <translation>%1 точек лежат вне разрешённой зоны</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_expander.cpp" line="250"/>
+        <location filename="../src/mission/mission_expander.cpp" line="261"/>
         <source>%1 waypoints lie inside an exclusion zone</source>
         <translation>%1 точек лежат внутри запретной зоны</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_expander.cpp" line="256"/>
+        <location filename="../src/mission/mission_expander.cpp" line="267"/>
         <source>%1 mission items exceed the flight controller capacity of %2</source>
         <translation>%1 элементов миссии превышают ёмкость полётного контроллера (%2)</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_expander.cpp" line="258"/>
+        <location filename="../src/mission/mission_expander.cpp" line="269"/>
         <source>%1 mission items, close to the flight controller capacity of %2</source>
         <translation>%1 элементов миссии, близко к ёмкости полётного контроллера (%2)</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_expander.cpp" line="261"/>
+        <location filename="../src/mission/mission_expander.cpp" line="272"/>
         <source>Estimated time %1 h exceeds %2 h</source>
         <translation>Расчётное время %1 ч превышает %2 ч</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_expander.cpp" line="264"/>
+        <location filename="../src/mission/mission_expander.cpp" line="275"/>
         <source>Route length %1 km exceeds %2 km</source>
         <translation>Длина маршрута %1 км превышает %2 км</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_expander.cpp" line="267"/>
+        <location filename="../src/mission/mission_expander.cpp" line="278"/>
         <source>Start point is not set</source>
         <translation>Точка старта не задана</translation>
     </message>
@@ -9242,54 +9485,69 @@ udp://@:1234
     </message>
 </context>
 <context>
-    <name>MissionRunTracker</name>
+    <name>mission::MissionRunTracker</name>
     <message>
-        <location filename="../src/mission/mission_run.cpp" line="84"/>
+        <location filename="../src/mission/mission_run.cpp" line="86"/>
         <source>Home</source>
         <translation type="unfinished">В исходное</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_run.cpp" line="89"/>
+        <location filename="../src/mission/mission_run.cpp" line="91"/>
         <source>Start point</source>
         <translation type="unfinished">Точка старта</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_run.cpp" line="91"/>
+        <location filename="../src/mission/mission_run.cpp" line="93"/>
         <source>Waypoint %1</source>
         <translation type="unfinished">Точка %1</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_run.cpp" line="93"/>
+        <location filename="../src/mission/mission_run.cpp" line="95"/>
         <source>Survey %1 · line %2/%3</source>
         <translation type="unfinished">Полигон %1 · галс %2/%3</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_run.cpp" line="94"/>
+        <location filename="../src/mission/mission_run.cpp" line="96"/>
         <source>Survey %1</source>
         <translation type="unfinished">Полигон %1</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_run.cpp" line="96"/>
+        <location filename="../src/mission/mission_run.cpp" line="98"/>
         <source>Corridor %1 · line %2/%3</source>
         <translation type="unfinished">Коридор %1 · галс %2/%3</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_run.cpp" line="97"/>
+        <location filename="../src/mission/mission_run.cpp" line="99"/>
         <source>Corridor %1</source>
         <translation type="unfinished">Коридор %1</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_run.cpp" line="99"/>
+        <location filename="../src/mission/mission_run.cpp" line="101"/>
         <source>Return to launch</source>
         <translation type="unfinished">Возврат (RTL)</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_run.cpp" line="101"/>
+        <location filename="../src/mission/mission_run.cpp" line="103"/>
         <source>Hold position</source>
         <translation type="unfinished">Остаться на месте</translation>
     </message>
     <message>
-        <location filename="../src/mission/mission_run.cpp" line="106"/>
+        <location filename="../src/mission/mission_run.cpp" line="611"/>
+        <source>Mission complete, holding position after returning to launch</source>
+        <translation>Миссия завершена, лодка держит позицию после возврата (RTL)</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_run.cpp" line="616"/>
+        <source>Mission complete, holding position at the start point</source>
+        <translation>Миссия завершена, лодка держит позицию в точке старта</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_run.cpp" line="618"/>
+        <source>Mission complete, holding position at the last point</source>
+        <translation>Миссия завершена, лодка держит позицию в последней точке</translation>
+    </message>
+    <message>
+        <location filename="../src/mission/mission_run.cpp" line="108"/>
         <source>Item %1</source>
         <translation type="unfinished">Пункт %1</translation>
     </message>
@@ -12708,7 +12966,7 @@ udp://@:1234
         <translation>Скорость звука, м/с: </translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="3267"/>
+        <location filename="../src/core.cpp" line="3269"/>
         <source>File</source>
         <translation>Файл</translation>
     </message>
@@ -12933,17 +13191,17 @@ udp://@:1234
 <context>
     <name>ScaleBar</name>
     <message>
-        <location filename="../src/scene3d/scene3d_renderer.cpp" line="560"/>
+        <location filename="../src/scene3d/scene3d_renderer.cpp" line="564"/>
         <source>cm</source>
         <translation>см</translation>
     </message>
     <message>
-        <location filename="../src/scene3d/scene3d_renderer.cpp" line="562"/>
+        <location filename="../src/scene3d/scene3d_renderer.cpp" line="566"/>
         <source>m</source>
         <translation>м</translation>
     </message>
     <message>
-        <location filename="../src/scene3d/scene3d_renderer.cpp" line="564"/>
+        <location filename="../src/scene3d/scene3d_renderer.cpp" line="568"/>
         <source>km</source>
         <translation>км</translation>
     </message>
@@ -13486,12 +13744,12 @@ udp://@:1234
         <translation>Настройки</translation>
     </message>
     <message>
-        <location filename="../qml/app/SettingsSidebarBase.qml" line="402"/>
+        <location filename="../qml/app/SettingsSidebarBase.qml" line="430"/>
         <source>Scroll to top</source>
         <translation>Наверх</translation>
     </message>
     <message>
-        <location filename="../qml/app/SettingsSidebarBase.qml" line="429"/>
+        <location filename="../qml/app/SettingsSidebarBase.qml" line="457"/>
         <source>Close</source>
         <translation>Закрыть</translation>
     </message>
@@ -13886,37 +14144,37 @@ udp://@:1234
 <context>
     <name>TutorialOverlay</name>
     <message>
-        <location filename="../qml/app/TutorialOverlay.qml" line="423"/>
+        <location filename="../qml/app/TutorialOverlay.qml" line="424"/>
         <source>Tutorial stopped: a step could not be shown</source>
         <translation>Обучение остановлено: не удалось показать шаг</translation>
     </message>
     <message>
-        <location filename="../qml/app/TutorialOverlay.qml" line="531"/>
+        <location filename="../qml/app/TutorialOverlay.qml" line="532"/>
         <source>%1 / %2</source>
         <translation>%1 / %2</translation>
     </message>
     <message>
-        <location filename="../qml/app/TutorialOverlay.qml" line="532"/>
+        <location filename="../qml/app/TutorialOverlay.qml" line="533"/>
         <source>Tap anywhere to continue</source>
         <translation>Нажмите в любом месте, чтобы продолжить</translation>
     </message>
     <message>
-        <location filename="../qml/app/TutorialOverlay.qml" line="539"/>
+        <location filename="../qml/app/TutorialOverlay.qml" line="540"/>
         <source>Back</source>
         <translation>Назад</translation>
     </message>
     <message>
-        <location filename="../qml/app/TutorialOverlay.qml" line="540"/>
+        <location filename="../qml/app/TutorialOverlay.qml" line="541"/>
         <source>Skip tutorial</source>
         <translation>Пропустить обучение</translation>
     </message>
     <message>
-        <location filename="../qml/app/TutorialOverlay.qml" line="541"/>
+        <location filename="../qml/app/TutorialOverlay.qml" line="542"/>
         <source>Next</source>
         <translation>Далее</translation>
     </message>
     <message>
-        <location filename="../qml/app/TutorialOverlay.qml" line="562"/>
+        <location filename="../qml/app/TutorialOverlay.qml" line="563"/>
         <source>Close tutorial</source>
         <translation>Закрыть обучение</translation>
     </message>
@@ -15755,23 +16013,23 @@ udp://@:1234
 <context>
     <name>WorkspaceStore</name>
     <message>
-        <location filename="../qml/app/WorkspaceStore.qml" line="1422"/>
-        <location filename="../qml/app/WorkspaceStore.qml" line="5116"/>
+        <location filename="../qml/app/WorkspaceStore.qml" line="1473"/>
+        <location filename="../qml/app/WorkspaceStore.qml" line="5168"/>
         <source>Video</source>
         <translation>Видео</translation>
     </message>
     <message>
-        <location filename="../qml/app/WorkspaceStore.qml" line="1427"/>
+        <location filename="../qml/app/WorkspaceStore.qml" line="1478"/>
         <source>Global pop-up</source>
         <translation>Глобальное всплывающее окно</translation>
     </message>
     <message>
-        <location filename="../qml/app/WorkspaceStore.qml" line="1431"/>
+        <location filename="../qml/app/WorkspaceStore.qml" line="1482"/>
         <source>Second window</source>
         <translation>Второе окно</translation>
     </message>
     <message>
-        <location filename="../qml/app/WorkspaceStore.qml" line="2090"/>
+        <location filename="../qml/app/WorkspaceStore.qml" line="2141"/>
         <source>Echogram</source>
         <translation>Эхограмма</translation>
     </message>
@@ -15900,78 +16158,73 @@ udp://@:1234
         <translation>Моторы останавливаются, лодку сносит</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="102"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="103"/>
         <source>The boat holds its position; without a position fix it stops (Hold)</source>
         <translation>Лодка удерживает позицию; без координат останавливается (Hold)</translation>
     </message>
     <message>
         <location filename="../src/autopilot/link_loss_policy.cpp" line="105"/>
+        <source>Loiter on link loss needs ArduRover 4.7 or newer</source>
+        <translation>Для Loiter при потере связи нужна прошивка ArduRover 4.7 или новее</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="107"/>
+        <source>Unknown whether this firmware has Loiter on link loss</source>
+        <translation>Неизвестно, есть ли в этой прошивке Loiter при потере связи</translation>
+    </message>
+    <message>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="111"/>
         <source>The boat returns to the nearest rally point or home and holds its position there</source>
         <translation>Лодка возвращается к ближайшей точке сбора или домой и удерживает там позицию</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="108"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="114"/>
         <source>The boat returns along its own track since arming and holds its position; without a track it does RTL</source>
         <translation>Лодка возвращается по своему следу с момента арма и удерживает позицию; без следа выполняет RTL</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="109"/>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="172"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="115"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="178"/>
         <source>SmartRTL is off on the boat (SRTL_POINTS = 0)</source>
         <translation>SmartRTL выключен на лодке (SRTL_POINTS = 0)</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="144"/>
-        <source>no action</source>
-        <translation>без действия</translation>
-    </message>
-    <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="145"/>
-        <source>mission goes on</source>
-        <translation>миссия продолжится</translation>
-    </message>
-    <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="146"/>
-        <source>stays in %1</source>
-        <translation>останется в %1</translation>
-    </message>
-    <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="160"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="166"/>
         <source>No autopilot</source>
         <translation>Автопилот не найден</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="166"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="172"/>
         <source>The link-loss parameters have not been read yet</source>
         <translation>Параметры потери связи ещё не прочитаны</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="169"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="175"/>
         <source>This firmware has no Loiter link-loss action</source>
         <translation>В этой прошивке нет действия Loiter при потере связи</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="254"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="260"/>
         <source>The link was lost before the boat confirmed the change</source>
         <translation>Связь пропала раньше, чем лодка подтвердила изменение</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="279"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="285"/>
         <source>The boat did not answer FS_GCS_ENABLE / FS_ACTION</source>
         <translation>Лодка не ответила на запрос FS_GCS_ENABLE / FS_ACTION</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="289"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="295"/>
         <source>Not confirmed: the boat reports %1 = %2</source>
         <translation>Не подтверждено: лодка сообщает %1 = %2</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="295"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="301"/>
         <source>Not confirmed by the boat</source>
         <translation>Лодка не подтвердила</translation>
     </message>
     <message>
-        <location filename="../src/autopilot/link_loss_policy.cpp" line="422"/>
+        <location filename="../src/autopilot/link_loss_policy.cpp" line="428"/>
         <source>Disarm</source>
         <translation>Disarm</translation>
     </message>
@@ -16128,64 +16381,267 @@ udp://@:1234
     </message>
 </context>
 <context>
-    <name>tutorial_demo</name>
+    <name>tutorial_autopilot</name>
     <message>
         <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="6"/>
+        <source>Autopilot card</source>
+        <translation>Карточка автопилота</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="8"/>
+        <source>Link and mode</source>
+        <translation>Связь и режим</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="9"/>
+        <source>The icon is grey without an autopilot, teal while it is connected and red while the boat is armed. Next to it, the current mode.</source>
+        <translation>Значок серый без автопилота, бирюзовый, пока он на связи, и красный, когда лодка в ARM. Рядом — текущий режим.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="10"/>
+        <source>On link loss</source>
+        <translation>При потере связи</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="11"/>
+        <source>What the boat does if the link drops. Amber means it does nothing.</source>
+        <translation>Что сделает лодка, если связь пропадёт. Жёлтым — если ничего.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="12"/>
+        <source>Telemetry</source>
+        <translation>Телеметрия</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="14"/>
+        <source>Details</source>
+        <translation>Подробнее</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="15"/>
+        <source>Opens the details below. A tap on the left part of the card does the same.</source>
+        <translation>Раскрывает подробности ниже. То же делает нажатие на левую часть карточки.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="16"/>
+        <source>Arm</source>
+        <translation>Арм</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="17"/>
+        <source>Tap ARM, then tap again while the ring runs (3 s). An armed boat shows the button red; one tap disarms.</source>
+        <translation>Нажмите ARM и ещё раз, пока бежит кольцо (3 с). Когда лодка в ARM, кнопка красная; одно нажатие — дизарм.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="18"/>
+        <source>Manual control</source>
+        <translation>Ручное управление</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="19"/>
+        <source>Manual: the transmitter or the gamepad drives directly. Acro keeps the heading; tap it again to go back to Manual.</source>
+        <translation>Manual — пульт или геймпад управляют напрямую. Acro держит курс; повторное нажатие возвращает Manual.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="20"/>
+        <source>Stop</source>
+        <translation>Стоп</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="21"/>
+        <source>Hold stops the motors and the boat drifts. Loiter keeps the boat on its spot by GPS.</source>
+        <translation>Hold останавливает моторы, лодку сносит. Loiter удерживает лодку на месте по GPS.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="22"/>
+        <source>Mission and return</source>
+        <translation>Миссия и возврат</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="23"/>
+        <source>Auto runs the mission stored on the boat. RTL returns to the nearest rally point or home.</source>
+        <translation>Auto выполняет миссию, записанную в лодку. RTL возвращает к ближайшей точке сбора или домой.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="24"/>
+        <source>Go here</source>
+        <translation>Перейти сюда</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="25"/>
+        <source>Turn it on, tap a point in the 3D view and confirm: the boat goes there.</source>
+        <translation>Включите, нажмите точку в 3D-виде и подтвердите — лодка пойдёт туда.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="26"/>
+        <source>Parameters, planner, close</source>
+        <translation>Параметры, планировщик, закрыть</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="27"/>
+        <source>All autopilot parameters, the mission planner and closing the card.</source>
+        <translation>Все параметры автопилота, планировщик миссий и закрытие карточки.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="28"/>
+        <source>Gamepad</source>
+        <translation>Геймпад</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="29"/>
+        <source>Take or release control from a gamepad. The A button takes control by itself once a gamepad and the boat are connected.</source>
+        <translation>Взять или отдать управление с геймпада. Кнопка A берёт управление сама, когда геймпад и лодка на связи.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="30"/>
+        <source>Mission progress</source>
+        <translation>Ход миссии</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="31"/>
+        <source>Point, distance and time left. A tap on the row opens the details.</source>
+        <translation>Точка, оставшиеся путь и время. Нажатие на строку раскрывает подробности.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="32"/>
+        <source>Boat</source>
+        <translation>Лодка</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="33"/>
+        <source>GPS fix, distance to home, radio signal and firmware.</source>
+        <translation>Фикс GPS, расстояние до дома, сигнал радио и прошивка.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="34"/>
+        <source>Mission</source>
+        <translation>Миссия</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="35"/>
+        <source>Current and next point, distance and cross-track error. Next point skips ahead after two taps; Read from the boat fetches the mission again.</source>
+        <translation>Текущая и следующая точка, расстояние и отклонение от линии. «Следующая точка» — переход дальше в два нажатия; «Прочитать с лодки» — заново загрузить миссию.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="36"/>
+        <source>Speed</source>
+        <translation>Скорость</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="37"/>
+        <source>Changes the mission speed on the go. ↺ returns to the plan speeds.</source>
+        <translation>Меняет скорость миссии на ходу. ↺ возвращает скорости плана.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="41"/>
+        <source>Messages</source>
+        <translation>Сообщения</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="42"/>
+        <source>Reports from the boat and the app. Critical ones pop up even with the card closed.</source>
+        <translation>Сообщения лодки и приложения. Критичные всплывают, даже когда карточка закрыта.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="43"/>
+        <source>That&apos;s all</source>
+        <translation>Вот и всё</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="44"/>
+        <source>Run this tour again from here.</source>
+        <translation>Пройти тур снова можно отсюда.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="45"/>
+        <source>Finish</source>
+        <translation>Готово</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="38"/>
+        <source>Card settings</source>
+        <translation>Настройки карточки</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="39"/>
+        <source>Choose which buttons and panels the card shows, its size and opacity. Also in Settings → Interface → Autopilot card.</source>
+        <translation>Выберите, какие кнопки и области показывает карточка, её размер и непрозрачность. То же — в Настройки → Интерфейс → Карточка автопилота.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="7"/>
+        <source>Drives the boat: modes, the mission, a gamepad and the action on link loss.</source>
+        <translation>Управление лодкой: режимы, миссия, геймпад и действие при потере связи.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="13"/>
+        <source>Battery, speed, link, satellites, voltage and current.</source>
+        <translation>Батарея, скорость, связь, спутники, напряжение и ток.</translation>
+    </message>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="40"/>
+        <source>What the boat does when the link drops; saved on the boat. Mission in Auto: keep going or abort.</source>
+        <translation>Что делает лодка при потере связи; хранится в лодке. «Миссия в Auto»: продолжить или прервать.</translation>
+    </message>
+</context>
+<context>
+    <name>tutorial_demo</name>
+    <message>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="46"/>
         <source>Tutorial engine demo</source>
         <translation>Демо движка обучения</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="7"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="47"/>
         <source>Tutorial demo</source>
         <translation>Демо обучения</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="8"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="48"/>
         <source>This scenario shows every building block of the tutorial engine. Tap anywhere to continue.</source>
         <translation>Этот сценарий показывает все элементы движка обучения. Нажмите в любом месте, чтобы продолжить.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="9"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="49"/>
         <source>Settings and quick actions</source>
         <translation>Настройки и быстрые действия</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="10"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="50"/>
         <source>The logo opens the settings, the arrow next to it unfolds the quick actions. One step can frame several elements.</source>
         <translation>Логотип открывает настройки, стрелка рядом раскрывает быстрые действия. Один шаг может выделять несколько элементов.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="11"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="51"/>
         <source>3D scene settings</source>
         <translation>Настройки 3D-сцены</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="12"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="52"/>
         <source>Tap the gear. The tap reaches the button itself and the step continues once settings are open.</source>
         <translation>Нажмите на шестерёнку. Нажатие доходит до самой кнопки, и шаг продолжится, когда откроются настройки.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="13"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="53"/>
         <source>Tutorials</source>
         <translation>Обучение</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="14"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="54"/>
         <source>All tutorials live here. A closed tutorial can be continued from its last checkpoint.</source>
         <translation>Здесь собраны все обучения. Закрытое обучение можно продолжить с последней контрольной точки.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="15"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="55"/>
         <source>That&apos;s it</source>
         <translation>Вот и всё</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="16"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="56"/>
         <source>The scenario is marked as completed.</source>
         <translation>Сценарий отмечен как пройденный.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="17"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="57"/>
         <source>Finish</source>
         <translation>Готово</translation>
     </message>
@@ -16193,217 +16649,217 @@ udp://@:1234
 <context>
     <name>tutorial_missions</name>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="18"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="58"/>
         <source>Mission planner</source>
         <translation>Планировщик миссий</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="19"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="59"/>
         <source>Here you plan the vehicle&apos;s work on the map: where it starts, which points it passes, which areas it covers and where it must not go. Let&apos;s walk through the screen.</source>
         <translation>Здесь на карте планируется работа лодки: откуда она стартует, какие точки проходит, какие площади обследует и куда ей заходить нельзя. Пройдёмся по экрану.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="20"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="60"/>
         <source>Mission and file</source>
         <translation>Миссия и файл</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="21"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="61"/>
         <source>The mission name. Next to it, the file it is saved in and a note when there are unsaved changes.</source>
         <translation>Название миссии. Рядом — файл, в котором она сохранена, и пометка о несохранённых изменениях.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="22"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="62"/>
         <source>Vehicle status</source>
         <translation>Состояние лодки</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="23"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="63"/>
         <source>Shows whether the connected vehicle carries this plan. When the vehicle has a different mission, tap the badge to open it.</source>
         <translation>Показывает, загружен ли этот план в подключённую лодку. Если на лодке другая миссия, нажмите на значок, чтобы открыть её.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="24"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="64"/>
         <source>Files</source>
         <translation>Файлы</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="25"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="65"/>
         <source>Start a new mission, open one from a file or save the current one. The save button is highlighted while there are unsaved changes.</source>
         <translation>Новая миссия, открытие из файла и сохранение текущей. Кнопка сохранения подсвечена, пока есть несохранённые изменения.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="26"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="66"/>
         <source>Vehicle</source>
         <translation>Лодка</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="27"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="67"/>
         <source>Upload the mission to the vehicle or read the one it already carries. Both need a connected autopilot.</source>
         <translation>Загрузить миссию в лодку или прочитать ту, что уже на ней. Для обоих нужен подключённый автопилот.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="28"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="68"/>
         <source>More and close</source>
         <translation>Ещё и закрыть</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="29"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="69"/>
         <source>The menu holds Save as and export for QGroundControl (.plan) and Mission Planner (.waypoints). The cross closes the editor and asks about unsaved changes first.</source>
         <translation>В меню — «Сохранить как» и экспорт для QGroundControl (.plan) и Mission Planner (.waypoints). Крестик закрывает редактор, предварительно спросив о несохранённых изменениях.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="30"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="70"/>
         <source>Tools</source>
         <translation>Инструменты</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="31"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="71"/>
         <source>Everything you put on the map starts here. Pick a tool, then tap the map. Tap the active tool again to put it away.</source>
         <translation>Всё, что ставится на карту, начинается здесь. Выберите инструмент и нажмите на карту. Повторное нажатие на активный инструмент отключает его.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="32"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="72"/>
         <source>Start point</source>
         <translation>Точка старта</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="33"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="73"/>
         <source>Where the mission begins. Until it is placed, this button and the Start point row on the right are highlighted.</source>
         <translation>Откуда начинается миссия. Пока точка не поставлена, эта кнопка и строка «Точка старта» справа подсвечены.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="34"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="74"/>
         <source>Waypoints</source>
         <translation>Путевые точки</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="35"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="75"/>
         <source>Single points the vehicle passes in order. While the tool is active, every tap on the map adds the next point.</source>
         <translation>Отдельные точки, которые лодка проходит по порядку. Пока инструмент активен, каждое нажатие на карту добавляет следующую точку.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="36"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="76"/>
         <source>Survey and corridor</source>
         <translation>Полигон и коридор</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="37"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="77"/>
         <source>A survey covers an area with parallel passes, a corridor follows a line. You choose how to draw the shape, from a ready template or point by point, and the check mark button finishes it.</source>
         <translation>Полигон покрывает площадь параллельными галсами, коридор идёт вдоль линии. Фигуру можно взять из готового шаблона или нарисовать по точкам, кнопка с галочкой её завершает.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="38"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="78"/>
         <source>Rally points and geofence</source>
         <translation>Точки сбора и геозона</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="39"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="79"/>
         <source>Rally points are safe places to return to. The geofence sets zones the vehicle must stay inside or keep out of.</source>
         <translation>Точки сбора — безопасные места для возврата. Геозона задаёт области, внутри которых лодка должна оставаться или в которые не должна заходить.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="40"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="80"/>
         <source>Undo and view</source>
         <translation>Отмена и вид</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="41"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="81"/>
         <source>Undo and redo your edits, fit the whole mission on screen, zoom in and out.</source>
         <translation>Отмена и повтор правок, вся миссия на экране, приближение и отдаление.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="42"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="82"/>
         <source>Map layer</source>
         <translation>Слой карты</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="43"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="83"/>
         <source>Tap to switch back to the previous map. Press and hold to pick one from the full list.</source>
         <translation>Нажатие возвращает предыдущую карту. Удерживайте, чтобы выбрать из полного списка.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="44"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="84"/>
         <source>Map</source>
         <translation>Карта</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="45"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="85"/>
         <source>Points and shapes are placed here. Tap an item to select it, drag its handles to edit, the plus sign inserts a vertex.</source>
         <translation>Здесь ставятся точки и фигуры. Нажмите на элемент, чтобы выделить его, тяните за маркеры для правки, плюс добавляет вершину.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="46"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="86"/>
         <source>Prompt</source>
         <translation>Подсказка</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="47"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="87"/>
         <source>This prompt always says what the map expects from you right now.</source>
         <translation>Эта подсказка всегда говорит, чего карта ждёт от вас прямо сейчас.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="48"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="88"/>
         <source>Mission panel</source>
         <translation>Панель миссии</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="49"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="89"/>
         <source>The whole mission as a list: plan settings, route, rally points, geofence and the summary.</source>
         <translation>Вся миссия списком: параметры плана, маршрут, точки сбора, геозона и сводка.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="50"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="90"/>
         <source>Plan</source>
         <translation>План</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="51"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="91"/>
         <source>Cruise speed and what the vehicle does after the last point: return to the start point, return to launch, hold position or leave it to the autopilot.</source>
         <translation>Крейсерская скорость и что лодка делает после последней точки: возвращается к точке старта или к месту запуска, остаётся на месте или действует по настройке автопилота.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="52"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="92"/>
         <source>Start point status</source>
         <translation>Состояние точки старта</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="53"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="93"/>
         <source>Shows whether the start point is placed. Tapping the row arms the Start point tool if it is missing, otherwise it selects the point on the map.</source>
         <translation>Показывает, поставлена ли точка старта. Если её нет, нажатие на строку включает инструмент «Точка старта», иначе выделяет точку на карте.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="54"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="94"/>
         <source>Route</source>
         <translation>Маршрут</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="55"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="95"/>
         <source>Route items in the order the vehicle runs them. Tap a card to select it and open its settings. Drag a card or use its arrows to change the order.</source>
         <translation>Элементы маршрута в порядке прохождения. Нажмите на карточку, чтобы выделить её и открыть настройки. Перетащите карточку или используйте её стрелки, чтобы изменить порядок.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="56"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="96"/>
         <source>Summary</source>
         <translation>Сводка</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="57"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="97"/>
         <source>Route length, time at cruise speed, the number of waypoints and how many mission items the autopilot receives out of its limit. Problems with the plan are listed here too.</source>
         <translation>Длина маршрута, время на крейсерской скорости, число путевых точек и сколько элементов миссии получит автопилот из его лимита. Здесь же перечислены проблемы плана.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="58"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="98"/>
         <source>That&apos;s all</source>
         <translation>Вот и всё</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="59"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="99"/>
         <source>Open this tour again any time with this button.</source>
         <translation>Этой кнопкой обучение можно открыть снова в любой момент.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="60"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="100"/>
         <source>Finish</source>
         <translation>Готово</translation>
     </message>

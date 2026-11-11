@@ -141,7 +141,7 @@ Rectangle {
         }
     }
 
-    KToolTip {
+    KLazyToolTip {
         text: pgroup.toolTipText
         targetItem: pgroup
         shown: pgroup._hovered && pgroup.toolTipText.length > 0

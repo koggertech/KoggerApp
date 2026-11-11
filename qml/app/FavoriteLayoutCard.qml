@@ -89,7 +89,7 @@ Rectangle {
 
     KFocusRing { id: focusRing; z: 12 }
 
-    KToolTip {
+    KLazyToolTip {
         text: root.showText ? "" : root.layoutCaption
         shown: root.hovered
     }

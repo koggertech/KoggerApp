@@ -59,6 +59,7 @@ Column {
         headerActions: [
             KCircleIconButton {
                 id: discoverBtn
+                objectName: "connectionsDiscoverChip"
                 readonly property bool _busy: typeof linkDiscovery !== "undefined" && linkDiscovery && linkDiscovery.running
                 property real pulse: 0
                 readonly property color _accent: AppPalette.accentBorder
@@ -142,25 +143,13 @@ Column {
             }
         ]
 
-        Loader {
+        SettingsViewerLoader {
             id: connectionsLoader
+            objectName: "connectionsViewerLoader"
             width: parent.width
-            active: connGroup.expanded
-                    && (root.store ? root.store.settingsPanelOpen === true : false)
-            asynchronous: true
+            group: connGroup
+            store: root.store
             source: "qrc:/qml/devices/ConnectionViewer.qml"
-
-            onLoaded: {
-                if (item) {
-                    item.width = width
-                    item.store = root.store
-                }
-            }
-
-            onWidthChanged: {
-                if (item)
-                    item.width = width
-            }
         }
     }
 

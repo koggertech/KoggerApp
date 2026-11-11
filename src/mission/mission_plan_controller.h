@@ -37,6 +37,8 @@ class MissionPlanController : public QObject
     Q_PROPERTY(int          maxMissionItems   READ maxMissionItems                             CONSTANT)
     Q_PROPERTY(double       minSpeed          READ minSpeed                                    CONSTANT)
     Q_PROPERTY(double       warnSpeed         READ warnSpeed                                   CONSTANT)
+    Q_PROPERTY(double       speedStep         READ speedStep                                   CONSTANT)
+    Q_PROPERTY(double       maxSpeed          READ maxSpeed                                    CONSTANT)
     Q_PROPERTY(bool         exportable        READ exportable                                  NOTIFY planChanged)
     Q_PROPERTY(QString      exportBlocker     READ exportBlocker                               NOTIFY planChanged)
     Q_PROPERTY(QString      lastError         READ lastError                                   NOTIFY lastErrorChanged)
@@ -68,6 +70,8 @@ public:
     int         maxMissionItems() const { return kMaxMissionItems; }
     double      minSpeed() const { return kMinMissionSpeed; }
     double      warnSpeed() const { return kWarnMissionSpeed; }
+    double      speedStep() const { return kSpeedStep; }
+    double      maxSpeed() const { return kMaxCommandSpeed; }
     bool        exportable() const { return exportBlocker().isEmpty(); }
     QString     exportBlocker() const;
     QString     lastError() const { return lastError_; }

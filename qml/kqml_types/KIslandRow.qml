@@ -253,7 +253,7 @@ Item {
         }
     }
 
-    KToolTip {
+    KLazyToolTip {
         text: row.toolTipText
         targetItem: row
         shown: rowMouse.containsMouse && row.toolTipText.length > 0

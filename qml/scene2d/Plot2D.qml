@@ -109,6 +109,21 @@ WaterFall {
     readonly property int  liveEdgeGap: Math.round(6 * AppPalette.scale)
     readonly property color scrollThumbColor: theme.controlBorderColor   // цвет темы
     readonly property real scrollThumbOpacity: 0.7                        // resting; pressed → 1.0 (opaque)
+    readonly property real scrollThumbRestingLen: Math.round(68 * AppPalette.scale)
+    readonly property int  contactMarkThickness: Math.max(2, Math.round(2 * AppPalette.scale))
+    readonly property color contactMarkColor: Qt.rgba(170 / 255, 30 / 255, 40 / 255, 0.85)
+    property var contactMarkEpochs: []
+
+    function refreshContactMarks() {
+        contactMarkEpochs = dataset ? dataset.contactIndices() : []
+    }
+
+    function contactMarkProgress(epoch) {
+        const range = 1.0 - viewportRatio
+        if (epochCount <= 0 || range <= 0.0001)
+            return -1
+        return Math.max(0, Math.min(1, ((epoch + 0.5) / epochCount - viewportRatio / 2) / range))
+    }
     property alias viewState: echoViewState
     signal echogramStateChanged()
     property bool suspendCapture: false
@@ -483,6 +498,7 @@ WaterFall {
     Component.onCompleted: {
         setPlotEnabled(enabled)
         _applyBtTool()
+        refreshContactMarks()
     }
 
     // Global bottom-track edit tool (core.bottomTrackEditTool) → per-plot mouse tool.
@@ -498,6 +514,11 @@ WaterFall {
         target: core
         ignoreUnknownSignals: true
         function onBottomTrackEditToolChanged() { plot._applyBtTool() }
+    }
+
+    Connections {
+        target: dataset
+        function onContactsChanged() { plot.refreshContactMarks() }
     }
 
     signal plotCursorChanged(int indx, real from, real to)
@@ -1986,7 +2007,7 @@ WaterFall {
             readonly property real progress: plot.timelineProgress
 
             x: {
-                const restingW = Math.round(68 * AppPalette.scale)
+                const restingW = plot.scrollThumbRestingLen
                 const center = progress * (echoScrollBarH.width - restingW) + restingW / 2
                 return Math.max(0, Math.min(echoScrollBarH.width - width, center - width / 2))
             }
@@ -1998,6 +2019,24 @@ WaterFall {
 
             Behavior on opacity { NumberAnimation { duration: 150 } }
             Behavior on width   { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+        }
+
+        Repeater {
+            model: plot.horizontal ? plot.contactMarkEpochs : []
+
+            Rectangle {
+                required property var modelData
+                readonly property real progress: plot.contactMarkProgress(modelData)
+
+                visible: progress >= 0
+                x: Math.round(progress * (echoScrollBarH.width - plot.scrollThumbRestingLen)
+                              + (plot.scrollThumbRestingLen - width) / 2)
+                anchors.verticalCenter: parent.verticalCenter
+                width: plot.contactMarkThickness
+                height: Math.round(echoScrollBarH.height * 0.6)
+                radius: width / 2
+                color: plot.contactMarkColor
+            }
         }
 
         NumberAnimation {
@@ -2145,7 +2184,7 @@ WaterFall {
             readonly property real progress: plot.timelineProgress
 
             y: {
-                const restingH = Math.round(68 * AppPalette.scale)
+                const restingH = plot.scrollThumbRestingLen
                 const vp = 1.0 - progress
                 const center = vp * (echoScrollBarV.height - restingH) + restingH / 2
                 return Math.max(0, Math.min(echoScrollBarV.height - height, center - height / 2))
@@ -2158,6 +2197,24 @@ WaterFall {
 
             Behavior on opacity { NumberAnimation { duration: 150 } }
             Behavior on height  { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+        }
+
+        Repeater {
+            model: plot.horizontal ? [] : plot.contactMarkEpochs
+
+            Rectangle {
+                required property var modelData
+                readonly property real progress: plot.contactMarkProgress(modelData)
+
+                visible: progress >= 0
+                y: Math.round((1.0 - progress) * (echoScrollBarV.height - plot.scrollThumbRestingLen)
+                              + (plot.scrollThumbRestingLen - height) / 2)
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: Math.round(echoScrollBarV.width * 0.6)
+                height: plot.contactMarkThickness
+                radius: height / 2
+                color: plot.contactMarkColor
+            }
         }
 
         NumberAnimation {

@@ -252,7 +252,7 @@ Item {
                     }
                 }
 
-                KToolTip {
+                KLazyToolTip {
                     text: root.optionTipAt(tabButton.optionIndex)
                     shown: tabMouseArea.hoverIndex === tabButton.optionIndex
                            && !tabMouseArea.pressed

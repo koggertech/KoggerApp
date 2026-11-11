@@ -1,6 +1,6 @@
 add_library(kogger_kqml_types STATIC)
 set_source_files_properties(
-    ZOrder.qml AppPalette.qml Tokens.qml Anim.qml DataFieldCatalog.qml DeviceParamCatalog.qml
+    ZOrder.qml AppPalette.qml Tokens.qml Anim.qml DataFieldCatalog.qml DeviceParamCatalog.qml ToolTipFactory.qml
     PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
 qt_add_qml_module(kogger_kqml_types
@@ -28,6 +28,7 @@ qt_add_qml_module(kogger_kqml_types
         KIsland.qml
         KIslandRow.qml
         KIslandSection.qml
+        KLazyToolTip.qml
         KParamGrid.qml
         KScrollBar.qml
         KSlider.qml
@@ -41,5 +42,6 @@ qt_add_qml_module(kogger_kqml_types
         KToolTip.qml
         KTutorialAnchor.qml
         Tokens.qml
+        ToolTipFactory.qml
         ZOrder.qml
         UsblFieldLogic.js)

@@ -81,7 +81,7 @@ ApplicationWindow {
         id: startupSettings
         category: "main/ui"
         property int appTheme: 0
-        property int instrumentsGradeList: 0
+        property int instrumentsGradeList: 2
     }
     Settings {
         id: consoleVisibilitySettings
@@ -1201,6 +1201,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "about"        ? qsTr("About")
                      : workspaceStore.settingsSubPageKind === "controls"     ? qsTr("Controls")
                      : workspaceStore.settingsSubPageKind === "tutorials"    ? qsTr("Tutorials")
+                     : workspaceStore.settingsSubPageKind === "autopilot"    ? qsTr("Autopilot")
                      : workspaceStore.settingsSubPageKind === "developer"    ? qsTr("Developer mode")
                      : workspaceStore.settingsSubPageKind === "license"      ? workspaceStore.licenseViewTitle
                      : workspaceStore.settingsSubPageKind === "createLayout" ? qsTr("Create layout")
@@ -1236,6 +1237,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "about"      ? aboutPageComponent
                      : workspaceStore.settingsSubPageKind === "controls"   ? controlsHelpPageComponent
                      : workspaceStore.settingsSubPageKind === "tutorials"  ? tutorialsPageComponent
+                     : workspaceStore.settingsSubPageKind === "autopilot"  ? autopilotSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "developer"  ? developerSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "license"    ? licensePageComponent
                      : workspaceStore.settingsSubPageKind === "createLayout" ? layoutCreateTabComponent
@@ -1591,6 +1593,14 @@ ApplicationWindow {
             id: tutorialsPageComponent
 
             TutorialsSettingsPage {
+                store: workspaceStore
+            }
+        }
+
+        Component {
+            id: autopilotSettingsTabComponent
+
+            AutopilotSettingsTab {
                 store: workspaceStore
             }
         }

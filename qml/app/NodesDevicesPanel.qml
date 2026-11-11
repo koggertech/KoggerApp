@@ -221,7 +221,7 @@ Item {
                         width: col.width - writeBtn.width - Tokens.spaceXs
                         elide: Text.ElideRight
                         anchors.verticalCenter: parent.verticalCenter
-                        KToolTip { text: root.store.writeStateText(qrow._ws); shown: qtip.hovered }
+                        KLazyToolTip { text: root.store.writeStateText(qrow._ws); shown: qtip.hovered }
                         HoverHandler { id: qtip }
                     }
                     Tool {

@@ -124,7 +124,7 @@ Rectangle {
         onClicked: chip.clicked()
     }
 
-    KToolTip {
+    KLazyToolTip {
         text: chip.resolvedToolTipText
         targetItem: chip
         shown: chipMouse.containsMouse

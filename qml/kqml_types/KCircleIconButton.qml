@@ -361,10 +361,11 @@ Item {
         onTriggered: root._holdTip = false
     }
 
-    KToolTip {
+    KLazyToolTip {
+        objectName: "toolTip"
         text: root.resolvedToolTipText
         targetItem: root
-        delay: root._holdTip ? 0 : 520
+        delay: root._holdTip ? 0 : Anim.tooltipDelayMs
         shown: root._holdTip
                || (root.hovered && root.enabled && !root._tipSuppressed && !root.toolTipSuppressed)
     }
