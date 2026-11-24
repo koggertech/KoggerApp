@@ -8,7 +8,7 @@ ToolTip {
     property bool shown: false
 
     visible: shown && text !== ""
-    delay: 520
+    delay: Anim.tooltipDelayMs
     timeout: 3200
     x: parent ? Math.round((parent.width - implicitWidth) / 2) : 0
     y: parent ? -implicitHeight - Math.round(8 * AppPalette.scale) : 0

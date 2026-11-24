@@ -253,7 +253,7 @@ Item {
         }
     }
 
-    KToolTip {
+    KLazyToolTip {
         text: root.toolTipText
         targetItem: root
         shown: root.hovered && root.toolTipText.length > 0

@@ -14,6 +14,7 @@ Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
       gridVisibility_(true),
       useAngleLocation_(false),
       navigatorViewLocation_(false),
+      smoothFollow_(true),
       isNorth_(false),
       compass_(true),
       compassPos_(1),
@@ -172,6 +173,18 @@ void Scene3dToolBarController::onNavigatorLocationButtonChanged(bool state)
 
     if (graphicsScene3dViewPtr_) {
         graphicsScene3dViewPtr_->setNavigatorViewLocation(navigatorViewLocation_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onSmoothFollowChanged(bool state)
+{
+    smoothFollow_ = state;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setSmoothFollow(smoothFollow_);
     }
     else {
         tryInitPendingLambda();
@@ -576,6 +589,7 @@ void Scene3dToolBarController::tryInitPendingLambda()
                 graphicsScene3dViewPtr_->setGridVisibility(gridVisibility_);
                 graphicsScene3dViewPtr_->setNavigatorViewLocation(navigatorViewLocation_);
                 graphicsScene3dViewPtr_->setUseAngleLocation(useAngleLocation_);
+                graphicsScene3dViewPtr_->setSmoothFollow(smoothFollow_);
                 graphicsScene3dViewPtr_->setIsNorth(isNorth_);
                 graphicsScene3dViewPtr_->setCompassState(compass_);
                 graphicsScene3dViewPtr_->setCompassPos(compassPos_);

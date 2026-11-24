@@ -27,6 +27,7 @@ public:
     Q_INVOKABLE void onGridVisibilityCheckedChanged(bool state);
     Q_INVOKABLE void onUseAngleLocationButtonChanged(bool state);
     Q_INVOKABLE void onNavigatorLocationButtonChanged(bool state);
+    Q_INVOKABLE void onSmoothFollowChanged(bool state);
     Q_INVOKABLE void onIsNorthLocationButtonChanged(bool state);
     Q_INVOKABLE void onCompassButtonChanged(bool state);
     Q_INVOKABLE void onCompassPosChanged(int pos);
@@ -78,6 +79,7 @@ private:
     bool gridVisibility_;
     bool useAngleLocation_;
     bool navigatorViewLocation_;
+    bool smoothFollow_;
     bool isNorth_;
     bool compass_;
     int  compassPos_;

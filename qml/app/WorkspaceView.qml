@@ -587,7 +587,7 @@ Item {
             Binding {
                 target: scene3dView.missionRunController
                 property: "layerVisible"
-                value: workspace.store ? workspace.store.missionRunVisible : true
+                value: workspace.store ? workspace.store.missionRunVisible : false
             }
             Binding {
                 target: scene3dView.missionRunController
@@ -603,6 +603,11 @@ Item {
                 target: scene3dView.missionRunController
                 property: "showHome"
                 value: workspace.store ? workspace.store.missionRunShowHome : true
+            }
+            Binding {
+                target: scene3dView.missionRunController
+                property: "goToColor"
+                value: AppPalette.accent
             }
             Binding {
                 target: scene3dView.missionRunController

@@ -329,34 +329,6 @@ void GraphicsScene3dRenderer::drawObjects()
         if (gridVisibility_ && !planeGridType_) {
             m_planeGridRenderImpl.render(this, m_model, view, m_projection, m_shaderProgramMap);
         }
-
-        //-----------Navigation arrow-------------
-        {
-            glEnable(GL_DEPTH_TEST);
-
-            QMatrix4x4 nModel;
-            nModel.setToIdentity();
-            nModel.translate(navigationArrowRenderImpl_.getPosition());
-            nModel.rotate(navigationArrowRenderImpl_.getAngle(), 0.f, 0.f, 1.f);
-            float distance =  m_camera.distToFocusPoint();
-            float perspFixFovRad = qDegreesToRadians(perspFixFov);
-            float factor = 2.0f * distance * std::tan(perspFixFovRad * 0.5f) / m_viewSize.height();
-            float worldScale = factor * 7.f * scaleFactor_;
-            float navigationArrowSizeFactor = 1.0f;
-            switch (qBound(1, navigationArrowRenderImpl_.getSize(), 5)) {
-            case 1: navigationArrowSizeFactor = 1.0f; break;
-            case 2: navigationArrowSizeFactor = 2.0f; break;
-            case 3: navigationArrowSizeFactor = 3.0f; break;
-            case 4: navigationArrowSizeFactor = 4.0f; break;
-            case 5: navigationArrowSizeFactor = 5.0f; break;
-            default: break;
-            }
-            nModel.scale(worldScale * navigationArrowSizeFactor);
-            navigationArrowRenderImpl_.render(this, projection * view * nModel, m_shaderProgramMap);
-
-            glDisable(GL_DEPTH_TEST);
-        }
-
     }
 
     //-----------Overlays that should work in any camera/reference state-------------
@@ -366,6 +338,38 @@ void GraphicsScene3dRenderer::drawObjects()
     geoJsonLayerRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
     missionRunLayerRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
     missionLayerRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
+    glDisable(GL_BLEND);
+
+    //-----------Navigation arrow-------------
+    if (!isOut) {
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glEnable(GL_DEPTH_TEST);
+
+        QMatrix4x4 nModel;
+        nModel.setToIdentity();
+        nModel.translate(navigationArrowRenderImpl_.getPosition());
+        nModel.rotate(navigationArrowRenderImpl_.getAngle(), 0.f, 0.f, 1.f);
+        float distance =  m_camera.distToFocusPoint();
+        float perspFixFovRad = qDegreesToRadians(perspFixFov);
+        float factor = 2.0f * distance * std::tan(perspFixFovRad * 0.5f) / m_viewSize.height();
+        float worldScale = factor * 7.f * scaleFactor_;
+        float navigationArrowSizeFactor = 1.0f;
+        switch (qBound(1, navigationArrowRenderImpl_.getSize(), 5)) {
+        case 1: navigationArrowSizeFactor = 1.0f; break;
+        case 2: navigationArrowSizeFactor = 2.0f; break;
+        case 3: navigationArrowSizeFactor = 3.0f; break;
+        case 4: navigationArrowSizeFactor = 4.0f; break;
+        case 5: navigationArrowSizeFactor = 5.0f; break;
+        default: break;
+        }
+        nModel.scale(worldScale * navigationArrowSizeFactor);
+        navigationArrowRenderImpl_.render(this, projection * view * nModel, m_shaderProgramMap);
+
+        glDisable(GL_DEPTH_TEST);
+    }
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     rulerToolRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
     glDisable(GL_BLEND);
 

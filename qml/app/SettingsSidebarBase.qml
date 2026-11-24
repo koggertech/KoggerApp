@@ -141,6 +141,7 @@ Item {
             return
 
         kbdScrollAnim.stop()
+        wheelScrollAnim.stop()
         focusScrollAnim.stop()
         focusScrollAnim.target = flick
         focusScrollAnim.from = cy
@@ -231,6 +232,7 @@ Item {
               : kind === "down"   ? Math.min(maxY, f.contentY + f.height * 0.9)
               :                     Math.max(0, f.contentY - f.height * 0.9)
         focusScrollAnim.stop()
+        wheelScrollAnim.stop()
         kbdScrollAnim.stop()
         kbdScrollAnim.target = f
         kbdScrollAnim.from = f.contentY
@@ -243,6 +245,41 @@ Item {
         property: "contentY"
         duration: 180
         easing.type: Easing.OutCubic
+    }
+
+    property real wheelSpeed: 1.3
+    property real _fineWheelAt: 0
+    property bool _wheelFine: false
+
+    function _wheelScroll(f, event) {
+        var dy = event.angleDelta.y
+        var now = Date.now()
+        if (dy % 120 !== 0)
+            _fineWheelAt = now
+        var fine = now - _fineWheelAt < 300
+        var maxY = Math.max(0, f.contentHeight - f.height)
+        var chained = !fine && wheelScrollAnim.running && wheelScrollAnim.target === f
+        var base = chained ? wheelScrollAnim.to : f.contentY
+        var step = Qt.styleHints.wheelScrollLines * 24 * (fine ? 1 : wheelSpeed * AppPalette.scale)
+        var y = Math.max(0, Math.min(maxY, base - dy / 120 * step))
+        if (Math.abs(y - base) < 0.5)
+            return
+        focusScrollAnim.stop()
+        kbdScrollAnim.stop()
+        scrollToTopAnim.stop()
+        wheelScrollAnim.stop()
+        _wheelFine = fine
+        wheelScrollAnim.target = f
+        wheelScrollAnim.from = f.contentY
+        wheelScrollAnim.to = y
+        wheelScrollAnim.start()
+    }
+
+    NumberAnimation {
+        id: wheelScrollAnim
+        property: "contentY"
+        duration: panelRoot._wheelFine ? 300 : 180
+        easing.type: panelRoot._wheelFine ? Easing.OutExpo : Easing.OutCubic
     }
 
     onOpenChanged: {
@@ -465,6 +502,7 @@ Item {
             interactive: contentHeight > height + 1
             enabled: !panelRoot.subPageCovers
             z: 2
+            onMovementStarted: wheelScrollAnim.stop()
 
             // Attached ScrollBar.vertical: positioning intentionally NOT
             // delegated to Qt's internal layout — Qt fixes x at flickable
@@ -503,6 +541,14 @@ Item {
             anchors.rightMargin: Math.round((panelRoot.scrollBarReservePx - panelRoot._scrollThumbW) / 2)
             thumbWidth: panelRoot._scrollThumbW
             autoHideMs: panelRoot.scrollAutoHideMs
+            onPressedChanged: if (pressed) wheelScrollAnim.stop()
+        }
+
+        WheelHandler {
+            parent: contentFlick
+            target: null
+            enabled: contentFlick.interactive
+            onWheel: function(event) { panelRoot._wheelScroll(contentFlick, event) }
         }
 
         // ── Scroll-edge fade overlays ─────────────────────────────────────
@@ -522,7 +568,7 @@ Item {
             var arr = panelRoot.store._settingsGroupInstances
             for (var i = 0; i < arr.length; ++i) {
                 var g = arr[i]
-                if (!g || !g._bodyShown)
+                if (!g || !g.bodyShown)
                     continue
                 if (g._pinningToTop)
                     return true
@@ -608,6 +654,7 @@ Item {
                 contentWidth: Math.max(0, width - panelRoot.scrollBarReservePx)
                 contentHeight: Math.max(height, subLoader.implicitHeight)
                 interactive: contentHeight > height + 1
+                onMovementStarted: wheelScrollAnim.stop()
                 ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOff }
 
                 Loader {
@@ -630,6 +677,14 @@ Item {
                 anchors.rightMargin: Math.round((panelRoot.scrollBarReservePx - panelRoot._scrollThumbW) / 2)
                 thumbWidth: panelRoot._scrollThumbW
                 autoHideMs: panelRoot.scrollAutoHideMs
+                onPressedChanged: if (pressed) wheelScrollAnim.stop()
+            }
+
+            WheelHandler {
+                parent: subFlick
+                target: null
+                enabled: subFlick.interactive
+                onWheel: function(event) { panelRoot._wheelScroll(subFlick, event) }
             }
         }
     }

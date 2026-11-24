@@ -87,6 +87,7 @@ public:
     Q_PROPERTY(bool              posZeroing                   READ getPosZeroing                   NOTIFY posZeroingChanged)
     Q_PROPERTY(int               bottomTrackEditTool          READ getBottomTrackEditTool          WRITE setBottomTrackEditTool          NOTIFY bottomTrackEditToolChanged)
     Q_PROPERTY(bool              contactPlacementArmed        READ getContactPlacementArmed        WRITE setContactPlacementArmed        NOTIFY contactPlacementArmedChanged)
+    Q_PROPERTY(bool              goToPlacementArmed           READ getGoToPlacementArmed           WRITE setGoToPlacementArmed           NOTIFY goToPlacementArmedChanged)
     Q_PROPERTY(int               klfEpochIndexSize            READ klfEpochIndexSize                                                     NOTIFY klfEpochIndexSizeChanged)
     Q_PROPERTY(bool              missionEditorActive          READ getMissionEditorActive          WRITE setMissionEditorActive          NOTIFY missionEditorActiveChanged)
 
@@ -207,6 +208,9 @@ public slots:
     Q_INVOKABLE void setBottomTrackEditTool(int tool);
     bool getContactPlacementArmed() const { return contactPlacementArmed_; }
     Q_INVOKABLE void setContactPlacementArmed(bool armed);
+    bool getGoToPlacementArmed() const { return goToPlacementArmed_; }
+    /** "Go here" tool: while armed every tap in the 3D scene picks the point the vehicle is sent to (see MissionRunController). */
+    Q_INVOKABLE void setGoToPlacementArmed(bool armed);
     bool getMissionEditorActive() const { return missionEditorActive_; }
     Q_INVOKABLE void setMissionEditorActive(bool active);
     QString missionDirectoryFor(const QString& logDir) const;
@@ -293,6 +297,7 @@ signals:
     void posZeroingChanged();
     void bottomTrackEditToolChanged();
     void contactPlacementArmedChanged();
+    void goToPlacementArmedChanged();
     void klfEpochIndexSizeChanged();
     void missionEditorActiveChanged();
     void languageChanged();
@@ -423,7 +428,7 @@ private:
     bool metered_ = false;
     bool deferTilesOnMetered_ = true;
     bool mapTileLoadingEnabled_ = true;
-    bool bringWindowToFrontEnabled_ = true;
+    bool bringWindowToFrontEnabled_ = false;
     bool needForceZooming_ = false; // debug
 
     bool fixBlackStripesState_;
@@ -434,6 +439,7 @@ private:
     bool isBottomTrackZeroing_;
     int  bottomTrackEditTool_ = 0;
     bool contactPlacementArmed_ = false;
+    bool goToPlacementArmed_ = false;
     bool missionEditorActive_ = false;
     int  previousMapTileProviderId_ = -1;
 

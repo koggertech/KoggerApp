@@ -569,7 +569,9 @@ Item {
     function _wheelStrip(event) {
         _userScrollsStrip()
         var px = event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.pixelDelta.x
-        if (px !== 0) {
+        var touchpad = event.phase !== Qt.NoScrollPhase
+                    || (event.device && event.device.type === PointerDevice.TouchPad)
+        if (touchpad && px !== 0) {
             stripScrollAnim.stop()
             strip.contentX = _clampStripX(strip.contentX - px)
             return
@@ -737,7 +739,7 @@ Item {
             onClicked: button.clicked()
         }
 
-        KToolTip {
+        KLazyToolTip {
             text: qsTr("Layouts")
             targetItem: button
             shown: buttonMouse.containsMouse && !button.open
@@ -842,7 +844,7 @@ Item {
             onClicked: wbutton.clicked()
         }
 
-        KToolTip {
+        KLazyToolTip {
             text: qsTr("Widget panels")
             targetItem: wbutton
             shown: wbuttonMouse.containsMouse && !wbutton.open
@@ -1084,7 +1086,7 @@ Item {
 
         KFocusRing { id: logFocusRing; target: badgeCircle; focusItem: logBadge }
 
-        KToolTip {
+        KLazyToolTip {
             text: logBadge._active ? qsTr("Stop recording · hold for options")
                                    : qsTr("Start recording · hold for options")
             shown: badgeMa.containsMouse && !pill.opened
@@ -1269,7 +1271,7 @@ Item {
                         }
                     }
 
-                    KToolTip {
+                    KLazyToolTip {
                         text: logBadge._active ? qsTr("Stop recording · hold to collapse")
                                                : qsTr("Start recording · hold to collapse")
                         shown: pillHeadMa.containsMouse
@@ -1326,7 +1328,7 @@ Item {
                             pill.close()
                         }
                     }
-                    KToolTip { text: logBadge._active ? qsTr("Stop recording") : qsTr("Start recording"); shown: actionMa.containsMouse }
+                    KLazyToolTip { text: logBadge._active ? qsTr("Stop recording") : qsTr("Start recording"); shown: actionMa.containsMouse }
                 }
 
                 Rectangle {
@@ -1353,7 +1355,7 @@ Item {
                             root.expanded = false
                         }
                     }
-                    KToolTip { text: qsTr("Recording settings"); shown: gearMa.containsMouse }
+                    KLazyToolTip { text: qsTr("Recording settings"); shown: gearMa.containsMouse }
                 }
             }
         }
@@ -1513,7 +1515,7 @@ Item {
 
         KFocusRing { id: lockFocusRing; target: lockCircle; focusItem: lockBadge }
 
-        KToolTip {
+        KLazyToolTip {
             text: lockBadge._locked ? qsTr("Input locked · hold to unlock")
                                     : qsTr("Lock input")
             shown: lockMa.containsMouse

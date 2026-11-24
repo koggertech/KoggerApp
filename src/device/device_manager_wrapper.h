@@ -5,6 +5,8 @@
 #include <QVariantList>
 #include <memory>
 
+#include "autopilot_params.h"
+#include "link_loss_policy.h"
 #include "device_manager.h"
 #include "mission_transfer.h"
 
@@ -51,8 +53,16 @@ public:
     /** Vehicle position from GLOBAL_POSITION_INT of the latched vehicle, NaN while unknown. */
     /** GPS of the latched vehicle (GPS_RAW_INT): MAVLink GPS_FIX_TYPE or -1, satellites or -1, HDOP or NaN. */
     Q_PROPERTY(int gpsFixType READ gpsFixType NOTIFY vruChanged)
+    /** Whether the vehicle's EKF has the horizontal position an armed ArduRover needs for Guided / Loiter / Auto: 1 yes, 0 no, -1 unknown (no EKF_STATUS_REPORT). */
+    Q_PROPERTY(int ekfPositionState READ ekfPositionState NOTIFY vruChanged)
     Q_PROPERTY(int gpsSatellites READ gpsSatellites NOTIFY vruChanged)
     Q_PROPERTY(double gpsHdop READ gpsHdop NOTIFY vruChanged)
+    /** Latched vehicle: MAV_AUTOPILOT / MAV_TYPE from HEARTBEAT (-1 = none); AUTOPILOT_VERSION "major.minor.patch" (empty until received), FIRMWARE_VERSION_TYPE (-1 = unknown), git hash. */
+    Q_PROPERTY(int autopilotKind READ autopilotKind NOTIFY vruChanged)
+    Q_PROPERTY(int vehicleType READ vehicleType NOTIFY vruChanged)
+    Q_PROPERTY(QString firmwareVersion READ firmwareVersion NOTIFY vruChanged)
+    Q_PROPERTY(int firmwareVersionType READ firmwareVersionType NOTIFY vruChanged)
+    Q_PROPERTY(QString firmwareGitHash READ firmwareGitHash NOTIFY vruChanged)
     Q_PROPERTY(double vehicleLat READ vehicleLat NOTIFY vruChanged)
     Q_PROPERTY(double vehicleLon READ vehicleLon NOTIFY vruChanged)
     /** Last STATUSTEXT messages of the vehicle, newest first: { severity, text, time (ms since epoch) }. */
@@ -69,6 +79,10 @@ public:
 
     DeviceManager* getWorker();
     QUuid getFileUuid() const;
+    /** Parameter list of the latched autopilot, exposed to QML as `autopilotParams`. */
+    autopilot::AutopilotParams* autopilotParams() { return autopilotParams_.get(); }
+    /** The link-loss action of the latched autopilot, exposed to QML as `linkLoss`. */
+    autopilot::LinkLossPolicy* linkLoss() { return linkLoss_.get(); }
 
     /*QML*/
     QList<DevQProperty*> getDevList     () { return getWorker()->getDevList();     }
@@ -97,8 +111,14 @@ public:
     double               waypointDistance() const { return autopilotState_.mission.waypointDistance; }
     double               crossTrackError() const { return autopilotState_.mission.crossTrackError; }
     int                  gpsFixType() const { return autopilotState_.gpsFixType; }
+    int                  ekfPositionState() const;
     int                  gpsSatellites() const { return autopilotState_.gpsSatellites; }
     double               gpsHdop() const { return autopilotState_.gpsHdop; }
+    int                  autopilotKind() const { return autopilotState_.autopilotKind; }
+    int                  vehicleType() const { return autopilotState_.vehicleType; }
+    QString              firmwareVersion() const { return autopilotState_.firmwareVersion; }
+    int                  firmwareVersionType() const { return autopilotState_.firmwareVersionType; }
+    QString              firmwareGitHash() const { return autopilotState_.firmwareGitHash; }
     double               vehicleLat() const { return autopilotState_.latitude; }
     double               vehicleLon() const { return autopilotState_.longitude; }
     QVariantList         autopilotMessages() const { return autopilotMessages_; }
@@ -116,6 +136,12 @@ public:
     qreal                missionTransferProgress() const { return missionTransferProgress_; }
 
     Q_INVOKABLE static QString modeNameFor(int mode);
+    /**
+     * What an armed ArduRover needs to enter @p mode, for a refused mode change: a position estimate for
+     * Loiter, Auto, RTL, SmartRTL, Guided, Follow, Circle and Dock (plus a mission, home or a recorded path for
+     * the three return / mission modes), a speed estimate for Acro and Steering; empty for the rest.
+     */
+    Q_INVOKABLE static QString modeRefusalReason(int mode);
     Q_INVOKABLE void autopilotArm(bool arm);
     Q_INVOKABLE void autopilotArmForce(bool arm);
     Q_INVOKABLE void autopilotSetMode(int customMode);
@@ -123,7 +149,9 @@ public:
     /** Makes vehicle mission item @p seq current (skip ahead or back); see DeviceManager::autopilotSetMissionCurrent. */
     Q_INVOKABLE void autopilotSetMissionCurrent(int seq);
     /** Sets the vehicle's ground speed in m/s; see DeviceManager::autopilotSetSpeed. */
-    void autopilotSetSpeed(double speed);
+    Q_INVOKABLE void autopilotSetSpeed(double speed);
+    /** Sends the vehicle to a point in Guided; see DeviceManager::autopilotGoTo. */
+    Q_INVOKABLE void autopilotGoTo(double latitude, double longitude);
     /** Sends one MANUAL_CONTROL frame; see DeviceManager::sendManualControl. */
     void autopilotManualControl(int steering, int throttle);
     /** Hands steering and throttle back to the transmitter; see DeviceManager::releaseManualControl. */
@@ -259,6 +287,8 @@ private:
     std::unique_ptr<DeviceManager> workerObject_;
     std::unique_ptr<QThread> missionThread_;
     autopilot::MissionTransfer* missionTransfer_ = nullptr;
+    std::unique_ptr<autopilot::AutopilotParams> autopilotParams_;
+    std::unique_ptr<autopilot::LinkLossPolicy> linkLoss_;
     AutopilotState autopilotState_;
     QVariantList autopilotMessages_;
     bool echogramDeliveryKnown_ = false;

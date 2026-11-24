@@ -10,6 +10,7 @@
 #include <SDL3/SDL_main.h>
 #endif
 
+#include <QDebug>
 #include <QVariantMap>
 
 #ifdef Q_OS_ANDROID
@@ -26,6 +27,39 @@ constexpr char kVirtualPadName[] = "KoggerApp virtual gamepad";
 constexpr Uint16 kVendorValve = 0x28DE;
 constexpr qreal kRumbleSpan = 65535.0;
 constexpr Uint32 kRumbleHoldMs = 250;
+constexpr qint64 kStallLogMs = 100;
+constexpr qint64 kStallLogIntervalMs = 1000;
+
+QString guidText(SDL_GUID guid)
+{
+    char text[33] = {};
+    SDL_GUIDToString(guid, text, int(sizeof(text)));
+    return QString::fromLatin1(text);
+}
+
+QString connectionName(SDL_JoystickConnectionState state)
+{
+    switch (state) {
+    case SDL_JOYSTICK_CONNECTION_WIRED:
+        return QStringLiteral("wired");
+    case SDL_JOYSTICK_CONNECTION_WIRELESS:
+        return QStringLiteral("wireless");
+    default:
+        return QString();
+    }
+}
+
+QString lossReasonName(int reason)
+{
+    switch (reason) {
+    case GamepadWorker::LossRemoved:
+        return QStringLiteral("removed by SDL");
+    case GamepadWorker::LossDetached:
+        return QStringLiteral("virtual pad detached");
+    default:
+        return QStringLiteral("subsystem stopped");
+    }
+}
 
 QString padFamily(SDL_Gamepad* pad)
 {
@@ -99,6 +133,7 @@ GamepadWorker::GamepadWorker(QObject* parent)
     : QObject(parent),
       timer_(this)
 {
+    clock_.start();
     timer_.setInterval(kPollIntervalMs);
     timer_.setTimerType(Qt::PreciseTimer);
     connect(&timer_, &QTimer::timeout, this, &GamepadWorker::poll);
@@ -121,7 +156,7 @@ void GamepadWorker::start()
         SDL_SetMainReady();
         SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
         if (!SDL_InitSubSystem(SDL_INIT_GAMEPAD)) {
-            emit errorChanged(QString::fromUtf8(SDL_GetError()));
+            reportError("SDL_InitSubSystem");
             return;
         }
         subsystemUp_ = true;
@@ -131,6 +166,7 @@ void GamepadWorker::start()
     }
 
     emit errorChanged(QString());
+    lastPollMs_ = -1;
     selectLatestPad();
     emitPads();
     readState(true);
@@ -143,7 +179,8 @@ void GamepadWorker::start()
 void GamepadWorker::stop()
 {
     timer_.stop();
-    closePad();
+    lastPollMs_ = -1;
+    closePad(LossStopped);
     detachVirtualPad();
 
 #ifdef KOGGER_SDL3
@@ -160,21 +197,41 @@ void GamepadWorker::stop()
 void GamepadWorker::poll()
 {
 #ifdef KOGGER_SDL3
+    const qint64 pollStart = clock_.elapsed();
+    const qint64 pollGap = lastPollMs_ < 0 ? 0 : pollStart - lastPollMs_;
+    lastPollMs_ = pollStart;
+
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_EVENT_GAMEPAD_ADDED) {
+            const SDL_JoystickID id = event.gdevice.which;
+            const char* rawName = SDL_GetGamepadNameForID(id);
+            const QString name = rawName ? QString::fromUtf8(rawName) : QString();
+            const QString guid = guidText(SDL_GetGamepadGUIDForID(id));
+            qInfo().noquote() << QStringLiteral("gamepad: added id %1 \"%2\" guid %3 usb %4:%5")
+                                     .arg(id)
+                                     .arg(name, guid)
+                                     .arg(SDL_GetGamepadVendorForID(id), 4, 16, QLatin1Char('0'))
+                                     .arg(SDL_GetGamepadProductForID(id), 4, 16, QLatin1Char('0'));
+            if (!lostGuid_.isEmpty() && guid == lostGuid_) {
+                const qint64 after = clock_.elapsed() - lostAtMs_;
+                qInfo().noquote() << QStringLiteral("gamepad: \"%1\" back %2 ms after the loss").arg(name).arg(after);
+                lostGuid_.clear();
+                emit padReturned(name, after);
+            }
             emitPads();
             if (!continuous_) {
                 selectLatestPad();
             }
         }
         else if (event.type == SDL_EVENT_GAMEPAD_REMOVED) {
+            qInfo().noquote() << QStringLiteral("gamepad: removed id %1").arg(event.gdevice.which);
             if (int(event.gdevice.which) == preferredId_) {
                 preferredId_ = 0;
             }
             emitPads();
             if (pad_ && event.gdevice.which == SDL_GetGamepadID(pad_)) {
-                closePad();
+                closePad(LossRemoved);
                 if (!continuous_) {
                     selectLatestPad();
                 }
@@ -187,6 +244,7 @@ void GamepadWorker::poll()
         }
     }
 
+    reportStall(pollGap, clock_.elapsed() - pollStart);
     readState(continuous_);
 #endif
 }
@@ -244,12 +302,12 @@ void GamepadWorker::attachVirtualPad(int vendorId, int productId)
 
     const SDL_JoystickID id = SDL_AttachVirtualJoystick(&desc);
     if (id == 0) {
-        emit errorChanged(QString::fromUtf8(SDL_GetError()));
+        reportError("SDL_AttachVirtualJoystick");
         return;
     }
     virtualPad_ = SDL_OpenJoystick(id);
     if (!virtualPad_) {
-        emit errorChanged(QString::fromUtf8(SDL_GetError()));
+        reportError("SDL_OpenJoystick");
         SDL_DetachVirtualJoystick(id);
         return;
     }
@@ -270,7 +328,7 @@ void GamepadWorker::detachVirtualPad()
     const SDL_JoystickID id = SDL_GetJoystickID(virtualPad_);
     const bool wasOpen = pad_ && SDL_GetGamepadID(pad_) == id;
     if (wasOpen) {
-        closePad();
+        closePad(LossDetached);
     }
     SDL_CloseJoystick(virtualPad_);
     virtualPad_ = nullptr;
@@ -351,10 +409,12 @@ void GamepadWorker::selectLatestPad()
                 SDL_CloseGamepad(pad_);
             }
             pad_ = next;
+            rememberPad();
             emitConnection();
             readState(true);
             return;
         }
+        qWarning().noquote() << QStringLiteral("gamepad: SDL_OpenGamepad id %1 failed: %2").arg(id).arg(QString::fromUtf8(SDL_GetError()));
     }
 #endif
 }
@@ -389,6 +449,10 @@ void GamepadWorker::emitBattery()
 #ifdef KOGGER_SDL3
     int percent = -1;
     const SDL_PowerState state = pad_ ? SDL_GetGamepadPowerInfo(pad_, &percent) : SDL_POWERSTATE_UNKNOWN;
+    if (pad_ && percent != padBattery_) {
+        padBattery_ = percent;
+        qInfo().noquote() << QStringLiteral("gamepad: \"%1\" battery %2% (%3)").arg(padName_).arg(percent).arg(powerStateName(state));
+    }
     emit batteryChanged(percent, powerStateName(state));
 #endif
 }
@@ -409,15 +473,32 @@ void GamepadWorker::emitPads()
     emit padsChanged(pads);
 }
 
-void GamepadWorker::closePad()
+void GamepadWorker::closePad(LossReason reason)
 {
 #ifdef KOGGER_SDL3
     if (!pad_) {
         return;
     }
 
+    const qint64 now = clock_.elapsed();
+    const qint64 idle = lastInputChangeMs_ < 0 ? -1 : now - lastInputChangeMs_;
+    qInfo().noquote() << QStringLiteral("gamepad: closed id %1 \"%2\" (%3), connection %4, battery %5%, no input change for %6 ms")
+                             .arg(SDL_GetGamepadID(pad_))
+                             .arg(padName_, lossReasonName(reason), padConnection_.isEmpty() ? QStringLiteral("unknown") : padConnection_)
+                             .arg(padBattery_)
+                             .arg(idle);
+    if (reason != LossStopped) {
+        lostGuid_ = padGuid_;
+        lostAtMs_ = now;
+    }
+    emit padLost(int(reason), padName_, padConnection_, padBattery_, idle);
+
     SDL_CloseGamepad(pad_);
     pad_ = nullptr;
+    padName_.clear();
+    padGuid_.clear();
+    padConnection_.clear();
+    padBattery_ = -1;
     emit connectionChanged(false, 0, QString(), QString(), QString(), QStringList(), 0);
     emitBattery();
     readState(false);
@@ -443,11 +524,69 @@ void GamepadWorker::readState(bool force)
     }
 #endif
 
-    if (!force && buttons == buttons_ && axes == axes_) {
+    const bool changed = buttons != buttons_ || axes != axes_;
+    if (changed) {
+        lastInputChangeMs_ = clock_.elapsed();
+    }
+    if (!force && !changed) {
         return;
     }
 
     buttons_ = buttons;
     axes_ = axes;
     emit stateChanged(buttons_, axes_[0], axes_[1], axes_[2], axes_[3], axes_[4], axes_[5]);
+}
+
+void GamepadWorker::rememberPad()
+{
+#ifdef KOGGER_SDL3
+    const SDL_JoystickID id = SDL_GetGamepadID(pad_);
+    const char* name = SDL_GetGamepadName(pad_);
+    padName_ = name ? QString::fromUtf8(name) : QString();
+    padGuid_ = guidText(SDL_GetGamepadGUIDForID(id));
+    padConnection_ = connectionName(SDL_GetGamepadConnectionState(pad_));
+    padBattery_ = -1;
+    lastInputChangeMs_ = clock_.elapsed();
+    qInfo().noquote() << QStringLiteral("gamepad: opened id %1 \"%2\" guid %3 usb %4:%5 connection %6")
+                             .arg(id)
+                             .arg(padName_, padGuid_)
+                             .arg(SDL_GetGamepadVendor(pad_), 4, 16, QLatin1Char('0'))
+                             .arg(SDL_GetGamepadProduct(pad_), 4, 16, QLatin1Char('0'))
+                             .arg(padConnection_.isEmpty() ? QStringLiteral("unknown") : padConnection_);
+#endif
+}
+
+void GamepadWorker::reportError(const char* where)
+{
+#ifdef KOGGER_SDL3
+    const QString error = QString::fromUtf8(SDL_GetError());
+    qWarning().noquote() << QStringLiteral("gamepad: %1 failed: %2").arg(QLatin1String(where), error);
+    emit errorChanged(error);
+#else
+    Q_UNUSED(where);
+#endif
+}
+
+void GamepadWorker::reportStall(qint64 pollGapMs, qint64 pumpMs)
+{
+#ifdef KOGGER_SDL3
+    if (pollGapMs < kStallLogMs && pumpMs < kStallLogMs) {
+        return;
+    }
+    const qint64 now = clock_.elapsed();
+    if (lastStallLogMs_ >= 0 && now - lastStallLogMs_ < kStallLogIntervalMs) {
+        ++stallsSuppressed_;
+        return;
+    }
+    lastStallLogMs_ = now;
+    const QString more = stallsSuppressed_ > 0 ? QStringLiteral(" (%1 more since the last report)").arg(stallsSuppressed_) : QString();
+    qWarning().noquote() << QStringLiteral("gamepad: poll gap %1 ms, SDL event pump %2 ms, pad %3%4")
+                                .arg(pollGapMs)
+                                .arg(pumpMs)
+                                .arg(pad_ ? QStringLiteral("open") : QStringLiteral("none"), more);
+    stallsSuppressed_ = 0;
+#else
+    Q_UNUSED(pollGapMs);
+    Q_UNUSED(pumpMs);
+#endif
 }

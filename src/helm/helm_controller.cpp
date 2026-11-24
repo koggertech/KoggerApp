@@ -2,6 +2,7 @@
 
 #include <span>
 
+#include <QDebug>
 #include <QGuiApplication>
 #include <QSettings>
 
@@ -27,6 +28,8 @@ constexpr int kResultAccepted = 0;
 constexpr int kResultInProgress = 5;
 
 constexpr qint64 kSampleTimeoutMs = 250;
+constexpr int kAutoEngageDelayMs = 1000;
+constexpr qint64 kAutoMinSessionMs = 10000;
 constexpr int kModeTimeoutMs = 3000;
 constexpr int kParamPaceMs = 100;
 constexpr int kParamsPerPace = 5;
@@ -202,6 +205,8 @@ HelmController::HelmController(GamepadMonitor* monitor, DeviceManagerWrapper* ve
     cueTimer_.setSingleShot(true);
     cueTimer_.setTimerType(Qt::PreciseTimer);
     rumblePreviewTimer_.setInterval(kRumblePreviewMs);
+    autoTimer_.setSingleShot(true);
+    autoTimer_.setInterval(kAutoEngageDelayMs);
 
     connect(&sendTimer_, &QTimer::timeout, this, &HelmController::onSendTick);
     connect(&paramTimer_, &QTimer::timeout, this, &HelmController::pumpParams);
@@ -209,6 +214,7 @@ HelmController::HelmController(GamepadMonitor* monitor, DeviceManagerWrapper* ve
     connect(&modeTimer_, &QTimer::timeout, this, [this] { onModeResult(false); });
     connect(&writeTimer_, &QTimer::timeout, this, &HelmController::onWriteDeadline);
     connect(&rumblePreviewTimer_, &QTimer::timeout, this, &HelmController::updateRumble);
+    connect(&autoTimer_, &QTimer::timeout, this, &HelmController::onAutoEngageTimer);
     connect(&cueTimer_, &QTimer::timeout, this, [this] {
         ++cueStep_;
         playCueStep();
@@ -216,6 +222,7 @@ HelmController::HelmController(GamepadMonitor* monitor, DeviceManagerWrapper* ve
 
     connect(monitor_, &GamepadMonitor::connectionChanged, this, &HelmController::onPadConnection);
     connect(monitor_, &GamepadMonitor::stateChanged, this, &HelmController::onPadState);
+    connect(monitor_, &GamepadMonitor::padReturned, this, &HelmController::onPadReturned);
     connect(vehicle_, &DeviceManagerWrapper::vruChanged, this, &HelmController::onVehicleChanged);
     connect(vehicle_, &DeviceManagerWrapper::autopilotParamReceived, this, &HelmController::onParam);
     connect(vehicle_, &DeviceManagerWrapper::autopilotRcChannelCount, this, &HelmController::onRcChannelCount);
@@ -409,13 +416,21 @@ void HelmController::engage()
     if (state_ != Off || confirmationBusy_) {
         return;
     }
+    if (!autoAttempt_) {
+        userReleased_ = false;
+        autoBlocked_ = false;
+    }
     setConfirmation(ConfirmNone, false);
     if (configuring_) {
-        notify(tr("Close the gamepad settings to take control"), kSeverityWarning);
+        const QString reason = tr("Close the gamepad settings to take control");
+        notify(reason, kSeverityWarning);
+        emit engageFailed(reason);
         return;
     }
     if (!available()) {
-        notify(tr("Gamepad control needs a connected gamepad and an online autopilot"), kSeverityWarning);
+        const QString reason = tr("Gamepad control needs a connected gamepad and an online autopilot");
+        notify(reason, kSeverityWarning);
+        emit engageFailed(reason);
         return;
     }
 
@@ -443,6 +458,8 @@ void HelmController::engage()
     seenMode_ = modeBeforeEngage_;
     seenArm_ = vehicle_->pilotArmState();
     padMissionModes_ = 0;
+    requestedMode_ = -1;
+    padLossPending_ = false;
 
     monitor_->setHelmActive(true);
     setState(Checking);
@@ -460,6 +477,7 @@ void HelmController::setConfiguring(bool configuring)
     emit configuringChanged();
     emit layoutEditableChanged();
     syncRumblePreview();
+    scheduleAutoEngage();
     if (configuring_) {
         cancelConfirmation();
         if (state_ != Off && state_ != Driving) {
@@ -541,6 +559,9 @@ void HelmController::onRcChannelCount(int count)
 
 void HelmController::disengage()
 {
+    userReleased_ = true;
+    autoTimer_.stop();
+    operatorStop_ = state_ == Checking || state_ == Starting || state_ == Driving;
     if (state_ == Checking) {
         finish(tr("Gamepad control cancelled"));
         return;
@@ -562,10 +583,24 @@ void HelmController::onVehicleChanged()
         emit availableChanged();
     }
 
+    if (!online) {
+        parkedMode_ = -1;
+    }
+    else if (parkedMode_ >= 0) {
+        if (vehicle_->pilotModeState() == parkedMode_) {
+            parkedSeen_ = true;
+        }
+        else if (parkedSeen_) {
+            parkedMode_ = -1;
+        }
+    }
+    scheduleAutoEngage();
+
     if (state_ == Off) {
         return;
     }
     if (!online) {
+        operatorStop_ = false;
         finish(tr("Link to the vehicle lost — gamepad control off"));
         return;
     }
@@ -576,11 +611,18 @@ void HelmController::onVehicleChanged()
     }
     if (mode != seenMode_) {
         seenMode_ = mode;
+        const bool asked = mode == requestedMode_;
+        requestedMode_ = -1;
         if (modeKeepsSession(mode)) {
             padMissionModes_ = 0;
         }
         if (state_ == Driving) {
             playCue(CueMode);
+            if (!asked && modeKeepsSession(mode) && !modeTakesPad(mode)) {
+                notify(tr("Mode changed to %1 (not from the gamepad) — the gamepad does not drive in this mode")
+                           .arg(DeviceManagerWrapper::modeNameFor(mode)),
+                       kSeverityWarning);
+            }
         }
     }
     const int arm = vehicle_->pilotArmState();
@@ -593,6 +635,7 @@ void HelmController::onVehicleChanged()
     }
     const bool keeps = modeKeepsSession(mode) || (modeBit(mode) & padMissionModes_) != 0;
     if ((state_ == Driving || state_ == Stopping) && pendingMode_ < 0 && !keeps) {
+        autoBlocked_ = true;
         finish(tr("Mode changed to %1 — gamepad control off").arg(DeviceManagerWrapper::modeNameFor(mode)));
     }
 }
@@ -605,9 +648,29 @@ void HelmController::onPadConnection()
         emit availableChanged();
     }
 
+    const int padId = monitor_->connected() ? monitor_->padId() : 0;
+    if (padId != 0 && padId != autoPadId_) {
+        userReleased_ = false;
+        autoBlocked_ = false;
+    }
+    autoPadId_ = padId;
+
     if (!monitor_->connected()) {
         cancelConfirmation();
-        safeStop(tr("Gamepad disconnected — holding position"), tr("Gamepad disconnected — the transmitter has the boat"));
+        if (state_ == Starting || state_ == Driving) {
+            padStop_ = true;
+        }
+        if (state_ != Off && state_ != Stopping) {
+            padLossPending_ = true;
+        }
+        const QString detail = lossDetail();
+        if (detail.isEmpty()) {
+            safeStop(tr("Gamepad disconnected — holding position"), tr("Gamepad disconnected — the transmitter has the boat"));
+        }
+        else {
+            safeStop(tr("Gamepad disconnected (%1) — holding position").arg(detail),
+                     tr("Gamepad disconnected (%1) — the transmitter has the boat").arg(detail));
+        }
         return;
     }
     if (state_ == Off && monitor_->family() != padFamily_) {
@@ -619,11 +682,49 @@ void HelmController::onPadConnection()
         emit tuningChanged();
         emit bindingsChanged();
     }
+    scheduleAutoEngage();
+}
+
+void HelmController::onPadReturned(const QString& name, qint64 afterMs)
+{
+    if (!padLossPending_) {
+        return;
+    }
+    padLossPending_ = false;
+    notify(tr("Gamepad back %1 s after the loss: %2").arg(afterMs / qreal(kMsPerSecond), 0, 'f', 1).arg(name), kSeverityInfo);
+}
+
+QString HelmController::lossDetail() const
+{
+    const GamepadMonitor::Loss& loss = monitor_->lastLoss();
+    if (loss.reason < 0) {
+        return QString();
+    }
+    QStringList parts;
+    if (!loss.name.isEmpty()) {
+        parts << loss.name;
+    }
+    if (loss.connection == QLatin1String("wireless")) {
+        parts << tr("wireless");
+    }
+    else if (loss.connection == QLatin1String("wired")) {
+        parts << tr("wired");
+    }
+    if (loss.batteryPercent >= 0) {
+        parts << tr("battery %1%").arg(loss.batteryPercent);
+    }
+    if (loss.idleMs >= 0) {
+        parts << tr("input unchanged for %1 s").arg(loss.idleMs / qreal(kMsPerSecond), 0, 'f', 1);
+    }
+    return parts.join(QStringLiteral(", "));
 }
 
 void HelmController::onPadState()
 {
     lastSampleMs_ = clock_.elapsed();
+    if (state_ == Off) {
+        scheduleAutoEngage();
+    }
 
     const int buttons = monitor_->buttons();
     const int previous = previousButtons_;
@@ -703,7 +804,9 @@ void HelmController::onParam(const QString& name, float value)
     if (confirmationBusy_ && name == QLatin1String(kParamFsGcs) && int(value) == kFsGcsStopKeepAuto) {
         writeTimer_.stop();
         setConfirmation(ConfirmNone, false);
-        notify(tr("The boat now stops when the link drops"), kSeverityInfo);
+        const QString action = vehicle_ && vehicle_->linkLoss() ? vehicle_->linkLoss()->actionText() : QString();
+        notify(action.isEmpty() ? tr("The link-loss action is on")
+                                : tr("The link-loss action is on: %1").arg(action), kSeverityInfo);
         engage();
         return;
     }
@@ -750,11 +853,18 @@ void HelmController::onCommandAcked(int command, int result)
 void HelmController::onApplicationStateChanged(Qt::ApplicationState appState)
 {
 #ifdef Q_OS_ANDROID
-    if (appState != Qt::ApplicationActive) {
+    if (appState == Qt::ApplicationInactive) {
+        safeStop(tr("App lost focus — holding position"), tr("App lost focus — the transmitter has the boat"));
+    }
+    else if (appState != Qt::ApplicationActive) {
         safeStop(tr("App in the background — holding position"), tr("App in the background — the transmitter has the boat"));
     }
 #else
-    setBackground(active() && appState != Qt::ApplicationActive);
+    const bool background = active() && appState != Qt::ApplicationActive;
+    if (background != background_) {
+        qInfo().noquote() << QStringLiteral("helm: application state %1 during a session, gamepad control goes on").arg(int(appState));
+    }
+    setBackground(background);
 #endif
 }
 
@@ -764,8 +874,21 @@ void HelmController::onSendTick()
         return;
     }
 
-    if ((state_ == Starting || state_ == Driving) && clock_.elapsed() - lastSampleMs_ > kSampleTimeoutMs) {
-        safeStop(tr("Gamepad stopped responding — holding position"), tr("Gamepad stopped responding — the transmitter has the boat"));
+    const qint64 now = clock_.elapsed();
+    const qint64 tickGap = lastTickMs_ < 0 ? 0 : now - lastTickMs_;
+    lastTickMs_ = now;
+    if (tickGap > kSampleTimeoutMs) {
+        qWarning().noquote() << QStringLiteral("helm: send tick %1 ms late, gamepad silence not counted").arg(tickGap);
+        lastSampleMs_ = now;
+    }
+
+    if ((state_ == Starting || state_ == Driving) && now - lastSampleMs_ > kSampleTimeoutMs) {
+        qWarning().noquote() << QStringLiteral("helm: no gamepad sample for %1 ms (send tick gap %2 ms)")
+                                    .arg(now - lastSampleMs_).arg(tickGap);
+        padStop_ = true;
+        const qint64 silence = now - lastSampleMs_;
+        safeStop(tr("Gamepad stopped responding: no data for %1 ms — holding position").arg(silence),
+                 tr("Gamepad stopped responding: no data for %1 ms — the transmitter has the boat").arg(silence));
         if (state_ == Off) {
             return;
         }
@@ -964,6 +1087,7 @@ void HelmController::finishCheck()
 void HelmController::requestMode(int mode, ModeIntent intent)
 {
     pendingMode_ = mode;
+    requestedMode_ = mode;
     modeIntent_ = intent;
     modeTimer_.start();
     vehicle_->autopilotSetMode(mode);
@@ -993,13 +1117,15 @@ void HelmController::onModeResult(bool ok)
             if (mode != vehicle_->pilotModeState()) {
                 padMissionModes_ &= ~modeBit(mode);
             }
-            notify(mode == kModeLoiter ? tr("The boat refused Loiter — no position (GPS/EKF)")
-                                       : tr("The vehicle refused %1").arg(DeviceManagerWrapper::modeNameFor(mode)),
+            const QString reason = DeviceManagerWrapper::modeRefusalReason(mode);
+            notify(reason.isEmpty() ? tr("The vehicle refused %1").arg(DeviceManagerWrapper::modeNameFor(mode))
+                                    : tr("The vehicle refused %1: %2").arg(DeviceManagerWrapper::modeNameFor(mode), reason),
                    kSeverityWarning);
         }
         break;
     case ModeIntent::StopLoiter:
         if (ok) {
+            stopModeReached_ = kModeLoiter;
             finish(stopReason_);
         }
         else {
@@ -1007,6 +1133,8 @@ void HelmController::onModeResult(bool ok)
         }
         break;
     case ModeIntent::StopHold:
+        stopModeReached_ = ok ? kModeHold : -1;
+        operatorStop_ = operatorStop_ && ok;
         finish(ok ? stopReason_ : tr("%1. The vehicle refused Loiter and Hold").arg(stopReason_));
         break;
     }
@@ -1046,6 +1174,7 @@ void HelmController::safeStop(const QString& reason, const QString& handBackReas
 void HelmController::finish(const QString& reason)
 {
     sendTimer_.stop();
+    lastTickMs_ = -1;
     paramTimer_.stop();
     checkTimer_.stop();
     modeTimer_.stop();
@@ -1061,10 +1190,92 @@ void HelmController::finish(const QString& reason)
     }
     setBackground(false);
     const bool wasActive = state_ != Off;
+    const bool takeFailed = (state_ == Checking || state_ == Starting) && !operatorStop_ && !reason.isEmpty();
     setState(Off);
     if (wasActive && !reason.isEmpty()) {
-        notify(reason, kSeverityWarning);
+        notify(reason, operatorStop_ ? kSeverityInfo : kSeverityWarning);
     }
+    operatorStop_ = false;
+    if (takeFailed) {
+        emit engageFailed(reason);
+    }
+
+    const bool padStop = padStop_;
+    padStop_ = false;
+    if (autoAttempt_) {
+        autoAttempt_ = false;
+        autoBlocked_ = true;
+    }
+    if (padStop && autoSession_ && clock_.elapsed() - autoSessionStartMs_ < kAutoMinSessionMs) {
+        autoBlocked_ = true;
+        notify(tr("The gamepad keeps dropping — automatic take-over paused"), kSeverityWarning);
+    }
+    autoSession_ = false;
+    const int reached = stopModeReached_;
+    stopModeReached_ = -1;
+    const int mode = vehicle_->autopilotOnline() ? vehicle_->pilotModeState() : -1;
+    parkedMode_ = !padStop || mode < 0 ? -1 : (mode == kModeLoiter || mode == kModeHold) ? mode : reached;
+    parkedSeen_ = parkedMode_ >= 0 && mode == parkedMode_;
+    scheduleAutoEngage();
+}
+
+bool HelmController::autoEngageAllowed() const
+{
+    if (!autoEngage_ || state_ != Off || userReleased_ || autoBlocked_ || configuring_ || confirmation_ != ConfirmNone
+        || confirmationBusy_ || !available()) {
+        return false;
+    }
+#ifdef Q_OS_ANDROID
+    if (QGuiApplication::applicationState() != Qt::ApplicationActive) {
+        return false;
+    }
+#endif
+    if (!helm::throttleReleased(padState(), bindings_, tuning_)) {
+        return false;
+    }
+    const int mode = vehicle_->pilotModeState();
+    return modeTakesPad(mode) || (parkedMode_ >= 0 && mode == parkedMode_);
+}
+
+void HelmController::scheduleAutoEngage()
+{
+    if (!autoEngageAllowed()) {
+        autoTimer_.stop();
+        return;
+    }
+    if (!autoTimer_.isActive()) {
+        autoTimer_.start();
+    }
+}
+
+void HelmController::onAutoEngageTimer()
+{
+    if (!autoEngageAllowed()) {
+        return;
+    }
+    autoAttempt_ = true;
+    notify(tr("Taking gamepad control automatically"), kSeverityInfo);
+    engage();
+    if (state_ == Off && autoAttempt_) {
+        autoAttempt_ = false;
+        autoBlocked_ = true;
+    }
+}
+
+void HelmController::setAutoEngage(bool autoEngage)
+{
+    if (autoEngage_ == autoEngage) {
+        return;
+    }
+    autoEngage_ = autoEngage;
+    QSettings(QStringLiteral("KOGGER"), QStringLiteral("KoggerApp"))
+        .setValue(QStringLiteral("%1/autoEngage").arg(QLatin1String(kSettingsGroup)), autoEngage_);
+    if (autoEngage_) {
+        userReleased_ = false;
+        autoBlocked_ = false;
+    }
+    emit autoEngageChanged();
+    scheduleAutoEngage();
 }
 
 void HelmController::setState(State state)
@@ -1075,6 +1286,11 @@ void HelmController::setState(State state)
     state_ = state;
     if (state_ != Driving) {
         holdUntilReleased_ = false;
+    }
+    else if (autoAttempt_) {
+        autoAttempt_ = false;
+        autoSession_ = true;
+        autoSessionStartMs_ = clock_.elapsed();
     }
     emit stateChanged();
     emit layoutEditableChanged();
@@ -1180,6 +1396,7 @@ void HelmController::loadTuning()
     tuning_.forwardLimit = std::clamp(settings.value(QStringLiteral("forwardLimit"), defaults.forwardLimit).toDouble(), 0.0, 1.0);
     rateHz_ = std::clamp(settings.value(QStringLiteral("rateHz"), rateHz_).toInt(), kRateMinHz, kRateMaxHz);
     rumble_ = settings.value(QStringLiteral("rumble"), false).toBool();
+    autoEngage_ = settings.value(QStringLiteral("autoEngage"), false).toBool();
     rumbleStrength_ = std::clamp(settings.value(QStringLiteral("rumbleStrength"), kRumbleStrengthDefault).toDouble(),
                                  kRumbleStrengthMin, 1.0);
     settings.endGroup();

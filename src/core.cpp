@@ -77,7 +77,7 @@ Core::Core() :
     qRegisterMetaType<uint8_t>("uint8_t");
     {
         QSettings settings("KOGGER", "KoggerApp");
-        bringWindowToFrontEnabled_ = settings.value("main/bringWindowToFrontEnabled", true).toBool();
+        bringWindowToFrontEnabled_ = settings.value("main/bringWindowToFrontEnabled", false).toBool();
         previousMapTileProviderId_ = settings.value("scene3d/map/PreviousTileProviderId", -1).toInt();
     }
     logger_.setDatasetPtr(datasetPtr_);
@@ -321,6 +321,8 @@ void Core::setEngine(QQmlApplicationEngine *engine)
             deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::readMissionSilently);
     connect(missionRunTrackerPtr_.get(), &mission::MissionRunTracker::legSpeedRequested,
             deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::autopilotSetSpeed, Qt::QueuedConnection);
+    connect(missionRunTrackerPtr_.get(), &mission::MissionRunTracker::missionEvent,
+            deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::logAutopilotEvent);
     connect(deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::vruChanged, this, &Core::pushMissionRunTelemetry);
     connect(deviceManagerWrapperPtr_.get(), &DeviceManagerWrapper::missionTransferChanged, this, &Core::pushMissionRunTelemetry);
 }
@@ -331,6 +333,7 @@ void Core::pushMissionRunTelemetry()
     const AutopilotState& state = dmw->autopilotState();
     mission::RunTelemetry t;
     t.online = state.online;
+    t.armed = state.armState > 0;
     t.transferActive = dmw->missionTransferActive();
     t.transferSilent = dmw->missionTransferSilent();
     t.flightMode = state.flightMode;
@@ -3002,6 +3005,7 @@ void Core::setContactPlacementArmed(bool armed)
     contactPlacementArmed_ = armed;
 
     if (armed) {
+        setGoToPlacementArmed(false);
         setBottomTrackEditTool(0);
         if (scene3dViewPtr_) {
             scene3dViewPtr_->setRulerEnabled(false);
@@ -3021,6 +3025,29 @@ void Core::setContactPlacementArmed(bool armed)
     emit contactPlacementArmedChanged();
 }
 
+void Core::setGoToPlacementArmed(bool armed)
+{
+    if (goToPlacementArmed_ == armed) {
+        return;
+    }
+    goToPlacementArmed_ = armed;
+
+    if (armed) {
+        setContactPlacementArmed(false);
+        setBottomTrackEditTool(0);
+        if (scene3dViewPtr_) {
+            scene3dViewPtr_->setRulerEnabled(false);
+            scene3dViewPtr_->setGeoJsonEnabled(false);
+        }
+    }
+
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->setGoToPlacementArmed(armed);
+    }
+
+    emit goToPlacementArmedChanged();
+}
+
 void Core::setMissionEditorActive(bool active)
 {
     if (missionEditorActive_ == active) {
@@ -3030,6 +3057,7 @@ void Core::setMissionEditorActive(bool active)
 
     if (active) {
         setContactPlacementArmed(false);
+        setGoToPlacementArmed(false);
         setBottomTrackEditTool(0);
         if (scene3dViewPtr_) {
             scene3dViewPtr_->setRulerEnabled(false);

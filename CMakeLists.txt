@@ -48,6 +48,15 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTORCC ON)
 
+# ── Compiler cache (ccache, when installed) ──
+find_program(KOGGER_CCACHE ccache)
+if(KOGGER_CCACHE)
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${KOGGER_CCACHE}")
+    message(STATUS "ccache: ${KOGGER_CCACHE}")
+else()
+    message(STATUS "ccache not found: compiler cache disabled")
+endif()
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
     file(GLOB _gcc_dirs LIST_DIRECTORIES true /usr/lib/gcc/x86_64-linux-gnu/*)
     list(SORT _gcc_dirs)
@@ -125,8 +134,11 @@ qt_add_executable(KoggerApp
 
 target_compile_features(KoggerApp PRIVATE cxx_std_23)
 
-configure_file(src/kogger_revision.h.in
-    "${CMAKE_CURRENT_BINARY_DIR}/generated/kogger_revision.h" @ONLY)
+configure_file(src/kogger_revision.cpp.in
+    "${CMAKE_CURRENT_BINARY_DIR}/generated/kogger_revision.cpp" @ONLY)
+target_sources(KoggerApp PRIVATE
+    src/kogger_revision.h
+    "${CMAKE_CURRENT_BINARY_DIR}/generated/kogger_revision.cpp")
 
 target_include_directories(KoggerApp PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/generated
@@ -187,6 +199,25 @@ add_subdirectory(qml/app)
 
 target_link_libraries(KoggerApp PRIVATE
     "$<LINK_LIBRARY:WHOLE_ARCHIVE,kogger_kqml_types,kogger_controls,kogger_menus,kogger_settings,kogger_devices,kogger_scene2d,kogger_scene3d,kogger_app>")
+
+set_target_properties(KoggerApp PROPERTIES AUTOGEN_ORIGIN_DEPENDS OFF)
+
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 4.1)
+    set_property(TARGET KoggerApp PROPERTY AUTOMOC_INCLUDE_DIRECTORIES
+        "$<TARGET_PROPERTY:KoggerApp,INCLUDE_DIRECTORIES>")
+endif()
+
+get_target_property(_kogger_qtcore_type Qt6::Core TYPE)
+if(_kogger_qtcore_type STREQUAL "SHARED_LIBRARY")
+    set_target_properties(KoggerApp PROPERTIES QT_QML_MODULE_NO_IMPORT_SCAN TRUE)
+endif()
+
+if(KOGGER_CCACHE)
+    add_custom_command(TARGET KoggerApp POST_BUILD
+        COMMAND "${KOGGER_CCACHE}" --show-stats
+        COMMAND "${KOGGER_CCACHE}" --zero-stats
+        VERBATIM)
+endif()
 
 qt_add_translations(KoggerApp
     TS_FILES

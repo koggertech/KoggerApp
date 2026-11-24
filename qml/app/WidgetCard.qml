@@ -90,7 +90,7 @@ Rectangle {
         onClicked: { root.forceActiveFocus(); root._activate() }
     }
 
-    KToolTip {
+    KLazyToolTip {
         text: root.showText ? "" : (root.title.length > 0 ? root.title : root.kindCaption)
         shown: root.hovered
     }

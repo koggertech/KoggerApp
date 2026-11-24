@@ -514,6 +514,7 @@ signals:
     void redrawEpochs(const QSet<int>& indxs);
     void lastPositionChanged();
     void activeContactChanged();
+    void contactsChanged();
     void contactsDepthUpdated(const QVector<int>& epochIndices);
     void lastDepthChanged();
     void speedChanged();

@@ -277,7 +277,7 @@ Item {
     }
 
     HoverHandler { id: _spinHover }
-    KToolTip {
+    KLazyToolTip {
         text: root.toolTipText
         targetItem: root
         shown: _spinHover.hovered && root.enabled && root.toolTipText.length > 0

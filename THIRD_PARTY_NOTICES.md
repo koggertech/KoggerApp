@@ -10,6 +10,7 @@ the application and is readable from *Settings → Interface → About*.
 | [FFmpeg](https://ffmpeg.org/) | 7.1 | dynamic | GNU LGPL v2.1 or later | [COPYING.LGPLv2.1](third_party/ffmpeg/COPYING.LGPLv2.1) | [ffmpeg-7.1.tar.xz](https://ffmpeg.org/releases/ffmpeg-7.1.tar.xz) |
 | [FreeType](https://freetype.org/) | 2.13.2 | **static** | The FreeType License (FTL) | [FTL.TXT](third_party/freetype/FTL.TXT) | [freetype-2.13.2.tar.xz](https://downloads.sourceforge.net/project/freetype/freetype2/2.13.2/freetype-2.13.2.tar.xz) |
 | [SDL](https://libsdl.org/) | 3.4.2 | **static** (Windows, Linux), dynamic (Android) | zlib | [LICENSE.txt](third_party/sdl3/LICENSE.txt) | [SDL3-3.4.2.tar.gz](https://github.com/libsdl-org/SDL/releases/download/release-3.4.2/SDL3-3.4.2.tar.gz) |
+| [ArduPilot ParameterRepository](https://github.com/ArduPilot/ParameterRepository) | Rover 4.0–4.8 | bundled data | GNU GPL v3 | [LICENSE](LICENSE) | [commit 19f34fc](https://github.com/ArduPilot/ParameterRepository/tree/19f34fc6eba8abeac2dc14a96e9819ca4388a555) |
 
 **Qt** and **FFmpeg** are used unmodified from a stock Qt installation and can be replaced with any
 compatible build of the same version. The FFmpeg libraries are an LGPL build: the configure line
@@ -28,6 +29,11 @@ copied unchanged from the SDL 3.4.2 release, four replaced by stubs written for 
 licence asks for no credit in the product; it requires that the notice stays with the sources and
 that altered files are marked as such.
 
+**ArduPilot ParameterRepository** (parameter names, units, ranges, value lists) is data generated from
+the ArduPilot firmware sources, GPL v3 like this application, copyright the ArduPilot Development
+Team. It is bundled as one file derived by a script, so the parameter window works offline.
+
 Provenance and what exactly is vendored: [third_party/ffmpeg/README.md](third_party/ffmpeg/README.md),
 [third_party/freetype/README.md](third_party/freetype/README.md),
-[third_party/sdl3/README.md](third_party/sdl3/README.md).
+[third_party/sdl3/README.md](third_party/sdl3/README.md),
+[third_party/ardupilot_params/README.md](third_party/ardupilot_params/README.md).

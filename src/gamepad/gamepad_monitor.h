@@ -39,6 +39,15 @@ class GamepadMonitor : public QObject
     Q_PROPERTY(qreal rumbleHigh READ rumbleHigh NOTIFY rumbleChanged)
 
 public:
+    /** The last pad that closed: GamepadWorker::LossReason (−1 before any), name, "wired" / "wireless" / empty, battery 0…100 or −1, ms without an input change. */
+    struct Loss {
+        int reason = -1;
+        QString name;
+        QString connection;
+        int batteryPercent = -1;
+        qint64 idleMs = -1;
+    };
+
     explicit GamepadMonitor(QObject* parent = nullptr);
     ~GamepadMonitor() override;
 
@@ -110,6 +119,9 @@ public:
     qreal rumbleLow() const { return rumble_[0]; }
     qreal rumbleHigh() const { return rumble_[1]; }
 
+    /** Details of the last pad that closed; already set when the connectionChanged of that close arrives. */
+    const Loss& lastLoss() const { return lastLoss_; }
+
 signals:
     void activeChanged();
     void runningChanged();
@@ -120,6 +132,8 @@ signals:
     void rumbleChanged();
     void padsChanged();
     void batteryChanged();
+    /** The pad lost last (same GUID) was added again @p afterMs after the loss. */
+    void padReturned(const QString& name, qint64 afterMs);
 
 private:
     void updateOwners();
@@ -130,6 +144,7 @@ private:
     void onWorkerPads(const QVariantList& pads);
     void onWorkerBattery(int percent, const QString& state);
     void onWorkerState(int buttons, qreal leftX, qreal leftY, qreal rightX, qreal rightY, qreal leftTrigger, qreal rightTrigger);
+    void onWorkerPadLost(int reason, const QString& name, const QString& connection, int batteryPercent, qint64 idleMs);
 
     QThread thread_;
     GamepadWorker* worker_ = nullptr;
@@ -155,4 +170,5 @@ private:
     int buttons_ = 0;
     std::array<qreal, 6> axes_{};
     std::array<qreal, 2> rumble_{};
+    Loss lastLoss_;
 };

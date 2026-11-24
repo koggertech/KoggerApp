@@ -1525,6 +1525,7 @@ void Dataset::resetRenderBuffers()
 
     emit simpleNavV2Changed();
     emit boatStatusChanged();
+    emit contactsChanged();
 }
 
 void Dataset::resetDistProcessing() {

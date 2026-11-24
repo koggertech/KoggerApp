@@ -1,12 +1,16 @@
 #include "device_manager_wrapper.h"
 #include "device_defs.h"
 #include "autopilot_messages.h"
+#include "core.h"
 #include <QDateTime>
 #include <QVariantMap>
+
+extern Core core;
 
 namespace {
 
 constexpr int kAutopilotMessagesKept = 20;
+constexpr int kSeverityWarning = 4;
 constexpr int kRoverModeAuto = 10;
 constexpr int kMissionRestartSeq = 0;
 
@@ -57,6 +61,22 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     QObject::connect(missionTransfer_, &autopilot::MissionTransfer::downloadFinished, this, &DeviceManagerWrapper::onMissionDownloadFinished);
     QObject::connect(dm, &DeviceManager::missionUploadRefused, this, [this](int result, int missionType) { onMissionUploadFinished(false, result, missionType); });
     QObject::connect(dm, &DeviceManager::missionDownloadRefused, this, [this](int result) { onMissionDownloadFinished(false, result, 0, {}); });
+
+    autopilotParams_ = std::make_unique<autopilot::AutopilotParams>();
+    autopilot::AutopilotParams* params = autopilotParams_.get();
+    QObject::connect(dm, &DeviceManager::autopilotParamFrame, params, &autopilot::AutopilotParams::handleParamValue);
+    QObject::connect(params, &autopilot::AutopilotParams::sendMessage, dm, &DeviceManager::sendAutopilotMessage);
+    QObject::connect(params, &autopilot::AutopilotParams::rebootRequested, dm, &DeviceManager::autopilotReboot);
+    linkLoss_ = std::make_unique<autopilot::LinkLossPolicy>(params);
+    autopilot::LinkLossPolicy* linkLoss = linkLoss_.get();
+    QObject::connect(this, &DeviceManagerWrapper::vruChanged, params, [this, params, linkLoss]() {
+        params->setVehicle(autopilotState_.online, workerObject_->autopilotSystemId(), workerObject_->autopilotComponentId());
+        params->setFirmware(autopilotState_.autopilotKind, autopilotState_.vehicleType, autopilotState_.firmwareVersion,
+                            autopilotState_.firmwareVersionPending);
+        linkLoss->setVehicle(autopilotState_.online, workerObject_->autopilotSystemId(), workerObject_->autopilotComponentId(),
+                             autopilotState_.autopilotKind, autopilotState_.vehicleType, autopilotState_.flightMode,
+                             autopilotState_.proxyTraffic);
+    });
 }
 
 void DeviceManagerWrapper::startMissionThread()
@@ -126,6 +146,31 @@ QString DeviceManagerWrapper::modeNameFor(int mode)
     return mode < 0 ? QString() : QStringLiteral("Mode %1").arg(mode);
 }
 
+QString DeviceManagerWrapper::modeRefusalReason(int mode)
+{
+    const QString position = tr("while armed it needs a position estimate (GPS fix and EKF)");
+    switch (mode) {
+    case 5:
+    case 6:
+    case 8:
+    case 9:
+    case 15:
+        return position;
+    case 10:
+        return tr("%1, and a mission on the boat").arg(position);
+    case 11:
+        return tr("%1, and a home position").arg(position);
+    case 12:
+        return tr("%1, and a recorded return path").arg(position);
+    case 1:
+    case 3:
+        return tr("while armed it needs a speed estimate (GPS fix and EKF)");
+    default:
+        break;
+    }
+    return QString();
+}
+
 void DeviceManagerWrapper::autopilotArm(bool arm)
 {
     workerObject_->autopilotArm(arm, false);
@@ -154,6 +199,21 @@ void DeviceManagerWrapper::autopilotSetMissionCurrent(int seq)
 void DeviceManagerWrapper::autopilotSetSpeed(double speed)
 {
     workerObject_->autopilotSetSpeed(float(speed));
+}
+
+int DeviceManagerWrapper::ekfPositionState() const
+{
+    const int flags = autopilotState_.ekfFlags;
+    if (flags < 0) {
+        return -1;
+    }
+    const bool position = (flags & (kMavEkfPosHorizAbs | kMavEkfPosHorizRel)) != 0;
+    return (position && (flags & kMavEkfConstPosMode) == 0) ? 1 : 0;
+}
+
+void DeviceManagerWrapper::autopilotGoTo(double latitude, double longitude)
+{
+    workerObject_->autopilotGoTo(latitude, longitude);
 }
 
 void DeviceManagerWrapper::autopilotManualControl(int steering, int throttle)
@@ -274,6 +334,13 @@ void DeviceManagerWrapper::onAutopilotStatusText(int severity, const QString& te
 
 void DeviceManagerWrapper::logAutopilotEvent(int severity, const QString& text)
 {
+    const QString line = QStringLiteral("Autopilot log [%1]: %2").arg(severity).arg(text);
+    if (severity <= kSeverityWarning) {
+        core.consoleWarning(line);
+    }
+    else {
+        core.consoleInfo(line);
+    }
     appendAutopilotMessage(severity, text, true);
     emit autopilotAppMessage(severity, text);
 }

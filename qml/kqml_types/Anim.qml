@@ -62,6 +62,7 @@ QtObject {
     property int fadeMs: 120
     readonly property int fadeEasing: easingStd
 
+    property int tooltipDelayMs: 520
     property int tooltipMs: 170
     property int tooltipExitMs: 90
     property real tooltipEnterScale: 1.08

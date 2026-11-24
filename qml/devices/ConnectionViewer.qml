@@ -12,6 +12,7 @@ Column {
 
     // Injected by ConnectionsSettingsPage.onLoaded.
     property var store: null
+    property bool shown: true
 
     property var devList: deviceManagerWrapper.devs
 
@@ -86,8 +87,25 @@ Column {
         _maybeFocusRecording()
     }
 
+    onShownChanged: {
+        recStatus._resync()
+        if (shown) {
+            linkList.editorAnimated = true
+            _maybeFocusRecording()
+        } else {
+            _releaseFocus()
+            recordingFocusTimer.stop()
+            if (store)
+                store.recordingFocusRequested = false
+            linkList.editorAnimated = false
+            linkList.expandedUuid = ""
+            recGear.checked = false
+        }
+    }
+
     Connections {
         target: core
+        enabled: connectionViewer.shown
         function onConnectionChanged() {
             if (store) store.setActiveDeviceIndex(-1)
         }
@@ -150,7 +168,6 @@ Column {
                 source: ibImg
                 color: ib.iconColor
                 smooth: true
-                cached: true
             }
         }
 
@@ -163,7 +180,7 @@ Column {
             onClicked: { ib.forceActiveFocus(); ib._activate() }
         }
 
-        KToolTip { text: ib.toolTipText; targetItem: ib; shown: ibMa.containsMouse && ib.toolTipText.length > 0 }
+        KLazyToolTip { text: ib.toolTipText; targetItem: ib; shown: ibMa.containsMouse && ib.toolTipText.length > 0 }
     }
 
     // Inline toggle switch (matches KSwitch's indicator size, same as
@@ -284,13 +301,26 @@ Column {
 
     Column {
         id: linkList
+        objectName: "connectionLinkList"
         width: parent.width
         visible: linkRepeater.count > 0
         spacing: Tokens.spaceXxs + 1
         property string expandedUuid: ""
+        property bool editorAnimated: true
+        property bool reordering: false
 
         move: Transition {
+            enabled: linkList.reordering
             NumberAnimation { properties: "y"; duration: 220; easing.type: Easing.OutCubic }
+        }
+
+        onPositioningComplete: reordering = false
+
+        Connections {
+            target: linkManagerWrapper.linkListModel
+            function onRowsAboutToBeMoved() { linkList.reordering = true }
+            function onRowsAboutToBeRemoved() { linkList.reordering = true }
+            function onRowsAboutToBeInserted() { linkList.reordering = true }
         }
 
         Repeater {
@@ -486,36 +516,43 @@ Column {
                         }
 
                         // Доп.кнопки режима редактирования
-                        IconBtn {
-                            visible: connRow.editing
-                            checked: IsPinned; checkable: true
-                            iconSource: "qrc:/icons/ui/pin.svg"
-                            iconFillRatio: 0.8
-                            toolTipText: checked ? qsTr("Unpin") : qsTr("Pin")
-                            Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
-                            onToggled: function(v) { linkManagerWrapper.sendUpdatePinnedState(Uuid, v) }
-                        }
-                        IconBtn {
-                            visible: connRow.editing
-                            checked: ControlType; checkable: true
-                            iconSource: "qrc:/icons/ui/repeat.svg"
-                            iconFillRatio: 0.8
-                            toolTipText: qsTr("Auto reconnect")
-                            Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
-                            onToggled: function(v) { linkManagerWrapper.sendUpdateControlType(Uuid, Number(v)) }
-                        }
-                        IconBtn {
-                            visible: connRow.editing && connRow.isRemembered
-                            iconSource: "qrc:/icons/ui/eraser.svg"; iconFillRatio: 0.8
-                            toolTipText: qsTr("Remove from recent")
-                            Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
-                            onClicked: if (connectionViewer.store) connectionViewer.store.removeRememberedLink(Uuid)
-                        }
-                        IconBtn {
-                            visible: connRow.editing && (LinkType === 2 || LinkType === 3 || LinkType === 4)
-                            iconSource: "qrc:/icons/ui/x.svg"; iconFillRatio: 0.8; toolTipText: qsTr("Delete")
-                            Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
-                            onClicked: linkManagerWrapper.deleteLink(Uuid)
+                        Loader {
+                            active: connRow.editing
+                            visible: active
+                            Layout.alignment: Qt.AlignVCenter
+                            sourceComponent: Row {
+                                spacing: Tokens.spaceXs
+
+                                IconBtn {
+                                    width: Tokens.controlHMd; height: Tokens.controlHMd
+                                    checked: IsPinned; checkable: true
+                                    iconSource: "qrc:/icons/ui/pin.svg"
+                                    iconFillRatio: 0.8
+                                    toolTipText: checked ? qsTr("Unpin") : qsTr("Pin")
+                                    onToggled: function(v) { linkManagerWrapper.sendUpdatePinnedState(Uuid, v) }
+                                }
+                                IconBtn {
+                                    width: Tokens.controlHMd; height: Tokens.controlHMd
+                                    checked: ControlType; checkable: true
+                                    iconSource: "qrc:/icons/ui/repeat.svg"
+                                    iconFillRatio: 0.8
+                                    toolTipText: qsTr("Auto reconnect")
+                                    onToggled: function(v) { linkManagerWrapper.sendUpdateControlType(Uuid, Number(v)) }
+                                }
+                                IconBtn {
+                                    visible: connRow.isRemembered
+                                    width: Tokens.controlHMd; height: Tokens.controlHMd
+                                    iconSource: "qrc:/icons/ui/eraser.svg"; iconFillRatio: 0.8
+                                    toolTipText: qsTr("Remove from recent")
+                                    onClicked: if (connectionViewer.store) connectionViewer.store.removeRememberedLink(Uuid)
+                                }
+                                IconBtn {
+                                    visible: LinkType === 2 || LinkType === 3 || LinkType === 4
+                                    width: Tokens.controlHMd; height: Tokens.controlHMd
+                                    iconSource: "qrc:/icons/ui/x.svg"; iconFillRatio: 0.8; toolTipText: qsTr("Delete")
+                                    onClicked: linkManagerWrapper.deleteLink(Uuid)
+                                }
+                            }
                         }
 
                         Item { visible: connRow.editing; Layout.fillWidth: true; Layout.preferredHeight: 1 }
@@ -555,278 +592,291 @@ Column {
                         id: editBody
                         width: parent.width
                         clip: true
-                        height: connRow.editing ? bodyCol.implicitHeight + connRow.vPad : 0
+                        height: (connRow.editing && editLoader.item) ? editLoader.implicitHeight + connRow.vPad : 0
                         opacity: connRow.editing ? 1 : 0
                         visible: editBody.height > 0.5
-                        Behavior on height { NumberAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } }
-                        Behavior on opacity { NumberAnimation { duration: Anim.fadeMs } }
+                        Behavior on height { enabled: linkList.editorAnimated; NumberAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } }
+                        Behavior on opacity { enabled: linkList.editorAnimated; NumberAnimation { duration: Anim.fadeMs } }
 
-                        ColumnLayout {
-                            id: bodyCol
+                        Loader {
+                            id: editLoader
                             y: connRow.vPad
                             width: parent.width
-                            spacing: Tokens.spaceXs
-
-                            RowLayout {
-                                Layout.fillWidth: true
+                            active: connRow.editing || editBody.visible
+                            sourceComponent: Column {
                                 spacing: Tokens.spaceXs
-                                Text {
-                                    text: qsTr("Name")
-                                    color: AppPalette.textMuted
-                                    font.pixelSize: Tokens.fontBase
-                                    Layout.preferredWidth: LinkType === 1 ? Math.round(70 * AppPalette.scale) : Math.round(34 * AppPalette.scale)
-                                }
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: Tokens.controlHMd
-                                    radius: Tokens.radiusMd; color: AppPalette.bg
-                                    border.width: nameField.activeFocus ? 1 : Tokens.cardBorderWidth
-                                    border.color: nameField.activeFocus ? AppPalette.accentBorder : AppPalette.border
-                                    TextInput {
-                                        id: nameField
-                                        activeFocusOnTab: true
-                                        anchors.fill: parent
-                                        anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
-                                        anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
-                                        verticalAlignment: TextInput.AlignVCenter
-                                        color: AppPalette.text; font.pixelSize: Tokens.fontBase; clip: true
-                                        maximumLength: 32
-                                        inputMethodHints: Qt.ImhNoPredictiveText
-                                        text: connRow.customName
-                                        TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: nameField.selectAll() }
-                                        onEditingFinished: linkManagerWrapper.sendUpdateCustomName(Uuid, text)
 
-                                        Text {
-                                            visible: !nameField.text.length && !nameField.activeFocus
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            text: connRow.typeLabel
-                                            color: AppPalette.textMuted
-                                            font: nameField.font
-                                        }
+                                RowLayout {
+                                    width: parent.width
+                                    spacing: Tokens.spaceXs
+                                    Text {
+                                        text: qsTr("Name")
+                                        color: AppPalette.textMuted
+                                        font.pixelSize: Tokens.fontBase
+                                        Layout.preferredWidth: LinkType === 1 ? Math.round(70 * AppPalette.scale) : Math.round(34 * AppPalette.scale)
                                     }
-                                }
-                                IconBtn {
-                                    visible: connRow.customName.length > 0
-                                    iconSource: "qrc:/icons/ui/eraser.svg"; iconFillRatio: 0.8
-                                    toolTipText: qsTr("Clear name")
-                                    Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
-                                    onClicked: {
-                                        nameField.text = ""
-                                        linkManagerWrapper.sendUpdateCustomName(Uuid, "")
-                                    }
-                                }
-                            }
+                                    Rectangle {
+                                        Layout.fillWidth: true
+                                        Layout.preferredHeight: Tokens.controlHMd
+                                        radius: Tokens.radiusMd; color: AppPalette.bg
+                                        border.width: nameField.activeFocus ? 1 : Tokens.cardBorderWidth
+                                        border.color: nameField.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                                        TextInput {
+                                            id: nameField
+                                            activeFocusOnTab: true
+                                            anchors.fill: parent
+                                            anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
+                                            anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
+                                            verticalAlignment: TextInput.AlignVCenter
+                                            color: AppPalette.text; font.pixelSize: Tokens.fontBase; clip: true
+                                            maximumLength: 32
+                                            inputMethodHints: Qt.ImhNoPredictiveText
+                                            text: connRow.customName
+                                            TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: nameField.selectAll() }
+                                            onEditingFinished: linkManagerWrapper.sendUpdateCustomName(Uuid, text)
 
-                            // UDP/TCP — адрес
-                            RowLayout {
-                                visible: LinkType === 2 || LinkType === 3
-                                Layout.fillWidth: true
-                                spacing: Tokens.spaceXs
-                                Text { text: qsTr("IP"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontBase; Layout.preferredWidth: Math.round(34 * AppPalette.scale) }
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: Tokens.controlHMd
-                                    radius: Tokens.radiusMd; color: AppPalette.bg
-                                    border.width: ipField.activeFocus ? 1 : Tokens.cardBorderWidth
-                                    border.color: ipField.activeFocus ? AppPalette.accentBorder : AppPalette.border
-                                    TextInput {
-                                        id: ipField
-                                        property int _prevLen: 0
-                                        activeFocusOnTab: true
-                                        anchors.fill: parent
-                                        anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
-                                        anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
-                                        verticalAlignment: TextInput.AlignVCenter
-                                        color: AppPalette.text; font.pixelSize: Tokens.fontBase; clip: true
-                                        maximumLength: 15
-                                        inputMethodHints: Qt.ImhPreferNumbers | Qt.ImhNoPredictiveText
-                                        validator: RegularExpressionValidator {
-                                            regularExpression: /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){0,3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)?$/
-                                        }
-                                        text: Address
-                                        TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: ipField.selectAll() }
-                                        onTextEdited: {
-                                            var parts = text.split('.')
-                                            var lastSeg = parts[parts.length - 1]
-                                            if (text.length > ipField._prevLen
-                                                    && cursorPosition === text.length
-                                                    && parts.length < 4
-                                                    && lastSeg.length === 3
-                                                    && text.charAt(text.length - 1) !== '.') {
-                                                text = text + '.'
-                                                cursorPosition = text.length
+                                            Text {
+                                                visible: !nameField.text.length && !nameField.activeFocus
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                text: connRow.typeLabel
+                                                color: AppPalette.textMuted
+                                                font: nameField.font
                                             }
-                                            ipField._prevLen = text.length
-                                            linkManagerWrapper.sendUpdateAddress(Uuid, text)
+                                        }
+                                    }
+                                    IconBtn {
+                                        visible: connRow.customName.length > 0
+                                        iconSource: "qrc:/icons/ui/eraser.svg"; iconFillRatio: 0.8
+                                        toolTipText: qsTr("Clear name")
+                                        Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
+                                        onClicked: {
+                                            nameField.text = ""
+                                            linkManagerWrapper.sendUpdateCustomName(Uuid, "")
                                         }
                                     }
                                 }
-                            }
 
-                            RowLayout {
-                                visible: LinkType === 4
-                                Layout.fillWidth: true
-                                spacing: Tokens.spaceXs
-                                Text {
-                                    id: urlLabel
-                                    text: qsTr("URL")
-                                    color: AppPalette.textMuted
-                                    font.pixelSize: Tokens.fontBase
-                                    horizontalAlignment: Text.AlignRight
-                                    Layout.fillHeight: true
-                                    verticalAlignment: Text.AlignVCenter
-
-                                    MouseArea {
-                                        id: urlLabelMa
-                                        anchors.fill: parent
-                                        acceptedButtons: Qt.NoButton
-                                        hoverEnabled: true
-                                    }
-
-                                    KToolTip {
-                                        readonly property string fileExample: Qt.platform.os === "windows" ? "C:\\clip.mp4"
-                                                                            : Qt.platform.os === "android" ? "/storage/emulated/0/Movies/clip.mp4"
-                                                                                                           : "/home/user/clip.mp4"
-                                        text: qsTr("Any URL that FFmpeg can open:\nrtsp://192.168.1.10:554/stream\nhttp://camera.local/video.cgi  (MJPEG, HLS, DASH)\nrtmp://server/live/key\nudp://@:1234\n%1  (a local file)").arg(fileExample)
-                                        targetItem: urlLabel
-                                        shown: urlLabelMa.containsMouse
-                                        x: 0
+                                // UDP/TCP — адрес
+                                Loader {
+                                    width: parent.width
+                                    active: LinkType === 2 || LinkType === 3
+                                    sourceComponent: RowLayout {
+                                        spacing: Tokens.spaceXs
+                                        Text { text: qsTr("IP"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontBase; Layout.preferredWidth: Math.round(34 * AppPalette.scale) }
+                                        Rectangle {
+                                            Layout.fillWidth: true
+                                            Layout.preferredHeight: Tokens.controlHMd
+                                            radius: Tokens.radiusMd; color: AppPalette.bg
+                                            border.width: ipField.activeFocus ? 1 : Tokens.cardBorderWidth
+                                            border.color: ipField.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                                            TextInput {
+                                                id: ipField
+                                                property int _prevLen: 0
+                                                activeFocusOnTab: true
+                                                anchors.fill: parent
+                                                anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
+                                                anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
+                                                verticalAlignment: TextInput.AlignVCenter
+                                                color: AppPalette.text; font.pixelSize: Tokens.fontBase; clip: true
+                                                maximumLength: 15
+                                                inputMethodHints: Qt.ImhPreferNumbers | Qt.ImhNoPredictiveText
+                                                validator: RegularExpressionValidator {
+                                                    regularExpression: /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){0,3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)?$/
+                                                }
+                                                text: Address
+                                                TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: ipField.selectAll() }
+                                                onTextEdited: {
+                                                    var parts = text.split('.')
+                                                    var lastSeg = parts[parts.length - 1]
+                                                    if (text.length > ipField._prevLen
+                                                            && cursorPosition === text.length
+                                                            && parts.length < 4
+                                                            && lastSeg.length === 3
+                                                            && text.charAt(text.length - 1) !== '.') {
+                                                        text = text + '.'
+                                                        cursorPosition = text.length
+                                                    }
+                                                    ipField._prevLen = text.length
+                                                    linkManagerWrapper.sendUpdateAddress(Uuid, text)
+                                                }
+                                            }
+                                        }
                                     }
                                 }
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: Tokens.controlHMd
-                                    radius: Tokens.radiusMd; color: AppPalette.bg
-                                    border.width: urlField.activeFocus ? 1 : Tokens.cardBorderWidth
-                                    border.color: urlField.activeFocus ? AppPalette.accentBorder : AppPalette.border
-                                    TextInput {
-                                        id: urlField
-                                        activeFocusOnTab: true
-                                        anchors.fill: parent
-                                        anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
-                                        anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
-                                        verticalAlignment: TextInput.AlignVCenter
-                                        color: AppPalette.text; font.pixelSize: Tokens.fontBase; clip: true
-                                        inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
-                                        text: Address
-                                        TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: urlField.selectAll() }
-                                        onEditingFinished: linkManagerWrapper.sendUpdateAddress(Uuid, text)
-                                    }
-                                }
-                            }
 
-                            // UDP — порты src/dst во всю строку
-                            RowLayout {
-                                visible: LinkType === 2
-                                Layout.fillWidth: true
-                                spacing: Tokens.spaceXs
-                                Text { text: qsTr("src"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontBase; Layout.preferredWidth: Math.round(34 * AppPalette.scale) }
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: Tokens.controlHMd
-                                    radius: Tokens.radiusMd; color: AppPalette.bg
-                                    border.width: srcPortField.activeFocus ? 1 : Tokens.cardBorderWidth
-                                    border.color: srcPortField.activeFocus ? AppPalette.accentBorder : AppPalette.border
-                                    TextInput {
-                                        id: srcPortField
-                                        activeFocusOnTab: true
-                                        anchors.fill: parent
-                                        anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
-                                        anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
-                                        verticalAlignment: TextInput.AlignVCenter
-                                        color: AppPalette.text; font.pixelSize: Tokens.fontBase
-                                        inputMethodHints: Qt.ImhDigitsOnly
-                                        maximumLength: 5
-                                        validator: IntValidator { bottom: 0; top: 65535 }
-                                        text: SourcePort
-                                        TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: srcPortField.selectAll() }
-                                        onTextEdited: linkManagerWrapper.sendUpdateSourcePort(Uuid, text)
-                                    }
-                                }
-                                Text { text: qsTr("dst"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontBase }
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: Tokens.controlHMd
-                                    radius: Tokens.radiusMd; color: AppPalette.bg
-                                    border.width: dstPortFieldUdp.activeFocus ? 1 : Tokens.cardBorderWidth
-                                    border.color: dstPortFieldUdp.activeFocus ? AppPalette.accentBorder : AppPalette.border
-                                    TextInput {
-                                        id: dstPortFieldUdp
-                                        activeFocusOnTab: true
-                                        anchors.fill: parent
-                                        anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
-                                        anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
-                                        verticalAlignment: TextInput.AlignVCenter
-                                        color: AppPalette.text; font.pixelSize: Tokens.fontBase
-                                        inputMethodHints: Qt.ImhDigitsOnly
-                                        maximumLength: 5
-                                        validator: IntValidator { bottom: 0; top: 65535 }
-                                        text: DestinationPort
-                                        TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: dstPortFieldUdp.selectAll() }
-                                        onTextEdited: linkManagerWrapper.sendUpdateDestinationPort(Uuid, text)
-                                    }
-                                }
-                            }
+                                Loader {
+                                    width: parent.width
+                                    active: LinkType === 4
+                                    sourceComponent: RowLayout {
+                                        spacing: Tokens.spaceXs
+                                        Text {
+                                            id: urlLabel
+                                            text: qsTr("URL")
+                                            color: AppPalette.textMuted
+                                            font.pixelSize: Tokens.fontBase
+                                            horizontalAlignment: Text.AlignRight
+                                            Layout.fillHeight: true
+                                            verticalAlignment: Text.AlignVCenter
 
-                            // TCP — порт сервера в половину строки
-                            RowLayout {
-                                visible: LinkType === 3
-                                Layout.fillWidth: true
-                                spacing: Tokens.spaceXs
-                                Text { text: qsTr("srv"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontBase; Layout.preferredWidth: Math.round(34 * AppPalette.scale) }
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: Tokens.controlHMd
-                                    radius: Tokens.radiusMd; color: AppPalette.bg
-                                    border.width: dstPortFieldTcp.activeFocus ? 1 : Tokens.cardBorderWidth
-                                    border.color: dstPortFieldTcp.activeFocus ? AppPalette.accentBorder : AppPalette.border
-                                    TextInput {
-                                        id: dstPortFieldTcp
-                                        activeFocusOnTab: true
-                                        anchors.fill: parent
-                                        anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
-                                        anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
-                                        verticalAlignment: TextInput.AlignVCenter
-                                        color: AppPalette.text; font.pixelSize: Tokens.fontBase
-                                        inputMethodHints: Qt.ImhDigitsOnly
-                                        maximumLength: 5
-                                        validator: IntValidator { bottom: 0; top: 65535 }
-                                        text: DestinationPort
-                                        TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: dstPortFieldTcp.selectAll() }
-                                        onTextEdited: linkManagerWrapper.sendUpdateDestinationPort(Uuid, text)
-                                    }
-                                }
-                                Item { Layout.fillWidth: true }
-                            }
+                                            MouseArea {
+                                                id: urlLabelMa
+                                                anchors.fill: parent
+                                                acceptedButtons: Qt.NoButton
+                                                hoverEnabled: true
+                                            }
 
-                            // Serial — бодрейт + автопоиск
-                            RowLayout {
-                                visible: LinkType === 1
-                                Layout.fillWidth: true
-                                spacing: Tokens.spaceXs
-                                Text { text: qsTr("baudrate"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontBase; Layout.preferredWidth: Math.round(70 * AppPalette.scale) }
-                                KCombo {
-                                    id: baudrateCombo
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: Tokens.controlHMd
-                                    model: linkManagerWrapper.baudrateModel
-                                    currentIndex: 8
-                                    displayTextOverride: Baudrate
-                                    fontPixelSize: Tokens.fontBase
-                                    bold: false
-                                    maxVisibleItems: 9
-                                    onActivated: {
-                                        linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
-                                        autoSpeedBtn.checked = false
+                                            KToolTip {
+                                                readonly property string fileExample: Qt.platform.os === "windows" ? "C:\\clip.mp4"
+                                                                                    : Qt.platform.os === "android" ? "/storage/emulated/0/Movies/clip.mp4"
+                                                                                                                   : "/home/user/clip.mp4"
+                                                text: qsTr("Any URL that FFmpeg can open:\nrtsp://192.168.1.10:554/stream\nhttp://camera.local/video.cgi  (MJPEG, HLS, DASH)\nrtmp://server/live/key\nudp://@:1234\n%1  (a local file)").arg(fileExample)
+                                                targetItem: urlLabel
+                                                shown: urlLabelMa.containsMouse
+                                                x: 0
+                                            }
+                                        }
+                                        Rectangle {
+                                            Layout.fillWidth: true
+                                            Layout.preferredHeight: Tokens.controlHMd
+                                            radius: Tokens.radiusMd; color: AppPalette.bg
+                                            border.width: urlField.activeFocus ? 1 : Tokens.cardBorderWidth
+                                            border.color: urlField.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                                            TextInput {
+                                                id: urlField
+                                                activeFocusOnTab: true
+                                                anchors.fill: parent
+                                                anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
+                                                anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
+                                                verticalAlignment: TextInput.AlignVCenter
+                                                color: AppPalette.text; font.pixelSize: Tokens.fontBase; clip: true
+                                                inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
+                                                text: Address
+                                                TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: urlField.selectAll() }
+                                                onEditingFinished: linkManagerWrapper.sendUpdateAddress(Uuid, text)
+                                            }
+                                        }
                                     }
                                 }
-                                IconBtn {
-                                    id: autoSpeedBtn
-                                    checked: AutoSpeedSelection; checkable: true
-                                    iconSource: "qrc:/icons/ui/refresh.svg"; iconFillRatio: 0.8; toolTipText: qsTr("Auto search baudrate")
-                                    Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
-                                    onToggled: function(v) { linkManagerWrapper.sendAutoSpeedSelection(Uuid, v) }
-                                    onCheckedChanged: { if (!checked) linkManagerWrapper.sendAutoSpeedSelection(Uuid, false) }
+
+                                // UDP — порты src/dst во всю строку
+                                Loader {
+                                    width: parent.width
+                                    active: LinkType === 2
+                                    sourceComponent: RowLayout {
+                                        spacing: Tokens.spaceXs
+                                        Text { text: qsTr("src"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontBase; Layout.preferredWidth: Math.round(34 * AppPalette.scale) }
+                                        Rectangle {
+                                            Layout.fillWidth: true
+                                            Layout.preferredHeight: Tokens.controlHMd
+                                            radius: Tokens.radiusMd; color: AppPalette.bg
+                                            border.width: srcPortField.activeFocus ? 1 : Tokens.cardBorderWidth
+                                            border.color: srcPortField.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                                            TextInput {
+                                                id: srcPortField
+                                                activeFocusOnTab: true
+                                                anchors.fill: parent
+                                                anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
+                                                anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
+                                                verticalAlignment: TextInput.AlignVCenter
+                                                color: AppPalette.text; font.pixelSize: Tokens.fontBase
+                                                inputMethodHints: Qt.ImhDigitsOnly
+                                                maximumLength: 5
+                                                validator: IntValidator { bottom: 0; top: 65535 }
+                                                text: SourcePort
+                                                TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: srcPortField.selectAll() }
+                                                onTextEdited: linkManagerWrapper.sendUpdateSourcePort(Uuid, text)
+                                            }
+                                        }
+                                        Text { text: qsTr("dst"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontBase }
+                                        Rectangle {
+                                            Layout.fillWidth: true
+                                            Layout.preferredHeight: Tokens.controlHMd
+                                            radius: Tokens.radiusMd; color: AppPalette.bg
+                                            border.width: dstPortFieldUdp.activeFocus ? 1 : Tokens.cardBorderWidth
+                                            border.color: dstPortFieldUdp.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                                            TextInput {
+                                                id: dstPortFieldUdp
+                                                activeFocusOnTab: true
+                                                anchors.fill: parent
+                                                anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
+                                                anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
+                                                verticalAlignment: TextInput.AlignVCenter
+                                                color: AppPalette.text; font.pixelSize: Tokens.fontBase
+                                                inputMethodHints: Qt.ImhDigitsOnly
+                                                maximumLength: 5
+                                                validator: IntValidator { bottom: 0; top: 65535 }
+                                                text: DestinationPort
+                                                TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: dstPortFieldUdp.selectAll() }
+                                                onTextEdited: linkManagerWrapper.sendUpdateDestinationPort(Uuid, text)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // TCP — порт сервера в половину строки
+                                Loader {
+                                    width: parent.width
+                                    active: LinkType === 3
+                                    sourceComponent: RowLayout {
+                                        spacing: Tokens.spaceXs
+                                        Text { text: qsTr("srv"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontBase; Layout.preferredWidth: Math.round(34 * AppPalette.scale) }
+                                        Rectangle {
+                                            Layout.fillWidth: true
+                                            Layout.preferredHeight: Tokens.controlHMd
+                                            radius: Tokens.radiusMd; color: AppPalette.bg
+                                            border.width: dstPortFieldTcp.activeFocus ? 1 : Tokens.cardBorderWidth
+                                            border.color: dstPortFieldTcp.activeFocus ? AppPalette.accentBorder : AppPalette.border
+                                            TextInput {
+                                                id: dstPortFieldTcp
+                                                activeFocusOnTab: true
+                                                anchors.fill: parent
+                                                anchors.leftMargin: Tokens.spaceSm; anchors.rightMargin: Tokens.spaceXs
+                                                anchors.topMargin: Tokens.spaceXxs; anchors.bottomMargin: Tokens.spaceXxs
+                                                verticalAlignment: TextInput.AlignVCenter
+                                                color: AppPalette.text; font.pixelSize: Tokens.fontBase
+                                                inputMethodHints: Qt.ImhDigitsOnly
+                                                maximumLength: 5
+                                                validator: IntValidator { bottom: 0; top: 65535 }
+                                                text: DestinationPort
+                                                TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: dstPortFieldTcp.selectAll() }
+                                                onTextEdited: linkManagerWrapper.sendUpdateDestinationPort(Uuid, text)
+                                            }
+                                        }
+                                        Item { Layout.fillWidth: true }
+                                    }
+                                }
+
+                                // Serial — бодрейт + автопоиск
+                                Loader {
+                                    width: parent.width
+                                    active: LinkType === 1
+                                    sourceComponent: RowLayout {
+                                        spacing: Tokens.spaceXs
+                                        Text { text: qsTr("baudrate"); color: AppPalette.textMuted; font.pixelSize: Tokens.fontBase; Layout.preferredWidth: Math.round(70 * AppPalette.scale) }
+                                        KCombo {
+                                            id: baudrateCombo
+                                            Layout.fillWidth: true
+                                            Layout.preferredHeight: Tokens.controlHMd
+                                            model: linkManagerWrapper.baudrateModel
+                                            currentIndex: 8
+                                            displayTextOverride: Baudrate
+                                            fontPixelSize: Tokens.fontBase
+                                            bold: false
+                                            maxVisibleItems: 9
+                                            onActivated: {
+                                                linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
+                                                autoSpeedBtn.checked = false
+                                            }
+                                        }
+                                        IconBtn {
+                                            id: autoSpeedBtn
+                                            checked: AutoSpeedSelection; checkable: true
+                                            iconSource: "qrc:/icons/ui/refresh.svg"; iconFillRatio: 0.8; toolTipText: qsTr("Auto search baudrate")
+                                            Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Tokens.controlHMd; Layout.preferredHeight: Tokens.controlHMd
+                                            onToggled: function(v) { linkManagerWrapper.sendAutoSpeedSelection(Uuid, v) }
+                                            onCheckedChanged: { if (!checked) linkManagerWrapper.sendAutoSpeedSelection(Uuid, false) }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -929,7 +979,8 @@ Column {
         onActiveChanged: { _refresh(); if (active) recGear.checked = false }   // collapse + lock settings during recording
         Component.onCompleted: _refresh()
         Timer {
-            interval: 1000; repeat: true; running: recRow.active
+            interval: 1000; repeat: true; triggeredOnStart: true
+            running: recRow.active && connectionViewer.shown
             onTriggered: recRow._refresh()
         }
 
@@ -961,6 +1012,7 @@ Column {
 
                 IconBtn {
                     id: recGear
+                    objectName: "recordingSettingsGear"
                     checkable: true
                     visible: !recRow.active                 // hidden while recording
                     iconSource: "qrc:/icons/ui/settings.svg"
@@ -994,7 +1046,7 @@ Column {
                         function _resync() {
                             recMarquee.stop()
                             x = marqueeClip.pad
-                            if (overflow)
+                            if (overflow && connectionViewer.shown)
                                 recMarquee.start()
                         }
                         SequentialAnimation {
@@ -1339,7 +1391,19 @@ Column {
         }
     }
 
+    function _releaseFocus() {
+        const focused = connectionViewer.Window.activeFocusItem
+        for (let p = focused; p; p = p.parent) {
+            if (p === connectionViewer) {
+                focused.focus = false
+                return
+            }
+        }
+    }
+
     function _maybeFocusRecording() {
+        if (!connectionViewer.shown)
+            return
         if (!(connectionViewer.store && connectionViewer.store.recordingFocusRequested === true))
             return
         if (!recRow.active)

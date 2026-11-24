@@ -1,0 +1,155 @@
+{
+  "id": "autopilot",
+  "version": 1,
+  "title": "Autopilot card",
+  "defaults": {
+    "enter": [ { "set": "autopilotPopupOpen", "value": true } ],
+    "advance": "anywhere",
+    "onMissing": "skip",
+    "timeoutMs": 1500,
+    "spotlight": { "padding": 6, "radius": 10 },
+    "buttons": { "back": true }
+  },
+  "steps": [
+    {
+      "id": "intro",
+      "anchor": "autopilot.card",
+      "delayMs": 400,
+      "spotlight": { "padding": 4 },
+      "title": "Autopilot card",
+      "text": "Drives the boat: modes, the mission, a gamepad and the action on link loss."
+    },
+    {
+      "id": "status",
+      "anchor": "autopilot.status",
+      "spotlight": { "anchors": ["autopilot.modeName"] },
+      "title": "Link and mode",
+      "text": "The icon is grey without an autopilot, teal while it is connected and red while the boat is armed. Next to it, the current mode."
+    },
+    {
+      "id": "lossHint",
+      "anchor": "autopilot.lossHint",
+      "title": "On link loss",
+      "text": "What the boat does if the link drops. Amber means it does nothing."
+    },
+    {
+      "id": "stats",
+      "anchor": "autopilot.stats",
+      "title": "Telemetry",
+      "text": "Battery, speed, link, satellites, voltage and current."
+    },
+    {
+      "id": "expand",
+      "anchor": "autopilot.expand",
+      "spotlight": { "shape": "circle" },
+      "title": "Details",
+      "text": "Opens the details below. A tap on the left part of the card does the same."
+    },
+    {
+      "id": "arm",
+      "checkpoint": true,
+      "anchor": "autopilot.arm",
+      "spotlight": { "shape": "circle" },
+      "title": "Arm",
+      "text": "Tap ARM, then tap again while the ring runs (3 s). An armed boat shows the button red; one tap disarms."
+    },
+    {
+      "id": "manualModes",
+      "anchor": "autopilot.mode.0",
+      "spotlight": { "anchors": ["autopilot.mode.1"] },
+      "title": "Manual control",
+      "text": "Manual: the transmitter or the gamepad drives directly. Acro keeps the heading; tap it again to go back to Manual."
+    },
+    {
+      "id": "stopModes",
+      "anchor": "autopilot.mode.4",
+      "spotlight": { "anchors": ["autopilot.mode.5"] },
+      "title": "Stop",
+      "text": "Hold stops the motors and the boat drifts. Loiter keeps the boat on its spot by GPS."
+    },
+    {
+      "id": "autoModes",
+      "anchor": "autopilot.mode.10",
+      "spotlight": { "anchors": ["autopilot.mode.11"] },
+      "title": "Mission and return",
+      "text": "Auto runs the mission stored on the boat. RTL returns to the nearest rally point or home."
+    },
+    {
+      "id": "goTo",
+      "anchor": "autopilot.goTo",
+      "spotlight": { "shape": "circle" },
+      "title": "Go here",
+      "text": "Turn it on, tap a point in the 3D view and confirm: the boat goes there."
+    },
+    {
+      "id": "tools",
+      "anchor": "autopilot.params",
+      "spotlight": { "anchors": ["autopilot.missionEditor", "autopilot.close"] },
+      "title": "Parameters, planner, close",
+      "text": "All autopilot parameters, the mission planner and closing the card."
+    },
+    {
+      "id": "helm",
+      "checkpoint": true,
+      "anchor": "autopilot.helm",
+      "title": "Gamepad",
+      "text": "Take or release control from a gamepad. The A button takes control by itself once a gamepad and the boat are connected."
+    },
+    {
+      "id": "progress",
+      "anchor": "autopilot.progress",
+      "title": "Mission progress",
+      "text": "Point, distance and time left. A tap on the row opens the details."
+    },
+    {
+      "id": "boat",
+      "checkpoint": true,
+      "anchor": "autopilot.boat",
+      "spotlight": { "padding": 2 },
+      "title": "Boat",
+      "text": "GPS fix, distance to home, radio signal and firmware."
+    },
+    {
+      "id": "mission",
+      "anchor": "autopilot.mission",
+      "spotlight": { "padding": 2 },
+      "title": "Mission",
+      "text": "Current and next point, distance and cross-track error. Next point skips ahead after two taps; Read from the boat fetches the mission again."
+    },
+    {
+      "id": "speed",
+      "anchor": "autopilot.speed",
+      "title": "Speed",
+      "text": "Changes the mission speed on the go. ↺ returns to the plan speeds."
+    },
+    {
+      "id": "settings",
+      "anchor": "autopilot.appSettings",
+      "spotlight": { "shape": "circle" },
+      "title": "Card settings",
+      "text": "Choose which buttons and panels the card shows, its size and opacity. Also in Settings → Interface → Autopilot card."
+    },
+    {
+      "id": "linkLoss",
+      "anchor": "autopilot.linkLoss",
+      "spotlight": { "padding": 2 },
+      "title": "On link loss",
+      "text": "What the boat does when the link drops; saved on the boat. Mission in Auto: keep going or abort."
+    },
+    {
+      "id": "messages",
+      "anchor": "autopilot.messages",
+      "spotlight": { "padding": 2 },
+      "title": "Messages",
+      "text": "Reports from the boat and the app. Critical ones pop up even with the card closed."
+    },
+    {
+      "id": "done",
+      "anchor": "autopilot.help",
+      "title": "That's all",
+      "text": "Run this tour again from here.",
+      "advance": "button",
+      "buttons": { "next": true, "nextLabel": "Finish" }
+    }
+  ]
+}

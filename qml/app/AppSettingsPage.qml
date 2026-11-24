@@ -722,6 +722,14 @@ Column {
             }
 
             KIslandRow {
+                label: qsTr("Autopilot card")
+                chevron: true
+                interactive: true
+                toolTipText: qsTr("Buttons, panels, size and opacity of the autopilot card")
+                onClicked: if (root.store) root.store.openAutopilotSettings()
+            }
+
+            KIslandRow {
                 label: qsTr("UI Saving")
                 chevron: true
                 interactive: true
@@ -3339,6 +3347,20 @@ Column {
                         }
                     }
                 }
+
+                KIslandRow {
+                    label: qsTr("Smooth follow")
+                    labelColor: root._bright
+                    interactive: true
+                    onClicked: smoothFollowSwitch.click()
+
+                    KSwitch {
+                        id: smoothFollowSwitch
+                        flat: true
+                        checked: root.store.smoothFollowEnabled
+                        onToggled: root.store.smoothFollowEnabled = checked
+                    }
+                }
             }
 
             Text {
@@ -3409,6 +3431,7 @@ Column {
                 if (typeof Scene3dToolBarController !== "undefined") {
                     Scene3dToolBarController.onUseAngleLocationButtonChanged(root.store.useAngleEnabled)
                     Scene3dToolBarController.onNavigatorLocationButtonChanged(root.store.navigationViewEnabled)
+                    Scene3dToolBarController.onSmoothFollowChanged(root.store.smoothFollowEnabled)
                     Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(root.store.trackLastDataEnabled)
                     Scene3dToolBarController.onForceSingleZoomCheckedChanged(render3dSettings.forceSingleZoomCheckButton)
                     Scene3dToolBarController.onSyncLoupeVisibleChanged(render3dSettings.syncLoupeCheckButton)

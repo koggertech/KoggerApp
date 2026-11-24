@@ -79,7 +79,7 @@ ApplicationWindow {
         id: startupSettings
         category: "main/ui"
         property int appTheme: 0
-        property int instrumentsGradeList: 0
+        property int instrumentsGradeList: 2
     }
     Settings {
         id: consoleVisibilitySettings
@@ -369,6 +369,16 @@ ApplicationWindow {
         function() {  // armed "set contact" mode — Esc disarms it
             if (typeof core === "undefined" || !core || !core.contactPlacementArmed) return false
             core.setContactPlacementArmed(false)
+            return true
+        },
+        function() {  // armed "go here" pick mode — Esc drops the pick, then disarms
+            if (typeof core === "undefined" || !core || !core.goToPlacementArmed) return false
+            var ctl = workspaceView.scene3dViewItem ? workspaceView.scene3dViewItem.missionRunController : null
+            if (ctl && ctl.goToPickValid) {
+                ctl.clearGoToPick()
+                return true
+            }
+            core.setGoToPlacementArmed(false)
             return true
         },
         function() {  // bottom-track edit palette — Esc closes it (resets tool)
@@ -1190,6 +1200,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "about"        ? qsTr("About")
                      : workspaceStore.settingsSubPageKind === "controls"     ? qsTr("Controls")
                      : workspaceStore.settingsSubPageKind === "tutorials"    ? qsTr("Tutorials")
+                     : workspaceStore.settingsSubPageKind === "autopilot"    ? qsTr("Autopilot")
                      : workspaceStore.settingsSubPageKind === "developer"    ? qsTr("Developer mode")
                      : workspaceStore.settingsSubPageKind === "license"      ? workspaceStore.licenseViewTitle
                      : workspaceStore.settingsSubPageKind === "createLayout" ? qsTr("Create layout")
@@ -1226,6 +1237,7 @@ ApplicationWindow {
                      : workspaceStore.settingsSubPageKind === "about"      ? aboutPageComponent
                      : workspaceStore.settingsSubPageKind === "controls"   ? controlsHelpPageComponent
                      : workspaceStore.settingsSubPageKind === "tutorials"  ? tutorialsPageComponent
+                     : workspaceStore.settingsSubPageKind === "autopilot"  ? autopilotSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "developer"  ? developerSettingsTabComponent
                      : workspaceStore.settingsSubPageKind === "license"    ? licensePageComponent
                      : workspaceStore.settingsSubPageKind === "createLayout" ? layoutCreateTabComponent
@@ -1594,6 +1606,14 @@ ApplicationWindow {
         }
 
         Component {
+            id: autopilotSettingsTabComponent
+
+            AutopilotSettingsTab {
+                store: workspaceStore
+            }
+        }
+
+        Component {
             id: developerSettingsTabComponent
 
             DeveloperSettingsTab {
@@ -1675,6 +1695,14 @@ ApplicationWindow {
             usblPlan: appUsblPlan
             usblNetwork: appNodesStore
             secondaryPlotItem: secondaryContent ? secondaryContent.plot2DInstance : null
+        }
+
+        PlacementHint {
+            anchors.horizontalCenter: workspaceView.horizontalCenter
+            anchors.bottom: workspaceView.bottom
+            anchors.bottomMargin: Tokens.spaceLg
+            maxWidth: workspaceView.width - Tokens.spaceXl * 2
+            visible: workspaceView.visible && text.length > 0
         }
 
         ConsolePanelDrawer {

@@ -177,6 +177,7 @@ bool Contacts::commitPlacement(const QString& text)
     indx_ = -1;
     info_.clear();
 
+    emit datasetPtr_->contactsChanged();
     emit datasetPtr_->dataUpdate();
 
     Q_EMIT contactChanged();
@@ -328,6 +329,7 @@ bool Contacts::deleteContact(int indx)
         datasetPtr_->setActiveContactIndx(-1);
     }
 
+    emit datasetPtr_->contactsChanged();
     emit datasetPtr_->dataUpdate();
 
     auto* r = RENDER_IMPL(Contacts);

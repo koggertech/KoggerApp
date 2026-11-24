@@ -139,7 +139,7 @@ Rectangle {
 
     KFocusRing { id: focusRing }
 
-    KToolTip {
+    KLazyToolTip {
         text: pcard.toolTipText
         targetItem: pcard
         shown: pcard._hovered && pcard.toolTipText.length > 0

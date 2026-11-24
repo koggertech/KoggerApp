@@ -8,37 +8,130 @@ BasePanePopup {
 
     required property var store
 
-    readonly property real _s: AppPalette.appScale
+    readonly property real cardScale: store ? store.autopilotCardScale : 1
+    readonly property real _s: AppPalette.appScale * cardScale
+    readonly property var _pillGroups: [["arm"], ["mode.0", "mode.1"], ["mode.4", "mode.5"], ["mode.10", "mode.11", "goTo"],
+                                        ["params", "missionEditor", "close"]]
+
+    function _k(value) {
+        return Math.round(value * cardScale)
+    }
+
+    function _shown(key) {
+        return _tour || key === _revealKey || !store || store.autopilotCardButtonShown(key)
+    }
+
+    property string _revealKey: ""
+    property string _highlightKey: ""
+    property int _revealFlash: 0
+    property bool _animateSize: false
+    readonly property int _revealPulseMs: 300
+    readonly property int _revealHoldMs: 1600
+
+    function _panelShown(key, available) {
+        return _tour || key === _revealKey || ((available || _preview) && (!store || store.autopilotCardButtonShown(key)))
+    }
+
+    function _toggleExpanded() {
+        if (!_showcase)
+            expanded = !expanded
+    }
+
+    function _startReveal(key) {
+        _revealKey = key
+        _highlightKey = ""
+        _animateSize = true
+        widthAnimEndTimer.stop()
+        revealPulseTimer.restart()
+        revealEndTimer.restart()
+    }
+
+    function _groupShown(group) {
+        var keys = _pillGroups[group]
+        for (var i = 0; i < keys.length; ++i)
+            if (_shown(keys[i])) return true
+        return false
+    }
+
+    function _separatorBefore(group) {
+        if (!_groupShown(group)) return false
+        for (var g = 0; g < group; ++g)
+            if (_groupShown(g)) return true
+        return false
+    }
     readonly property int _controlH: Math.round(36 * _s)
     readonly property int _sidePad: Math.round(3 * _s)
     readonly property int _gap: Math.round(6 * _s)
+    readonly property int _autoPillInset: Math.round(2 * _s)
+    property bool _helmTakeFailed: false
+    readonly property int _helmTakeFailedMs: 10000
     readonly property int _pad: Math.round(12 * _s)
     readonly property int _armConfirmMinMs: 400
     readonly property int _armConfirmMs: 3000
+    readonly property int _lossPeekMs: 5000
     property real _armCountdown: 0
     readonly property int _severityCritical: 2
     readonly property int _severityWarning: 4
     readonly property int _severityInfo: 6
 
     readonly property var _dmw: (typeof deviceManagerWrapper !== "undefined") ? deviceManagerWrapper : null
+    readonly property var _core: (typeof core !== "undefined") ? core : null
+    readonly property bool _goToArmed: _core ? _core.goToPlacementArmed : false
     readonly property bool _online: _dmw ? _dmw.autopilotOnline : false
-    readonly property int _arm: _dmw ? _dmw.pilotArmState : -1
-    readonly property int _mode: _dmw ? _dmw.pilotModeState : -1
-    readonly property string _modeName: _dmw ? _dmw.autopilotModeName : ""
-    readonly property real _voltage: _dmw ? _dmw.vruVoltage : NaN
-    readonly property real _speed: _dmw ? _dmw.vruVelocityH : NaN
-    readonly property real _current: _dmw ? _dmw.vruCurrent : NaN
-    readonly property int _batteryPct: _dmw ? _dmw.vruBatteryPercent : -1
-    readonly property int _linkQuality: _dmw ? _dmw.autopilotLinkQuality : -1
-    readonly property bool _rssiValid: _dmw ? _dmw.radioRssiValid : false
-    readonly property int _rssi: _dmw ? _dmw.radioRssi : 0
+    readonly property string tutorialId: "autopilot"
+    readonly property bool _tour: typeof tutorial !== "undefined" && !!tutorial && tutorial.active && tutorial.scenarioId === tutorialId
+    readonly property bool _preview: !!store && store.autopilotCardPreview
+    readonly property bool _showcase: _tour || _preview
+    readonly property bool _demo: _showcase && !_online
+    readonly property bool _live: _online || _demo
+    readonly property bool _open: expanded || _showcase
+    property real _openAmount: _open ? 1 : 0
+    Behavior on _openAmount {
+        NumberAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing }
+    }
+    readonly property var _sample: ({ battery: 78, voltage: 16.4, current: 3.2, speed: 1.6, link: 95, rssi: -64,
+                                      gpsFix: 3, sats: 17, hdop: 0.8, firmware: "ArduRover 4.6.2", home: 140,
+                                      toPoint: 85, crossTrack: 1.2, point: 3, points: 8, remaining: 420,
+                                      remainingSeconds: 360, progress: 0.4, missionSpeed: 1.5 })
+    readonly property int _arm: _demo ? 0 : (_dmw ? _dmw.pilotArmState : -1)
+    readonly property int _mode: _demo ? 0 : (_dmw ? _dmw.pilotModeState : -1)
+    readonly property string _modeName: _demo ? "Manual" : (_dmw ? _dmw.autopilotModeName : "")
+    readonly property real _voltage: _demo ? _sample.voltage : (_dmw ? _dmw.vruVoltage : NaN)
+    readonly property real _speed: _demo ? _sample.speed : (_dmw ? _dmw.vruVelocityH : NaN)
+    readonly property real _current: _demo ? _sample.current : (_dmw ? _dmw.vruCurrent : NaN)
+    readonly property int _batteryPct: _demo ? _sample.battery : (_dmw ? _dmw.vruBatteryPercent : -1)
+    readonly property int _linkQuality: _demo ? _sample.link : (_dmw ? _dmw.autopilotLinkQuality : -1)
+    readonly property bool _rssiValid: _demo || (_dmw ? _dmw.radioRssiValid : false)
+    readonly property int _rssi: _demo ? _sample.rssi : (_dmw ? _dmw.radioRssi : 0)
     readonly property bool _armed: _arm > 0
-    readonly property int _gpsFix: _dmw ? _dmw.gpsFixType : -1
-    readonly property int _gpsSats: _dmw ? _dmw.gpsSatellites : -1
-    readonly property real _gpsHdop: _dmw ? _dmw.gpsHdop : NaN
+    readonly property int _gpsFix: _demo ? _sample.gpsFix : (_dmw ? _dmw.gpsFixType : -1)
+    readonly property int _gpsSats: _demo ? _sample.sats : (_dmw ? _dmw.gpsSatellites : -1)
+    readonly property string _firmwareText: {
+        if (_demo) return _sample.firmware
+        if (!_dmw || _dmw.firmwareVersion.length === 0) return ""
+        var name = ""
+        if (_dmw.autopilotKind === 12) name = "PX4"
+        else if (_dmw.autopilotKind === 3) name = (_dmw.vehicleType === 10 || _dmw.vehicleType === 11) ? "ArduRover" : "ArduPilot"
+        var parts = [(name.length ? name + " " : "") + _dmw.firmwareVersion]
+        var kind = _firmwareTypeName(_dmw.firmwareVersionType)
+        if (kind.length) parts.push(kind)
+        if (_dmw.firmwareGitHash.length) parts.push(_dmw.firmwareGitHash)
+        return parts.join(" · ")
+    }
+    readonly property real _gpsHdop: _demo ? _sample.hdop : (_dmw ? _dmw.gpsHdop : NaN)
     readonly property int _gpsFix3d: 3
     readonly property int _gpsMinSatellites: 6
     readonly property bool _gpsPoor: _gpsFix >= 0 && (_gpsFix < _gpsFix3d || (_gpsSats >= 0 && _gpsSats < _gpsMinSatellites))
+
+    function _firmwareTypeName(type) {
+        switch (type) {
+        case 0: return "dev"
+        case 64: return "alpha"
+        case 128: return "beta"
+        case 192: return "RC"
+        }
+        return ""
+    }
 
     function _gpsFixName(fix) {
         switch (fix) {
@@ -58,19 +151,132 @@ BasePanePopup {
     readonly property var _run: (typeof missionRun !== "undefined") ? missionRun : null
     readonly property int _missionStatePaused: 4
     readonly property int _cmdSetMissionCurrent: 224
-    readonly property int _messagesShown: 5
+    readonly property int _messagesMinLines: 3
+    readonly property int _messagesStackedHeight: Math.round(220 * _s)
+    readonly property int _messageFontPx: Math.round(11 * _s)
+    readonly property int _messageGap: Math.round(6 * _s)
+    readonly property int _messageInset: Math.round(3 * _s)
+    readonly property real _messagesMinBody: Math.ceil(messageMetrics.lineSpacing) * _messagesMinLines + _messageGap * (_messagesMinLines - 1)
+    property bool _messagesSynced: false
+    property string _messagesNewestKey: ""
+    property bool _messagesFollowEnd: true
     readonly property real _earthRadiusM: 6371000.0
-    readonly property bool _paused: !!_dmw && _dmw.missionState === _missionStatePaused
+    readonly property bool _paused: (!!_run && _run.paused) || (!!_dmw && _dmw.missionState === _missionStatePaused)
+    readonly property bool _autoDisarmed: !!_run && _run.running && !_paused && !_armed && _mode === _modeAuto
     readonly property bool _missionKnown: _online && !!_run && _run.known && !_run.vehicleEmpty
-    readonly property bool _missionRowVisible: _missionKnown && (_run.running || _paused || (_run.complete && _armed))
+    readonly property bool _missionRowVisible: _missionKnown && (_run.running || ((_paused || _run.complete) && _armed))
+    readonly property bool _missionRowSample: _showcase && !_missionRowVisible
+    readonly property bool _missionSample: _showcase && !_missionKnown
+    readonly property bool _holdingAtEnd: _missionKnown && _run.holdingAtEnd
+    readonly property bool _hasPlanLimits: typeof missionPlan !== "undefined" && !!missionPlan
+    readonly property real _speedMin: _hasPlanLimits ? missionPlan.minSpeed : 0.3
+    readonly property real _speedWarn: _hasPlanLimits ? missionPlan.warnSpeed : 0.8
+    readonly property real _speedStep: _hasPlanLimits ? missionPlan.speedStep : 0.1
+    readonly property real _speedMax: _hasPlanLimits ? missionPlan.maxSpeed : 10
+    readonly property int _cmdChangeSpeed: 178
+    readonly property int _speedSendDelayMs: 600
+    property real _speedDraft: NaN
+    readonly property real _manualSpeed: _run ? _run.manualSpeed : NaN
+    readonly property real _planSpeed: _run ? _run.planSpeed : NaN
+    readonly property bool _speedManual: isFinite(_speedDraft) || isFinite(_manualSpeed)
+    readonly property real _shownSpeed: isFinite(_speedDraft) ? _speedDraft : (isFinite(_manualSpeed) ? _manualSpeed : _planSpeed)
+    readonly property real _cardSpeed: _missionSample ? _sample.missionSpeed : _shownSpeed
+    readonly property bool _speedRowVisible: _missionKnown && !_run.complete && !_holdingAtEnd && (_run.running || _paused)
+    property int _speedSendsInFlight: 0
+    property real _speedPrevious: NaN
+    property bool _speedWasReset: false
+    on_SpeedRowVisibleChanged: {
+        if (_speedRowVisible) return
+        speedSendTimer.stop()
+        _speedDraft = NaN
+    }
     readonly property var _helm: (typeof helm !== "undefined") ? helm : null
     readonly property var _gamepad: (typeof gamepadMonitor !== "undefined") ? gamepadMonitor : null
     readonly property bool _helmActive: !!_helm && _helm.active
     readonly property bool _helmRowVisible: !!_helm && (_helm.available || _helm.active)
     readonly property int _helmConfirmation: _helm ? _helm.confirmation : 0
+    readonly property var _loss: (typeof linkLoss !== "undefined") ? linkLoss : null
+    readonly property bool _lossAvailable: _online && !!_loss && _loss.available
+    readonly property bool _lossKnown: _demo || (!!_loss && _loss.known)
+    readonly property int _lossChoiceNothing: 0
+    readonly property int _lossChoiceRtl: 3
+    readonly property int _lossChoice: _demo ? _lossChoiceRtl : (_loss ? _loss.choice : -1)
+    readonly property bool _lossContinue: _demo || (!!_loss && _loss.continueMission)
+    readonly property string _lossActionText: _demo ? "RTL" : (_loss ? _loss.actionText : "")
+    readonly property int _lossOutcomeUnknown: 0
+    readonly property int _lossOutcomeNothing: 1
+    readonly property int _modeHold: 4
+    readonly property int _modeAuto: 10
+    readonly property int _modeLoiter: 5
+    readonly property int _blockGap: Math.round(8 * _s)
+    readonly property int _lossActionHold: 2
+    readonly property color _lossInk: !!_loss && _loss.outcome === _lossOutcomeNothing ? AppPalette.linkIdleText : AppPalette.textMuted
+    readonly property bool _lossActive: _lossKnown && _lossChoice !== _lossChoiceNothing
+    readonly property var _lossCurrentOption: {
+        if (!_loss) return null
+        var list = _loss.options
+        for (var i = 0; i < list.length; ++i)
+            if (list[i].choice === _lossChoice) return list[i]
+        return null
+    }
+    property bool _lossNothingPending: false
+    property int _lossPeekChoice: -1
+    readonly property var _lossPeekOption: {
+        if (!_loss || _lossPeekChoice < 0) return null
+        var list = _loss.options
+        for (var i = 0; i < list.length; ++i)
+            if (list[i].choice === _lossPeekChoice) return list[i]
+        return null
+    }
+    readonly property var _lossSegments: {
+        if (!_loss) return []
+        var out = []
+        var list = _loss.options
+        for (var i = 0; i < list.length; ++i) {
+            var o = list[i]
+            var confirming = _lossNothingPending && o.choice === _lossChoiceNothing
+            out.push({ value: o.choice,
+                       label: confirming ? qsTr("Tap again") : o.label,
+                       enabled: o.enabled && _lossKnown,
+                       locked: _loss.busy || _demo,
+                       unavailable: !o.enabled,
+                       current: o.choice === _lossChoice,
+                       danger: confirming })
+        }
+        return out
+    }
+    readonly property var _lossMissionSegments: {
+        if (!_loss) return []
+        var known = _lossKnown
+        var locked = _loss.busy || _demo
+        return [{ value: true, label: qsTr("Keep going"), enabled: known, locked: locked, current: _lossContinue, danger: false },
+                { value: false, label: qsTr("Abort → %1").arg(_lossActionText.length > 0 ? _lossActionText : "FS_ACTION"),
+                  enabled: known, locked: locked, current: !_lossContinue, danger: false }]
+    }
+    readonly property string _lossNote: {
+        if (!_loss || !_lossKnown) return ""
+        if (_lossPeekOption) return _lossPeekOption.note + "."
+        var note = _lossCurrentOption ? _lossCurrentOption.note : _loss.choiceLabel
+        return note + "."
+    }
+    readonly property string _lossWarning: {
+        if (!_loss || !_lossKnown) return ""
+        var parts = []
+        if (_lossActive) parts.push(qsTr("Closing KoggerApp also counts as a link loss."))
+        if (_lossActive && _loss.sharedWithRc) parts.push(qsTr("The same happens when the RC transmitter is lost."))
+        if (_lossActive && _mode === _modeHold && !_loss.activeInHold && _loss.fsAction !== _lossActionHold) parts.push(qsTr("In Hold the boat ignores a link loss and stays in Hold (FS_OPTIONS bit 0 is off)."))
+        if (_loss.proxyMasks) parts.push(qsTr("A ground station behind the MAVLink proxy can hide the loss from the boat."))
+        return parts.join(" ")
+    }
     property bool expanded: false
-    readonly property bool _trayVisible: _online && (expanded || _missionRowVisible || _helmRowVisible)
-    readonly property int _rowPad: _trayVisible ? Math.round(6 * _s) : _sidePad
+    readonly property bool _trayVisible: _openAmount > 0 || (_online && (_missionRowVisible || _helmRowVisible))
+    readonly property int _rowPad: _sidePad
+    readonly property int _trayPad: Math.round(6 * _s)
+    readonly property int _expandedMinViewH: Math.round(120 * _s)
+    readonly property int _scrollBarW: Math.round(_pad / 2)
+    readonly property bool _helmRowShown: (_online && _helmRowVisible) || _showcase
+    readonly property bool _helmConfirmShown: _online && _helmRowVisible && _helmConfirmation !== 0
+    readonly property bool _missionRowShown: _missionRowVisible || _missionRowSample
     readonly property int _nextSeq: (_run && _run.running && _run.actionable && _run.targetSeq >= 0) ? _run.nextTargetSeq() : -1
     property bool _dragging: false
 
@@ -82,16 +288,24 @@ BasePanePopup {
     readonly property string _missionRowText: {
         if (!_run) return ""
         if (_run.complete) return qsTr("Mission complete")
+        if (_holdingAtEnd) return qsTr("Mission complete") + " · " + qsTr("Holding position")
         var parts = []
         if (_paused) parts.push(qsTr("Paused"))
+        if (_autoDisarmed) parts.push(qsTr("Not armed, the boat is not moving"))
         if (_run.currentNav > 0) parts.push(qsTr("Pt %1/%2").arg(_run.currentNav).arg(_run.navCount))
         if (isFinite(_run.remainingDistance)) parts.push(_fmtDist(_run.remainingDistance))
-        if (isFinite(_run.remainingSeconds)) parts.push("~" + _fmtTime(_run.remainingSeconds))
+        if (isFinite(_run.remainingSeconds) && !_autoDisarmed) parts.push("~" + _fmtTime(_run.remainingSeconds))
+        if (isFinite(_manualSpeed)) parts.push(_fmtSpeed(_manualSpeed))
         return parts.join(" · ")
     }
 
-    readonly property bool _sourceIsPlan: !!_run && _run.known && !_run.stale && !_run.reading && !_run.vehicleEmpty && _run.matchesPlan
+    readonly property string _missionRowSampleText: [qsTr("Pt %1/%2").arg(_sample.point).arg(_sample.points),
+                                                     _fmtDist(_sample.remaining),
+                                                     "~" + _fmtTime(_sample.remainingSeconds)].join(" · ")
+
+    readonly property bool _sourceIsPlan: _demo || !!_run && _run.known && !_run.stale && !_run.reading && !_run.vehicleEmpty && _run.matchesPlan
     readonly property string _missionSourceText: {
+        if (_demo) return qsTr("This plan is on the vehicle")
         if (!_run || !_online) return ""
         if (_run.reading) return qsTr("Reading the vehicle mission…")
         if (_run.known && _run.stale) return qsTr("The mission on the vehicle has changed; read it again")
@@ -101,6 +315,7 @@ BasePanePopup {
     }
 
     readonly property real _homeDistance: {
+        if (_demo) return _sample.home
         if (!_dmw) return NaN
         var lat1 = _dmw.vehicleLat, lon1 = _dmw.vehicleLon, lat2 = _dmw.vehicleHomeLat, lon2 = _dmw.vehicleHomeLon
         if (!isFinite(lat1) || !isFinite(lon1) || !isFinite(lat2) || !isFinite(lon2)) return NaN
@@ -114,6 +329,63 @@ BasePanePopup {
     function _fmtDist(m) {
         if (!isFinite(m)) return "—"
         return m < 1000 ? qsTr("%1 m").arg(Math.round(m)) : qsTr("%1 km").arg((m / 1000).toFixed(1))
+    }
+
+    function _fmtSpeed(v) {
+        return qsTr("%1 m/s").arg(v.toFixed(1))
+    }
+
+    function _stepSpeed(direction) {
+        if (!_run) return
+        var base = isFinite(_shownSpeed) ? _shownSpeed : (isFinite(_speed) && _speed > 0 ? _speed : _speedMin)
+        var grid = base / _speedStep
+        var next = (direction > 0 ? Math.floor(grid + 1e-6) + 1 : Math.ceil(grid - 1e-6) - 1) * _speedStep
+        _speedDraft = Math.round(Math.max(_speedMin, Math.min(_speedMax, next)) * 100) / 100
+        speedSendTimer.restart()
+    }
+
+    function _applySpeed() {
+        var v = _speedDraft
+        _speedDraft = NaN
+        if (!_run || !isFinite(v) || !_speedRowVisible) return
+        var previous = _run.manualSpeed
+        if (_run.setManualSpeed(v))
+            _speedSent(previous, false)
+    }
+
+    function _resetSpeed() {
+        speedSendTimer.stop()
+        _speedDraft = NaN
+        if (!_run) return
+        var previous = _run.manualSpeed
+        if (_run.clearManualSpeed(true))
+            _speedSent(previous, true)
+    }
+
+    function _speedSent(previous, reset) {
+        _speedSendsInFlight++
+        _speedPrevious = previous
+        _speedWasReset = reset
+        speedAckTimer.restart()
+    }
+
+    function _speedAcked(result) {
+        var previous = _speedPrevious
+        var reset = _speedWasReset
+        _speedPrevious = NaN
+        _speedWasReset = false
+        if (result === 0 || !_run) return
+        if (isFinite(previous))
+            _run.setManualSpeed(previous, false)
+        else
+            _run.clearManualSpeed(false)
+        if (result === 4) {
+            _log(_severityWarning, reset
+                 ? qsTr("Mission speed: the reset was not applied while the boat holds at a point; tap ↺ again once it moves on")
+                 : qsTr("Mission speed: not applied while the boat holds at a point; set it again once it moves on"))
+            return
+        }
+        _log(_severityWarning, qsTr("%1: %2").arg(commandText(_cmdChangeSpeed)).arg(resultText(result)))
     }
 
     function _fmtTime(sec) {
@@ -134,6 +406,42 @@ BasePanePopup {
         return AppPalette.textSecond
     }
 
+    function _messageKey(entry) {
+        return entry.time + "|" + entry.severity + "|" + entry.text
+    }
+
+    function _messageRow(entry, fresh) {
+        return { msgTime: entry.time, severity: entry.severity, msgText: entry.text, fresh: fresh }
+    }
+
+    function _syncMessages() {
+        const src = _dmw ? _dmw.autopilotMessages : []
+        let fresh = -1
+        if (_messagesSynced)
+            fresh = _messagesNewestKey === "" ? src.length : src.findIndex(e => _messageKey(e) === _messagesNewestKey)
+        if (fresh < 0) {
+            messagesModel.clear()
+            for (let i = src.length - 1; i >= 0; --i)
+                messagesModel.append(_messageRow(src[i], false))
+        } else {
+            for (let i = fresh - 1; i >= 0; --i)
+                messagesModel.append(_messageRow(src[i], true))
+            while (messagesModel.count > src.length)
+                messagesModel.remove(0)
+        }
+        _messagesSynced = true
+        _messagesNewestKey = src.length > 0 ? _messageKey(src[0]) : ""
+        if (fresh !== 0) {
+            _messagesFollowEnd = true
+            Qt.callLater(_scrollMessagesToEnd)
+        }
+    }
+
+    function _scrollMessagesToEnd() {
+        if (_messagesFollowEnd)
+            messagesFlick.contentY = Math.max(0, messagesFlick.contentHeight - messagesFlick.height)
+    }
+
     function _severityColor(severity) {
         if (severity <= 3) return AppPalette.dangerText
         if (severity === root._severityWarning) return AppPalette.linkIdleText
@@ -147,6 +455,25 @@ BasePanePopup {
     function _cancelNextConfirm() {
         nextConfirmPending = false
         nextConfirmTimer.stop()
+    }
+
+    function peekLinkLoss(choice) {
+        _lossPeekChoice = choice
+        lossPeekTimer.restart()
+    }
+
+    function requestLinkLoss(choice) {
+        _lossPeekChoice = -1
+        lossPeekTimer.stop()
+        if (!_loss || _loss.busy || !_loss.known) return
+        if (choice === _lossChoiceNothing && _armed && _loss.choice !== _lossChoiceNothing && !_lossNothingPending) {
+            _lossNothingPending = true
+            lossConfirmTimer.restart()
+            return
+        }
+        _lossNothingPending = false
+        lossConfirmTimer.stop()
+        _loss.apply(choice, _loss.continueMission)
     }
 
     function requestNextPoint() {
@@ -168,7 +495,11 @@ BasePanePopup {
     }
 
     readonly property var _modeNamesForWidth: ["Manual", "Acro", "Hold", "Loiter", "Auto", "RTL"]
-    readonly property real _titleSlotW: Math.max(modeNameProbe.width, titleText.implicitWidth)
+    readonly property int _lossHintIconW: Math.round(11 * _s)
+    readonly property int _lossHintGap: Math.round(3 * _s)
+    readonly property real _lossHintTextW: Math.ceil(lossHintMetrics.advanceWidth)
+    readonly property real _titleSlotW: Math.max(modeNameProbe.width, titleText.implicitWidth,
+                                                 _lossHintIconW + _lossHintGap + _lossHintTextW)
     readonly property var _statTemplates: ["100 %", "88.8 V", "88.8 A", "88.8 " + qsTr("m/s"), "88"]
     readonly property real _statValueW: Math.ceil(statValueProbe.width)
     readonly property real _statLastValueW: Math.ceil(statLastValueProbe.width)
@@ -186,14 +517,17 @@ BasePanePopup {
     property real _armFirstTapMs: 0
     property int _armFlash: 0
     property int pendingCommand: -1
+    property int _pendingModeTarget: -1
 
     readonly property real _pillW: _pad + statusDot.width + infoColumn.anchors.leftMargin + infoColumn.width
                                    + buttonRow.anchors.leftMargin + buttonRow.width + _sidePad
     readonly property real _pillH: _controlH + _rowPad * 2
+    readonly property int _expandedLeftMinW: Math.round(220 * _s)
     readonly property real _wantW: _pillW + contentPadding * 2
     readonly property real _wantH: headerHeight + _pillH + (_trayVisible ? tray.height : 0) + contentPadding
 
-    popupVisible: store.autopilotPopupOpen
+    popupVisible: store.autopilotPopupOpen || store.autopilotCardPreview
+    contentPadding: _k(Tokens.spaceXs)
     dragEnabled: true
     resizeEnabled: false
     collapseButtonVisible: false
@@ -206,8 +540,14 @@ BasePanePopup {
     siblingSnapAlignTop: true
     snapEdgeCenters: true
 
+    property real _shownW: _wantW
+    Behavior on _shownW {
+        enabled: root._animateSize
+        NumberAnimation { duration: Anim.controlMs; easing.type: Anim.controlEasing }
+    }
+
     function _applySize() {
-        expandedWidth = _wantW
+        expandedWidth = _shownW
         expandedHeight = _wantH
     }
 
@@ -248,6 +588,9 @@ BasePanePopup {
         case 176: return qsTr("Mode change")
         case 300: return qsTr("Mission start")
         case 224: return qsTr("Go to point")
+        case 192: return qsTr("Go here")
+        case 246: return qsTr("Reboot")
+        case 178: return qsTr("Mission speed")
         }
         return qsTr("Command %1").arg(command)
     }
@@ -290,10 +633,17 @@ BasePanePopup {
     function requestMode(mode) {
         if (!_dmw || !_online || mode === _mode) return
         _cancelArmConfirm()
+        _pendingModeTarget = mode
         _send(176, function() { root._dmw.autopilotSetMode(mode) })
     }
 
     function _warnFailure(command, result) {
+        if (command === 176 && _pendingModeTarget >= 0 && _dmw) {
+            var reason = _dmw.modeRefusalReason(_pendingModeTarget)
+            var head = qsTr("Mode change to %1: %2").arg(_dmw.modeNameFor(_pendingModeTarget)).arg(resultText(result))
+            _log(_severityWarning, reason.length > 0 ? head + " — " + reason : head)
+            return
+        }
         _log(_severityWarning, qsTr("%1: %2").arg(commandText(command)).arg(resultText(result)))
     }
 
@@ -307,13 +657,23 @@ BasePanePopup {
             notifications.info(text)
     }
 
+    function openParamsDialog() {
+        if (paramsDialogLoader.item)
+            paramsDialogLoader.item.open()
+        else
+            paramsDialogLoader.active = true
+    }
 
-    on_WantWChanged: _applySize()
+
+    on_ShownWChanged: _applySize()
     on_WantHChanged: { _applySize(); Qt.callLater(_restorePlacement) }
     onInteractionStarted: _dragging = true
-    on_OnlineChanged: if (!_online) { _cancelArmConfirm(); _cancelNextConfirm(); expanded = false; _pendingJumpSeq = -1 }
+    on_OnlineChanged: if (!_online) { _cancelArmConfirm(); _cancelNextConfirm(); _lossNothingPending = false; _lossPeekChoice = -1; _pendingJumpSeq = -1 }
     on_NextSeqChanged: _cancelNextConfirm()
-    onExpandedChanged: _cancelNextConfirm()
+    onExpandedChanged: {
+        _cancelNextConfirm()
+        if (expanded) _helmTakeFailed = false
+    }
     on_ArmedChanged: _cancelArmConfirm()
     onArmConfirmPendingChanged: {
         if (armConfirmPending) {
@@ -325,8 +685,36 @@ BasePanePopup {
         }
     }
 
+    FontMetrics {
+        id: messageMetrics
+        font.pixelSize: root._messageFontPx
+    }
+
+    ListModel {
+        id: messagesModel
+    }
+
+    ListModel {
+        id: sampleMessagesModel
+    }
+
+    function _fillSampleMessages() {
+        sampleMessagesModel.clear()
+        const now = Date.now()
+        sampleMessagesModel.append({ msgTime: now - 95000, severity: _severityInfo, msgText: _sample.firmware, fresh: false })
+        sampleMessagesModel.append({ msgTime: now - 60000, severity: _severityInfo, msgText: qsTr("Mission: %1 points").arg(_sample.points), fresh: false })
+        sampleMessagesModel.append({ msgTime: now - 20000, severity: _severityWarning,
+                                     msgText: qsTr("Mode change to %1: %2").arg("Loiter").arg(resultText(-2)), fresh: false })
+    }
+
+    on_ShowcaseChanged: {
+        if (_showcase) _fillSampleMessages()
+        else sampleMessagesModel.clear()
+    }
+
     Component.onCompleted: {
         _applySize()
+        _syncMessages()
         syncFromStore()
         Qt.callLater(syncFromStore)
         Qt.callLater(resolveOverlapWithSibling)
@@ -334,6 +722,8 @@ BasePanePopup {
 
     onPopupVisibleChanged: {
         _cancelArmConfirm()
+        if (!popupVisible && _core)
+            _core.setGoToPlacementArmed(false)
         if (popupVisible) {
             _applySize()
             syncFromStore()
@@ -389,10 +779,86 @@ BasePanePopup {
         onTriggered: root.nextConfirmPending = false
     }
 
+    Timer {
+        id: speedSendTimer
+        interval: root._speedSendDelayMs
+        onTriggered: root._applySpeed()
+    }
+
+    Timer {
+        id: speedAckTimer
+        interval: 3000
+        onTriggered: {
+            if (root._speedSendsInFlight === 0) return
+            root._speedSendsInFlight = 0
+            root._speedPrevious = NaN
+            root._speedWasReset = false
+            root._log(root._severityWarning, qsTr("%1: %2").arg(root.commandText(root._cmdChangeSpeed)).arg(root.resultText(-2)))
+        }
+    }
+
+    Timer {
+        id: lossConfirmTimer
+        interval: root._armConfirmMs
+        onTriggered: root._lossNothingPending = false
+    }
+
+    Timer {
+        id: lossPeekTimer
+        interval: root._lossPeekMs
+        onTriggered: root._lossPeekChoice = -1
+    }
+
+    Connections {
+        target: root._helm
+        ignoreUnknownSignals: true
+        function onEngageFailed(reason) {
+            if (root.expanded) return
+            root._helmTakeFailed = true
+            helmTakeFailedTimer.restart()
+        }
+        function onStateChanged() {
+            if (root._helm.state !== 0)
+                root._helmTakeFailed = false
+        }
+    }
+
+    Timer {
+        id: helmTakeFailedTimer
+        interval: root._helmTakeFailedMs
+        onTriggered: root._helmTakeFailed = false
+    }
+
+    Loader {
+        id: paramsDialogLoader
+        visible: false
+        active: false
+        source: "qrc:/qml/app/AutopilotParamsDialog.qml"
+        onLoaded: {
+            item.store = root.store
+            item.firmwareText = Qt.binding(function() { return root._firmwareText })
+            item.open()
+        }
+    }
+
     Connections {
         target: root._dmw
         ignoreUnknownSignals: true
+        function onAutopilotMessagesChanged() {
+            root._syncMessages()
+        }
         function onAutopilotCommandAcked(command, result) {
+            if (command === root._cmdChangeSpeed && root._speedSendsInFlight > 0) {
+                if (result === 5) {
+                    speedAckTimer.restart()
+                    return
+                }
+                root._speedSendsInFlight--
+                if (root._speedSendsInFlight > 0) return
+                speedAckTimer.stop()
+                root._speedAcked(result)
+                return
+            }
             if (command !== root.pendingCommand) return
             if (result === 5) {
                 ackTimer.restart()
@@ -420,19 +886,22 @@ BasePanePopup {
         }
     }
 
-    component InfoCell: Column {
+    component InfoCell: Row {
+        id: infoCell
         property string key: ""
         property string value: ""
         property color valueColor: AppPalette.textStrong
-        spacing: 0
+        spacing: Math.round(4 * root._s)
         Text {
-            text: parent.key
+            anchors.baseline: infoValue.baseline
+            text: infoCell.key
             color: AppPalette.textMuted
-            font.pixelSize: Math.round(10 * root._s)
+            font.pixelSize: Math.round(11 * root._s)
         }
         Text {
-            text: parent.value
-            color: parent.valueColor
+            id: infoValue
+            text: infoCell.value
+            color: infoCell.valueColor
             font.pixelSize: Math.round(12 * root._s)
             font.bold: true
         }
@@ -440,19 +909,100 @@ BasePanePopup {
 
     component PillButton: KCircleIconButton {
         property bool selected: false
+        property bool hinted: false
         property bool danger: false
         width: root._controlH
         height: root._controlH
-        enabled: root._online
+        enabled: root._live
         opacity: enabled ? 1.0 : 0.5
-        iconTintColor: danger ? AppPalette.dangerText : AppPalette.text
+        iconTintColor: danger ? AppPalette.dangerText : (hinted && !selected ? AppPalette.accent : AppPalette.text)
         fillColor:        danger ? AppPalette.dangerBg : (selected ? AppPalette.accentBgStrong : AppPalette.card)
         fillHoverColor:   danger ? AppPalette.dangerBg : (selected ? AppPalette.accentBorder : AppPalette.cardHover)
         fillPressedColor: AppPalette.bgDeep
-        borderColor:      danger ? AppPalette.dangerBorder : (selected ? AppPalette.accentBorder : AppPalette.border)
-        borderHoverColor: danger ? AppPalette.dangerBorder : (selected ? AppPalette.accentBorder : AppPalette.borderHover)
-        borderWidth: danger || selected ? 1 : Tokens.cardBorderWidth
+        borderColor:      danger ? AppPalette.dangerBorder : (selected || hinted ? AppPalette.accentBorder : AppPalette.border)
+        borderHoverColor: danger ? AppPalette.dangerBorder : (selected || hinted ? AppPalette.accentBorder : AppPalette.borderHover)
+        borderWidth: danger || selected ? 1 : (hinted ? 2 : Tokens.cardBorderWidth)
         toolTipOnHold: true
+        property string cardKey: ""
+        highlighted: cardKey.length > 0 && root._highlightKey === cardKey
+        flashToken: root._revealFlash
+
+        RevealAppear { animProperty: "scale"; from: 0.4 }
+    }
+
+    component RevealRow: Row {
+        move: Transition {
+            NumberAnimation { properties: "x"; duration: Anim.controlMs; easing.type: Anim.controlEasing }
+        }
+    }
+
+    component RevealAppear: Item {
+        id: appear
+        property string animProperty: "opacity"
+        property real from: 0
+        readonly property Item host: parent
+        visible: false
+
+        Connections {
+            target: appear.host
+            function onVisibleChanged() {
+                if (appear.host.visible && root._animateSize)
+                    appearAnim.restart()
+            }
+        }
+
+        NumberAnimation {
+            id: appearAnim
+            target: appear.host
+            property: appear.animProperty
+            from: appear.from
+            to: 1
+            duration: Anim.controlMs
+            easing.type: Anim.controlEasing
+        }
+    }
+
+    Connections {
+        target: root.store
+        ignoreUnknownSignals: true
+        function onAutopilotCardRevealNonceChanged() {
+            root._startReveal(root.store.autopilotCardRevealKey)
+        }
+    }
+
+    Timer {
+        id: revealPulseTimer
+        interval: root._revealPulseMs
+        onTriggered: {
+            root._highlightKey = root._revealKey
+            root._revealFlash += 1
+        }
+    }
+
+    Timer {
+        id: revealEndTimer
+        interval: root._revealHoldMs
+        onTriggered: {
+            root._highlightKey = ""
+            root._revealKey = ""
+            widthAnimEndTimer.restart()
+        }
+    }
+
+    Timer {
+        id: widthAnimEndTimer
+        interval: Anim.controlMs + 100
+        onTriggered: root._animateSize = false
+    }
+
+    component StepButton: KCircleIconButton {
+        width: root._k(Tokens.controlHMd)
+        height: root._k(Tokens.controlHMd)
+        glyphPixelSize: Math.round(14 * root._s)
+        iconTintColor: AppPalette.text
+        fillColor: AppPalette.card
+        fillHoverColor: AppPalette.cardHover
+        borderColor: AppPalette.border
     }
 
     component StatCell: Row {
@@ -518,6 +1068,159 @@ BasePanePopup {
         }
     }
 
+    component RevealGlow: Rectangle {
+        id: glow
+        property string key: ""
+        readonly property bool lit: key.length > 0 && root._highlightKey === key
+        readonly property int flash: root._revealFlash
+        anchors.fill: parent
+        radius: parent ? parent.radius : 0
+        color: "transparent"
+        border.color: AppPalette.accentBorder
+        border.width: Math.max(2, Math.round(2 * root._s))
+        opacity: 0
+        visible: opacity > 0
+        z: 1
+        onFlashChanged: if (lit) glowAnim.restart()
+        onLitChanged: if (!lit) { glowAnim.stop(); opacity = 0 }
+
+        SequentialAnimation {
+            id: glowAnim
+            NumberAnimation { target: glow; property: "opacity"; to: 1; duration: 180; easing.type: Easing.OutCubic }
+            NumberAnimation { target: glow; property: "opacity"; to: 0.35; duration: 380; easing.type: Easing.InOutSine }
+            NumberAnimation { target: glow; property: "opacity"; to: 1; duration: 380; easing.type: Easing.InOutSine }
+        }
+    }
+
+    component Panel: Rectangle {
+        id: panel
+        property string title: ""
+        property url icon: ""
+        property string note: ""
+        property string cardKey: ""
+        property color noteColor: AppPalette.textMuted
+        property bool noteBold: false
+        default property alias content: panelBody.data
+        readonly property int pad: Math.round(8 * root._s)
+        readonly property real chromeHeight: pad * 2 + panelHeader.height + panelColumn.spacing
+        implicitHeight: panelColumn.implicitHeight + pad * 2
+        radius: root._k(Tokens.radiusLg)
+        color: AppPalette.bgDeep
+        border.color: AppPalette.border
+        border.width: Tokens.cardBorderWidth
+
+        RevealGlow { key: panel.cardKey }
+        RevealAppear {}
+
+        Column {
+            id: panelColumn
+            x: panel.pad
+            y: panel.pad
+            width: panel.width - panel.pad * 2
+            spacing: Math.round(6 * root._s)
+
+            Item {
+                id: panelHeader
+                width: parent.width
+                height: Math.max(panelTitle.implicitHeight, panelIcon.height)
+
+                StatIcon {
+                    id: panelIcon
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Math.round(14 * root._s)
+                    source: panel.icon
+                    tint: AppPalette.textMuted
+                }
+                Text {
+                    id: panelTitle
+                    anchors.left: panelIcon.right
+                    anchors.leftMargin: Math.round(5 * root._s)
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: panel.title
+                    color: AppPalette.textStrong
+                    font.pixelSize: Math.round(12 * root._s)
+                    font.bold: true
+                }
+                Text {
+                    anchors.left: panelTitle.right
+                    anchors.leftMargin: Math.round(8 * root._s)
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    horizontalAlignment: Text.AlignRight
+                    text: panel.note
+                    color: panel.noteColor
+                    font.pixelSize: Math.round((panel.noteBold ? 12 : 11) * root._s)
+                    font.bold: panel.noteBold
+                    elide: Text.ElideRight
+                }
+            }
+
+            Column {
+                id: panelBody
+                width: parent.width
+                spacing: Math.round(6 * root._s)
+            }
+        }
+    }
+
+    component Segments: Rectangle {
+        id: segments
+        property var items: []
+        signal picked(var value)
+        signal blocked(var value)
+        readonly property int inset: Math.max(2, Math.round(2 * root._s))
+        implicitWidth: segmentRow.implicitWidth + inset * 2
+        implicitHeight: root._k(Tokens.controlHMd)
+        radius: root._k(Tokens.radiusMd)
+        color: AppPalette.card
+        border.color: AppPalette.border
+        border.width: Tokens.cardBorderWidth
+
+        Row {
+            id: segmentRow
+            x: segments.inset
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 0
+
+            Repeater {
+                model: segments.items.length
+                delegate: Rectangle {
+                    id: segment
+                    required property int index
+                    readonly property var entry: segments.items[index] || ({})
+                    readonly property bool tappable: entry.locked !== true
+                                                     && (entry.danger === true || (entry.enabled === true && entry.current !== true))
+                    width: segmentLabel.implicitWidth + Math.round(18 * root._s)
+                    height: segments.height - segments.inset * 2
+                    radius: Math.max(2, segments.radius - segments.inset)
+                    opacity: entry.enabled || entry.current ? 1.0 : 0.4
+                    color: entry.danger ? AppPalette.dangerBg
+                         : entry.current ? AppPalette.accentBgStrong
+                         : segmentTap.containsMouse && tappable ? AppPalette.cardHover : "transparent"
+
+                    Text {
+                        id: segmentLabel
+                        anchors.centerIn: parent
+                        text: segment.entry.label || ""
+                        color: segment.entry.danger ? AppPalette.dangerText : AppPalette.textStrong
+                        font.pixelSize: Math.round(12 * root._s)
+                        font.bold: true
+                    }
+                    MouseArea {
+                        id: segmentTap
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        enabled: segment.tappable || segment.entry.unavailable === true
+                        cursorShape: segment.tappable ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: segment.tappable ? segments.picked(segment.entry.value)
+                                                    : segments.blocked(segment.entry.value)
+                    }
+                }
+            }
+        }
+    }
+
     component PillSeparator: Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         width: 1
@@ -528,12 +1231,25 @@ BasePanePopup {
     Item {
         id: cardBody
         anchors.fill: parent
+        opacity: root._tour || !root.store ? 1 : root.store.autopilotCardOpacity
+
+        MouseArea {
+            anchors.fill: parent
+            z: 100
+            visible: root._preview && !root._tour
+            hoverEnabled: true
+            preventStealing: true
+            acceptedButtons: Qt.AllButtons
+            onWheel: function(wheel) { wheel.accepted = false }
+        }
 
         Rectangle {
             width: parent.width
             height: root._pillH + (root._trayVisible ? tray.height : 0)
             radius: root._pillH / 2
             color: AppPalette.bg
+
+            KTutorialAnchor { key: "autopilot.card" }
         }
 
         Rectangle {
@@ -549,9 +1265,8 @@ BasePanePopup {
                 anchors.right: buttonRow.left
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
-                enabled: root._online
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root.expanded = !root.expanded
+                onClicked: root._toggleExpanded()
             }
 
             Item {
@@ -564,7 +1279,7 @@ BasePanePopup {
                 Image {
                     id: statusIcon
                     anchors.fill: parent
-                    source: root._online ? "qrc:/icons/ui/autopilot-link.svg" : "qrc:/icons/ui/autopilot-link-off.svg"
+                    source: root._live ? "qrc:/icons/ui/autopilot-link.svg" : "qrc:/icons/ui/autopilot-link-off.svg"
                     sourceSize.width: Math.max(1, Math.round(width * Screen.devicePixelRatio))
                     sourceSize.height: Math.max(1, Math.round(height * Screen.devicePixelRatio))
                     fillMode: Image.PreserveAspectFit
@@ -574,7 +1289,7 @@ BasePanePopup {
                 ColorOverlay {
                     anchors.fill: statusIcon
                     source: statusIcon
-                    color: !root._online ? AppPalette.textMuted
+                    color: !root._live ? AppPalette.textMuted
                          : root._armed ? AppPalette.dangerBorder : AppPalette.missionRally
                     smooth: true
                 }
@@ -591,12 +1306,14 @@ BasePanePopup {
                     id: statusTipTimer
                     interval: 2000
                 }
-                KToolTip {
+                KLazyToolTip {
                     text: qsTr("No autopilot")
                     targetItem: statusDot
-                    delay: statusTipTimer.running ? 0 : 520
+                    delay: statusTipTimer.running ? 0 : Anim.tooltipDelayMs
                     shown: !root._online && (statusTipArea.containsMouse || statusTipTimer.running)
                 }
+
+                KTutorialAnchor { key: "autopilot.status" }
             }
 
             Column {
@@ -647,28 +1364,61 @@ BasePanePopup {
             Row {
                 id: infoColumn
                 anchors.left: statusDot.right
-                anchors.leftMargin: root._online ? Math.round(8 * root._s) : 0
+                anchors.leftMargin: Math.round(8 * root._s)
                 anchors.verticalCenter: parent.verticalCenter
-                visible: root._online
-                width: root._online ? implicitWidth : 0
                 spacing: Math.round(8 * root._s)
 
                 Item {
                     anchors.verticalCenter: parent.verticalCenter
-                    width: root._titleSlotW + titleRow.spacing + chevron.width
+                    width: root._live ? root._titleSlotW + titleRow.spacing + chevron.width : chevron.width
                     height: titleRow.height
 
                     Row {
                         id: titleRow
                         spacing: Math.round(6 * root._s)
 
-                        Text {
-                            id: titleText
+                        Column {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: root._modeName
-                            color: AppPalette.textStrong
-                            font.pixelSize: Math.round(13 * root._s)
-                            font.bold: true
+                            width: root._titleSlotW
+                            visible: root._live
+                            spacing: 0
+
+                            Text {
+                                id: titleText
+                                text: root._modeName
+                                color: AppPalette.textStrong
+                                font.pixelSize: Math.round(13 * root._s)
+                                font.bold: true
+
+                                KTutorialAnchor { key: "autopilot.modeName" }
+                            }
+                            Row {
+                                id: lossHint
+                                visible: root._lossAvailable || root._demo
+                                spacing: root._lossHintGap
+
+                                KTutorialAnchor { key: "autopilot.lossHint" }
+
+                                StatIcon {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: root._lossHintIconW
+                                    source: "qrc:/icons/ui/autopilot-link-off.svg"
+                                    tint: root._lossInk
+                                }
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: root._lossHintTextW
+                                    text: root._demo ? "→ RTL" : (root._loss ? root._loss.outcomeText : "")
+                                    color: root._lossInk
+                                    font: lossHintMetrics.font
+                                    elide: Text.ElideRight
+                                }
+                                TextMetrics {
+                                    id: lossHintMetrics
+                                    font.pixelSize: Math.round(10 * root._s)
+                                    text: "→ SmartRTL"
+                                }
+                            }
                         }
                         KCircleIconButton {
                             id: chevron
@@ -676,25 +1426,30 @@ BasePanePopup {
                             width: Math.round(24 * root._s)
                             height: width
                             iconSource: "qrc:/icons/ui/chevron-down.svg"
-                            iconRotation: root.expanded ? 180 : 0
+                            iconRotation: root._open ? 180 : 0
                             iconTintColor: AppPalette.text
                             fillColor: AppPalette.card
                             fillHoverColor: AppPalette.cardHover
                             fillPressedColor: AppPalette.bgDeep
                             borderColor: AppPalette.border
                             borderHoverColor: AppPalette.borderHover
-                            onClicked: root.expanded = !root.expanded
+                            onClicked: root._toggleExpanded()
+
+                            KTutorialAnchor { key: "autopilot.expand" }
                         }
                     }
                 }
 
                 Grid {
                     anchors.verticalCenter: parent.verticalCenter
+                    visible: root._live
                     rows: 2
                     flow: Grid.TopToBottom
                     columnSpacing: Math.round(6 * root._s)
                     rowSpacing: Math.round(3 * root._s)
                     verticalItemAlignment: Grid.AlignVCenter
+
+                    KTutorialAnchor { key: "autopilot.stats" }
 
                     StatCell {
                         GlyphSlot {
@@ -751,7 +1506,7 @@ BasePanePopup {
                 }
             }
 
-            Row {
+            RevealRow {
                 id: buttonRow
                 anchors.left: infoColumn.right
                 anchors.leftMargin: Math.round(10 * root._s)
@@ -760,12 +1515,15 @@ BasePanePopup {
 
                 PillButton {
                     id: armBtn
+                    visible: root._shown("arm")
                     danger: root._armed || root.armConfirmPending
-                    highlighted: root.armConfirmPending
-                    flashToken: root._armFlash
+                    highlighted: root.armConfirmPending || root._highlightKey === "arm"
+                    flashToken: root._armFlash + root._revealFlash
                     highlightBorderColor: AppPalette.dangerBorder
                     autoToolTip: false
                     onClicked: root.requestArm()
+
+                    KTutorialAnchor { key: "autopilot.arm" }
 
                     Item {
                         id: armLabel
@@ -842,37 +1600,75 @@ BasePanePopup {
                     }
                 }
 
-                PillSeparator {}
+                PillSeparator {
+                    visible: root._separatorBefore(1)
+                }
 
                 Repeater {
                     model: root.modes
-                    delegate: Row {
+                    delegate: RevealRow {
                         id: modeCell
                         required property var modelData
                         required property int index
+                        readonly property bool buttonShown: root._shown("mode." + modelData.mode)
+                        readonly property bool separatorShown: index > 0 && root.modes[index - 1].group !== modelData.group
+                                                               && root._separatorBefore(modelData.group + 1)
                         anchors.verticalCenter: parent.verticalCenter
+                        visible: buttonShown || separatorShown
                         spacing: root._gap
 
                         PillSeparator {
-                            visible: modeCell.index > 0 && root.modes[modeCell.index - 1].group !== modeCell.modelData.group
+                            visible: modeCell.separatorShown
                         }
 
                         PillButton {
-                            selected: root._online && root._mode === modeCell.modelData.mode
+                            visible: modeCell.buttonShown
+                            cardKey: "mode." + modeCell.modelData.mode
+                            selected: root._live && root._mode === modeCell.modelData.mode
+                            hinted: !selected && root._holdingAtEnd && modeCell.modelData.mode === root._modeLoiter
                             toolTipOnHold: modeCell.modelData.stop !== true
                             iconSource: modeCell.modelData.icon
-                            toolTipText: modeCell.modelData.tip
+                            toolTipText: hinted ? qsTr("Loiter: the finished mission holds position in Auto") : modeCell.modelData.tip
                             onClicked: root.requestMode(modeCell.modelData.offMode !== undefined && root._mode === modeCell.modelData.mode
                                                         ? modeCell.modelData.offMode : modeCell.modelData.mode)
+
+                            KTutorialAnchor { key: "autopilot.mode." + modeCell.modelData.mode }
                         }
                     }
                 }
 
-                PillSeparator {}
+                PillButton {
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: root._shown("goTo")
+                    selected: root._goToArmed
+                    cardKey: "goTo"
+                    iconSource: "qrc:/icons/ui/location_pin.svg"
+                    toolTipText: root._goToArmed ? qsTr("Stop picking a point") : qsTr("Go here: tap a point in the 3D view")
+                    onClicked: if (root._core && root._online) root._core.setGoToPlacementArmed(!root._goToArmed)
+
+                    KTutorialAnchor { key: "autopilot.goTo" }
+                }
+
+                PillSeparator {
+                    visible: root._separatorBefore(4)
+                }
+
+                PillButton {
+                    visible: root._shown("params")
+                    iconSource: "qrc:/icons/ui/adjustments_horizontal.svg"
+                    cardKey: "params"
+                    toolTipText: qsTr("Autopilot parameters")
+                    onClicked: if (root._online) root.openParamsDialog()
+
+                    KTutorialAnchor { key: "autopilot.params" }
+                }
 
                 KCircleIconButton {
                     width: root._controlH
                     height: root._controlH
+                    visible: root._shown("missionEditor")
+                    highlighted: root._highlightKey === "missionEditor"
+                    flashToken: root._revealFlash
                     toolTipOnHold: true
                     iconSource: "qrc:/icons/ui/map_route.svg"
                     iconTintColor: AppPalette.text
@@ -883,11 +1679,17 @@ BasePanePopup {
                     borderHoverColor: AppPalette.borderHover
                     toolTipText: qsTr("Mission editor")
                     onClicked: if (typeof core !== "undefined" && core) core.setMissionEditorActive(true)
+
+                    KTutorialAnchor { key: "autopilot.missionEditor" }
+                    RevealAppear { animProperty: "scale"; from: 0.4 }
                 }
 
                 KCircleIconButton {
                     width: root._controlH
                     height: root._controlH
+                    visible: root._shown("close")
+                    highlighted: root._highlightKey === "close"
+                    flashToken: root._revealFlash
                     iconSource: "qrc:/icons/ui/x.svg"
                     iconTintColor: AppPalette.text
                     fillColor: AppPalette.card
@@ -896,6 +1698,9 @@ BasePanePopup {
                     borderColor: AppPalette.border
                     borderHoverColor: AppPalette.borderHover
                     onClicked: root.store.autopilotPopupOpen = false
+
+                    KTutorialAnchor { key: "autopilot.close" }
+                    RevealAppear { animProperty: "scale"; from: 0.4 }
                 }
             }
         }
@@ -905,7 +1710,7 @@ BasePanePopup {
             visible: root._trayVisible
             anchors.top: pill.bottom
             width: parent.width
-            height: trayColumn.implicitHeight + root._rowPad * 2
+            height: trayColumn.implicitHeight + root._trayPad * 2
             color: "transparent"
 
             Rectangle {
@@ -925,13 +1730,15 @@ BasePanePopup {
                 anchors.top: parent.top
                 anchors.leftMargin: root._pad
                 anchors.rightMargin: root._pad
-                anchors.topMargin: root._rowPad
+                anchors.topMargin: root._trayPad
                 spacing: Math.round(8 * root._s)
 
                 Item {
                     width: parent.width + root._pad - root._sidePad
                     height: root._controlH
-                    visible: root._helmRowVisible
+                    visible: root._helmRowShown
+
+                    KTutorialAnchor { key: "autopilot.helm" }
 
                     KGamepadIcon {
                         id: helmPadIcon
@@ -959,8 +1766,9 @@ BasePanePopup {
 
                         anchors.left: helmPadIcon.right
                         anchors.leftMargin: root._gap
-                        anchors.right: helmBars.visible ? helmBars.left
-                                     : helmSettingsButton.visible ? helmSettingsButton.left : helmButton.left
+                        anchors.right: helmWarn.visible ? helmWarn.left
+                                     : helmBars.visible ? helmBars.left
+                                     : helmSettingsButton.visible ? helmSettingsButton.left : helmAutoButton.left
                         anchors.rightMargin: root._gap
                         anchors.verticalCenter: parent.verticalCenter
 
@@ -1034,9 +1842,42 @@ BasePanePopup {
                         }
                     }
 
+                    Item {
+                        id: helmWarn
+                        anchors.right: helmBars.visible ? helmBars.left
+                                     : helmSettingsButton.visible ? helmSettingsButton.left : helmAutoButton.left
+                        anchors.rightMargin: root._gap
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: root._controlH
+                        height: root._controlH
+                        visible: root._helmTakeFailed
+
+                        StatIcon {
+                            id: helmWarnIcon
+                            anchors.centerIn: parent
+                            width: Math.round(20 * root._s)
+                            source: "qrc:/icons/ui/alert-triangle.svg"
+                            tint: AppPalette.linkIdleText
+
+                            SequentialAnimation on opacity {
+                                running: helmWarn.visible
+                                loops: Animation.Infinite
+                                alwaysRunToEnd: true
+                                NumberAnimation { to: 0.25; duration: 550; easing.type: Easing.InOutSine }
+                                NumberAnimation { to: 1.0; duration: 550; easing.type: Easing.InOutSine }
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.expanded = true
+                        }
+                    }
+
                     Row {
                         id: helmBars
-                        anchors.right: helmSettingsButton.visible ? helmSettingsButton.left : helmButton.left
+                        anchors.right: helmSettingsButton.visible ? helmSettingsButton.left : helmAutoButton.left
                         anchors.rightMargin: root._gap
                         anchors.verticalCenter: parent.verticalCenter
                         visible: !!root._helm && root._helm.state === 3
@@ -1073,7 +1914,7 @@ BasePanePopup {
 
                     PillButton {
                         id: helmSettingsButton
-                        anchors.right: helmButton.left
+                        anchors.right: helmAutoButton.left
                         anchors.rightMargin: root._gap
                         anchors.verticalCenter: parent.verticalCenter
                         visible: typeof theme !== "undefined" && !!theme && theme.instrumentsGrade >= 1
@@ -1082,9 +1923,39 @@ BasePanePopup {
                         onClicked: if (root.store) root.store.openAppSettingsAtGroup("app.gamepadhelm")
                     }
 
+                    Rectangle {
+                        readonly property color tint: AppPalette.accent
+                        x: helmAutoButton.x - root._autoPillInset
+                        width: helmButton.x + helmButton.width - helmAutoButton.x + root._autoPillInset * 2
+                        height: root._controlH + root._autoPillInset * 2
+                        anchors.verticalCenter: parent.verticalCenter
+                        radius: height / 2
+                        color: Qt.rgba(tint.r, tint.g, tint.b, 0.32)
+                        border.width: Math.max(1, Math.round(1.5 * root._s))
+                        border.color: tint
+                        opacity: helmAutoButton.selected ? 1 : 0
+                        visible: opacity > 0
+
+                        Behavior on opacity {
+                            NumberAnimation { duration: Anim.fadeMs; easing.type: Anim.fadeEasing }
+                        }
+                    }
+
+                    PillButton {
+                        id: helmAutoButton
+                        anchors.right: helmButton.left
+                        anchors.rightMargin: root._gap
+                        anchors.verticalCenter: parent.verticalCenter
+                        selected: !!root._helm && root._helm.autoEngage
+                        iconSource: "qrc:/icons/ui/helm-auto.svg"
+                        toolTipText: selected ? qsTr("Automatic take-over is on") : qsTr("Take control automatically")
+                        onClicked: if (root._helm) root._helm.autoEngage = !root._helm.autoEngage
+                    }
+
                     PillButton {
                         id: helmButton
                         anchors.right: parent.right
+                        anchors.rightMargin: root._autoPillInset
                         anchors.verticalCenter: parent.verticalCenter
                         danger: root._helmActive
                         toolTipOnHold: false
@@ -1099,8 +1970,9 @@ BasePanePopup {
                 }
 
                 Column {
+                    id: helmConfirm
                     width: parent.width
-                    visible: root._helmRowVisible && root._helmConfirmation !== 0
+                    visible: root._helmConfirmShown
                     spacing: Math.round(6 * root._s)
 
                     Text {
@@ -1119,7 +1991,8 @@ BasePanePopup {
                         text: root._helmConfirmation === 1
                               ? qsTr("%1 s after the last gamepad command the boat follows the transmitter sticks again. Keep the transmitter on.")
                                     .arg(root._helm ? root._helm.overrideSeconds : 3)
-                              : qsTr("Without a transmitter the boat would keep the last gamepad command. Turn on stopping on link loss? The boat holds; missions in Auto go on. The setting is saved on the boat.")
+                              : qsTr("Without a transmitter the boat would keep the last gamepad command. Turn on the link-loss action (%1)? Missions in Auto go on. The setting is saved on the boat.")
+                                    .arg(root._loss && root._loss.actionText.length > 0 ? root._loss.actionText : "FS_ACTION")
                         color: AppPalette.textSecond
                         font.pixelSize: Math.round(12 * root._s)
                         wrapMode: Text.WordWrap
@@ -1127,13 +2000,14 @@ BasePanePopup {
 
                     Item {
                         width: parent.width
-                        height: Tokens.controlHMd
+                        height: root._k(Tokens.controlHMd)
 
                         KButton {
                             id: helmConfirmButton
+                            fontPixelSize: root._k(Tokens.fontBase)
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
-                            height: Tokens.controlHMd
+                            height: root._k(Tokens.controlHMd)
                             enabled: !!root._helm && !root._helm.confirmationBusy
                             text: root._helmConfirmation === 1 ? qsTr("Transmitter is on — start")
                                 : (root._helm && root._helm.confirmationBusy) ? qsTr("Saving…")
@@ -1142,10 +2016,11 @@ BasePanePopup {
                         }
 
                         KButton {
+                            fontPixelSize: root._k(Tokens.fontBase)
                             anchors.right: helmConfirmButton.left
                             anchors.rightMargin: root._gap
                             anchors.verticalCenter: parent.verticalCenter
-                            height: Tokens.controlHMd
+                            height: root._k(Tokens.controlHMd)
                             text: qsTr("Cancel")
                             onClicked: if (root._helm) root._helm.cancelConfirmation()
                         }
@@ -1155,12 +2030,14 @@ BasePanePopup {
                 Item {
                     width: parent.width
                     height: progressRow.implicitHeight
-                    visible: root._missionRowVisible
+                    visible: root._missionRowShown
+
+                    KTutorialAnchor { key: "autopilot.progress" }
 
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: root.expanded = !root.expanded
+                        onClicked: root._toggleExpanded()
                     }
 
                     Column {
@@ -1170,8 +2047,8 @@ BasePanePopup {
 
                         Text {
                             width: parent.width
-                            text: root._missionRowText
-                            color: AppPalette.textStrong
+                            text: root._missionRowSample ? root._missionRowSampleText : root._missionRowText
+                            color: root._autoDisarmed ? AppPalette.linkIdleText : AppPalette.textStrong
                             font.pixelSize: Math.round(12 * root._s)
                             font.bold: true
                             elide: Text.ElideRight
@@ -1182,119 +2059,563 @@ BasePanePopup {
                             height: Math.round(4 * root._s)
                             radius: height / 2
                             color: AppPalette.trackOff
-                            visible: !!root._run && root._run.progress >= 0
+                            visible: root._missionRowSample || (!!root._run && root._run.progress >= 0)
 
                             Rectangle {
-                                width: parent.width * (root._run ? Math.max(0, Math.min(1, root._run.progress)) : 0)
+                                width: parent.width * (root._missionRowSample ? root._sample.progress
+                                                       : root._run ? Math.max(0, Math.min(1, root._run.progress)) : 0)
                                 height: parent.height
                                 radius: parent.radius
-                                color: root._paused ? AppPalette.textMuted : AppPalette.accentBar
+                                color: root._paused || root._autoDisarmed ? AppPalette.textMuted : AppPalette.accentBar
                                 Behavior on width { NumberAnimation { duration: Anim.controlMs; easing.type: Anim.controlEasing } }
                             }
                         }
                     }
                 }
 
-                Column {
+                Item {
+                    id: expandedArea
+                    readonly property real gap: root._blockGap
+                    readonly property real lossLabelW: Math.max(lossTitleRow.implicitWidth, root._lossActive ? lossMissionLabel.implicitWidth : 0)
+                    readonly property real lossSegmentsW: Math.max(lossSegments.implicitWidth, root._lossActive ? lossMissionSegments.implicitWidth : 0)
+                    readonly property real lossWideW: lossLabelW + lossGrid.columnSpacing + lossSegmentsW + lossPanel.pad * 2
+                    readonly property real lossCompactW: Math.max(lossLabelW, lossSegmentsW) + lossPanel.pad * 2
+                    readonly property real rightRoom: width - gap - root._expandedLeftMinW
+                    readonly property bool lossCompact: sideBySide ? rightRoom < lossWideW : width < lossWideW
+                    readonly property real panelW: lossCompact ? lossCompactW : lossWideW
+                    readonly property bool hasMessages: !!root._dmw && root._dmw.autopilotMessages.length > 0
+                    readonly property bool sampleMessages: root._showcase && !hasMessages
+                    readonly property bool lossShown: root._panelShown("panel.linkLoss", root._lossAvailable)
+                    readonly property bool messagesShown: root._panelShown("panel.messages", hasMessages)
+                    readonly property bool boatShown: root._panelShown("panel.boat", root._live)
+                    readonly property bool missionShown: root._panelShown("panel.mission", !!root._run && root._online)
+                    readonly property bool settingsShown: root._panelShown("panel.settings", true)
+                    readonly property bool leftVisible: boatShown || missionShown || settingsShown
+                    readonly property bool rightVisible: lossShown || messagesShown
+                    readonly property bool sideBySide: rightVisible && leftVisible && rightRoom >= lossCompactW
+                    readonly property real fullHeight: sideBySide ? Math.max(expandedLeft.implicitHeight, expandedRight.implicitHeight)
+                                                                  : (leftVisible ? expandedLeft.implicitHeight : 0)
+                                                                    + (leftVisible && rightVisible ? gap : 0)
+                                                                    + (rightVisible ? expandedRight.implicitHeight : 0)
+                    readonly property real roomHeight: {
+                        var rows = 0
+                        var count = 0
+                        if (root._helmRowShown) { rows += root._controlH; ++count }
+                        if (root._helmConfirmShown) { rows += helmConfirm.implicitHeight; ++count }
+                        if (root._missionRowShown) { rows += progressRow.implicitHeight; ++count }
+                        var fixed = root.headerHeight + root._pillH + root.contentPadding + root._trayPad * 2 + rows + count * trayColumn.spacing
+                        return root.height - Math.max(0, root.popupMargin) * 2 - fixed
+                    }
+                    readonly property real viewHeight: Math.min(fullHeight, Math.max(root._expandedMinViewH, roomHeight))
+                    property real shownViewHeight: viewHeight
+                    Behavior on shownViewHeight {
+                        enabled: root._animateSize
+                        NumberAnimation { duration: Anim.controlMs; easing.type: Anim.controlEasing }
+                    }
                     width: parent.width
-                    visible: root.expanded
-                    spacing: Math.round(6 * root._s)
+                    visible: root._openAmount > 0
+                    height: Math.round(shownViewHeight * root._openAmount)
+                    opacity: root._openAmount
+                    clip: root._openAmount < 1 || height < fullHeight - 0.5
 
-                    Text {
-                        width: parent.width
-                        visible: root._missionKnown && !!root._run && root._run.currentLabel.length > 0
-                        textFormat: Text.StyledText
-                        text: {
-                            if (!root._run) return ""
-                            var line = "<b>" + root._run.currentLabel + "</b>"
-                            if (root._nextSeq >= 0) line += "  →  " + root._run.labelForSeq(root._nextSeq)
-                            return line
-                        }
-                        color: AppPalette.textStrong
-                        font.pixelSize: Math.round(12 * root._s)
-                        elide: Text.ElideRight
+                    KScrollBar {
+                        flickable: expandedFlick
+                        thumbWidth: root._scrollBarW
+                        x: parent.width + Math.round((root._pad - width) / 2)
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
                     }
 
-                    Flow {
-                        width: parent.width
-                        spacing: Math.round(12 * root._s)
+                    Flickable {
+                        id: expandedFlick
+                        anchors.fill: parent
+                        contentWidth: width
+                        contentHeight: expandedArea.fullHeight
+                        boundsBehavior: Flickable.StopAtBounds
+                        interactive: contentHeight > expandedArea.viewHeight + 0.5
+                        clip: interactive
 
-                        InfoCell {
-                            visible: root._missionKnown
-                            key: qsTr("To point")
-                            value: root._dmw && root._dmw.navigationValid ? root._fmtDist(root._dmw.waypointDistance) : "—"
-                        }
-                        InfoCell {
-                            visible: root._missionKnown
-                            key: qsTr("Cross-track")
-                            value: root._dmw && root._dmw.navigationValid && isFinite(root._dmw.crossTrackError)
-                                   ? qsTr("%1 m").arg(Math.abs(root._dmw.crossTrackError).toFixed(1)) : "—"
-                        }
-                        InfoCell {
-                            key: qsTr("GPS")
-                            valueColor: root._gpsPoor ? AppPalette.linkIdleText : AppPalette.textStrong
-                            value: {
-                                if (root._gpsFix < 0) return "—"
-                                var parts = [root._gpsFixName(root._gpsFix)]
-                                if (root._gpsSats >= 0) parts.push(qsTr("%1 sat.").arg(root._gpsSats))
-                                if (isFinite(root._gpsHdop)) parts.push("HDOP " + root._gpsHdop.toFixed(1))
-                                return parts.join(" · ")
+                        Column {
+                            id: expandedLeft
+                            visible: expandedArea.leftVisible
+                            width: expandedArea.sideBySide ? expandedArea.width - expandedArea.panelW - expandedArea.gap : expandedArea.width
+                            spacing: root._blockGap
+                            move: Transition {
+                                NumberAnimation { properties: "y"; duration: Anim.controlMs; easing.type: Anim.controlEasing }
                             }
-                        }
-                        InfoCell {
-                            key: qsTr("To home")
-                            value: root._fmtDist(root._homeDistance)
-                        }
-                        InfoCell {
-                            visible: root._rssiValid
-                            key: "RSSI"
-                            value: qsTr("%1 dBm").arg(root._rssi)
-                        }
-                    }
 
-                    Text {
-                        width: parent.width
-                        visible: text.length > 0 && !root._sourceIsPlan
-                        text: root._missionSourceText
-                        color: AppPalette.textSecond
-                        font.pixelSize: Math.round(11 * root._s)
-                        wrapMode: Text.WordWrap
-                    }
-
-                    Row {
-                        spacing: Math.round(6 * root._s)
-
-                        KButton {
-                            visible: root._missionKnown && root._nextSeq >= 0
-                            height: Tokens.controlHMd
-                            danger: root.nextConfirmPending
-                            text: root.nextConfirmPending ? qsTr("Tap again to skip") : qsTr("Next point")
-                            onClicked: root.requestNextPoint()
-                        }
-                        KButton {
-                            visible: !!root._run && !root._run.reading
-                            height: Tokens.controlHMd
-                            text: qsTr("Read again")
-                            toolTipText: qsTr("Read the mission from the vehicle again")
-                            onClicked: if (root._run) root._run.refresh()
-                        }
-                    }
-
-                    Column {
-                        width: parent.width
-                        spacing: Math.round(2 * root._s)
-
-                        Repeater {
-                            model: root._dmw ? root._dmw.autopilotMessages.slice(0, root._messagesShown) : []
-                            delegate: Text {
-                                required property var modelData
+                            Panel {
+                                id: boatPanel
                                 width: parent.width
-                                textFormat: Text.PlainText
-                                text: Qt.formatTime(new Date(modelData.time), "hh:mm:ss") + "  " + modelData.text
-                                color: root._severityColor(modelData.severity)
-                                font.pixelSize: Math.round(11 * root._s)
-                                wrapMode: Text.WordWrap
+                                visible: expandedArea.boatShown
+                                cardKey: "panel.boat"
+                                title: qsTr("Boat")
+                                icon: "qrc:/icons/ui/speedboat.svg"
+                                note: root._firmwareText
+
+                                Flow {
+                                    width: parent.width
+                                    spacing: Math.round(12 * root._s)
+
+                                    InfoCell {
+                                        key: qsTr("GPS")
+                                        valueColor: root._gpsPoor ? AppPalette.linkIdleText : AppPalette.textStrong
+                                        value: {
+                                            if (root._gpsFix < 0) return "—"
+                                            var parts = [root._gpsFixName(root._gpsFix)]
+                                            if (root._gpsSats >= 0) parts.push(qsTr("%1 sat.").arg(root._gpsSats))
+                                            if (isFinite(root._gpsHdop)) parts.push("HDOP " + root._gpsHdop.toFixed(1))
+                                            return parts.join(" · ")
+                                        }
+                                    }
+                                    InfoCell {
+                                        key: qsTr("To home")
+                                        value: root._fmtDist(root._homeDistance)
+                                    }
+                                    InfoCell {
+                                        visible: root._rssiValid
+                                        key: "RSSI"
+                                        value: qsTr("%1 dBm").arg(root._rssi)
+                                    }
+                                }
                             }
+
+                            KTutorialAnchor { key: "autopilot.boat"; target: boatPanel }
+
+                            Panel {
+                                id: missionPanel
+                                width: parent.width
+                                visible: !!root._run && expandedArea.missionShown
+                                cardKey: "panel.mission"
+                                title: qsTr("Mission")
+                                icon: "qrc:/icons/ui/route.svg"
+                                noteColor: AppPalette.textStrong
+                                noteBold: true
+                                note: {
+                                    if (root._missionSample)
+                                        return qsTr("Waypoint %1").arg(root._sample.point) + "  →  " + qsTr("Waypoint %1").arg(root._sample.point + 1)
+                                    if (!root._missionKnown || !root._run || root._run.currentLabel.length === 0) return ""
+                                    var line = root._run.currentLabel
+                                    if (root._nextSeq >= 0) line += "  →  " + root._run.labelForSeq(root._nextSeq)
+                                    return line
+                                }
+
+                                Flow {
+                                    width: parent.width
+                                    visible: root._missionKnown || root._showcase
+                                    spacing: Math.round(12 * root._s)
+
+                                    InfoCell {
+                                        key: qsTr("To point")
+                                        value: root._missionSample ? root._fmtDist(root._sample.toPoint)
+                                             : root._dmw && root._dmw.navigationValid ? root._fmtDist(root._dmw.waypointDistance) : "—"
+                                    }
+                                    InfoCell {
+                                        key: qsTr("Cross-track")
+                                        value: root._missionSample ? qsTr("%1 m").arg(root._sample.crossTrack.toFixed(1))
+                                             : root._dmw && root._dmw.navigationValid && isFinite(root._dmw.crossTrackError)
+                                               ? qsTr("%1 m").arg(Math.abs(root._dmw.crossTrackError).toFixed(1)) : "—"
+                                    }
+                                }
+
+                                Item {
+                                    width: parent.width
+                                    height: root._k(Tokens.controlHMd)
+                                    visible: root._speedRowVisible || root._showcase
+
+                                    KTutorialAnchor { key: "autopilot.speed" }
+
+                                    Text {
+                                        anchors.left: parent.left
+                                        anchors.right: speedControls.left
+                                        anchors.rightMargin: root._k(Tokens.spaceSm)
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: qsTr("Speed")
+                                        color: AppPalette.textSecond
+                                        font.pixelSize: Math.round(12 * root._s)
+                                        elide: Text.ElideRight
+                                    }
+
+                                    Row {
+                                        id: speedControls
+                                        anchors.right: parent.right
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        spacing: root._k(Tokens.spaceSm)
+
+                                        StepButton {
+                                            iconSource: "qrc:/icons/ui/minus.svg"
+                                            onClicked: root._stepSpeed(-1)
+                                        }
+                                        Column {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: Math.round(72 * root._s)
+                                            Text {
+                                                width: parent.width
+                                                horizontalAlignment: Text.AlignHCenter
+                                                text: isFinite(root._cardSpeed) ? root._fmtSpeed(root._cardSpeed) : "—"
+                                                color: isFinite(root._cardSpeed) && root._cardSpeed < root._speedWarn ? AppPalette.linkIdleText : AppPalette.textStrong
+                                                font.pixelSize: root._k(Tokens.fontBase)
+                                                font.bold: true
+                                            }
+                                            Text {
+                                                width: parent.width
+                                                horizontalAlignment: Text.AlignHCenter
+                                                text: !root._speedManual ? qsTr("plan")
+                                                    : (isFinite(root._planSpeed) ? qsTr("plan %1").arg(root._fmtSpeed(root._planSpeed)) : qsTr("manual"))
+                                                color: AppPalette.textMuted
+                                                font.pixelSize: root._k(Tokens.fontSm)
+                                                elide: Text.ElideRight
+                                            }
+                                        }
+                                        StepButton {
+                                            iconSource: "qrc:/icons/ui/plus.svg"
+                                            onClicked: root._stepSpeed(1)
+                                        }
+                                        StepButton {
+                                            glyph: "↺"
+                                            toolTipOnHold: true
+                                            enabled: isFinite(root._speedDraft) || (isFinite(root._manualSpeed) && (isFinite(root._planSpeed) || root._mode !== root._modeAuto))
+                                            opacity: enabled ? 1.0 : 0.4
+                                            toolTipText: qsTr("Return to the plan speeds")
+                                            onClicked: root._resetSpeed()
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    width: parent.width
+                                    visible: root._speedRowVisible && root._paused && root._speedManual
+                                    text: qsTr("Applies when the mission resumes")
+                                    color: AppPalette.textMuted
+                                    font.pixelSize: Math.round(11 * root._s)
+                                    wrapMode: Text.WordWrap
+                                }
+
+                                Item {
+                                    id: missionFooter
+                                    readonly property bool sourceShown: root._missionSourceText.length > 0
+                                    readonly property bool nextShown: (root._missionKnown && root._nextSeq >= 0) || root._showcase
+                                    readonly property bool readShown: !!root._run && !root._run.reading
+                                    width: parent.width
+                                    height: Math.max(missionButtons.height, sourceShown ? missionSource.implicitHeight : 0)
+                                    visible: sourceShown || nextShown || readShown
+
+                                    Text {
+                                        id: missionSource
+                                        anchors.left: parent.left
+                                        anchors.right: missionButtons.left
+                                        anchors.rightMargin: missionFooter.nextShown || missionFooter.readShown ? Math.round(8 * root._s) : 0
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        visible: missionFooter.sourceShown
+                                        text: root._missionSourceText
+                                        color: root._sourceIsPlan ? AppPalette.textMuted : AppPalette.textSecond
+                                        font.pixelSize: Math.round(11 * root._s)
+                                        wrapMode: Text.WordWrap
+                                    }
+
+                                Row {
+                                    id: missionButtons
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: Math.round(6 * root._s)
+
+                                    KButton {
+                                        fontPixelSize: root._k(Tokens.fontBase)
+                                        visible: missionFooter.nextShown
+                                        height: root._k(Tokens.controlHMd)
+                                        horizontalPadding: Math.round(10 * root._s)
+                                        danger: root.nextConfirmPending
+                                        text: root.nextConfirmPending ? qsTr("Tap again to skip") : qsTr("Next point")
+                                        onClicked: root.requestNextPoint()
+                                    }
+                                    KButton {
+                                        fontPixelSize: root._k(Tokens.fontBase)
+                                        visible: missionFooter.readShown
+                                        height: root._k(Tokens.controlHMd)
+                                        horizontalPadding: Math.round(10 * root._s)
+                                        text: qsTr("Read from the boat")
+                                        toolTipText: qsTr("Read the mission from the vehicle again")
+                                        onClicked: if (root._run && root._online) root._run.refresh()
+                                    }
+                                }
+                                }
+                            }
+
+                            KTutorialAnchor { key: "autopilot.mission"; target: missionPanel }
+
+                            Panel {
+                                id: settingsPanel
+                                width: parent.width
+                                visible: expandedArea.settingsShown
+                                cardKey: "panel.settings"
+                                title: qsTr("Settings")
+                                icon: "qrc:/icons/ui/settings.svg"
+
+                                Row {
+                                    spacing: root._gap
+
+                                    KCircleIconButton {
+                                        width: root._controlH
+                                        height: root._controlH
+                                        toolTipOnHold: true
+                                        iconSource: "qrc:/icons/ui/question-mark.svg"
+                                        iconTintColor: AppPalette.text
+                                        fillColor: AppPalette.card
+                                        fillHoverColor: AppPalette.cardHover
+                                        fillPressedColor: AppPalette.bgDeep
+                                        borderColor: AppPalette.border
+                                        borderHoverColor: AppPalette.borderHover
+                                        toolTipText: qsTr("Tutorial")
+                                        onClicked: if (typeof tutorial !== "undefined" && tutorial) tutorial.start(root.tutorialId)
+
+                                        KTutorialAnchor { key: "autopilot.help" }
+                                    }
+                                    KCircleIconButton {
+                                        width: root._controlH
+                                        height: root._controlH
+                                        toolTipOnHold: true
+                                        iconSource: "qrc:/icons/ui/settings.svg"
+                                        iconTintColor: AppPalette.text
+                                        fillColor: AppPalette.card
+                                        fillHoverColor: AppPalette.cardHover
+                                        fillPressedColor: AppPalette.bgDeep
+                                        borderColor: AppPalette.border
+                                        borderHoverColor: AppPalette.borderHover
+                                        toolTipText: qsTr("Autopilot settings")
+                                        onClicked: if (root.store) root.store.openAutopilotSettings()
+
+                                        KTutorialAnchor { key: "autopilot.appSettings" }
+                                    }
+                                }
+                            }
+
+                            KTutorialAnchor { key: "autopilot.settings"; target: settingsPanel }
+                        }
+
+                        Column {
+                            id: expandedRight
+                            visible: expandedArea.rightVisible
+                            x: expandedArea.sideBySide ? expandedArea.width - width : 0
+                            y: expandedArea.sideBySide || !expandedArea.leftVisible ? 0 : expandedLeft.implicitHeight + expandedArea.gap
+                            width: expandedArea.sideBySide ? expandedArea.panelW : expandedArea.width
+                            spacing: root._blockGap
+                            move: Transition {
+                                NumberAnimation { properties: "y"; duration: Anim.controlMs; easing.type: Anim.controlEasing }
+                            }
+
+                            Rectangle {
+                                id: lossPanel
+                                readonly property int pad: Math.round(8 * root._s)
+                                visible: expandedArea.lossShown
+
+                                KTutorialAnchor { key: "autopilot.linkLoss" }
+                                RevealGlow { key: "panel.linkLoss" }
+                                RevealAppear {}
+                                width: parent.width
+                                height: lossColumn.implicitHeight + pad * 2
+                                radius: root._k(Tokens.radiusLg)
+                                color: AppPalette.bgDeep
+                                border.color: AppPalette.border
+                                border.width: Tokens.cardBorderWidth
+
+                                Column {
+                                    id: lossStatusProbe
+                                    opacity: 0
+                                    enabled: false
+
+                                    Repeater {
+                                        model: [qsTr("saving…"), qsTr("reading…")]
+                                        delegate: Text {
+                                            required property string modelData
+                                            text: modelData
+                                            font.pixelSize: Math.round(11 * root._s)
+                                        }
+                                    }
+                                }
+
+                                Column {
+                                    id: lossColumn
+                                    x: lossPanel.pad
+                                    y: lossPanel.pad
+                                    width: lossPanel.width - lossPanel.pad * 2
+                                    spacing: Math.round(6 * root._s)
+
+                                    Grid {
+                                        id: lossGrid
+                                        columns: expandedArea.lossCompact ? 1 : 2
+                                        columnSpacing: Math.round(10 * root._s)
+                                        rowSpacing: Math.round(6 * root._s)
+                                        verticalItemAlignment: Grid.AlignVCenter
+
+                                        Row {
+                                            id: lossTitleRow
+                                            spacing: Math.round(5 * root._s)
+
+                                            StatIcon {
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                width: Math.round(14 * root._s)
+                                                source: "qrc:/icons/ui/autopilot-link-off.svg"
+                                                tint: root._lossInk
+                                            }
+                                            Text {
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                text: qsTr("On link loss")
+                                                color: AppPalette.textStrong
+                                                font.pixelSize: Math.round(12 * root._s)
+                                                font.bold: true
+                                            }
+                                            Text {
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                width: Math.max(implicitWidth, lossStatusProbe.width)
+                                                text: {
+                                                    if (!root._loss) return ""
+                                                    if (root._loss.busy) return qsTr("saving…")
+                                                    if (root._loss.reading) return qsTr("reading…")
+                                                    return root._loss.delaySeconds >= 0
+                                                            ? qsTr("%1 s").arg(Math.round(root._loss.delaySeconds * 10) / 10) : ""
+                                                }
+                                                color: AppPalette.textMuted
+                                                font.pixelSize: Math.round(11 * root._s)
+                                            }
+                                        }
+                                        Segments {
+                                            id: lossSegments
+                                            items: root._lossSegments
+                                            onPicked: function(value) { root.requestLinkLoss(value) }
+                                            onBlocked: function(value) { root.peekLinkLoss(value) }
+                                        }
+
+                                        Text {
+                                            id: lossMissionLabel
+                                            visible: root._lossActive
+                                            text: qsTr("Mission in Auto")
+                                            color: AppPalette.textMuted
+                                            font.pixelSize: Math.round(11 * root._s)
+                                        }
+                                        Segments {
+                                            id: lossMissionSegments
+                                            visible: root._lossActive
+                                            items: root._lossMissionSegments
+                                            onPicked: function(value) { if (root._loss) root._loss.apply(root._loss.choice, value) }
+                                        }
+                                    }
+
+                                    Text {
+                                        width: parent.width
+                                        visible: text.length > 0
+                                        textFormat: Text.StyledText
+                                        text: {
+                                            var note = root._lossNote
+                                            if (root._lossWarning.length === 0) return note
+                                            return note + " <font color=\"" + AppPalette.linkIdleText + "\">" + root._lossWarning + "</font>"
+                                        }
+                                        color: AppPalette.textSecond
+                                        font.pixelSize: Math.round(11 * root._s)
+                                        wrapMode: Text.WordWrap
+                                    }
+
+                                    Text {
+                                        width: parent.width
+                                        visible: !!root._loss && root._loss.error.length > 0
+                                        text: root._loss ? root._loss.error : ""
+                                        color: AppPalette.dangerText
+                                        font.pixelSize: Math.round(11 * root._s)
+                                        wrapMode: Text.WordWrap
+                                    }
+                                }
+                            }
+
+                            Panel {
+                                id: messagesPanel
+                                readonly property real bodyMax: Math.max(root._messagesMinBody, expandedArea.sideBySide
+                                    ? expandedLeft.implicitHeight - (lossPanel.visible ? lossPanel.height + expandedRight.spacing : 0) - messagesPanel.chromeHeight
+                                    : root._messagesStackedHeight - messagesPanel.chromeHeight)
+                                width: parent.width
+                                visible: expandedArea.messagesShown
+                                cardKey: "panel.messages"
+                                title: qsTr("Messages")
+                                icon: "qrc:/icons/ui/list-details.svg"
+
+                                Item {
+                                    width: parent.width
+                                    height: Math.min(messagesList.implicitHeight, messagesPanel.bodyMax)
+
+                                    Flickable {
+                                        id: messagesFlick
+                                        anchors.fill: parent
+                                        contentWidth: width
+                                        contentHeight: messagesList.implicitHeight
+                                        boundsBehavior: Flickable.StopAtBounds
+                                        clip: true
+                                        onContentHeightChanged: root._scrollMessagesToEnd()
+                                        onHeightChanged: root._scrollMessagesToEnd()
+                                        onMovementStarted: root._messagesFollowEnd = false
+                                        onMovementEnded: root._messagesFollowEnd = messagesFlick.atYEnd
+
+                                        Column {
+                                            id: messagesList
+                                            width: messagesFlick.width - messagesScroll.width - root._k(Tokens.spaceXs)
+                                            spacing: root._messageGap
+
+                                            Repeater {
+                                                model: expandedArea.sampleMessages ? sampleMessagesModel : messagesModel
+                                                delegate: Item {
+                                                    id: messageRow
+                                                    required property real msgTime
+                                                    required property int severity
+                                                    required property string msgText
+                                                    required property bool fresh
+                                                    width: messagesList.width
+                                                    height: messageLabel.implicitHeight
+
+                                                    Text {
+                                                        id: messageLabel
+                                                        x: root._messageInset
+                                                        width: parent.width - root._messageInset * 2
+                                                        textFormat: Text.PlainText
+                                                        text: Qt.formatTime(new Date(messageRow.msgTime), "hh:mm:ss") + "  " + messageRow.msgText
+                                                        color: root._severityColor(messageRow.severity)
+                                                        font.pixelSize: root._messageFontPx
+                                                        wrapMode: Text.WordWrap
+                                                    }
+
+                                                    SequentialAnimation {
+                                                        id: flashAnimation
+                                                        loops: 2
+                                                        NumberAnimation {
+                                                            target: messageLabel
+                                                            property: "opacity"
+                                                            to: 0.2
+                                                            duration: 500
+                                                            easing.type: Easing.InOutSine
+                                                        }
+                                                        NumberAnimation {
+                                                            target: messageLabel
+                                                            property: "opacity"
+                                                            to: 1
+                                                            duration: 500
+                                                            easing.type: Easing.InOutSine
+                                                        }
+                                                    }
+
+                                                    Component.onCompleted: if (messageRow.fresh) flashAnimation.start()
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    KScrollBar {
+                                        id: messagesScroll
+                                        flickable: messagesFlick
+                                        thumbWidth: root._scrollBarW
+                                        anchors.top: parent.top
+                                        anchors.bottom: parent.bottom
+                                        anchors.right: parent.right
+                                    }
+                                }
+                            }
+
+                            KTutorialAnchor { key: "autopilot.messages"; target: messagesPanel }
                         }
                     }
                 }

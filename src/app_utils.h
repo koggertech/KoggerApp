@@ -26,7 +26,7 @@ public:
         return QUuid::createUuid().toString(QUuid::WithoutBraces);
     }
 
-    QString gitRevision() const { return QStringLiteral(KOGGER_GIT_REVISION); }
+    QString gitRevision() const { return QString::fromLatin1(koggerGitRevision()); }
 
     Q_INVOKABLE QString licenseText(const QString& name) const {
         if (name.contains(QLatin1Char('/')) || name.contains(QLatin1Char('\\'))

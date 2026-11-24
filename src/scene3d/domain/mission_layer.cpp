@@ -4,6 +4,8 @@
 #include <cmath>
 #include <map>
 
+#include <QElapsedTimer>
+
 #include "draw_utils.h"
 #include "text_renderer.h"
 #include "themes.h"
@@ -29,6 +31,42 @@ constexpr int kMaxCircleSegments = 72;
 constexpr int kMinJoinSegments = 8;
 constexpr int kMaxJoinSegments = 24;
 constexpr float kJoinAngleCos = 0.995f;
+constexpr float kFlowBaseAlpha = 0.35f;
+constexpr float kFlowSpacingPx = 26.0f;
+constexpr float kFlowSpeedPxPerSec = 40.0f;
+constexpr float kFlowChevronPx = 6.0f;
+constexpr float kFlowEndMarginPx = 10.0f;
+constexpr float kFlowFadePx = 18.0f;
+
+bool clipToRect(const QVector2D& origin, const QVector2D& dir, float minX, float minY, float maxX, float maxY, float& t0, float& t1)
+{
+    const float p[4] = {-dir.x(), dir.x(), -dir.y(), dir.y()};
+    const float q[4] = {origin.x() - minX, maxX - origin.x(), origin.y() - minY, maxY - origin.y()};
+    for (int i = 0; i < 4; ++i) {
+        if (std::fabs(p[i]) < 1e-6f) {
+            if (q[i] < 0.0f) {
+                return false;
+            }
+            continue;
+        }
+        const float r = q[i] / p[i];
+        if (p[i] < 0.0f) {
+            t0 = std::max(t0, r);
+        } else {
+            t1 = std::min(t1, r);
+        }
+    }
+    return t0 < t1;
+}
+
+float flowClockSeconds()
+{
+    static QElapsedTimer clock;
+    if (!clock.isValid()) {
+        clock.start();
+    }
+    return static_cast<float>(clock.nsecsElapsed() * 1e-9);
+}
 
 struct ScreenSpace
 {
@@ -398,6 +436,54 @@ void MissionLayer::MissionLayerRenderImplementation::render(
 
     const float markerLineWidth = std::round(kMarkerLineWidthPx * scale);
     const float haloLineWidth = markerLineWidth + kHaloWidthPx;
+
+    if (!data_.flows.isEmpty()) {
+        const float spacing = kFlowSpacingPx * scale;
+        const float chevron = kFlowChevronPx * scale;
+        const float margin = kFlowEndMarginPx * scale;
+        const float fade = kFlowFadePx * scale;
+        const float phase = std::fmod(flowClockSeconds() * kFlowSpeedPxPerSec * scale, spacing);
+        const float pad = chevron + kHaloWidthPx;
+        for (const auto& flow : data_.flows) {
+            const QVector2D a = ss.window(flow.from);
+            const QVector2D b = ss.window(flow.to);
+            const QVector2D d = b - a;
+            const float len = d.length();
+            float t0 = 0.0f;
+            float t1 = len;
+            if (len < 1.0f || !clipToRect(a, d / len, -pad, -pad, ss.halfW * 2.0f + pad, ss.halfH * 2.0f + pad, t0, t1)) {
+                continue;
+            }
+            QColor base = flow.color;
+            base.setAlphaF(flow.color.alphaF() * kFlowBaseAlpha);
+            const QVector2D dir = d / len;
+            QVector<QVector3D> baseTris;
+            appendStroke(baseTris, {a + dir * t0, a + dir * t1}, false, std::round(flow.widthPx * scale), kLineZ, ss);
+            drawTriangles3(ctx, sp, colorLoc, baseTris, base);
+
+            const QVector2D left(-dir.x() * kCos30 + dir.y() * kSin30, -dir.y() * kCos30 - dir.x() * kSin30);
+            const QVector2D right(-dir.x() * kCos30 - dir.y() * kSin30, -dir.y() * kCos30 + dir.x() * kSin30);
+            const float first = std::max(margin, t0);
+            float sPos = phase + margin + std::ceil((first - phase - margin) / spacing) * spacing;
+            QVector<QVector2D> solid;
+            for (; sPos < std::min(len - margin, t1); sPos += spacing) {
+                const QVector2D tip = a + dir * sPos;
+                const QVector<QVector2D> verts{ss.toNdc(tip), ss.toNdc(tip + left * chevron),
+                                               ss.toNdc(tip), ss.toNdc(tip + right * chevron)};
+                const float edge = std::min(sPos - margin, len - margin - sPos);
+                if (edge >= fade) {
+                    solid += verts;
+                    continue;
+                }
+                QColor c = flow.color;
+                c.setAlphaF(flow.color.alphaF() * std::clamp(edge / fade, 0.0f, 1.0f));
+                draw2d(ctx, sp, colorLoc, extendSegments(verts, ss), data_.haloColor, GL_LINES, haloLineWidth);
+                draw2d(ctx, sp, colorLoc, verts, c, GL_LINES, markerLineWidth);
+            }
+            draw2d(ctx, sp, colorLoc, extendSegments(solid, ss), data_.haloColor, GL_LINES, haloLineWidth);
+            draw2d(ctx, sp, colorLoc, solid, flow.color, GL_LINES, markerLineWidth);
+        }
+    }
 
     if (!data_.arrows.isEmpty()) {
         QVector<QVector2D> arrowVerts;

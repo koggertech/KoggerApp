@@ -8,6 +8,8 @@ qt_add_qml_module(kogger_app
         AppSettingsPage.qml
         BasePanePopup.qml
         AutopilotPopup.qml
+        AutopilotSettingsTab.qml
+        AutopilotParamsDialog.qml
         HelmIndicator.qml
         HelmBar.qml
         BottomTrackEditPopup.qml
@@ -33,6 +35,7 @@ qt_add_qml_module(kogger_app
         FilesSettingsPage.qml
         FullscreenPanePopup.qml
         GlobalPanePopup.qml
+        GoToPointCard.qml
         HeaderActionChip.qml
         HotActionsPanel.qml
         ImuStatusGroup.qml
@@ -62,6 +65,7 @@ qt_add_qml_module(kogger_app
         PaneInputBridge.qml
         PaneVideoWindow.qml
         PipelineStatusGroup.qml
+        PlacementHint.qml
         PowerOffConfirmOverlay.qml
         ParamCard.qml
         ParamCardGroup.qml
@@ -76,6 +80,7 @@ qt_add_qml_module(kogger_app
         SettingsGearButton.qml
         SettingsGroupBase.qml
         SettingsGroup.qml
+        SettingsViewerLoader.qml
         SettingsSidebarBase.qml
         SplashOverlay.qml
         SurfaceExportSettingsTab.qml

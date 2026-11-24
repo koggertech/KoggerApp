@@ -239,7 +239,7 @@ Item {
                             font.pixelSize: Tokens.fontSm
                         }
                         HoverHandler { cursorShape: Qt.DragLinkCursor }
-                        KToolTip {
+                        KLazyToolTip {
                             text: qsTr("Drag to another lifeline to add an exchange")
                             shown: linkHover.hovered && !linkDrag.active
                         }
@@ -595,7 +595,7 @@ Item {
                                  : AppPalette.dangerText
                             font.pixelSize: Tokens.fontXxs; font.bold: true
                             HoverHandler { id: rxHover }
-                            KToolTip {
+                            KLazyToolTip {
                                 text: root.store ? root.store.rxDetailText(rxMark._ds, rxMark.modelData) : ""
                                 shown: rxHover.hovered && rxMark.visible
                             }

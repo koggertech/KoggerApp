@@ -30,6 +30,7 @@ public:
     Q_PROPERTY(float verticalScale READ distanceZoom NOTIFY timelinePositionChanged)
     Q_PROPERTY(float verticalShift READ distanceShift NOTIFY timelinePositionChanged)
     Q_PROPERTY(bool hasData READ hasData NOTIFY timelinePositionChanged)
+    Q_PROPERTY(int epochCount READ epochCount NOTIFY timelinePositionChanged)
     Q_PROPERTY(bool isEnabled READ getPlotEnabled WRITE setPlotEnabled NOTIFY plotEnabledChanged)
     Q_PROPERTY(QString contactInfo      READ getContactInfo      WRITE setContactInfo     NOTIFY contactChanged)
     Q_PROPERTY(bool    contactVisible   READ getContactVisible   WRITE setContactVisible  NOTIFY contactChanged)
@@ -73,6 +74,10 @@ public:
 
     bool hasData() const {
         return datasetPtr_ != nullptr && datasetPtr_->size() > 0;
+    }
+
+    int epochCount() const {
+        return datasetPtr_ ? datasetPtr_->size() : 0;
     }
 
     void setHorizontal(bool is_horizontal) {

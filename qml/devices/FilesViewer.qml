@@ -12,6 +12,7 @@ Column {
     id: filesViewer
 
     property var store: null
+    property bool shown: true
 
     property string filePath: currentLogPath()
     property var lastLogFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
@@ -34,6 +35,12 @@ Column {
     }
 
     onStoreChanged: _consumeFilePathFocus()
+    onShownChanged: {
+        if (shown)
+            _consumeFilePathFocus()
+        else
+            setLogPath(selectedLogPathSource.length ? selectedLogPathSource : core.filePath)
+    }
 
     Connections {
         target: filesViewer.store
@@ -42,7 +49,7 @@ Column {
     }
 
     function _consumeFilePathFocus() {
-        if (store && store.filePathFocusRequested) {
+        if (shown && store && store.filePathFocusRequested) {
             store.filePathFocusRequested = false
             Qt.callLater(function() { if (pathText) pathText.forceActiveFocus() })
         }
@@ -180,7 +187,6 @@ Column {
                 source: ibImg
                 color: ib.iconColor
                 smooth: true
-                cached: true
             }
         }
 
@@ -193,7 +199,7 @@ Column {
             onClicked: { ib.forceActiveFocus(); ib._activate() }
         }
 
-        KToolTip { text: ib.toolTipText; targetItem: ib; shown: ibMa.containsMouse && ib.toolTipText.length > 0 }
+        KLazyToolTip { text: ib.toolTipText; targetItem: ib; shown: ibMa.containsMouse && ib.toolTipText.length > 0 }
     }
 
     // ── Open file ───────────────────────────────────────────────────────────
@@ -217,6 +223,7 @@ Column {
 
             TextInput {
                 id: pathText
+                objectName: "filesPathField"
                 activeFocusOnTab: true
                 anchors.fill: parent; anchors.leftMargin: Tokens.spaceMd; anchors.rightMargin: Tokens.spaceMd
                 TapHandler { acceptedButtons: Qt.LeftButton; onDoubleTapped: pathText.selectAll() }
