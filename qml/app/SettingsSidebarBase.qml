@@ -28,6 +28,71 @@ Item {
     property real progress: open ? 1.0 : 0.0
     readonly property real panelWidth: panelSizePx
 
+    property string _shownSide: "left"
+    property real _sideSwap: 1.0
+    readonly property string shownSide: _shownSide
+    readonly property real sideSwap: _sideSwap
+    readonly property real slideProgress: progress * _sideSwap
+
+    function _syncSideNow() {
+        sideSwapOutAnim.stop()
+        sideSwapBackAnim.stop()
+        _shownSide = resolvedSide
+        _sideSwap = 1.0
+    }
+
+    function _applySide() {
+        if (progress <= 0.01) {
+            _syncSideNow()
+            return
+        }
+        if (!open || (resolvedSide === _shownSide && _sideSwap >= 1.0))
+            return
+        sideSwapOutAnim.stop()
+        sideSwapBackAnim.stop()
+        if (resolvedSide === _shownSide) {
+            sideSwapBackAnim.from = _sideSwap
+            sideSwapBackAnim.start()
+        } else {
+            sideSwapOutStep.from = _sideSwap
+            sideSwapOutAnim.start()
+        }
+    }
+
+    onResolvedSideChanged: _applySide()
+
+    Component.onCompleted: _syncSideNow()
+
+    SequentialAnimation {
+        id: sideSwapOutAnim
+        NumberAnimation {
+            id: sideSwapOutStep
+            target: panelRoot
+            property: "_sideSwap"
+            to: 0.0
+            duration: AppPalette.sidebarAnimMs
+            easing.type: Easing.InCubic
+        }
+        ScriptAction { script: panelRoot._shownSide = panelRoot.resolvedSide }
+        NumberAnimation {
+            target: panelRoot
+            property: "_sideSwap"
+            from: 0.0
+            to: 1.0
+            duration: AppPalette.sidebarAnimMs
+            easing.type: Easing.OutCubic
+        }
+    }
+
+    NumberAnimation {
+        id: sideSwapBackAnim
+        target: panelRoot
+        property: "_sideSwap"
+        to: 1.0
+        duration: AppPalette.sidebarAnimMs
+        easing.type: Easing.OutCubic
+    }
+
     signal closeRequested()
     signal interacted()          // any press inside the panel (for last-active routing)
 
@@ -283,8 +348,12 @@ Item {
     }
 
     onOpenChanged: {
-        if (!open)
+        if (!open) {
+            sideSwapOutAnim.stop()
+            sideSwapBackAnim.stop()
             return
+        }
+        _applySide()
         contentFlick.contentY = 0
         if (subPageOpen)
             Qt.callLater(panelRoot._focusSubPage)
@@ -313,9 +382,9 @@ Item {
     Rectangle {
         id: panel
 
-        x: panelRoot.resolvedSide === "left"
-           ? -panelRoot.panelWidth + panelRoot.panelWidth * panelRoot.progress
-           : panelRoot.width - panelRoot.panelWidth * panelRoot.progress
+        x: panelRoot._shownSide === "left"
+           ? -panelRoot.panelWidth + panelRoot.panelWidth * panelRoot.slideProgress
+           : panelRoot.width - panelRoot.panelWidth * panelRoot.slideProgress
         y: 0
         width: panelRoot.panelWidth
         height: panelRoot.height
@@ -695,16 +764,16 @@ Item {
         y: panel.y
         width: panelRoot.panelShadowSize
         height: panel.height
-        x: panelRoot.resolvedSide === "left" ? panel.x + panel.width : panel.x - width
+        x: panelRoot._shownSide === "left" ? panel.x + panel.width : panel.x - width
         z: 1
-        visible: panelRoot.panelShadowEnabled && panelRoot.progress > 0.01
-        opacity: panelRoot.panelShadowOpacity * panelRoot.progress
+        visible: panelRoot.panelShadowEnabled && panelRoot.slideProgress > 0.01
+        opacity: panelRoot.panelShadowOpacity * panelRoot.slideProgress
 
         gradient: Gradient {
             orientation: Gradient.Horizontal
             GradientStop {
                 position: 0.0
-                color: panelRoot.resolvedSide === "left" ? AppPalette.shadow0 : "#00000000"
+                color: panelRoot._shownSide === "left" ? AppPalette.shadow0 : "#00000000"
             }
             GradientStop {
                 position: 0.45
@@ -712,7 +781,7 @@ Item {
             }
             GradientStop {
                 position: 1.0
-                color: panelRoot.resolvedSide === "left" ? "#00000000" : AppPalette.shadow0
+                color: panelRoot._shownSide === "left" ? "#00000000" : AppPalette.shadow0
             }
         }
     }

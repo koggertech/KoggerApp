@@ -191,10 +191,10 @@ ApplicationWindow {
         NumberAnimation { duration: root._workspaceAnimMs; easing.type: Easing.OutCubic }
     }
 
-    readonly property real settingsInsetLeft: workspaceStore.settingsSide === "left"
-                                              ? _workspaceShiftProgress * workspaceStore.settingsPanelSizePx : 0
-    readonly property real settingsInsetRight: workspaceStore.settingsSide === "right"
-                                               ? _workspaceShiftProgress * workspaceStore.settingsPanelSizePx : 0
+    readonly property real settingsInsetLeft: settingsSidebar.shownSide === "left"
+                                              ? _workspaceShiftProgress * settingsSidebar.sideSwap * workspaceStore.settingsPanelSizePx : 0
+    readonly property real settingsInsetRight: settingsSidebar.shownSide === "right"
+                                               ? _workspaceShiftProgress * settingsSidebar.sideSwap * workspaceStore.settingsPanelSizePx : 0
     readonly property bool hotkeysPreviewMode: workspaceStore.settingsPanelOpen && workspaceStore.hotkeysRevealKey !== ""
     property bool hotkeysPreviewClosing: false
     property bool legacyPanelOpen: false
@@ -999,8 +999,8 @@ ApplicationWindow {
 
             anchors.left: parent.left
             anchors.top: parent.top
-            anchors.leftMargin: ((hotkeysPreviewPinned || hotkeysPreviewSticky) && workspaceStore.settingsSide === "left")
-                                ? Math.round(workspaceStore.settingsPanelSizePx * settingsSidebar.progress) + root.hotkeysPreviewGap
+            anchors.leftMargin: ((hotkeysPreviewPinned || hotkeysPreviewSticky) && settingsSidebar.shownSide === "left")
+                                ? Math.round(workspaceStore.settingsPanelSizePx * settingsSidebar.slideProgress) + root.hotkeysPreviewGap
                                 : 8
             anchors.topMargin: 8
             z: workspaceStore.inputLocked
@@ -1430,8 +1430,8 @@ ApplicationWindow {
             anchors.fill: parent
             z: maximized ? ZOrder.nodesConfiguratorMaximized : ZOrder.nodesConfigurator
             maxInsetTop: hotActions.visible ? hotActions.y + hotActions.barHeight + Tokens.spaceSm : 0
-            maxInsetLeft: workspaceStore.settingsSide === "left" && root._workspaceShouldShift ? workspaceStore.settingsPanelSizePx : 0
-            maxInsetRight: workspaceStore.settingsSide === "right" && root._workspaceShouldShift ? workspaceStore.settingsPanelSizePx : 0
+            maxInsetLeft: settingsSidebar.shownSide === "left" && root._workspaceShouldShift ? workspaceStore.settingsPanelSizePx : 0
+            maxInsetRight: settingsSidebar.shownSide === "right" && root._workspaceShouldShift ? workspaceStore.settingsPanelSizePx : 0
             maxInsetBottom: consoleDrawer.height
             open: workspaceStore.nodesConfiguratorOpen
             title: qsTr("Nodes-Configurator")
