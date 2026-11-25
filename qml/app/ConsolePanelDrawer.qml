@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import QtQuick.Effects
 import QtQml.Models 2.15
 import QtCore
 import kqml_types 1.0
@@ -23,6 +24,11 @@ Item {
     }
 
     readonly property real _s: AppPalette.scale
+    readonly property bool _editing: !!store && store.editableMode
+    readonly property real cornerRadius: _editing ? 0 : Tokens.paneRadiusPx
+    readonly property real topGap: (_editing || maximized) ? 0 : Tokens.paneGapPx
+    property int shadowSize: 30
+    property real shadowOpacity: 0.72
     readonly property int _pad: Tokens.spaceLg
     readonly property int _btnSize: Math.round(34 * _s)
     readonly property bool _colorize: !!store && store.consoleColorize
@@ -281,8 +287,6 @@ Item {
         return html
     }
 
-    clip: true
-
     height: consoleOpen ? (maximized ? maxHeight : openHeight) : 0
     Behavior on height {
         enabled: !resizeHandle.pressed
@@ -397,20 +401,46 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: AppPalette.bg
+        color: AppPalette.headerBg
+        visible: root.maximized || root.height > root.openHeight + 0.5
+    }
+
+    Item {
+        x: consoleCard.x
+        y: consoleCard.y
+        width: consoleCard.width
+        height: consoleCard.height
+        visible: !root._editing && !root.maximized && consoleCard.height > 1
 
         Rectangle {
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            height: 1
-            color: AppPalette.border
-            z: 1
+            id: consoleShadowSource
+            anchors.fill: parent
+            radius: root.cornerRadius
+            color: AppPalette.bg
+            visible: false
         }
+
+        MultiEffect {
+            anchors.fill: consoleShadowSource
+            source: consoleShadowSource
+            shadowEnabled: true
+            shadowColor: AppPalette.shadow0
+            shadowBlur: 1.0
+            blurMax: root.shadowSize
+            shadowOpacity: root.shadowOpacity
+        }
+    }
+
+    Rectangle {
+        id: consoleCard
+        anchors.fill: parent
+        anchors.topMargin: root.topGap
+        radius: root.cornerRadius
+        color: AppPalette.bg
+        clip: true
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.topMargin: 1
             spacing: 0
 
             RowLayout {
@@ -691,7 +721,7 @@ Item {
 
     MouseArea {
         id: resizeHandle
-        anchors.top: parent.top
+        anchors.top: consoleCard.top
         anchors.horizontalCenter: parent.horizontalCenter
         width: Math.round(AppPalette.dragBarLengthPx * root._s) + Tokens.spaceXl
         height: Math.round(12 * root._s)

@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Window 2.15
 import Qt5Compat.GraphicalEffects
+import QtQuick.Effects
 import kqml_types 1.0
 
 Item {
@@ -46,6 +47,8 @@ Item {
     readonly property real cornerRadius: (_editing || _edgeToEdge) ? 0 : Tokens.paneRadiusPx
     readonly property real paneGap: _editing ? 0 : Tokens.paneGapPx
     readonly property real dimBleed: Math.max(2, Math.round(2 * AppPalette.scale))
+    property int shadowSize: 30
+    property real shadowOpacity: 0.72
     readonly property bool _outerRight: (x + width) >= (workspaceItem.width - 0.5)
     readonly property bool _outerBottom: (y + height) >= (workspaceItem.height - 0.5)
     readonly property real _leftInset: _editing ? 0 : (Math.floor(x) - x)
@@ -116,6 +119,36 @@ Item {
         function onLayoutTransitionSuspendedChanged() {
             if (paneItem.store.layoutTransitionSuspended)
                 paneItem.hoveredEdge = ""
+        }
+    }
+
+    Item {
+        parent: paneItem.parent
+        x: paneItem.x + paneSurface.x
+        y: paneItem.y + paneSurface.y
+        width: paneSurface.width
+        height: paneSurface.height
+        z: ZOrder.paneShadow
+        opacity: paneItem.opacity
+        visible: paneItem.visible && !paneItem._editing && !paneItem._edgeToEdge
+                 && width > 1 && height > 1
+
+        Rectangle {
+            id: paneShadowSource
+            anchors.fill: parent
+            radius: paneItem.cornerRadius
+            color: AppPalette.headerBg
+            visible: false
+        }
+
+        MultiEffect {
+            anchors.fill: paneShadowSource
+            source: paneShadowSource
+            shadowEnabled: true
+            shadowColor: AppPalette.shadow0
+            shadowBlur: 1.0
+            blurMax: paneItem.shadowSize
+            shadowOpacity: paneItem.shadowOpacity
         }
     }
 

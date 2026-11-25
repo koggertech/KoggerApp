@@ -3,6 +3,7 @@ import QtQuick 2.15
 
 QtObject {
     // ── WorkspaceView level ──────────────────────────────────────────────────
+    readonly property int paneShadow:         -1
     readonly property int workspacePane:       0    // normal pane tile
     readonly property int dropZoneHighlight:  45    // drag-over highlight ring
     readonly property int dragOverlay:       100    // drag ghost / target overlay
