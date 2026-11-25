@@ -1212,6 +1212,7 @@ ApplicationWindow {
             side: workspaceStore.settingsSide
             gearMode: "app"
             panelSizePx: workspaceStore.settingsPanelSizePx
+            glassSource: workspaceView
             leftInnerGapExtra: workspaceStore.effectivePushContent ? 0 : Tokens.paneGapPx
             store: workspaceStore
             onCloseRequested: workspaceStore.settingsPanelOpen = false

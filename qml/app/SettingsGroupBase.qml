@@ -367,8 +367,8 @@ Item {
         // (header colour → content bg), not spread over the whole group.
         // Non-linear: two curved mid-stops make the header colour decay FAST near
         // the top, then ease into the content bg (ease-out, not a straight blend).
-        readonly property real _seamStart: Math.min(1, headerRow.height / Math.max(1, height))
-        readonly property real _seamEnd: Math.min(1, (headerRow.height * 1.5) / Math.max(1, height))
+        readonly property real _seamStart: Math.min(1, headerRow.height / Math.max(1, islandFill.height))
+        readonly property real _seamEnd: Math.min(1, (headerRow.height * 1.5) / Math.max(1, islandFill.height))
         readonly property real _seamSpan: _seamEnd - _seamStart
         function _mix(a, b, t) {
             return Qt.rgba(a.r + (b.r - a.r) * t,
@@ -377,25 +377,35 @@ Item {
                            a.a + (b.a - a.a) * t)
         }
 
-        gradient: Gradient {
-            GradientStop { position: 0.0;               color: island._headerColor
-                Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } } }
-            GradientStop { position: island._seamStart; color: island._headerColor
-                Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } } }
-            GradientStop {
-                position: island._seamStart + island._seamSpan * 0.25
-                color: island._mix(island._headerColor, island._bottomColor, 0.58)
-                Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
+        color: "transparent"
+
+        Rectangle {
+            id: islandFill
+            y: root._stickyHeaderY
+            width: parent.width
+            height: Math.max(0, parent.height - root._stickyHeaderY)
+            radius: island.radius
+
+            gradient: Gradient {
+                GradientStop { position: 0.0;               color: island._headerColor
+                    Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } } }
+                GradientStop { position: island._seamStart; color: island._headerColor
+                    Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } } }
+                GradientStop {
+                    position: island._seamStart + island._seamSpan * 0.25
+                    color: island._mix(island._headerColor, island._bottomColor, 0.58)
+                    Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
+                }
+                GradientStop {
+                    position: island._seamStart + island._seamSpan * 0.55
+                    color: island._mix(island._headerColor, island._bottomColor, 0.91)
+                    Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
+                }
+                GradientStop { position: island._seamEnd;   color: island._bottomColor
+                    Behavior on color { ColorAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } } }
+                GradientStop { position: 1.0;               color: island._bottomColor
+                    Behavior on color { ColorAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } } }
             }
-            GradientStop {
-                position: island._seamStart + island._seamSpan * 0.55
-                color: island._mix(island._headerColor, island._bottomColor, 0.91)
-                Behavior on color { ColorAnimation { duration: 110; easing.type: Easing.OutCubic } }
-            }
-            GradientStop { position: island._seamEnd;   color: island._bottomColor
-                Behavior on color { ColorAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } } }
-            GradientStop { position: 1.0;               color: island._bottomColor
-                Behavior on color { ColorAnimation { duration: Anim.disclosureMs; easing.type: Anim.disclosureEasing } } }
         }
 
         // ── Header row (sticky — floats to stay at the viewport top) ────────
@@ -416,7 +426,7 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 visible: root._stickyHeaderY > 0
-                color: AppPalette.bg
+                color: "transparent"
 
                 Rectangle {
                     anchors.fill: parent

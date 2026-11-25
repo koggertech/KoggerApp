@@ -1,21 +1,50 @@
 import QtQuick 2.15
+import Qt5Compat.GraphicalEffects
 import kqml_types 1.0
 
 Column {
     id: card
 
     property var store: null
+    readonly property int logoHeight: Math.round(36 * AppPalette.scale)
+    readonly property int logoSourceHeight: Math.round(86 * AppPalette.scale)
 
     spacing: Tokens.spaceXs
 
-    Image {
+    Row {
         anchors.horizontalCenter: parent.horizontalCenter
-        source: "qrc:/kogger_app_logo.png"
-        fillMode: Image.PreserveAspectFit
-        smooth: true
-        width: Math.round(150 * AppPalette.scale)
-        sourceSize.width: Math.round(360 * AppPalette.scale)
-        opacity: 0.85
+
+        Image {
+            source: "qrc:/kogger-app-mark.png"
+            height: card.logoHeight
+            width: implicitHeight > 0 ? Math.round(height * implicitWidth / implicitHeight) : 0
+            sourceSize.height: card.logoSourceHeight
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+        }
+
+        Item {
+            height: card.logoHeight
+            width: wordmarkImage.width
+
+            Image {
+                id: wordmarkImage
+                source: "qrc:/kogger-app-wordmark.png"
+                height: parent.height
+                width: implicitHeight > 0 ? Math.round(height * implicitWidth / implicitHeight) : 0
+                sourceSize.height: card.logoSourceHeight
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                visible: false
+            }
+
+            ColorOverlay {
+                anchors.fill: wordmarkImage
+                source: wordmarkImage
+                color: AppPalette.text
+                smooth: true
+            }
+        }
     }
 
     Text {

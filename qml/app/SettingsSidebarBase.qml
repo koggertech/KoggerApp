@@ -17,6 +17,11 @@ Item {
     property string gearMode: "app"
     property color headerColor: AppPalette.headerBg
     property color panelColor: AppPalette.bg
+    property Item glassSource: null
+    property real glassTint: 0.72
+    property int glassBlurPx: 40
+    readonly property bool _glass: glassSource !== null
+    readonly property color _panelFill: _glass ? Qt.rgba(panelColor.r, panelColor.g, panelColor.b, glassTint) : panelColor
     property bool panelShadowEnabled: true
     property real panelShadowOpacity: 0.72
     property int panelShadowSize: 30
@@ -108,7 +113,9 @@ Item {
     property Component subPage: null
     property bool subPageOpen: false
 
-    readonly property bool subPageCovers: subPageOpen && subPageHost.x > -0.5
+    readonly property bool subPageCovers: subPageOpen && subPageHost.slide > 0.999
+    readonly property real _mainOpacity: 1 - subPageHost.slide
+    readonly property bool _subSliding: subPageHost.slide > 0.001 && subPageHost.slide < 0.999
     property Item _mainFocusMemo: null
 
     function _isWithin(item, ancestor) {
@@ -396,7 +403,7 @@ Item {
         width: Math.max(0, panelRoot.panelWidth - panelRoot.floatGap * 2 - panelRoot._innerGapExtra)
         height: Math.max(0, panelRoot.height - panelRoot.floatGap * 2)
         radius: panelRoot.floatRadius
-        color: panelRoot.panelColor
+        color: panelRoot._panelFill
         clip: true
         z: 2
 
@@ -440,7 +447,7 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            color: panelRoot.headerColor
+            color: panelRoot._glass ? "transparent" : panelRoot.headerColor
             topLeftRadius: panel.radius
             topRightRadius: panel.radius
             height: topSectionContent.y + topSectionContent.implicitHeight + Tokens.spaceLg
@@ -581,6 +588,7 @@ Item {
             contentHeight: Math.max(height, contentColumn.implicitHeight)
             interactive: contentHeight > height + 1
             enabled: !panelRoot.subPageCovers
+            opacity: panelRoot._mainOpacity
             z: 2
             onMovementStarted: wheelScrollAnim.stop()
 
@@ -621,6 +629,7 @@ Item {
             anchors.rightMargin: Math.round((panelRoot.scrollBarReservePx - panelRoot._scrollThumbW) / 2)
             thumbWidth: panelRoot._scrollThumbW
             autoHideMs: panelRoot.scrollAutoHideMs
+            opacity: panelRoot._mainOpacity
             onPressedChanged: if (pressed) wheelScrollAnim.stop()
         }
 
@@ -660,15 +669,15 @@ Item {
 
         Rectangle {
             id: topFade
-            x: contentFlick.x
+            x: contentFlick.x + contentColumn.x
             y: contentFlick.y
-            width: contentFlick.width - panelRoot.scrollBarReservePx
+            width: contentColumn.width
             height: panel._fadeHeight
             z: 3
-            opacity: (contentFlick.atYBeginning || panel._stickyHeaderAtTop) ? 0.0 : 1.0
+            opacity: ((contentFlick.atYBeginning || panel._stickyHeaderAtTop) ? 0.0 : 1.0) * panelRoot._mainOpacity
             visible: opacity > 0.01
             Behavior on opacity {
-                enabled: !panel._stickyHeaderAtTop
+                enabled: !panel._stickyHeaderAtTop && !panelRoot._subSliding
                 NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
             }
 
@@ -680,14 +689,17 @@ Item {
 
         Rectangle {
             id: bottomFade
-            x: contentFlick.x
+            x: contentFlick.x + contentColumn.x
             y: contentFlick.y + contentFlick.height - height
-            width: contentFlick.width - panelRoot.scrollBarReservePx
+            width: contentColumn.width
             height: panel._fadeHeight
             z: 3
-            opacity: contentFlick.atYEnd ? 0.0 : 1.0
+            opacity: (contentFlick.atYEnd ? 0.0 : 1.0) * panelRoot._mainOpacity
             visible: opacity > 0.01
-            Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+            Behavior on opacity {
+                enabled: !panelRoot._subSliding
+                NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+            }
 
             gradient: Gradient {
                 GradientStop { position: 0.0; color: panel._fadeEnd }
@@ -702,16 +714,17 @@ Item {
             width: panel.width
             z: 5                                   // above content (2), fades (3), scrollbar (4)
             clip: true
-            x: panelRoot.subPageOpen ? 0 : -width
-            visible: panelRoot.subPage !== null && (panelRoot.subPageOpen || x > -width + 0.5)
+            property real slide: panelRoot.subPageOpen ? 1 : 0
+            x: -width * (1 - slide)
+            visible: panelRoot.subPage !== null && (panelRoot.subPageOpen || slide > 0.001)
 
-            Behavior on x {
+            Behavior on slide {
                 NumberAnimation { duration: Anim.subpageMs; easing.type: Anim.subpageEasing }
             }
 
             Rectangle {
                 anchors.fill: parent
-                color: panelRoot.panelColor
+                color: panelRoot._glass ? "transparent" : panelRoot.panelColor
                 bottomLeftRadius: panel.radius
                 bottomRightRadius: panel.radius
                 MouseArea {
@@ -797,6 +810,82 @@ Item {
             shadowBlur: 1.0
             blurMax: panelRoot.panelShadowSize
             shadowOpacity: panelRoot.panelShadowOpacity * panelRoot.slideProgress
+        }
+    }
+
+    Item {
+        id: glass
+
+        readonly property int pad: panelRoot.glassBlurPx
+        readonly property rect panelInSource: {
+            var src = panelRoot.glassSource
+            if (!src || !src.parent || !panelRoot.parent)
+                return Qt.rect(0, 0, 0, 0)
+            var o = panelRoot.parent.mapToItem(src.parent, 0, 0)
+            return Qt.rect(o.x + panelRoot.x + panel.x - src.x,
+                           o.y + panelRoot.y + panel.y - src.y,
+                           panel.width, panel.height)
+        }
+        readonly property bool overSource: {
+            var src = panelRoot.glassSource
+            var r = panelInSource
+            return !!src && r.x < src.width && r.x + r.width > 0
+                && r.y < src.height && r.y + r.height > 0
+        }
+        readonly property rect captureRect: Qt.rect(panelInSource.x - pad, panelInSource.y - pad,
+                                                    panelInSource.width + pad * 2, panelInSource.height + pad * 2)
+
+        x: panel.x
+        y: panel.y
+        width: panel.width
+        height: panel.height
+        z: 1
+        visible: panelRoot._glass && panelRoot.slideProgress > 0.01 && overSource
+
+        ShaderEffectSource {
+            id: glassCapture
+            x: -glass.pad
+            y: -glass.pad
+            width: glass.width + glass.pad * 2
+            height: glass.height + glass.pad * 2
+            sourceItem: panelRoot.glassSource
+            sourceRect: glass.captureRect
+            live: glass.visible
+            visible: false
+        }
+
+        ShaderEffectSource {
+            id: glassMask
+            width: glassCapture.width
+            height: glassCapture.height
+            hideSource: true
+            visible: false
+            sourceItem: Item {
+                width: glassCapture.width
+                height: glassCapture.height
+
+                Rectangle {
+                    x: glass.pad + 1
+                    y: glass.pad + 1
+                    width: Math.max(0, glass.width - 2)
+                    height: Math.max(0, glass.height - 2)
+                    radius: Math.max(0, panel.radius - 1)
+                }
+            }
+        }
+
+        MultiEffect {
+            x: glassCapture.x
+            y: glassCapture.y
+            width: glassCapture.width
+            height: glassCapture.height
+            source: glassCapture
+            autoPaddingEnabled: false
+            blurEnabled: true
+            blur: 1.0
+            blurMax: glass.pad
+            maskEnabled: true
+            maskSource: glassMask
         }
     }
 }
