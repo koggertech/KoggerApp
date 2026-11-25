@@ -206,6 +206,8 @@ ApplicationWindow {
     readonly property bool hotkeysPreviewSticky: workspaceStore.settingsPanelOpen
                                                 && workspaceStore.settingsSubPageActive
                                                 && workspaceStore.settingsSubPageKind === "quickActions"
+    readonly property bool _hotActionsBesideSidebar: (hotkeysPreviewPinned || hotkeysPreviewSticky)
+                                                     && settingsSidebar.shownSide === "left"
     onHotkeysPreviewStickyChanged: {
         if (!hotActions)
             return
@@ -999,10 +1001,10 @@ ApplicationWindow {
 
             anchors.left: parent.left
             anchors.top: parent.top
-            anchors.leftMargin: ((hotkeysPreviewPinned || hotkeysPreviewSticky) && settingsSidebar.shownSide === "left")
-                                ? Math.round(workspaceStore.settingsPanelSizePx * settingsSidebar.slideProgress) + root.hotkeysPreviewGap
+            anchors.leftMargin: root._hotActionsBesideSidebar
+                                ? Math.max(8, Math.round(settingsSidebar.panelRect.x + settingsSidebar.panelRect.width) + root.hotkeysPreviewGap)
                                 : 8
-            anchors.topMargin: 8
+            anchors.topMargin: root._hotActionsBesideSidebar ? Math.round(settingsSidebar.panelRect.y) : 8
             z: workspaceStore.inputLocked
                ? ZOrder.inputLockPanel
                : hotkeysPreviewMode || hotkeysPreviewSticky || (workspaceStore.settingsPanelOpen && hotActions.expanded)
@@ -1210,6 +1212,7 @@ ApplicationWindow {
             side: workspaceStore.settingsSide
             gearMode: "app"
             panelSizePx: workspaceStore.settingsPanelSizePx
+            leftInnerGapExtra: workspaceStore.effectivePushContent ? 0 : Tokens.paneGapPx
             store: workspaceStore
             onCloseRequested: workspaceStore.settingsPanelOpen = false
 

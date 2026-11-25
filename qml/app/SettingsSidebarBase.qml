@@ -1,7 +1,8 @@
-import QtQuick 2.15
+import QtQuick
 import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import QtQuick.Effects
 import kqml_types 1.0
 
 Item {
@@ -20,6 +21,11 @@ Item {
     property real panelShadowOpacity: 0.72
     property int panelShadowSize: 30
     property real panelSizePx: 300
+    property real floatGap: Tokens.spaceMd
+    property real floatRadius: Tokens.radiusXl
+    property real leftInnerGapExtra: 0
+    readonly property real _innerGapExtra: _shownSide === "left" ? leftInnerGapExtra : 0
+    readonly property rect panelRect: Qt.rect(panel.x, panel.y, panel.width, panel.height)
     property int scrollBarReservePx: Tokens.spaceXl
     readonly property int _scrollThumbW: Math.round(12 * AppPalette.scale)
     property int scrollAutoHideMs: 1500
@@ -382,13 +388,16 @@ Item {
     Rectangle {
         id: panel
 
-        x: panelRoot._shownSide === "left"
-           ? -panelRoot.panelWidth + panelRoot.panelWidth * panelRoot.slideProgress
-           : panelRoot.width - panelRoot.panelWidth * panelRoot.slideProgress
-        y: 0
-        width: panelRoot.panelWidth
-        height: panelRoot.height
+        x: (panelRoot._shownSide === "left"
+            ? -panelRoot.panelWidth + panelRoot.panelWidth * panelRoot.slideProgress
+            : panelRoot.width - panelRoot.panelWidth * panelRoot.slideProgress)
+           + panelRoot.floatGap
+        y: panelRoot.floatGap
+        width: Math.max(0, panelRoot.panelWidth - panelRoot.floatGap * 2 - panelRoot._innerGapExtra)
+        height: Math.max(0, panelRoot.height - panelRoot.floatGap * 2)
+        radius: panelRoot.floatRadius
         color: panelRoot.panelColor
+        clip: true
         z: 2
 
         MouseArea {
@@ -432,6 +441,8 @@ Item {
             anchors.right: parent.right
             anchors.top: parent.top
             color: panelRoot.headerColor
+            topLeftRadius: panel.radius
+            topRightRadius: panel.radius
             height: topSectionContent.y + topSectionContent.implicitHeight + Tokens.spaceLg
             z: 1
 
@@ -701,6 +712,8 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 color: panelRoot.panelColor
+                bottomLeftRadius: panel.radius
+                bottomRightRadius: panel.radius
                 MouseArea {
                     anchors.fill: parent
                     hoverEnabled: true
@@ -758,31 +771,32 @@ Item {
         }
     }
 
-    Rectangle {
+    Item {
         id: panelShadow
 
+        x: panel.x
         y: panel.y
-        width: panelRoot.panelShadowSize
+        width: panel.width
         height: panel.height
-        x: panelRoot._shownSide === "left" ? panel.x + panel.width : panel.x - width
         z: 1
         visible: panelRoot.panelShadowEnabled && panelRoot.slideProgress > 0.01
-        opacity: panelRoot.panelShadowOpacity * panelRoot.slideProgress
 
-        gradient: Gradient {
-            orientation: Gradient.Horizontal
-            GradientStop {
-                position: 0.0
-                color: panelRoot._shownSide === "left" ? AppPalette.shadow0 : "#00000000"
-            }
-            GradientStop {
-                position: 0.45
-                color: AppPalette.shadowMid
-            }
-            GradientStop {
-                position: 1.0
-                color: panelRoot._shownSide === "left" ? "#00000000" : AppPalette.shadow0
-            }
+        Rectangle {
+            id: panelShadowSource
+            anchors.fill: parent
+            radius: panel.radius
+            color: panelRoot.panelColor
+            visible: false
+        }
+
+        MultiEffect {
+            anchors.fill: panelShadowSource
+            source: panelShadowSource
+            shadowEnabled: true
+            shadowColor: AppPalette.shadow0
+            shadowBlur: 1.0
+            blurMax: panelRoot.panelShadowSize
+            shadowOpacity: panelRoot.panelShadowOpacity * panelRoot.slideProgress
         }
     }
 }

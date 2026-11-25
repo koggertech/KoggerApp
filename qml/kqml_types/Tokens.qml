@@ -64,6 +64,7 @@ QtObject {
     readonly property int radiusSm: Math.round(4 * s)
     readonly property int radiusMd: Math.round(6 * s)
     readonly property int radiusLg: Math.round(8 * s)
+    readonly property int radiusXl: Math.round(12 * s)
 
     readonly property int cardBorderWidth: 0
 
