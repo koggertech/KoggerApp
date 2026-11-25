@@ -157,7 +157,7 @@ BasePanePopup {
     Rectangle {
         anchors.fill: parent
         radius: width / 2
-        color: AppPalette.bg
+        color: root.glassSurface
         border.width: 0
 
         Column {
@@ -171,9 +171,9 @@ BasePanePopup {
                 height: root._controlH
                 iconSource: "qrc:/icons/ui/x.svg"
                 iconTintColor: AppPalette.text
-                fillColor:        AppPalette.card
-                fillHoverColor:   AppPalette.cardHover
-                fillPressedColor: AppPalette.bgDeep
+                fillColor:        root.glassControl
+                fillHoverColor:   root.glassControlHover
+                fillPressedColor: root.glassControlPressed
                 borderColor:      AppPalette.border
                 borderHoverColor: AppPalette.borderHover
                 onClicked: root.store.profilesPopupOpen = false
@@ -193,9 +193,9 @@ BasePanePopup {
                     toolTipText: root._editMode
                                  ? qsTr("Remove profile")
                                  : (modelData && modelData.path ? root._fileName(modelData.path) : "")
-                    fillColor:        root._editMode ? AppPalette.dangerBg : AppPalette.card
-                    fillHoverColor:   root._editMode ? AppPalette.dangerHover : AppPalette.cardHover
-                    fillPressedColor: AppPalette.bgDeep
+                    fillColor:        root._editMode ? AppPalette.dangerBg : root.glassControl
+                    fillHoverColor:   root._editMode ? AppPalette.dangerHover : root.glassControlHover
+                    fillPressedColor: root.glassControlPressed
                     borderColor:      root._editMode ? AppPalette.dangerBorder : AppPalette.border
                     borderHoverColor: root._editMode ? AppPalette.dangerBorder : AppPalette.borderHover
                     onClicked: {
@@ -214,9 +214,9 @@ BasePanePopup {
                 iconSource: "qrc:/icons/ui/file_import.svg"
                 iconTintColor: AppPalette.text
                 toolTipText: qsTr("Add profile")
-                fillColor:        AppPalette.card
-                fillHoverColor:   AppPalette.cardHover
-                fillPressedColor: AppPalette.bgDeep
+                fillColor:        root.glassControl
+                fillHoverColor:   root.glassControlHover
+                fillPressedColor: root.glassControlPressed
                 borderColor:      AppPalette.border
                 borderHoverColor: AppPalette.borderHover
                 onClicked: {
@@ -233,9 +233,9 @@ BasePanePopup {
                 iconSource: "qrc:/icons/ui/pencil.svg"
                 iconTintColor: AppPalette.text
                 toolTipText: qsTr("Edit profiles")
-                fillColor:        root._editMode ? AppPalette.accentBgStrong : AppPalette.card
-                fillHoverColor:   root._editMode ? AppPalette.accentBorder : AppPalette.cardHover
-                fillPressedColor: AppPalette.bgDeep
+                fillColor:        root._editMode ? AppPalette.accentBgStrong : root.glassControl
+                fillHoverColor:   root._editMode ? AppPalette.accentBorder : root.glassControlHover
+                fillPressedColor: root.glassControlPressed
                 borderColor:      root._editMode ? AppPalette.accentBorder : AppPalette.border
                 borderHoverColor: root._editMode ? AppPalette.accentBorder : AppPalette.borderHover
                 onClicked: root._editMode = !root._editMode

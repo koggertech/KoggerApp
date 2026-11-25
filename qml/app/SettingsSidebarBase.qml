@@ -18,7 +18,7 @@ Item {
     property color headerColor: AppPalette.headerBg
     property color panelColor: AppPalette.bg
     property Item glassSource: null
-    property real glassTint: 0.72
+    property real glassTint: AppPalette.glassAlpha
     property int glassBlurPx: 40
     readonly property bool _glass: glassSource !== null
     readonly property color _panelFill: _glass ? Qt.rgba(panelColor.r, panelColor.g, panelColor.b, glassTint) : panelColor
@@ -813,79 +813,16 @@ Item {
         }
     }
 
-    Item {
+    KGlassBackdrop {
         id: glass
-
-        readonly property int pad: panelRoot.glassBlurPx
-        readonly property rect panelInSource: {
-            var src = panelRoot.glassSource
-            if (!src || !src.parent || !panelRoot.parent)
-                return Qt.rect(0, 0, 0, 0)
-            var o = panelRoot.parent.mapToItem(src.parent, 0, 0)
-            return Qt.rect(o.x + panelRoot.x + panel.x - src.x,
-                           o.y + panelRoot.y + panel.y - src.y,
-                           panel.width, panel.height)
-        }
-        readonly property bool overSource: {
-            var src = panelRoot.glassSource
-            var r = panelInSource
-            return !!src && r.x < src.width && r.x + r.width > 0
-                && r.y < src.height && r.y + r.height > 0
-        }
-        readonly property rect captureRect: Qt.rect(panelInSource.x - pad, panelInSource.y - pad,
-                                                    panelInSource.width + pad * 2, panelInSource.height + pad * 2)
-
         x: panel.x
         y: panel.y
         width: panel.width
         height: panel.height
         z: 1
-        visible: panelRoot._glass && panelRoot.slideProgress > 0.01 && overSource
-
-        ShaderEffectSource {
-            id: glassCapture
-            x: -glass.pad
-            y: -glass.pad
-            width: glass.width + glass.pad * 2
-            height: glass.height + glass.pad * 2
-            sourceItem: panelRoot.glassSource
-            sourceRect: glass.captureRect
-            live: glass.visible
-            visible: false
-        }
-
-        ShaderEffectSource {
-            id: glassMask
-            width: glassCapture.width
-            height: glassCapture.height
-            hideSource: true
-            visible: false
-            sourceItem: Item {
-                width: glassCapture.width
-                height: glassCapture.height
-
-                Rectangle {
-                    x: glass.pad + 1
-                    y: glass.pad + 1
-                    width: Math.max(0, glass.width - 2)
-                    height: Math.max(0, glass.height - 2)
-                    radius: Math.max(0, panel.radius - 1)
-                }
-            }
-        }
-
-        MultiEffect {
-            x: glassCapture.x
-            y: glassCapture.y
-            width: glassCapture.width
-            height: glassCapture.height
-            source: glassCapture
-            autoPaddingEnabled: false
-            blurEnabled: true
-            blur: 1.0
-            blurMax: glass.pad
-            maskEnabled: true
-            maskSource: glassMask
-        }
+        source: panelRoot.glassSource
+        radius: panel.radius
+        blurPx: panelRoot.glassBlurPx
+        visible: panelRoot._glass && panelRoot.slideProgress > 0.01
     }
 }

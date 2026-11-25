@@ -83,6 +83,8 @@ QtObject {
 
     readonly property color chipRaised:      isDark ? controlRaised : Qt.darker(card, 1.12)
     readonly property color chipRaisedHover: isDark ? Qt.lighter(controlRaised, 1.2) : Qt.darker(card, 1.20)
+    readonly property real glassAlpha: 0.72
+    readonly property real glassControlAlpha: 0.55
 
     // ── Borders ───────────────────────────────────────────────────────────────
     readonly property color border:      theme ? theme.controlBorderColor       : (isDark ? "#334155" : "#E2E8F0")

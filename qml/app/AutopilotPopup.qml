@@ -916,9 +916,9 @@ BasePanePopup {
         enabled: root._live
         opacity: enabled ? 1.0 : 0.5
         iconTintColor: danger ? AppPalette.dangerText : (hinted && !selected ? AppPalette.accent : AppPalette.text)
-        fillColor:        danger ? AppPalette.dangerBg : (selected ? AppPalette.accentBgStrong : AppPalette.card)
-        fillHoverColor:   danger ? AppPalette.dangerBg : (selected ? AppPalette.accentBorder : AppPalette.cardHover)
-        fillPressedColor: AppPalette.bgDeep
+        fillColor:        danger ? AppPalette.dangerBg : (selected ? AppPalette.accentBgStrong : root.glassControl)
+        fillHoverColor:   danger ? AppPalette.dangerBg : (selected ? AppPalette.accentBorder : root.glassControlHover)
+        fillPressedColor: root.glassControlPressed
         borderColor:      danger ? AppPalette.dangerBorder : (selected || hinted ? AppPalette.accentBorder : AppPalette.border)
         borderHoverColor: danger ? AppPalette.dangerBorder : (selected || hinted ? AppPalette.accentBorder : AppPalette.borderHover)
         borderWidth: danger || selected ? 1 : (hinted ? 2 : Tokens.cardBorderWidth)
@@ -1247,7 +1247,7 @@ BasePanePopup {
             width: parent.width
             height: root._pillH + (root._trayVisible ? tray.height : 0)
             radius: root._pillH / 2
-            color: AppPalette.bg
+            color: root.glassSurface
 
             KTutorialAnchor { key: "autopilot.card" }
         }
@@ -1428,9 +1428,9 @@ BasePanePopup {
                             iconSource: "qrc:/icons/ui/chevron-down.svg"
                             iconRotation: root._open ? 180 : 0
                             iconTintColor: AppPalette.text
-                            fillColor: AppPalette.card
-                            fillHoverColor: AppPalette.cardHover
-                            fillPressedColor: AppPalette.bgDeep
+                            fillColor: root.glassControl
+                            fillHoverColor: root.glassControlHover
+                            fillPressedColor: root.glassControlPressed
                             borderColor: AppPalette.border
                             borderHoverColor: AppPalette.borderHover
                             onClicked: root._toggleExpanded()
@@ -1672,9 +1672,9 @@ BasePanePopup {
                     toolTipOnHold: true
                     iconSource: "qrc:/icons/ui/map_route.svg"
                     iconTintColor: AppPalette.text
-                    fillColor: AppPalette.card
-                    fillHoverColor: AppPalette.cardHover
-                    fillPressedColor: AppPalette.bgDeep
+                    fillColor: root.glassControl
+                    fillHoverColor: root.glassControlHover
+                    fillPressedColor: root.glassControlPressed
                     borderColor: AppPalette.border
                     borderHoverColor: AppPalette.borderHover
                     toolTipText: qsTr("Mission editor")
@@ -1692,9 +1692,9 @@ BasePanePopup {
                     flashToken: root._revealFlash
                     iconSource: "qrc:/icons/ui/x.svg"
                     iconTintColor: AppPalette.text
-                    fillColor: AppPalette.card
-                    fillHoverColor: AppPalette.cardHover
-                    fillPressedColor: AppPalette.bgDeep
+                    fillColor: root.glassControl
+                    fillHoverColor: root.glassControlHover
+                    fillPressedColor: root.glassControlPressed
                     borderColor: AppPalette.border
                     borderHoverColor: AppPalette.borderHover
                     onClicked: root.store.autopilotPopupOpen = false

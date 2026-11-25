@@ -19,14 +19,24 @@ Rectangle {
         return ""
     }
 
+    property Item glassSource: null
     property real maxWidth: hintText.implicitWidth + Tokens.spaceXl * 2
     width: Math.min(maxWidth, hintText.implicitWidth + Tokens.spaceXl * 2)
     height: hintText.implicitHeight + Tokens.spaceMd * 2
     radius: Tokens.radiusLg
-    color: AppPalette.card
-    border.color: AppPalette.border
-    border.width: 1
+    color: "transparent"
     visible: text.length > 0
+
+    KGlassPanel {
+        anchors.fill: parent
+        source: root.glassSource
+        originSpace: root.parent
+        origin: Qt.point(root.x, root.y)
+        radius: root.radius
+        fillColor: AppPalette.card
+        borderColor: AppPalette.border
+        borderWidth: 1
+    }
 
     Text {
         id: hintText

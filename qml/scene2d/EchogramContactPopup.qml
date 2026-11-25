@@ -24,6 +24,7 @@ Rectangle {
     property double lon: 0.0
     property double depth: 0.0
     property bool isActive: false
+    property Item glassSource: null
 
     readonly property int btnSize: Tokens.controlHMd
 
@@ -32,10 +33,20 @@ Rectangle {
     width: layout.implicitWidth + 2 * Tokens.spaceMd
     height: layout.implicitHeight + 2 * Tokens.spaceMd
     radius: Tokens.radiusLg
-    color: AppPalette.card
+    color: "transparent"
     border.width: 0
 
     function formatNumber(value, decimals) { return value.toFixed(decimals) }
+
+    KGlassPanel {
+        id: glassBg
+        anchors.fill: parent
+        source: root.glassSource
+        originSpace: root.parent
+        origin: Qt.point(root.x, root.y)
+        radius: root.radius
+        fillColor: AppPalette.card
+    }
 
     onVisibleChanged: if (visible) inputField.forceActiveFocus()
     onXChanged: if (visible) inputField.forceActiveFocus()
@@ -57,8 +68,8 @@ Rectangle {
         Layout.preferredWidth: root.btnSize
         Layout.preferredHeight: root.btnSize
         iconTintColor: AppPalette.text
-        fillColor: AppPalette.card
-        fillHoverColor: AppPalette.cardHover
+        fillColor: glassBg.tint(AppPalette.card, AppPalette.glassControlAlpha)
+        fillHoverColor: glassBg.tint(AppPalette.cardHover, AppPalette.glassAlpha)
         borderColor: AppPalette.border
     }
 
@@ -67,7 +78,7 @@ Rectangle {
         Layout.fillWidth: true
         Layout.preferredHeight: root.btnSize
         radius: Tokens.radiusMd
-        color: AppPalette.bg
+        color: glassBg.tint(AppPalette.bg, AppPalette.glassControlAlpha)
         border.width: 0
         Text {
             id: readout
@@ -95,8 +106,8 @@ Rectangle {
                 toolTipText: qsTr("Mark as active")
                 enabled: root.indx >= 0
                 opacity: enabled ? 1.0 : 0.4
-                fillColor: root.isActive ? AppPalette.accentBgStrong : AppPalette.card
-                fillHoverColor: root.isActive ? AppPalette.accentBgStrong : AppPalette.cardHover
+                fillColor: root.isActive ? AppPalette.accentBgStrong : glassBg.tint(AppPalette.card, AppPalette.glassControlAlpha)
+                fillHoverColor: root.isActive ? AppPalette.accentBgStrong : glassBg.tint(AppPalette.cardHover, AppPalette.glassAlpha)
                 borderColor: root.isActive ? AppPalette.accentBorder : AppPalette.border
                 onClicked: { root.visible = false; root.setActiveButtonClicked() }
             }
@@ -106,7 +117,7 @@ Rectangle {
                 Layout.preferredWidth: Math.round(120 * AppPalette.scale)
                 Layout.preferredHeight: root.btnSize
                 radius: Tokens.radiusMd
-                color: AppPalette.bg
+                color: glassBg.tint(AppPalette.bg, AppPalette.glassControlAlpha)
                 border.width: inputField.activeFocus ? 1 : 0
                 border.color: AppPalette.accentBorder
 

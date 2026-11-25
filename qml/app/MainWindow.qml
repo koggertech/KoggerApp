@@ -988,8 +988,21 @@ ApplicationWindow {
             }
         }
 
+        KGlassBackdrop {
+            id: hotActionsGlass
+            x: hotActions.x
+            y: hotActions.y
+            width: hotActions.width
+            height: hotActions.height
+            z: hotActions.z - 0.5
+            source: workspaceView
+            maskItem: hotActions
+            visible: hotActions.visible
+        }
+
         HotActionsPanel {
             id: hotActions
+            glass: hotActionsGlass
 
             visible: (!workspaceStore.settingsPanelOpen
                       && !workspaceStore.modeSettingsPanelOpen
@@ -1322,6 +1335,7 @@ ApplicationWindow {
             z: ZOrder.bottomTrackEditPopup   // поверх глобал/фуллскрин попапов
             store: workspaceStore
             popupId: "btEdit"
+            glassSource: workspaceView
             siblingBoundsList: [root.profilesPopupEffectiveBounds, root.autopilotPopupEffectiveBounds]
             siblingIdList: ["profiles", "autopilot"]
         }
@@ -1332,6 +1346,7 @@ ApplicationWindow {
             z: ZOrder.profilesPopup
             store: workspaceStore
             popupId: "profiles"
+            glassSource: workspaceView
             siblingBoundsList: [root.btEditPopupEffectiveBounds, root.autopilotPopupEffectiveBounds]
             siblingIdList: ["btEdit", "autopilot"]
         }
@@ -1342,6 +1357,7 @@ ApplicationWindow {
             z: ZOrder.autopilotPopup
             store: workspaceStore
             popupId: "autopilot"
+            glassSource: workspaceView
             siblingBoundsList: [root.btEditPopupEffectiveBounds, root.profilesPopupEffectiveBounds]
             siblingIdList: ["btEdit", "profiles"]
         }
@@ -1702,6 +1718,7 @@ ApplicationWindow {
         }
 
         PlacementHint {
+            glassSource: workspaceView
             anchors.horizontalCenter: workspaceView.horizontalCenter
             anchors.bottom: workspaceView.bottom
             anchors.bottomMargin: Tokens.spaceLg

@@ -292,8 +292,7 @@ WaterFall {
 
         if (mouseButton === Qt.LeftButton && typeof core !== "undefined" && core && core.contactPlacementArmed) {
             plot.simplePlotMousePosition(x, y)
-            contactDialog.x = x
-            contactDialog.y = y
+            plot._placeContactDialog(x, y)
             contactDialog.indx = -1
             contactDialog.isActive = false
             contactDialog.visible = true
@@ -493,7 +492,18 @@ WaterFall {
         }
     }
 
-    onVisibleChanged: if (!visible) pointerHeld = false
+    onVisibleChanged: {
+        if (!visible) {
+            pointerHeld = false
+            contactDialog.visible = false
+        }
+    }
+
+    function _placeContactDialog(px, py) {
+        var p = plot.mapToItem(contactDialog.parent, px, py)
+        contactDialog.x = p.x
+        contactDialog.y = p.y
+    }
 
     Component.onCompleted: {
         setPlotEnabled(enabled)
@@ -1840,10 +1850,12 @@ WaterFall {
 
     EchogramContactPopup {
         id: contactDialog
+        parent: plot.parent ? plot.parent : plot
+        glassSource: parent !== plot ? plot : null
 
         onVisibleChanged: {
             if (!visible) {
-                parent.focus = true
+                plot.focus = true
 
                 if (accepted) {
                     plot.setContact(contactDialog.indx, contactDialog.inputFieldText)
@@ -1893,8 +1905,7 @@ WaterFall {
             contactDialog.inputFieldText = ""
         }
 
-        contactDialog.x = plot.contactPositionX
-        contactDialog.y = plot.contactPositionY
+        plot._placeContactDialog(plot.contactPositionX, plot.contactPositionY)
         contactDialog.indx = plot.contactIndx
         contactDialog.lat = plot.contactLat
         contactDialog.lon = plot.contactLon

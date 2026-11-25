@@ -24,11 +24,12 @@ Item {
     readonly property int quickActionSpacing: Math.round(8 * root._s)
     property int triggerButtonWidth: 2 * controlHeight + quickActionSpacing
     readonly property int toggleButtonSize: root.controlHeight
-    readonly property color hotkeysLayerColor: AppPalette.bg
+    property KGlassBackdrop glass: null
+    readonly property color hotkeysLayerColor: glass ? glass.tint(AppPalette.bg, AppPalette.glassAlpha) : AppPalette.bg
     readonly property color hotkeysPopupLayerColor: AppPalette.bg
-    readonly property color buttonFillColor: AppPalette.card
-    readonly property color buttonHoverColor: AppPalette.cardHover
-    readonly property color buttonPressedColor: AppPalette.bgDeep
+    readonly property color buttonFillColor: glass ? glass.tint(AppPalette.card, AppPalette.glassControlAlpha) : AppPalette.card
+    readonly property color buttonHoverColor: glass ? glass.tint(AppPalette.cardHover, AppPalette.glassAlpha) : AppPalette.cardHover
+    readonly property color buttonPressedColor: glass ? glass.tint(AppPalette.bgDeep, AppPalette.glassAlpha) : AppPalette.bgDeep
     readonly property color buttonBorderColor: AppPalette.border
     readonly property color buttonHoverBorderColor: AppPalette.borderHover
     readonly property int panelHeight: controlHeight + panelPaddingX * 2
@@ -1158,11 +1159,14 @@ Item {
             }
             onOpened: refresh()
 
-            background: Rectangle {
-                color: AppPalette.bg
+            background: KGlassPanel {
+                id: recPillGlass
+                source: root.glass ? root.glass.source : null
+                originSpace: parent ? parent.parent : null
+                origin: parent ? Qt.point(parent.x + x, parent.y + y) : Qt.point(0, 0)
                 radius: width / 2
-                border.width: 1
-                border.color: logBadge._active ? "#EF4444" : AppPalette.border
+                borderWidth: 1
+                borderColor: logBadge._active ? "#EF4444" : AppPalette.border
             }
 
             contentItem: Column {
@@ -1173,7 +1177,7 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: logBadge.width; height: width
                     radius: width / 2
-                    color: root.buttonFillColor
+                    color: recPillGlass.tint(AppPalette.card, AppPalette.glassControlAlpha)
                     border.width: 0
 
                     Column {
@@ -1335,7 +1339,8 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: logBadge.width; height: width
                     radius: width / 2
-                    color: gearMa.containsMouse ? AppPalette.cardHover : AppPalette.card
+                    color: gearMa.containsMouse ? recPillGlass.tint(AppPalette.cardHover, AppPalette.glassAlpha)
+                                                : recPillGlass.tint(AppPalette.card, AppPalette.glassControlAlpha)
                     border.width: 0
                     Image {
                         anchors.centerIn: parent
@@ -1737,11 +1742,14 @@ Item {
                     closePolicy: Popup.CloseOnEscape
                     onAboutToShow: root._showInStrip(devBadge)
 
-                    background: Rectangle {
-                        color: AppPalette.bg
+                    background: KGlassPanel {
+                        id: devPillGlass
+                        source: root.glass ? root.glass.source : null
+                        originSpace: parent ? parent.parent : null
+                        origin: parent ? Qt.point(parent.x + x, parent.y + y) : Qt.point(0, 0)
                         radius: width / 2
-                        border.width: 1
-                        border.color: devBadge._border
+                        borderWidth: 1
+                        borderColor: devBadge._border
                     }
 
                     contentItem: Column {
@@ -1808,9 +1816,9 @@ Item {
                             glyph: "700"
                             glyphPixelSize: Math.round(11 * root._s)
                             readonly property bool _active: devBadge._dev && devBadge._dev.transFreq === 700
-                            fillColor:      _active ? AppPalette.accentBgStrong : AppPalette.card
-                            fillHoverColor: _active ? AppPalette.accentBgHover : AppPalette.cardHover
-                            fillPressedColor: _active ? AppPalette.accentBgPressed : AppPalette.bgDeep
+                            fillColor:      _active ? AppPalette.accentBgStrong : devPillGlass.tint(AppPalette.card, AppPalette.glassControlAlpha)
+                            fillHoverColor: _active ? AppPalette.accentBgHover : devPillGlass.tint(AppPalette.cardHover, AppPalette.glassAlpha)
+                            fillPressedColor: _active ? AppPalette.accentBgPressed : devPillGlass.tint(AppPalette.bgDeep, AppPalette.glassAlpha)
                             borderColor:    _active ? AppPalette.accentBorder : AppPalette.border
                             toolTipText: qsTr("Set 700 kHz")
                             onClicked: {
@@ -1825,9 +1833,9 @@ Item {
                             glyph: "450"
                             glyphPixelSize: Math.round(11 * root._s)
                             readonly property bool _active: devBadge._dev && devBadge._dev.transFreq === 450
-                            fillColor:      _active ? AppPalette.accentBgStrong : AppPalette.card
-                            fillHoverColor: _active ? AppPalette.accentBgHover : AppPalette.cardHover
-                            fillPressedColor: _active ? AppPalette.accentBgPressed : AppPalette.bgDeep
+                            fillColor:      _active ? AppPalette.accentBgStrong : devPillGlass.tint(AppPalette.card, AppPalette.glassControlAlpha)
+                            fillHoverColor: _active ? AppPalette.accentBgHover : devPillGlass.tint(AppPalette.cardHover, AppPalette.glassAlpha)
+                            fillPressedColor: _active ? AppPalette.accentBgPressed : devPillGlass.tint(AppPalette.bgDeep, AppPalette.glassAlpha)
                             borderColor:    _active ? AppPalette.accentBorder : AppPalette.border
                             toolTipText: qsTr("Set 450 kHz")
                             onClicked: {
@@ -1840,8 +1848,8 @@ Item {
                             width: devBadge.width; height: width
                             iconSource: "qrc:/icons/ui/settings.svg"
                             iconTintColor: AppPalette.text
-                            fillColor: AppPalette.card
-                            fillHoverColor: AppPalette.cardHover
+                            fillColor: devPillGlass.tint(AppPalette.card, AppPalette.glassControlAlpha)
+                            fillHoverColor: devPillGlass.tint(AppPalette.cardHover, AppPalette.glassAlpha)
                             borderColor: AppPalette.border
                             toolTipText: qsTr("Device settings")
                             onClicked: {

@@ -220,6 +220,7 @@ Item {
     EchogramContactPopup {
         id: contact3dPopup
         z: 3
+        glassSource: hostSurface
         visible: false
 
         onVisibleChanged: {

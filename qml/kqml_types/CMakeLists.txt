@@ -24,6 +24,8 @@ qt_add_qml_module(kogger_kqml_types
         KDragBar.qml
         KFocusRing.qml
         KGamepadIcon.qml
+        KGlassBackdrop.qml
+        KGlassPanel.qml
         KIsland.qml
         KIslandRow.qml
         KIslandSection.qml

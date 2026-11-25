@@ -35,6 +35,11 @@ Item {
     property bool ghostFollowsContent: false     // drag/snap ghost mirrors the content rect (inset) instead of full panel
     property bool ghostGripAndContent: false     // draw a SECOND ghost matching the header drag grip, alongside the content one
     property real ghostRadius: panelRadius        // corner radius for drag/snap/resize ghosts
+    property Item glassSource: null
+    readonly property color glassSurface: glassFill(AppPalette.bg, AppPalette.glassAlpha)
+    readonly property color glassControl: glassFill(AppPalette.card, AppPalette.glassControlAlpha)
+    readonly property color glassControlHover: glassFill(AppPalette.cardHover, AppPalette.glassAlpha)
+    readonly property color glassControlPressed: glassFill(AppPalette.bgDeep, AppPalette.glassAlpha)
 
     readonly property real headerHeight: Math.round(32 * AppPalette.scale)
     property real contentPadding: Tokens.spaceXs
@@ -485,6 +490,23 @@ Item {
         z: 0
     }
 
+    function glassFill(c, a) {
+        return panelGlass.tint(c, a)
+    }
+
+    KGlassBackdrop {
+        id: panelGlass
+        x: panel.x
+        y: panel.y
+        width: panel.width
+        height: panel.height
+        z: 0.5
+        source: root.glassSource
+        maskItem: panel
+        radius: panel.radius
+        visible: root.glassSource !== null && panel.visible && !root.fullscreenMode
+    }
+
     Rectangle {
         id: panel
 
@@ -607,7 +629,7 @@ Item {
                     id: grip
                     anchors.centerIn: parent
                     orientation: "horizontal"
-                    barColor: root.overlayChrome ? "transparent" : AppPalette.card
+                    barColor: root.overlayChrome ? "transparent" : root.glassControl
                     barLength: root.headerDragBarLength > 0
                                ? root.headerDragBarLength
                                : Math.round(AppPalette.dragBarLengthPx * AppPalette.scale)

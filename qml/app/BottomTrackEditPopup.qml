@@ -99,7 +99,7 @@ BasePanePopup {
         id: pill
         anchors.fill: parent
         radius: width / 2
-        color: AppPalette.bg
+        color: root.glassSurface
         border.width: 0
 
         Column {
@@ -112,9 +112,9 @@ BasePanePopup {
                 height: root._controlH
                 iconSource: "qrc:/icons/ui/x.svg"
                 iconTintColor: AppPalette.text
-                fillColor:        AppPalette.card
-                fillHoverColor:   AppPalette.cardHover
-                fillPressedColor: AppPalette.bgDeep
+                fillColor:        root.glassControl
+                fillHoverColor:   root.glassControlHover
+                fillPressedColor: root.glassControlPressed
                 borderColor:      AppPalette.border
                 borderHoverColor: AppPalette.borderHover
                 onClicked: root.store.bottomTrackEditorOpen = false
@@ -130,9 +130,9 @@ BasePanePopup {
                     iconSource: modelData.icon
                     iconTintColor: AppPalette.text
                     toolTipText: modelData.tip
-                    fillColor:        _sel ? AppPalette.accentBgStrong : AppPalette.card
-                    fillHoverColor:   _sel ? AppPalette.accentBorder : AppPalette.cardHover
-                    fillPressedColor: AppPalette.bgDeep
+                    fillColor:        _sel ? AppPalette.accentBgStrong : root.glassControl
+                    fillHoverColor:   _sel ? AppPalette.accentBorder : root.glassControlHover
+                    fillPressedColor: root.glassControlPressed
                     borderColor:      _sel ? AppPalette.accentBorder : AppPalette.border
                     borderHoverColor: _sel ? AppPalette.accentBorder : AppPalette.borderHover
                     onClicked: {
