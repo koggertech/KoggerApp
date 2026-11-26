@@ -110,25 +110,81 @@ Item {
         }
     }
 
-    component ScrollArrow: Item {
-        property bool active: false
-        opacity: active ? 0.6 : 0.0
-        visible: opacity > 0.01
-        Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    function _targetX() {
+        return stripScrollAnim.running ? stripScrollAnim.to : strip.contentX
+    }
 
-        Image {
-            id: arrowImg
-            anchors.fill: parent
-            source: "qrc:/icons/ui/chevron-right.svg"
-            fillMode: Image.PreserveAspectFit
-            sourceSize.width: width
-            sourceSize.height: height
-            visible: false
+    function _scrollTo(x) {
+        stripScrollAnim.to = Math.max(0, Math.min(x, strip.contentWidth - strip.width))
+        stripScrollAnim.restart()
+    }
+
+    function _wheel(event) {
+        var px = event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.pixelDelta.x
+        var touchpad = event.phase !== Qt.NoScrollPhase
+                    || (event.device && event.device.type === PointerDevice.TouchPad)
+        if (touchpad && px !== 0) {
+            stripScrollAnim.stop()
+            strip.contentX = Math.max(0, Math.min(strip.contentX - px, strip.contentWidth - strip.width))
+            return
         }
-        ColorOverlay {
-            anchors.fill: arrowImg
-            source: arrowImg
-            color: AppPalette.text
+        var d = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x
+        _scrollTo(_targetX() - d)
+    }
+
+    function _page(direction) {
+        var step = buttonSize + gap
+        var pages = Math.max(1, visibleCount - 1)
+        _scrollTo(Math.round((_targetX() + direction * pages * step) / step) * step)
+    }
+
+    component ScrollEdge: Item {
+        id: edge
+
+        property bool active: false
+        property bool forward: true
+
+        width: root._fadeW
+        height: strip.height
+        visible: active || arrow.opacity > 0.01
+
+        Item {
+            id: arrow
+            width: Math.round(root.buttonSize * 0.4)
+            height: width
+            x: Math.round((edge.width - width) / 2)
+            y: Math.round((edge.height - height) / 2)
+            rotation: edge.forward ? 0 : 180
+            opacity: edge.active ? (edgeMouse.containsMouse ? 0.95 : 0.6) : 0.0
+            Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+
+            Image {
+                id: arrowImg
+                anchors.fill: parent
+                source: "qrc:/icons/ui/chevron-right.svg"
+                fillMode: Image.PreserveAspectFit
+                sourceSize.width: width
+                sourceSize.height: height
+                visible: false
+            }
+            ColorOverlay {
+                anchors.fill: arrowImg
+                source: arrowImg
+                color: AppPalette.text
+            }
+        }
+
+        MouseArea {
+            id: edgeMouse
+            anchors.fill: parent
+            enabled: edge.active
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root._page(edge.forward ? 1 : -1)
+            onWheel: function(wheel) {
+                root._wheel(wheel)
+                wheel.accepted = true
+            }
         }
     }
 
@@ -198,21 +254,7 @@ Item {
 
             WheelHandler {
                 acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                onWheel: function(event) {
-                    var maxX = Math.max(0, strip.contentWidth - strip.width)
-                    var px = event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.pixelDelta.x
-                    var touchpad = event.phase !== Qt.NoScrollPhase
-                                || (event.device && event.device.type === PointerDevice.TouchPad)
-                    if (touchpad && px !== 0) {
-                        stripScrollAnim.stop()
-                        strip.contentX = Math.max(0, Math.min(maxX, strip.contentX - px))
-                        return
-                    }
-                    var d = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x
-                    var from = stripScrollAnim.running ? stripScrollAnim.to : strip.contentX
-                    stripScrollAnim.to = Math.max(0, Math.min(maxX, from - d))
-                    stripScrollAnim.restart()
-                }
+                onWheel: function(event) { root._wheel(event) }
             }
 
             NumberAnimation {
@@ -274,24 +316,19 @@ Item {
             }
         }
 
-        ScrollArrow {
-            id: leftScrollArrow
-            width: Math.round(root.buttonSize * 0.4)
-            height: width
-            x: strip.x + Math.round((root._fadeW - width) / 2)
-            y: strip.y + Math.round((strip.height - height) / 2)
+        ScrollEdge {
+            x: strip.x
+            y: strip.y
             z: 2
-            rotation: 180
+            forward: false
             active: root.menuOpen && strip.contentX > 0.5
         }
 
-        ScrollArrow {
-            id: rightScrollArrow
-            width: Math.round(root.buttonSize * 0.4)
-            height: width
-            x: strip.x + strip.width - root._fadeW + Math.round((root._fadeW - width) / 2)
-            y: strip.y + Math.round((strip.height - height) / 2)
+        ScrollEdge {
+            x: strip.x + strip.width - width
+            y: strip.y
             z: 2
+            forward: true
             active: root.menuOpen && strip.contentX < (strip.contentWidth - strip.width - 0.5)
         }
     }
