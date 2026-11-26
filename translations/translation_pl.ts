@@ -747,119 +747,119 @@
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2294"/>
         <source>Acoustic nodes and their tracks displayed in the 3D scene.</source>
-        <translation type="unfinished"></translation>
+        <translation>Węzły akustyczne i ich ślady w scenie 3D.</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2308"/>
         <source>Beacon tracks</source>
-        <translation type="unfinished"></translation>
+        <translation>Ślady bakenów</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2309"/>
         <source>Draw each beacon&apos;s track as a continuous line, or as a dot at every fix</source>
-        <translation type="unfinished"></translation>
+        <translation>Rysuj ślad każdego bakenu ciągłą linią lub kropką przy każdym pomiarze</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2317"/>
         <location filename="../qml/app/AppSettingsPage.qml" line="2335"/>
         <source>Line</source>
-        <translation type="unfinished">Linia</translation>
+        <translation>Linia</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2318"/>
         <location filename="../qml/app/AppSettingsPage.qml" line="2336"/>
         <source>Dots</source>
-        <translation type="unfinished"></translation>
+        <translation>Kropki</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2326"/>
         <source>USBL track</source>
-        <translation type="unfinished"></translation>
+        <translation>Ślad USBL</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2327"/>
         <source>Draw the acoustic head&apos;s own track as a continuous line, or as a dot at every fix</source>
-        <translation type="unfinished"></translation>
+        <translation>Rysuj własny ślad głowicy akustycznej ciągłą linią lub kropką przy każdym pomiarze</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2344"/>
         <source>Signal quality details</source>
-        <translation type="unfinished"></translation>
+        <translation>Szczegóły jakości sygnału</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2345"/>
         <source>Show the sync peak readings under each node&apos;s RSRQ in the USBL panel</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj w panelu USBL odczyty piku synchronizacji pod RSRQ każdego węzła</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2358"/>
         <source>Received message bytes</source>
-        <translation type="unfinished"></translation>
+        <translation>Bajty odebranej wiadomości</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2359"/>
         <source>Show the payload last received from each node in the USBL panel</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj w panelu USBL ostatnie dane odebrane od każdego węzła</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2372"/>
         <source>Antenna diagnostics</source>
-        <translation type="unfinished"></translation>
+        <translation>Diagnostyka anteny</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2373"/>
         <source>Show the array fit and the channel levels under each node in the USBL panel; click the line for the per-channel view</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj w panelu USBL pod każdym węzłem dopasowanie szyku antenowego i poziomy kanałów; kliknięcie wiersza otwiera widok poszczególnych kanałów</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2386"/>
         <source>Fit misfit above</source>
-        <translation type="unfinished"></translation>
+        <translation>Niedopasowanie powyżej</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2387"/>
         <source>Antenna diagnostics: a misfit above this marks the antenna for a check</source>
-        <translation type="unfinished"></translation>
+        <translation>Diagnostyka anteny: niedopasowanie powyżej tej wartości oznacza antenę do sprawdzenia</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2405"/>
         <source>Amplitude part above</source>
-        <translation type="unfinished"></translation>
+        <translation>Część amplitudowa powyżej</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2406"/>
         <source>Antenna diagnostics: the share of the misfit from unequal channel amplitudes</source>
-        <translation type="unfinished"></translation>
+        <translation>Diagnostyka anteny: udział niedopasowania wynikający z nierównych amplitud kanałów</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2424"/>
         <source>Phase part above</source>
-        <translation type="unfinished"></translation>
+        <translation>Część fazowa powyżej</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2425"/>
         <source>Antenna diagnostics: the share of the misfit from channel phases off a plane wave</source>
-        <translation type="unfinished"></translation>
+        <translation>Diagnostyka anteny: udział niedopasowania wynikający z odchylenia faz kanałów od fali płaskiej</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2443"/>
         <source>Alt. margin below, dB</source>
-        <translation type="unfinished"></translation>
+        <translation>Margines alt. poniżej, dB</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2444"/>
         <source>Antenna diagnostics: how much worse the best other direction must fit than the reported one</source>
-        <translation type="unfinished"></translation>
+        <translation>Diagnostyka anteny: o ile gorzej musi pasować najlepszy inny kierunek niż podany</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2462"/>
         <source>Channel level below, dB</source>
-        <translation type="unfinished"></translation>
+        <translation>Poziom kanału poniżej, dB</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2463"/>
         <source>Antenna diagnostics: a channel this far below the strongest is marked low, and 10 dB further down, dead</source>
-        <translation type="unfinished"></translation>
+        <translation>Diagnostyka anteny: kanał o tyle słabszy od najsilniejszego jest oznaczany jako słaby, a o kolejne 10 dB słabszy — jako martwy</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2481"/>
@@ -869,37 +869,37 @@
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2482"/>
         <source>Restore the default antenna diagnostics thresholds</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć domyślne progi diagnostyki anteny</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2501"/>
         <source>No acoustic nodes yet. Open a file containing beacon fixes, or add an address below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak węzłów akustycznych. Otwórz plik z pomiarami bakenów lub dodaj adres poniżej.</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2513"/>
         <source>Address %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Adres %1</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2515"/>
         <source>detected in the opened file</source>
-        <translation type="unfinished"></translation>
+        <translation>wykryty w otwartym pliku</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2516"/>
         <source>from the interrogation plan</source>
-        <translation type="unfinished"></translation>
+        <translation>z planu odpytywania</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2540"/>
         <source>Add an address the plan does not name yet</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj adres, którego jeszcze nie ma w planie</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2562"/>
         <source>Add a node at address %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj węzeł o adresie %1</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="2688"/>
@@ -1562,6 +1562,21 @@
         <location filename="../qml/app/AppSettingsPage.qml" line="734"/>
         <source>Buttons, panels, size and opacity of the autopilot card</source>
         <translation>Przyciski, panele, rozmiar i nieprzezroczystość karty autopilota</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2236"/>
+        <source>In the USBL panel</source>
+        <translation>W panelu USBL</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2292"/>
+        <source>Antenna check thresholds</source>
+        <translation>Progi sprawdzania anteny</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="2408"/>
+        <source>Acoustic nodes</source>
+        <translation>Węzły akustyczne</translation>
     </message>
 </context>
 <context>

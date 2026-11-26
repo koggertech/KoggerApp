@@ -2175,231 +2175,276 @@ Column {
         }
         collapsedByDefault: true
 
+        readonly property int tabW: Math.round(150 * AppPalette.scale)
+        readonly property int spinW: Math.round(120 * AppPalette.scale)
+        readonly property bool antennaDiag: root.store ? root.store.usblAntennaDiag : true
+
         Column {
             width: parent.width
-            spacing: Tokens.spaceSm
+            spacing: Tokens.spaceMd
 
-            KIslandRow {
-                label: qsTr("Beacon tracks")
-                toolTipText: qsTr("Draw each beacon's track as a continuous line, or as a dot at every fix")
-                slotWidth: Math.round(190 * AppPalette.scale)
-
-                KTabBar {
-                    buttonHeight: Tokens.controlHSm
-                    fontPixelSize: Tokens.fontSm
-                    trackColor: AppPalette.bgDeep
-                    options: [
-                        { label: qsTr("Line"), value: false },
-                        { label: qsTr("Dots"), value: true }
-                    ]
-                    currentValue: !!(root.store && root.store.usblBeaconTrackDots)
-                    onValueSelected: function(v) { if (root.store) root.store.usblBeaconTrackDots = v }
-                }
+            Text {
+                width: parent.width
+                text: qsTr("In the 3D scene") + ":"
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
+                topPadding: Tokens.spaceXs
             }
 
-            KIslandRow {
-                label: qsTr("USBL track")
-                toolTipText: qsTr("Draw the acoustic head's own track as a continuous line, or as a dot at every fix")
-                slotWidth: Math.round(190 * AppPalette.scale)
+            KIsland {
+                KIslandRow {
+                    label: qsTr("Beacon tracks")
+                    labelColor: root._bright
+                    toolTipText: qsTr("Draw each beacon's track as a continuous line, or as a dot at every fix")
 
-                KTabBar {
-                    buttonHeight: Tokens.controlHSm
-                    fontPixelSize: Tokens.fontSm
-                    trackColor: AppPalette.bgDeep
-                    options: [
-                        { label: qsTr("Line"), value: false },
-                        { label: qsTr("Dots"), value: true }
-                    ]
-                    currentValue: !!(root.store && root.store.usblHeadTrackDots)
-                    onValueSelected: function(v) { if (root.store) root.store.usblHeadTrackDots = v }
+                    KTabBar {
+                        width: usblLayerGroup.tabW
+                        buttonHeight: Tokens.controlHMd
+                        fontPixelSize: Tokens.fontBase
+                        trackColor: AppPalette.bgDeep
+                        options: [
+                            { label: qsTr("Line"), value: false },
+                            { label: qsTr("Dots"), value: true }
+                        ]
+                        currentValue: !!(root.store && root.store.usblBeaconTrackDots)
+                        onValueSelected: function(v) { if (root.store) root.store.usblBeaconTrackDots = v }
+                    }
                 }
-            }
 
-            KIslandRow {
-                label: qsTr("Signal quality details")
-                toolTipText: qsTr("Show the sync peak readings under each node's RSRQ in the USBL panel")
-                interactive: true
-                onClicked: usblSignalDetailsSwitch.click()
+                KIslandRow {
+                    label: qsTr("USBL track")
+                    labelColor: root._bright
+                    toolTipText: qsTr("Draw the acoustic head's own track as a continuous line, or as a dot at every fix")
 
-                KSwitch {
-                    id: usblSignalDetailsSwitch
-                    flat: true
-                    checked: root.store ? root.store.usblSignalDetails : true
-                    onToggled: if (root.store) root.store.usblSignalDetails = checked
-                }
-            }
-
-            KIslandRow {
-                label: qsTr("Received message bytes")
-                toolTipText: qsTr("Show the payload last received from each node in the USBL panel")
-                interactive: true
-                onClicked: usblMessageBytesSwitch.click()
-
-                KSwitch {
-                    id: usblMessageBytesSwitch
-                    flat: true
-                    checked: root.store ? root.store.usblMessageBytes : true
-                    onToggled: if (root.store) root.store.usblMessageBytes = checked
-                }
-            }
-
-            KIslandRow {
-                label: qsTr("Antenna diagnostics")
-                toolTipText: qsTr("Show the array fit and the channel levels under each node in the USBL panel; click the line for the per-channel view")
-                interactive: true
-                onClicked: usblAntennaDiagSwitch.click()
-
-                KSwitch {
-                    id: usblAntennaDiagSwitch
-                    flat: true
-                    checked: root.store ? root.store.usblAntennaDiag : true
-                    onToggled: if (root.store) root.store.usblAntennaDiag = checked
-                }
-            }
-
-            KIslandRow {
-                label: qsTr("Fit misfit above")
-                toolTipText: qsTr("Antenna diagnostics: a misfit above this marks the antenna for a check")
-                slotWidth: Math.round(130 * AppPalette.scale)
-
-                KSpinBox {
-                    id: usblDiagMisfitSpin
-                    width: Math.round(130 * AppPalette.scale)
-                    height: Tokens.controlHMd
-                    from: 1; to: 500; stepSize: 1; divisor: 1000; decimals: 3
-                    onValueModified: function(v) { if (root.store) root.store.usblDiagMisfitMax = v / 1000 }
-                    Binding {
-                        target: usblDiagMisfitSpin
-                        property: "value"
-                        value: Math.round((root.store ? root.store.usblDiagMisfitMax : DataFieldCatalog.usblDiagDefaults().misfit) * 1000)
+                    KTabBar {
+                        width: usblLayerGroup.tabW
+                        buttonHeight: Tokens.controlHMd
+                        fontPixelSize: Tokens.fontBase
+                        trackColor: AppPalette.bgDeep
+                        options: [
+                            { label: qsTr("Line"), value: false },
+                            { label: qsTr("Dots"), value: true }
+                        ]
+                        currentValue: !!(root.store && root.store.usblHeadTrackDots)
+                        onValueSelected: function(v) { if (root.store) root.store.usblHeadTrackDots = v }
                     }
                 }
             }
 
-            KIslandRow {
-                label: qsTr("Amplitude part above")
-                toolTipText: qsTr("Antenna diagnostics: the share of the misfit from unequal channel amplitudes")
-                slotWidth: Math.round(130 * AppPalette.scale)
+            Text {
+                width: parent.width
+                text: qsTr("In the USBL panel") + ":"
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
+                topPadding: Tokens.spaceXs
+            }
 
-                KSpinBox {
-                    id: usblDiagAmpSpin
-                    width: Math.round(130 * AppPalette.scale)
-                    height: Tokens.controlHMd
-                    from: 1; to: 500; stepSize: 1; divisor: 1000; decimals: 3
-                    onValueModified: function(v) { if (root.store) root.store.usblDiagAmpMax = v / 1000 }
-                    Binding {
-                        target: usblDiagAmpSpin
-                        property: "value"
-                        value: Math.round((root.store ? root.store.usblDiagAmpMax : DataFieldCatalog.usblDiagDefaults().amp) * 1000)
+            KIsland {
+                KIslandRow {
+                    label: qsTr("Signal quality details")
+                    labelColor: root._bright
+                    toolTipText: qsTr("Show the sync peak readings under each node's RSRQ in the USBL panel")
+                    interactive: true
+                    onClicked: usblSignalDetailsSwitch.click()
+
+                    KSwitch {
+                        id: usblSignalDetailsSwitch
+                        flat: true
+                        checked: root.store ? root.store.usblSignalDetails : true
+                        onToggled: if (root.store) root.store.usblSignalDetails = checked
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("Received message bytes")
+                    labelColor: root._bright
+                    toolTipText: qsTr("Show the payload last received from each node in the USBL panel")
+                    interactive: true
+                    onClicked: usblMessageBytesSwitch.click()
+
+                    KSwitch {
+                        id: usblMessageBytesSwitch
+                        flat: true
+                        checked: root.store ? root.store.usblMessageBytes : true
+                        onToggled: if (root.store) root.store.usblMessageBytes = checked
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("Antenna diagnostics")
+                    labelColor: root._bright
+                    toolTipText: qsTr("Show the array fit and the channel levels under each node in the USBL panel; click the line for the per-channel view")
+                    interactive: true
+                    onClicked: usblAntennaDiagSwitch.click()
+
+                    KSwitch {
+                        id: usblAntennaDiagSwitch
+                        flat: true
+                        checked: root.store ? root.store.usblAntennaDiag : true
+                        onToggled: if (root.store) root.store.usblAntennaDiag = checked
                     }
                 }
             }
 
-            KIslandRow {
-                label: qsTr("Phase part above")
-                toolTipText: qsTr("Antenna diagnostics: the share of the misfit from channel phases off a plane wave")
-                slotWidth: Math.round(130 * AppPalette.scale)
+            Text {
+                width: parent.width
+                visible: usblLayerGroup.antennaDiag
+                text: qsTr("Antenna check thresholds") + ":"
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
+                topPadding: Tokens.spaceXs
+            }
 
-                KSpinBox {
-                    id: usblDiagPhaseSpin
-                    width: Math.round(130 * AppPalette.scale)
-                    height: Tokens.controlHMd
-                    from: 1; to: 500; stepSize: 1; divisor: 1000; decimals: 3
-                    onValueModified: function(v) { if (root.store) root.store.usblDiagPhaseMax = v / 1000 }
-                    Binding {
-                        target: usblDiagPhaseSpin
-                        property: "value"
-                        value: Math.round((root.store ? root.store.usblDiagPhaseMax : DataFieldCatalog.usblDiagDefaults().phase) * 1000)
+            KIsland {
+                visible: usblLayerGroup.antennaDiag
+
+                KIslandRow {
+                    label: qsTr("Fit misfit above")
+                    labelColor: root._bright
+                    toolTipText: qsTr("Antenna diagnostics: a misfit above this marks the antenna for a check")
+
+                    KSpinBox {
+                        id: usblDiagMisfitSpin
+                        width: usblLayerGroup.spinW
+                        height: Tokens.controlHMd
+                        from: 1; to: 500; stepSize: 1; divisor: 1000; decimals: 3
+                        onValueModified: function(v) { if (root.store) root.store.usblDiagMisfitMax = v / 1000 }
+                        Binding {
+                            target: usblDiagMisfitSpin
+                            property: "value"
+                            value: Math.round((root.store ? root.store.usblDiagMisfitMax : DataFieldCatalog.usblDiagDefaults().misfit) * 1000)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("Amplitude part above")
+                    labelColor: root._bright
+                    toolTipText: qsTr("Antenna diagnostics: the share of the misfit from unequal channel amplitudes")
+
+                    KSpinBox {
+                        id: usblDiagAmpSpin
+                        width: usblLayerGroup.spinW
+                        height: Tokens.controlHMd
+                        from: 1; to: 500; stepSize: 1; divisor: 1000; decimals: 3
+                        onValueModified: function(v) { if (root.store) root.store.usblDiagAmpMax = v / 1000 }
+                        Binding {
+                            target: usblDiagAmpSpin
+                            property: "value"
+                            value: Math.round((root.store ? root.store.usblDiagAmpMax : DataFieldCatalog.usblDiagDefaults().amp) * 1000)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("Phase part above")
+                    labelColor: root._bright
+                    toolTipText: qsTr("Antenna diagnostics: the share of the misfit from channel phases off a plane wave")
+
+                    KSpinBox {
+                        id: usblDiagPhaseSpin
+                        width: usblLayerGroup.spinW
+                        height: Tokens.controlHMd
+                        from: 1; to: 500; stepSize: 1; divisor: 1000; decimals: 3
+                        onValueModified: function(v) { if (root.store) root.store.usblDiagPhaseMax = v / 1000 }
+                        Binding {
+                            target: usblDiagPhaseSpin
+                            property: "value"
+                            value: Math.round((root.store ? root.store.usblDiagPhaseMax : DataFieldCatalog.usblDiagDefaults().phase) * 1000)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("Alt. margin below, dB")
+                    labelColor: root._bright
+                    toolTipText: qsTr("Antenna diagnostics: how much worse the best other direction must fit than the reported one")
+
+                    KSpinBox {
+                        id: usblDiagAltSpin
+                        width: usblLayerGroup.spinW
+                        height: Tokens.controlHMd
+                        from: 0; to: 200; stepSize: 1; divisor: 10; decimals: 1
+                        onValueModified: function(v) { if (root.store) root.store.usblDiagAltMinDb = v / 10 }
+                        Binding {
+                            target: usblDiagAltSpin
+                            property: "value"
+                            value: Math.round((root.store ? root.store.usblDiagAltMinDb : DataFieldCatalog.usblDiagDefaults().altDb) * 10)
+                        }
+                    }
+                }
+
+                KIslandRow {
+                    label: qsTr("Channel level below, dB")
+                    labelColor: root._bright
+                    toolTipText: qsTr("Antenna diagnostics: a channel this far below the strongest is marked low, and 10 dB further down, dead")
+
+                    KSpinBox {
+                        id: usblDiagLevelSpin
+                        width: usblLayerGroup.spinW
+                        height: Tokens.controlHMd
+                        from: -300; to: 0; stepSize: 5; divisor: 10; decimals: 1
+                        onValueModified: function(v) { if (root.store) root.store.usblDiagLevelMinDb = v / 10 }
+                        Binding {
+                            target: usblDiagLevelSpin
+                            property: "value"
+                            value: Math.round((root.store ? root.store.usblDiagLevelMinDb : DataFieldCatalog.usblDiagDefaults().levelDb) * 10)
+                        }
                     }
                 }
             }
 
-            KIslandRow {
-                label: qsTr("Alt. margin below, dB")
-                toolTipText: qsTr("Antenna diagnostics: how much worse the best other direction must fit than the reported one")
-                slotWidth: Math.round(130 * AppPalette.scale)
-
-                KSpinBox {
-                    id: usblDiagAltSpin
-                    width: Math.round(130 * AppPalette.scale)
-                    height: Tokens.controlHMd
-                    from: 0; to: 200; stepSize: 1; divisor: 10; decimals: 1
-                    onValueModified: function(v) { if (root.store) root.store.usblDiagAltMinDb = v / 10 }
-                    Binding {
-                        target: usblDiagAltSpin
-                        property: "value"
-                        value: Math.round((root.store ? root.store.usblDiagAltMinDb : DataFieldCatalog.usblDiagDefaults().altDb) * 10)
-                    }
-                }
-            }
-
-            KIslandRow {
-                label: qsTr("Channel level below, dB")
-                toolTipText: qsTr("Antenna diagnostics: a channel this far below the strongest is marked low, and 10 dB further down, dead")
-                slotWidth: Math.round(130 * AppPalette.scale)
-
-                KSpinBox {
-                    id: usblDiagLevelSpin
-                    width: Math.round(130 * AppPalette.scale)
-                    height: Tokens.controlHMd
-                    from: -300; to: 0; stepSize: 5; divisor: 10; decimals: 1
-                    onValueModified: function(v) { if (root.store) root.store.usblDiagLevelMinDb = v / 10 }
-                    Binding {
-                        target: usblDiagLevelSpin
-                        property: "value"
-                        value: Math.round((root.store ? root.store.usblDiagLevelMinDb : DataFieldCatalog.usblDiagDefaults().levelDb) * 10)
-                    }
-                }
-            }
-
-            KIslandRow {
-                label: qsTr("Antenna thresholds")
+            KButton {
+                visible: usblLayerGroup.antennaDiag
+                width: parent.width
+                fontPixelSize: Tokens.fontLg
+                text: qsTr("Defaults")
                 toolTipText: qsTr("Restore the default antenna diagnostics thresholds")
-                slotWidth: Math.round(130 * AppPalette.scale)
-
-                KButton {
-                    width: Math.round(130 * AppPalette.scale)
-                    height: Tokens.controlHMd
-                    text: qsTr("Defaults")
-                    onClicked: if (root.store) root.store.resetUsblDiagThresholds()
-                }
+                onClicked: if (root.store) root.store.resetUsblDiagThresholds()
             }
-        }
 
-        Column {
-            width: parent.width
-            spacing: Tokens.spaceSm
+            Text {
+                width: parent.width
+                text: qsTr("Acoustic nodes") + ":"
+                color: AppPalette.textSecond
+                font.pixelSize: Tokens.fontBase
+                topPadding: Tokens.spaceXs
+            }
 
             Text {
                 width: parent.width
                 visible: usblNodeRows.count === 0
                 text: qsTr("No acoustic nodes yet. Open a file containing beacon fixes, or add an address below.")
                 color: AppPalette.textMuted
-                font.pixelSize: Tokens.fontSm
+                font.pixelSize: Tokens.fontMd
                 wrapMode: Text.WordWrap
             }
 
-            Repeater {
-                id: usblNodeRows
-                model: root.usblPlan ? root.usblPlan.nodes : []
+            KIsland {
+                visible: usblNodeRows.count > 0
 
-                KIslandRow {
-                    required property var modelData
-                    label: qsTr("Address %1").arg(modelData.addr)
-                    labelColor: DataFieldCatalog.usblAddressColor(modelData.addr)
-                    caption: modelData.fromFile ? qsTr("detected in the opened file")
-                                                : qsTr("from the interrogation plan")
-                    interactive: true
-                    onClicked: usblNodeSwitch.click()
+                Repeater {
+                    id: usblNodeRows
+                    model: root.usblPlan ? root.usblPlan.nodes : []
 
-                    KSwitch {
-                        id: usblNodeSwitch
-                        flat: true
-                        checked: modelData.active !== false
-                        onToggled: {
-                            if (root.usblPlan)
-                                root.usblPlan.toggleNode(modelData.id)
-                            checked = Qt.binding(function() { return modelData.active !== false })
+                    KIslandRow {
+                        required property var modelData
+                        label: qsTr("Address %1").arg(modelData.addr)
+                        labelColor: DataFieldCatalog.usblAddressColor(modelData.addr)
+                        caption: modelData.fromFile ? qsTr("detected in the opened file")
+                                                    : qsTr("from the interrogation plan")
+                        interactive: true
+                        onClicked: usblNodeSwitch.click()
+
+                        KSwitch {
+                            id: usblNodeSwitch
+                            flat: true
+                            checked: modelData.active !== false
+                            onToggled: {
+                                if (root.usblPlan)
+                                    root.usblPlan.toggleNode(modelData.id)
+                                checked = Qt.binding(function() { return modelData.active !== false })
+                            }
                         }
                     }
                 }
@@ -2407,14 +2452,14 @@ Column {
 
             Column {
                 width: parent.width
-                spacing: Tokens.spaceXs
+                spacing: Tokens.spaceSm
                 visible: usblAddableChips.count > 0
 
                 Text {
                     width: parent.width
                     text: qsTr("Add an address the plan does not name yet")
-                    color: AppPalette.textMuted
-                    font.pixelSize: Tokens.fontXs
+                    color: AppPalette.textSecond
+                    font.pixelSize: Tokens.fontSm
                     wrapMode: Text.WordWrap
                 }
 
