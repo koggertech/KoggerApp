@@ -1148,8 +1148,7 @@ void MissionController::updateHomeScreen()
     const std::optional<mission::GeoPoint> home = plan_ ? plan_->plan().home : std::nullopt;
     if (editing_ && home && home->isValid() && view_->width() > 0 && view_->height() > 0) {
         screen = toScreen(toScene(*home));
-        offscreen = !std::isfinite(screen.x()) || !std::isfinite(screen.y())
-                    || screen.x() < 0.0 || screen.y() < 0.0 || screen.x() > view_->width() || screen.y() > view_->height();
+        offscreen = !std::isfinite(screen.x()) || !std::isfinite(screen.y()) || !view_->missionVisibleRect().contains(screen);
     }
     const bool moved = offscreen && QLineF(screen, homeScreen_).length() > 0.5;
     if (offscreen == homeOffscreen_ && !moved) {
@@ -1300,7 +1299,7 @@ bool MissionController::viewExtent(QVector3D& center, float& halfX, float& halfY
     if (!view_ || !view_->m_camera) {
         return false;
     }
-    const auto [minX, maxX, minY, maxY] = view_->getFieldViewDim();
+    const auto [minX, maxX, minY, maxY] = view_->getFieldViewDim(view_->missionVisibleRect());
     const bool valid = maxX > minX && maxY > minY && std::isfinite(minX) && std::isfinite(maxX) && std::isfinite(minY) && std::isfinite(maxY)
                        && (maxX - minX) < 1.0e6f && (maxY - minY) < 1.0e6f;
     if (valid) {

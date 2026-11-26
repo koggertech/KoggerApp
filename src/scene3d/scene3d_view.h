@@ -49,6 +49,7 @@ class GraphicsScene3dView : public QQuickFramebufferObject
     Q_PROPERTY(QObject* geoJsonController READ geoJsonController CONSTANT)
     Q_PROPERTY(QObject* missionController READ missionController CONSTANT)
     Q_PROPERTY(QObject* missionRunController READ missionRunController CONSTANT)
+    Q_PROPERTY(QRectF missionSafeArea READ missionSafeArea WRITE setMissionSafeArea NOTIFY missionSafeAreaChanged)
     Q_PROPERTY(QObject* usblLayer READ usblLayer CONSTANT)
     Q_PROPERTY(bool cameraPerspective READ cameraPerspective NOTIFY cameraPerspectiveChanged)
     Q_PROPERTY(bool updateSurface READ updateSurface NOTIFY updateSurfaceChanged)
@@ -274,6 +275,9 @@ public:
     void setMissionEditorActive(bool active);
     void missionFitInView();
     void missionFocusBounds(const QVector3D& minB, const QVector3D& maxB);
+    QRectF missionSafeArea() const { return missionSafeArea_; }
+    void setMissionSafeArea(const QRectF& rect);
+    QRectF missionVisibleRect() const;
     QObject* usblLayer() const;
     bool syncLoupeOverlayVisible() const;
     int syncLoupeEpochIndex() const;
@@ -400,6 +404,7 @@ signals:
     void sendLlaRef(LLARef viewLlaRef);
     void sendDataZoom(int zoom);
     void sceneContentVisibleChanged();
+    void missionSafeAreaChanged();
     void sendMapTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
     void geoJsonEnabledChanged();
     void sendCameraEpIndxs(const QVector<QPair<int, QSet<TileKey>>>& epIndxs);
@@ -460,6 +465,8 @@ private:
 
     bool getViewQuadNed(std::array<QPointF, 4>* quad) const;
     std::tuple<float, float, float, float> getFieldViewDim() const;
+    std::tuple<float, float, float, float> getFieldViewDim(const QRectF& screenRect) const;
+    QPointF missionProjectionShift() const;
     std::shared_ptr<Camera> m_camera;
     std::shared_ptr<Camera> m_axesThumbnailCamera;
     QPointF m_startMousePos = {0.0f, 0.0f};
@@ -482,6 +489,8 @@ private:
     QVector2D missionSavedRotAngle_;
     float missionSavedDist_{0.0f};
     QVector3D missionSavedLookAt_;
+    QRectF missionSafeArea_;
+    bool missionRefitOnSafeArea_{false};
     std::shared_ptr<BoatTrack> boatTrack_;
     std::shared_ptr<BottomTrack> m_bottomTrack;
     std::shared_ptr<PolygonGroup> m_polygonGroup;

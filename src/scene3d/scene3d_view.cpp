@@ -2315,6 +2315,13 @@ void GraphicsScene3dView::updateProjection()
             currProj.ortho(-orthV * aspectRatio, orthV * aspectRatio, -orthV, orthV, orthV * nearPlaneOrthoCoeff_, orthV * farPlaneOrthoCoeff_);
         }
 
+        const QPointF shift = missionProjectionShift();
+        if (!shift.isNull()) {
+            QMatrix4x4 shiftMatrix;
+            shiftMatrix.translate(static_cast<float>(shift.x()), static_cast<float>(shift.y()), 0.0f);
+            currProj = shiftMatrix * currProj;
+        }
+
         m_projection = currProj;
     }
 }
@@ -2428,6 +2435,10 @@ void GraphicsScene3dView::setMissionEditorActive(bool active)
     cancelKeyNudge();
     cancelFollowReturn();
 
+    missionSafeArea_ = QRectF();
+    missionRefitOnSafeArea_ = active;
+    emit missionSafeAreaChanged();
+
     if (active) {
         missionSavedRotAngle_ = m_camera->getRotAngle();
         missionSavedDist_ = m_camera->m_distToFocusPoint;
@@ -2465,6 +2476,46 @@ void GraphicsScene3dView::setMissionEditorActive(bool active)
     }
 }
 
+void GraphicsScene3dView::setMissionSafeArea(const QRectF& rect)
+{
+    if (missionSafeArea_ == rect) {
+        return;
+    }
+    missionSafeArea_ = rect;
+    emit missionSafeAreaChanged();
+    if (!missionEditorActive_) {
+        return;
+    }
+    updateProjection();
+    QQuickFramebufferObject::update();
+    onCameraMoved();
+    if (missionRefitOnSafeArea_ && rect.isValid()) {
+        missionRefitOnSafeArea_ = false;
+        missionFitInView();
+    }
+}
+
+QPointF GraphicsScene3dView::missionProjectionShift() const
+{
+    if (!missionEditorActive_) {
+        return {};
+    }
+    const QRectF visible = missionVisibleRect();
+    const qreal w = std::max<qreal>(1.0, width());
+    const qreal h = std::max<qreal>(1.0, height());
+    return { 2.0 * (visible.center().x() - w * 0.5) / w, -2.0 * (visible.center().y() - h * 0.5) / h };
+}
+
+QRectF GraphicsScene3dView::missionVisibleRect() const
+{
+    const QRectF full(0.0, 0.0, width(), height());
+    if (!missionEditorActive_ || !missionSafeArea_.isValid()) {
+        return full;
+    }
+    const QRectF clipped = missionSafeArea_.intersected(full);
+    return (clipped.width() >= 1.0 && clipped.height() >= 1.0) ? clipped : full;
+}
+
 void GraphicsScene3dView::missionFitInView()
 {
     QVector3D minB;
@@ -2491,9 +2542,14 @@ void GraphicsScene3dView::missionFocusBounds(const QVector3D& minB, const QVecto
     const float targetRotX = twoPi * std::round(startRot.x() / twoPi);
     const float startDist = static_cast<float>(m_camera->m_distToFocusPoint);
     const QVector3D startLookAt = m_camera->m_lookAt;
+    float fitScale = 1.0f;
+    const QRectF visible = missionVisibleRect();
+    if (visible != QRectF(0.0, 0.0, width(), height())) {
+        fitScale = static_cast<float>(height() / std::max<qreal>(1.0, std::min(visible.width(), visible.height())));
+    }
     float targetDist = kMinFitDistance;
     if (extent >= kDegenerateExtent) {
-        targetDist = std::max(static_cast<float>((extent * 0.5f) / std::tan(m_camera->fov() / 2.0f) * 1.6f), kMinFitDistance);
+        targetDist = std::max(static_cast<float>((extent * 0.5f) / std::tan(m_camera->fov() / 2.0f) * 1.6f * fitScale), kMinFitDistance);
     } else {
         targetDist = std::max(startDist, kMinFitDistance);
     }
@@ -3874,6 +3930,11 @@ void GraphicsScene3dView::rebuildGeoJsonLayerIfNeeded()
 
 std::tuple<float, float, float, float> GraphicsScene3dView::getFieldViewDim() const
 {
+    return getFieldViewDim(QRectF(0.0, 0.0, width(), height()));
+}
+
+std::tuple<float, float, float, float> GraphicsScene3dView::getFieldViewDim(const QRectF& screenRect) const
+{
     float reductorFactor = -0.05f;
     QVector<QPair<float, float>> cornerMultipliers = {
         {       reductorFactor,         reductorFactor }, // lt
@@ -3889,8 +3950,8 @@ std::tuple<float, float, float, float> GraphicsScene3dView::getFieldViewDim() co
     float maxY = std::numeric_limits<float>::lowest();
 
     for (const auto& multiplier : cornerMultipliers) {
-        float currWidth  = width() * multiplier.first;
-        float currHeight = height() * multiplier.second;
+        float currWidth  = static_cast<float>(screenRect.x() + screenRect.width() * multiplier.first);
+        float currHeight = static_cast<float>(height() - (screenRect.y() + screenRect.height() * multiplier.second));
 
         QVector3D point;
         if (m_camera->getIsPerspective()) {
@@ -4258,6 +4319,8 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_pointGroupRenderImpl      = *(dynamic_cast<PointGroup::PointGroupRenderImplementation*>(view->m_pointGroup->m_renderImpl));
     m_renderer->navigationArrowRenderImpl_  = *(dynamic_cast<NavigationArrow::NavigationArrowRenderImplementation*>(view->navigationArrow_->m_renderImpl));
     m_renderer->m_viewSize                  = view->size();
+    m_renderer->projectionShift_            = view->missionProjectionShift();
+    m_renderer->hudRect_                    = view->missionVisibleRect();
     m_renderer->m_camera                    = *view->m_camera;
     m_renderer->m_axesThumbnailCamera       = *view->m_axesThumbnailCamera;
     m_renderer->m_comboSelectionRect        = view->m_comboSelectionRect;

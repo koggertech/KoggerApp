@@ -34,9 +34,9 @@ Rectangle {
         height: root.toolSize
         iconTintColor: enabled ? AppPalette.text : AppPalette.textMuted
         glyphColor: enabled ? AppPalette.text : AppPalette.textMuted
-        fillColor: armed ? AppPalette.accentBgStrong : AppPalette.card
-        fillHoverColor: armed ? AppPalette.accentBorder : AppPalette.cardHover
-        fillPressedColor: AppPalette.bgHover
+        fillColor: armed ? AppPalette.accentBgStrong : AppPalette.glassControl
+        fillHoverColor: armed ? AppPalette.accentBorder : AppPalette.glassControlHover
+        fillPressedColor: AppPalette.glassControlPressed
         borderColor: armed ? AppPalette.accentBorder : AppPalette.border
         borderHoverColor: armed ? AppPalette.accentBorder : AppPalette.borderHover
         borderWidth: 1
@@ -49,13 +49,16 @@ Rectangle {
         rounded: false
         cornerRadius: Tokens.radiusMd
         hitPadding: Math.round(4 * root._s)
-        iconPixelSize: Math.round(18 * root._s)
-        iconTintColor: AppPalette.textSecond
+        iconPixelSize: Math.round(root.toolSize * 0.4)
+        iconTintColor: AppPalette.text
+        scaleOnHover: false
         property bool available: true
-        opacity: available ? 1.0 : 0.3
+        enabled: available
+        opacity: available ? (hovered ? 0.95 : 0.6) : 0.0
+        Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
         fillColor: "transparent"
-        fillHoverColor: available ? AppPalette.cardHover : "transparent"
-        fillPressedColor: available ? AppPalette.card : "transparent"
+        fillHoverColor: "transparent"
+        fillPressedColor: "transparent"
         borderColor: "transparent"
         borderHoverColor: "transparent"
         borderWidth: 0
@@ -674,7 +677,34 @@ Rectangle {
             dlg.selectedFile = (u.length ? u + "/" : "") + root.plan.defaultFileName().replace(/\.kmission$/, "")
     }
 
+    Item {
+        id: hostSurface
+        anchors.fill: parent
+        clip: true
+    }
+
+    Binding {
+        target: root.view
+        property: "missionSafeArea"
+        when: root.active && !!root.view
+        value: Qt.rect(chrome.x + bodyRow.x + sceneArea.x, chrome.y + bodyRow.y + sceneArea.y,
+                       sceneArea.width, sceneArea.height)
+    }
+
+    PaneInputBridge {
+        id: hostBridge
+        anchors.fill: parent
+        workspaceRoot: root.workspaceRoot
+        leafId: -1
+        paneKind: "3D"
+        doubleTapEnabled: false
+        focusOnPointer: false
+        focusOnPress: true
+        active: root.active
+    }
+
     ColumnLayout {
+        id: chrome
         anchors.fill: parent
         spacing: 0
 
@@ -682,7 +712,24 @@ Rectangle {
             id: header
             Layout.fillWidth: true
             Layout.preferredHeight: root.toolSize + Tokens.spaceMd * 2
-            color: AppPalette.headerBg
+            color: "transparent"
+
+            KGlassPanel {
+                id: headerGlass
+                anchors.fill: parent
+                source: hostSurface
+                originSpace: root
+                origin: Qt.point(chrome.x + header.x, chrome.y + header.y)
+                fillColor: AppPalette.headerBg
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                acceptedButtons: Qt.AllButtons
+                hoverEnabled: true
+                onPressed: function(mouse) { mouse.accepted = true }
+                onWheel: function(wheel) { wheel.accepted = true }
+            }
 
             RowLayout {
                 anchors.fill: parent
@@ -701,7 +748,7 @@ Rectangle {
                     Layout.preferredWidth: Math.round(220 * root._s)
                     Layout.preferredHeight: Tokens.controlHMd
                     radius: Tokens.radiusMd
-                    color: AppPalette.card
+                    color: AppPalette.glassControl
                     border.color: nameInput.activeFocus ? AppPalette.borderFocus : AppPalette.border
                     border.width: 1
 
@@ -793,7 +840,7 @@ Rectangle {
                 KCircleIconButton {
                     Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
                     iconSource: "qrc:/icons/ui/question-mark.svg"; iconTintColor: AppPalette.text
-                    fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
+                    fillColor: AppPalette.glassControl; fillHoverColor: AppPalette.glassControlHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: qsTr("Help")
                     onClicked: if (typeof tutorial !== "undefined" && tutorial) tutorial.start("missions")
                     KTutorialAnchor { key: "missions.help" }
@@ -802,7 +849,7 @@ Rectangle {
                 KCircleIconButton {
                     Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
                     iconSource: "qrc:/icons/ui/file_plus.svg"; iconTintColor: AppPalette.text
-                    fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
+                    fillColor: AppPalette.glassControl; fillHoverColor: AppPalette.glassControlHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: qsTr("New mission")
                     onClicked: root.guardUnsaved(function() { if (root.plan) root.plan.newPlan() })
                     KTutorialAnchor { key: "missions.new" }
@@ -810,7 +857,7 @@ Rectangle {
                 KCircleIconButton {
                     Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
                     iconSource: "qrc:/icons/ui/folder-open.svg"; iconTintColor: AppPalette.text
-                    fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
+                    fillColor: AppPalette.glassControl; fillHoverColor: AppPalette.glassControlHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: qsTr("Open mission")
                     onClicked: root.guardUnsaved(function() { root._prepareDialog(openDialog); openDialog.open() })
                     KTutorialAnchor { key: "missions.open" }
@@ -819,8 +866,8 @@ Rectangle {
                     Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
                     iconSource: "qrc:/icons/ui/file-check.svg"; iconTintColor: AppPalette.text
                     borderWidth: 1
-                    fillColor: root.plan && root.plan.dirty ? AppPalette.accentBgStrong : AppPalette.card
-                    fillHoverColor: root.plan && root.plan.dirty ? AppPalette.accentBorder : AppPalette.cardHover
+                    fillColor: root.plan && root.plan.dirty ? AppPalette.accentBgStrong : AppPalette.glassControl
+                    fillHoverColor: root.plan && root.plan.dirty ? AppPalette.accentBorder : AppPalette.glassControlHover
                     borderColor: root.plan && root.plan.dirty ? AppPalette.accentBorder : AppPalette.border
                     toolTipText: qsTr("Save mission")
                     onClicked: root.saveAction()
@@ -832,7 +879,7 @@ Rectangle {
                     iconSource: "qrc:/icons/ui/upload.svg"; iconTintColor: AppPalette.text
                     enabled: root._vehicleOnline && !!root.plan && !root._uploading
                     opacity: enabled && root.plan.exportable ? 1.0 : 0.5
-                    fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
+                    fillColor: AppPalette.glassControl; fillHoverColor: AppPalette.glassControlHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: root._uploading ? qsTr("Uploading mission to the vehicle") : qsTr("Upload to vehicle")
                     onClicked: root.requestUpload()
                     KTutorialAnchor { key: "missions.upload" }
@@ -842,7 +889,7 @@ Rectangle {
                     iconSource: "qrc:/icons/ui/download.svg"; iconTintColor: AppPalette.text
                     enabled: root._vehicleOnline && !root._uploading
                     opacity: enabled ? 1.0 : 0.5
-                    fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
+                    fillColor: AppPalette.glassControl; fillHoverColor: AppPalette.glassControlHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: qsTr("Read mission from vehicle")
                     onClicked: root.requestDownload()
                     KTutorialAnchor { key: "missions.download" }
@@ -852,8 +899,8 @@ Rectangle {
                     id: moreBtn
                     Layout.preferredWidth: root.headerBtn; Layout.preferredHeight: root.headerBtn; Layout.minimumWidth: root.headerBtn; Layout.minimumHeight: root.headerBtn; iconPixelSize: Tokens.iconLg
                     iconSource: "qrc:/icons/ui/menu-2.svg"; iconTintColor: AppPalette.text
-                    fillColor: moreMenu.visible ? AppPalette.accentBgStrong : AppPalette.card
-                    fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
+                    fillColor: moreMenu.visible ? AppPalette.accentBgStrong : AppPalette.glassControl
+                    fillHoverColor: AppPalette.glassControlHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: qsTr("Save as, export")
                     KTutorialAnchor { key: "missions.more" }
                     onClicked: {
@@ -871,7 +918,7 @@ Rectangle {
                     Layout.preferredHeight: root.headerBtn; Layout.minimumHeight: root.headerBtn
                     glyph: "✕"
                     glyphPixelSize: Tokens.fontXl
-                    fillColor: AppPalette.card; fillHoverColor: AppPalette.cardHover; borderColor: AppPalette.border; borderWidth: 1
+                    fillColor: AppPalette.glassControl; fillHoverColor: AppPalette.glassControlHover; borderColor: AppPalette.border; borderWidth: 1
                     toolTipText: qsTr("Close editor")
                     onClicked: root.requestClose()
                     KTutorialAnchor { key: "missions.close" }
@@ -880,6 +927,7 @@ Rectangle {
         }
 
         RowLayout {
+            id: bodyRow
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: 0
@@ -889,7 +937,24 @@ Rectangle {
                 KTutorialAnchor { key: "missions.tools" }
                 Layout.preferredWidth: root.toolSize + Tokens.spaceMd * 2
                 Layout.fillHeight: true
-                color: AppPalette.bgDeep
+                color: "transparent"
+
+                KGlassPanel {
+                    id: toolsGlass
+                    anchors.fill: parent
+                    source: hostSurface
+                    originSpace: root
+                    origin: Qt.point(chrome.x + bodyRow.x + toolsColumn.x, chrome.y + bodyRow.y + toolsColumn.y)
+                    fillColor: AppPalette.bgDeep
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.AllButtons
+                    hoverEnabled: true
+                    onPressed: function(mouse) { mouse.accepted = true }
+                    onWheel: function(wheel) { wheel.accepted = true }
+                }
 
                 readonly property bool needArrows: toolsList.implicitHeight > height + 1
                 readonly property int arrowH: Math.round(30 * root._s)
@@ -1104,7 +1169,7 @@ Rectangle {
                     height: Math.round(36 * root._s)
                     visible: toolsFlick.overflow && !toolsFlick.atTop
                     gradient: Gradient {
-                        GradientStop { position: 0.0; color: AppPalette.bgDeep }
+                        GradientStop { position: 0.0; color: toolsGlass.tint(AppPalette.bgDeep, AppPalette.glassAlpha) }
                         GradientStop { position: 1.0; color: Qt.rgba(AppPalette.bgDeep.r, AppPalette.bgDeep.g, AppPalette.bgDeep.b, 0) }
                     }
                 }
@@ -1116,7 +1181,7 @@ Rectangle {
                     visible: toolsFlick.overflow && !toolsFlick.atBottom
                     gradient: Gradient {
                         GradientStop { position: 0.0; color: Qt.rgba(AppPalette.bgDeep.r, AppPalette.bgDeep.g, AppPalette.bgDeep.b, 0) }
-                        GradientStop { position: 1.0; color: AppPalette.bgDeep }
+                        GradientStop { position: 1.0; color: toolsGlass.tint(AppPalette.bgDeep, AppPalette.glassAlpha) }
                     }
                 }
             }
@@ -1131,11 +1196,11 @@ Rectangle {
                     anchors.left: parent.left
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
-                    width: Math.round(28 * root._s)
+                    width: Math.round(20 * root._s)
                     z: 1
                     gradient: Gradient {
                         orientation: Gradient.Horizontal
-                        GradientStop { position: 0.0; color: "#66000000" }
+                        GradientStop { position: 0.0; color: "#26000000" }
                         GradientStop { position: 1.0; color: "#00000000" }
                     }
                 }
@@ -1143,56 +1208,49 @@ Rectangle {
                     anchors.right: parent.right
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
-                    width: Math.round(28 * root._s)
+                    width: Math.round(20 * root._s)
                     z: 1
                     gradient: Gradient {
                         orientation: Gradient.Horizontal
                         GradientStop { position: 0.0; color: "#00000000" }
-                        GradientStop { position: 1.0; color: "#66000000" }
+                        GradientStop { position: 1.0; color: "#26000000" }
                     }
                 }
                 Rectangle {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.top: parent.top
-                    height: Math.round(28 * root._s)
+                    height: Math.round(20 * root._s)
                     z: 1
                     gradient: Gradient {
-                        GradientStop { position: 0.0; color: "#66000000" }
+                        GradientStop { position: 0.0; color: "#26000000" }
                         GradientStop { position: 1.0; color: "#00000000" }
                     }
                 }
 
-                Item {
-                    id: hostSurface
-                    anchors.fill: parent
-                    clip: true
-                }
-
-                PaneInputBridge {
-                    id: hostBridge
-                    anchors.fill: parent
-                    workspaceRoot: root.workspaceRoot
-                    leafId: -1
-                    paneKind: "3D"
-                    doubleTapEnabled: false
-                    focusOnPointer: false
-                    focusOnPress: true
-                    active: root.active
-                }
-
                 Rectangle {
+                    id: hintPlate
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: Tokens.spaceLg
                     width: Math.min(parent.width - Tokens.spaceXl * 2, hintText.implicitWidth + Tokens.spaceXl * 2)
                     height: hintText.implicitHeight + Tokens.spaceMd * 2
                     radius: Tokens.radiusLg
-                    color: AppPalette.card
-                    border.color: AppPalette.border
-                    border.width: 1
+                    color: "transparent"
                     visible: hintText.text.length > 0
                     KTutorialAnchor { key: "missions.hint" }
+
+                    KGlassPanel {
+                        anchors.fill: parent
+                        source: hostSurface
+                        originSpace: root
+                        origin: Qt.point(chrome.x + bodyRow.x + sceneArea.x + hintPlate.x,
+                                         chrome.y + bodyRow.y + sceneArea.y + hintPlate.y)
+                        radius: hintPlate.radius
+                        fillColor: AppPalette.card
+                        borderColor: AppPalette.border
+                        borderWidth: 1
+                    }
 
                     Text {
                         id: hintText
@@ -1397,7 +1455,24 @@ Rectangle {
                 Layout.preferredWidth: root.panelWidth
                 KTutorialAnchor { key: "missions.panel" }
                 Layout.fillHeight: true
-                color: AppPalette.bgDeep
+                color: "transparent"
+
+                KGlassPanel {
+                    id: panelGlass
+                    anchors.fill: parent
+                    source: hostSurface
+                    originSpace: root
+                    origin: Qt.point(chrome.x + bodyRow.x + panel.x, chrome.y + bodyRow.y + panel.y)
+                    fillColor: AppPalette.bgDeep
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.AllButtons
+                    hoverEnabled: true
+                    onPressed: function(mouse) { mouse.accepted = true }
+                    onWheel: function(wheel) { wheel.accepted = true }
+                }
 
                 Flickable {
                     id: panelFlick
@@ -1688,7 +1763,7 @@ Rectangle {
                     height: Math.round(36 * root._s)
                     visible: panelFlick.overflow && !panelFlick.atTop
                     gradient: Gradient {
-                        GradientStop { position: 0.0; color: AppPalette.bgDeep }
+                        GradientStop { position: 0.0; color: panelGlass.tint(AppPalette.bgDeep, AppPalette.glassAlpha) }
                         GradientStop { position: 1.0; color: Qt.rgba(AppPalette.bgDeep.r, AppPalette.bgDeep.g, AppPalette.bgDeep.b, 0) }
                     }
                 }
@@ -1700,7 +1775,7 @@ Rectangle {
                     visible: panelFlick.overflow && !panelFlick.atBottom
                     gradient: Gradient {
                         GradientStop { position: 0.0; color: Qt.rgba(AppPalette.bgDeep.r, AppPalette.bgDeep.g, AppPalette.bgDeep.b, 0) }
-                        GradientStop { position: 1.0; color: AppPalette.bgDeep }
+                        GradientStop { position: 1.0; color: panelGlass.tint(AppPalette.bgDeep, AppPalette.glassAlpha) }
                     }
                 }
             }
@@ -1720,9 +1795,18 @@ Rectangle {
         width: Math.round(280 * root._s)
         height: chooserColumn.implicitHeight + Tokens.spaceSm * 2
         radius: Tokens.radiusLg
-        color: AppPalette.card
-        border.color: AppPalette.border
-        border.width: 1
+        color: "transparent"
+
+        KGlassPanel {
+            anchors.fill: parent
+            source: hostSurface
+            originSpace: root
+            origin: Qt.point(shapeChooser.x, shapeChooser.y)
+            radius: shapeChooser.radius
+            fillColor: AppPalette.card
+            borderColor: AppPalette.border
+            borderWidth: 1
+        }
 
         Column {
             id: chooserColumn
@@ -1804,9 +1888,18 @@ Rectangle {
         width: Math.round(300 * root._s)
         height: moreColumn.implicitHeight + Tokens.spaceSm * 2
         radius: Tokens.radiusLg
-        color: AppPalette.card
-        border.color: AppPalette.border
-        border.width: 1
+        color: "transparent"
+
+        KGlassPanel {
+            anchors.fill: parent
+            source: hostSurface
+            originSpace: root
+            origin: Qt.point(moreMenu.x, moreMenu.y)
+            radius: moreMenu.radius
+            fillColor: AppPalette.card
+            borderColor: AppPalette.border
+            borderWidth: 1
+        }
 
         Column {
             id: moreColumn

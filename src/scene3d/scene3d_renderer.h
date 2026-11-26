@@ -50,7 +50,7 @@ private:
     void initialize();
     void drawObjects();
     void drawCompass(int x, int y, int sizePx);
-    void drawScaleBar(const QRect& vportRect, const QMatrix4x4& view);
+    void drawScaleBar(const QRect& vportRect, const QRect& anchorRect, const QMatrix4x4& view);
     QMatrix4x4 model() const;
     QMatrix4x4 view() const;
     QMatrix4x4 projection() const;
@@ -64,6 +64,8 @@ private:
     friend class InFboRenderer;
 
     QSizeF m_viewSize;
+    QPointF projectionShift_;
+    QRectF hudRect_;
     GraphicsScene3dView::Camera m_camera;
     GraphicsScene3dView::Camera m_axesThumbnailCamera;
     CoordinateAxes::CoordinateAxesRenderImplementation compassRenderImpl_;

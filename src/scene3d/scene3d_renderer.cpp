@@ -197,6 +197,12 @@ void GraphicsScene3dRenderer::drawObjects()
         projection.ortho(-orth_v*aspect_ratio, orth_v*aspect_ratio, -orth_v, orth_v, orth_v * nearPlaneOrthoCoeff, orth_v * farPlaneOrthoCoeff);
     }
 
+    if (!projectionShift_.isNull()) {
+        QMatrix4x4 shiftMatrix;
+        shiftMatrix.translate(static_cast<float>(projectionShift_.x()), static_cast<float>(projectionShift_.y()), 0.0f);
+        projection = shiftMatrix * projection;
+    }
+
     view = m_camera.m_view;
     model.scale(1.0f, 1.0f, m_verticalScale);
 
@@ -375,6 +381,16 @@ void GraphicsScene3dRenderer::drawObjects()
 
     const bool scaleBarVisible = scaleBar_ && m_camera.getIsPerspective();
 
+    QRect hud(viewport[0], viewport[1], viewport[2], viewport[3]);
+    if (hudRect_.isValid() && m_viewSize.width() > 0.0 && m_viewSize.height() > 0.0) {
+        const qreal sx = viewport[2] / m_viewSize.width();
+        const qreal sy = viewport[3] / m_viewSize.height();
+        hud = QRect(viewport[0] + qRound(hudRect_.x() * sx),
+                    viewport[1] + qRound((m_viewSize.height() - hudRect_.y() - hudRect_.height()) * sy),
+                    qRound(hudRect_.width() * sx),
+                    qRound(hudRect_.height() * sy));
+    }
+
     //-----------Compass-------------
     compassRectPx_ = QRectF();
     if (compass_) {
@@ -390,12 +406,12 @@ void GraphicsScene3dRenderer::drawObjects()
         constexpr float kCompassSizeFactor = 0.7f;
         const int compassSizePx = qRound(compassBase * renderScale() * kCompassSizeFactor);
 
-        int compassX = viewport[0];
-        int compassY = viewport[1];
+        int compassX = hud.x();
+        int compassY = hud.y();
         switch (compassPos_) {
-        case 1: compassX = viewport[0] + viewport[2] - compassSizePx;                                                       break;
-        case 3: compassX = viewport[0] + viewport[2] - compassSizePx; compassY = viewport[1] + viewport[3] - compassSizePx; break;
-        default:                                                                                                           break;
+        case 1: compassX = hud.x() + hud.width() - compassSizePx;                                                  break;
+        case 3: compassX = hud.x() + hud.width() - compassSizePx; compassY = hud.y() + hud.height() - compassSizePx; break;
+        default:                                                                                                  break;
         }
 
         // bottom-right compass shares the corner with the scale bar — lift it just above
@@ -414,7 +430,7 @@ void GraphicsScene3dRenderer::drawObjects()
     //-----------Scale bar-------------
     if (scaleBarVisible) {
         const QRect vportRect(viewport[0], viewport[1], viewport[2], viewport[3]);
-        drawScaleBar(vportRect, view);
+        drawScaleBar(vportRect, hud, view);
     }
 }
 
@@ -465,7 +481,7 @@ const QVector2D kScaleBarCasingOffsets[] = {
 
 } // namespace
 
-void GraphicsScene3dRenderer::drawScaleBar(const QRect& vportRect, const QMatrix4x4& view)
+void GraphicsScene3dRenderer::drawScaleBar(const QRect& vportRect, const QRect& anchorRect, const QMatrix4x4& view)
 {
     // fixed bottom-right map scale bar (independent of UI scale / DPI)
     const float sideMargin   = 16.0f;
@@ -475,8 +491,8 @@ void GraphicsScene3dRenderer::drawScaleBar(const QRect& vportRect, const QMatrix
     const float maxBarPx     = 120.0f;
     const float casingPx     = qMax(1.0f, std::round(static_cast<float>(renderScale())));
 
-    const float centerX = vportRect.x() + vportRect.width() - sideMargin - maxBarPx * 0.5f; // shifted center
-    const float barY    = vportRect.y() + bottomMargin; // line; ticks point up
+    const float centerX = anchorRect.x() + anchorRect.width() - sideMargin - maxBarPx * 0.5f; // shifted center
+    const float barY    = anchorRect.y() + bottomMargin; // line; ticks point up
 
     // ground (Z=0) meters per horizontal screen pixel at the bar — valid under tilt
     const QMatrix4x4 mv = view * m_model;
