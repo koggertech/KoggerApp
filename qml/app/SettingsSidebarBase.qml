@@ -802,6 +802,16 @@ Item {
             visible: false
         }
 
+        ShaderEffectSource {
+            id: panelShadowCut
+            readonly property int pad: panelRoot.panelShadowSize
+            width: parent.width + pad * 2
+            height: parent.height + pad * 2
+            sourceItem: panelRoot._glass && panelShadow.visible ? panelShadowSource : null
+            sourceRect: Qt.rect(-pad, -pad, width, height)
+            visible: false
+        }
+
         MultiEffect {
             anchors.fill: panelShadowSource
             source: panelShadowSource
@@ -810,6 +820,9 @@ Item {
             shadowBlur: 1.0
             blurMax: panelRoot.panelShadowSize
             shadowOpacity: panelRoot.panelShadowOpacity * panelRoot.slideProgress
+            maskEnabled: panelRoot._glass
+            maskInverted: true
+            maskSource: panelShadowCut
         }
     }
 
