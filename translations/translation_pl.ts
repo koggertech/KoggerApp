@@ -3789,7 +3789,7 @@ udp://@:1234
         <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="315"/>
         <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="326"/>
         <source>dB</source>
-        <translation type="unfinished"></translation>
+        <translation>dB</translation>
     </message>
     <message>
         <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="46"/>
@@ -3856,48 +3856,48 @@ udp://@:1234
     <message>
         <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="60"/>
         <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation>OK</translation>
     </message>
     <message>
         <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="61"/>
         <source>CHECK</source>
-        <translation type="unfinished"></translation>
+        <translation>SPRAWDŹ</translation>
     </message>
     <message>
         <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="62"/>
         <source>FAULT</source>
-        <translation type="unfinished"></translation>
+        <translation>AWARIA</translation>
     </message>
     <message>
         <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="68"/>
         <source>TRACKING</source>
-        <translation type="unfinished"></translation>
+        <translation>ŚLEDZENIE</translation>
     </message>
     <message>
         <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="69"/>
         <source>STALE</source>
-        <translation type="unfinished"></translation>
+        <translation>NIEAKTUALNE</translation>
     </message>
     <message>
         <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="70"/>
         <source>NO SOLUTION</source>
-        <translation type="unfinished"></translation>
+        <translation>BRAK ROZWIĄZANIA</translation>
     </message>
     <message>
         <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="121"/>
         <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="122"/>
         <source> s</source>
-        <translation type="unfinished"></translation>
+        <translation> s</translation>
     </message>
     <message>
         <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="124"/>
         <source> m</source>
-        <translation type="unfinished"> m</translation>
+        <translation> min</translation>
     </message>
     <message>
         <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="125"/>
         <source> h</source>
-        <translation type="unfinished"></translation>
+        <translation> h</translation>
     </message>
     <message>
         <location filename="../qml/kqml_types/DataFieldCatalog.qml" line="251"/>
@@ -9522,6 +9522,19 @@ udp://@:1234
         <location filename="../qml/app/MissionRunPointCard.qml" line="194"/>
         <source>The mission continues from this point when the boat is switched to Auto</source>
         <translation>Misja będzie kontynuowana od tego punktu po przełączeniu łodzi w tryb Auto</translation>
+    </message>
+</context>
+<context>
+    <name>PanelTitleBar</name>
+    <message>
+        <location filename="../qml/app/PanelTitleBar.qml" line="90"/>
+        <source>Panel settings</source>
+        <translation>Ustawienia panelu</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/PanelTitleBar.qml" line="70"/>
+        <source>Hide panel</source>
+        <translation>Ukryj panel</translation>
     </message>
 </context>
 <context>
@@ -15186,7 +15199,7 @@ udp://@:1234
         <location filename="../qml/app/UsblNodesPopup.qml" line="632"/>
         <location filename="../qml/app/UsblNodesPopup.qml" line="832"/>
         <source>m</source>
-        <translation type="unfinished"></translation>
+        <translation>m</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="238"/>
@@ -15198,109 +15211,114 @@ udp://@:1234
         <location filename="../qml/app/UsblNodesPopup.qml" line="902"/>
         <location filename="../qml/app/UsblNodesPopup.qml" line="904"/>
         <source>dB</source>
-        <translation type="unfinished"></translation>
+        <translation>dB</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="232"/>
         <source> · %1 bit</source>
-        <translation type="unfinished"></translation>
+        <translation> · %1 bit</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="387"/>
         <source>Peak</source>
-        <translation type="unfinished"></translation>
+        <translation>Szczyt</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="399"/>
         <source>Peak SNR</source>
-        <translation type="unfinished"></translation>
+        <translation>SNR szczytu</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="411"/>
         <source>1st peak</source>
-        <translation type="unfinished"></translation>
+        <translation>1. szczyt</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="423"/>
         <source>1st SNR</source>
-        <translation type="unfinished"></translation>
+        <translation>SNR 1.</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="435"/>
         <source>RMS</source>
-        <translation type="unfinished"></translation>
+        <translation>RMS</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="447"/>
         <source>1st→peak</source>
-        <translation type="unfinished"></translation>
+        <translation>1.→szczyt</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="500"/>
         <source>Antenna</source>
-        <translation type="unfinished"></translation>
+        <translation>Antena</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="513"/>
         <source>Fit</source>
-        <translation type="unfinished">Dopasuj</translation>
+        <translation>Dopasowanie</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="525"/>
         <source>Width</source>
-        <translation type="unfinished">Szerokość</translation>
+        <translation>Szerokość</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="542"/>
         <source>Alt</source>
-        <translation type="unfinished"></translation>
+        <translation>Alt.</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="606"/>
         <location filename="../qml/app/UsblNodesPopup.qml" line="906"/>
         <source>ms</source>
-        <translation type="unfinished"></translation>
+        <translation>ms</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="639"/>
         <location filename="../qml/app/UsblNodesPopup.qml" line="862"/>
         <source>RSRQ</source>
-        <translation type="unfinished"></translation>
+        <translation>RSRQ</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="689"/>
         <source>No acoustic device</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak urządzenia akustycznego</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="689"/>
         <source>No bound head connected</source>
-        <translation type="unfinished"></translation>
+        <translation>Powiązana głowica nie jest podłączona</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="690"/>
         <source>No nodes in the USBL plan</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak węzłów w planie USBL</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="690"/>
         <source>No beacons in the network</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak bakenów w sieci</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="938"/>
         <source>+%1 more</source>
-        <translation type="unfinished"></translation>
+        <translation>jeszcze %1</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="952"/>
         <source>Schedule stopped</source>
-        <translation type="unfinished"></translation>
+        <translation>Harmonogram zatrzymany</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblNodesPopup.qml" line="952"/>
         <source>Cycle stopped · double-click for the configurator</source>
-        <translation type="unfinished"></translation>
+        <translation>Cykl zatrzymany · dwuklik otwiera konfigurator</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/UsblNodesPopup.qml" line="176"/>
+        <source>USBL</source>
+        <translation>USBL</translation>
     </message>
 </context>
 <context>
@@ -15808,22 +15826,22 @@ udp://@:1234
     <message>
         <location filename="../qml/app/UsblStateBadge.qml" line="53"/>
         <source>REPLIED</source>
-        <translation type="unfinished"></translation>
+        <translation>ODEBRANO</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblStateBadge.qml" line="54"/>
         <source>MISSED</source>
-        <translation type="unfinished"></translation>
+        <translation>POMINIĘTO</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblStateBadge.qml" line="55"/>
         <source>LOST</source>
-        <translation type="unfinished"></translation>
+        <translation>UTRACONO</translation>
     </message>
     <message>
         <location filename="../qml/app/UsblStateBadge.qml" line="56"/>
         <source>NEVER</source>
-        <translation type="unfinished"></translation>
+        <translation>NIGDY</translation>
     </message>
 </context>
 <context>

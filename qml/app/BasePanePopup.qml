@@ -111,6 +111,7 @@ Item {
     signal interactionStarted()
 
     default property alias popupContent: contentHost.data
+    property alias headerContent: headerSlot.data
 
     visible: popupVisible
 
@@ -657,6 +658,12 @@ Item {
                     onActiveChanged: active ? root._beginDrag() : root._endDrag()
                     onTranslationChanged: if (active) root._updateDrag(translation.x, translation.y)
                 }
+            }
+
+            Item {
+                id: headerSlot
+                anchors.fill: parent
+                visible: root.headerReserved && !root.overlayChrome && !root.collapsed
             }
 
             KButton {

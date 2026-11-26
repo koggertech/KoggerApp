@@ -49,12 +49,9 @@ BasePanePopup {
     readonly property bool _canStart: _hasStand && _invalid === ""
 
     readonly property real _s: AppPalette.scale
-    readonly property real _barH: headerHeight
-    readonly property real _barPad: contentPadding
-    readonly property real _barBtn: Math.max(Math.round(18 * AppPalette.scale), _barH - _barPad * 2)
-    readonly property real _pad: Math.round(9 * _s)
+    readonly property real _pad: Tokens.spaceMd
     readonly property real _gap: Math.round(7 * _s)
-    readonly property real _contentW: Math.round(292 * _s)
+    readonly property real _contentW: Math.round(300 * _s)
     readonly property real _contentH: contentCol.implicitHeight
 
     function _writeCfg(patch) {
@@ -274,91 +271,17 @@ BasePanePopup {
         }
     }
 
-    Item {
-        id: titleBar
-        width: parent.width
-        height: root._barH
-        y: -root._barH
-        z: 10
-
-        MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.AllButtons
-            cursorShape: Qt.OpenHandCursor
-            onPressed: function(mouse) { mouse.accepted = true }
-        }
-
-        DragHandler {
-            target: null
-            enabled: root.dragEnabled && !root.collapsed && !root.fullscreenMode
-            xAxis.enabled: true
-            yAxis.enabled: true
-            onActiveChanged: active ? root._beginDrag() : root._endDrag()
-            onTranslationChanged: if (active) root._updateDrag(translation.x, translation.y)
-        }
-
-        Text {
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            text: qsTr("Stand")
-            color: AppPalette.textStrong
-            font.pixelSize: Tokens.fontBase
-        }
-
-        KDragBar {
-            anchors.centerIn: parent
-            orientation: "horizontal"
-            barColor: AppPalette.controlRaised
-        }
-
-        KCircleIconButton {
-            id: closeBtn
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.topMargin: root._barPad
-            width: root._barBtn
-            height: root._barBtn
-            rounded: false
-            cornerRadius: Tokens.radiusLg
-            z: 1
-            iconSource: ""
-            glyph: "×"
-            showGlyphWithIcon: true
-            glyphPixelSize: Tokens.iconSm
-            glyphColor: AppPalette.textSecond
-            fillColor: AppPalette.controlRaised
-            fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2)
-            fillPressedColor: AppPalette.bgDeep
-            borderColor: AppPalette.border
-            borderHoverColor: AppPalette.borderHover
-            toolTipText: qsTr("Hide panel")
-            onClicked: root.store.setStandPanelShown(false)
-        }
-
-        KCircleIconButton {
-            anchors.right: closeBtn.left
-            anchors.rightMargin: root._barPad
-            anchors.top: closeBtn.top
-            width: root._barBtn
-            height: root._barBtn
-            rounded: false
-            cornerRadius: Tokens.radiusLg
-            z: 1
-            iconSource: "qrc:/icons/ui/pencil.svg"
-            iconTintColor: AppPalette.textSecond
-            fillColor: AppPalette.controlRaised
-            fillHoverColor: Qt.lighter(AppPalette.controlRaised, 1.2)
-            fillPressedColor: AppPalette.bgDeep
-            borderColor: AppPalette.border
-            borderHoverColor: AppPalette.borderHover
-            toolTipText: qsTr("Panel settings")
-            onClicked: root.store.openStandPanelSettings()
-        }
+    headerContent: PanelTitleBar {
+        popup: root
+        title: qsTr("Stand")
+        titleInset: root.contentPadding + root._pad
+        onSettingsClicked: root.store.openStandPanelSettings()
+        onCloseClicked: root.store.setStandPanelShown(false)
     }
 
     Item {
-        x: root.contentPadding + root._pad
-        y: root.contentPadding + root._pad
+        x: root._pad
+        y: root._pad
         width: root._contentW
         height: root._contentH
 
@@ -370,6 +293,7 @@ BasePanePopup {
             // ── head ──────────────────────────────────────────────────────
             Row {
                 width: parent.width
+                visible: root._hasStand
                 spacing: Math.round(7 * root._s)
 
                 Rectangle {
@@ -500,16 +424,11 @@ BasePanePopup {
             }
 
             // ── empty state ───────────────────────────────────────────────
-            Island {
+            PanelEmptyNote {
                 visible: !root._hasStand
-                Text {
-                    width: parent.width
-                    wrapMode: Text.WordWrap
-                    horizontalAlignment: Text.AlignHCenter
-                    text: qsTr("No stand-capable device")
-                    font.pixelSize: Tokens.fontSm
-                    color: AppPalette.textSecond
-                }
+                width: root._contentW
+                fillAlpha: root._bgAlpha
+                text: qsTr("No stand-capable device")
             }
 
             // ── the form ──────────────────────────────────────────────────

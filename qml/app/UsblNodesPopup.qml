@@ -52,15 +52,15 @@ BasePanePopup {
     // Eight is the protocol's address range, and a taller card than that stops being glanceable
     // over a chart. Past it the panel says how many it is not showing rather than growing.
     readonly property int _maxRows: 8
-    readonly property int _shown: Math.min(_rows.length, _maxRows)
-    readonly property int _hidden: Math.max(0, _rows.length - _maxRows)
 
     readonly property bool _noDevice: !engine || !engine.hasDevice
     readonly property bool _noNodes: !_noDevice && _rows.length === 0
+    readonly property bool _empty: _noDevice || _noNodes
+    readonly property int _shown: _empty ? 0 : Math.min(_rows.length, _maxRows)
+    readonly property int _hidden: _empty ? 0 : Math.max(0, _rows.length - _maxRows)
     // Every row reads Idle with the schedule stopped, which is true and looks like a fault. One
     // line saying why costs less than an operator deciding the panel is broken.
-    readonly property bool _stopped: !_noDevice && !_noNodes && !engine.running
-    readonly property bool _note: _noDevice || _noNodes || _stopped
+    readonly property bool _stopped: !_empty && !engine.running
 
     // ── metrics ───────────────────────────────────────────────────────────
     // WIDTH DOES NOT MOVE WITH THE DATA. Height follows the row count; width does not follow
@@ -122,46 +122,70 @@ BasePanePopup {
     readonly property real _rowH: _baseRowH + _bytesH + _diagH + _antH
     readonly property real _noteH: Math.round(18 * _k)
     readonly property real _gap: Math.round(4 * _k)
-    readonly property real _pad: Math.round(8 * _k)
+    readonly property real _pad: Math.round(Tokens.spaceMd * widgetScale)
 
     // Same scale space as the prototype, so nothing is converted and nothing accumulates.
-    readonly property real _contentW: Math.ceil(Math.max(_protoStatus.implicitWidth,
-                                                         _protoRead.implicitWidth,
-                                                         _details ? _protoDiag.implicitWidth : 0,
-                                                         _antenna ? _protoAnt.implicitWidth : 0)
-                                                + _rowPadH * 2)
+    readonly property real _rowsW: Math.ceil(Math.max(_protoStatus.implicitWidth,
+                                                      _protoRead.implicitWidth,
+                                                      _details ? _protoDiag.implicitWidth : 0,
+                                                      _antenna ? _protoAnt.implicitWidth : 0)
+                                             + _rowPadH * 2)
+    readonly property real _emptyW: Math.round(300 * AppPalette.scale * widgetScale)
+    readonly property real _contentW: _empty ? Math.min(_rowsW, _emptyW) : _rowsW
     readonly property real _contentH: {
-        var n = Math.max(1, _shown)          // an empty plan still occupies one line, which says so
-        var h = n * (_shown > 0 ? _rowH : _baseRowH) + (n - 1) * _gap
+        if (_empty)
+            return Math.ceil(emptyNote.implicitHeight)
+        var h = _shown * _rowH + Math.max(0, _shown - 1) * _gap
         if (_hidden > 0) h += _gap + _noteH
-        if (_note)      h += _gap + _noteH
+        if (_stopped)   h += _gap + _noteH
         return h
     }
+
+    readonly property real _naturalW: Math.round(_contentW + _pad * 2 + contentPadding * 2)
+    readonly property real _naturalH: Math.round(_contentH + _pad * 2 + _contentTopMargin + contentPadding)
+    readonly property var _scaleSteps: [0.75, 1.0, 1.25, 1.5, 2.0, 2.5]
 
     popupVisible: true
     dragEnabled: true
     dragAnywhere: true
-    headerReserved: false
-    // No corner grip, exactly like a grid panel: scale is a panel property, set in its editor,
-    // not something a drag on the scene should redefine. Height is the data's to decide.
-    resizeEnabled: false
+    headerReserved: true
+    dragHandleOpacity: 0
+    resizeEnabled: true
+    resizeSnapSizes: {
+        var s0 = Math.max(0.01, widgetScale)
+        var out = []
+        for (var i = 0; i < _scaleSteps.length; ++i) {
+            var f = _scaleSteps[i] / s0
+            var sz = Qt.size(Math.round(_naturalW * f), Math.round(_naturalH * f))
+            if (out.length === 0 || sz.width <= width - popupMargin * 2)
+                out.push(sz)
+        }
+        return out
+    }
     collapseButtonVisible: false
     fullscreenMode: false
-    panelColor: "transparent"
-    panelBorderColor: "transparent"
+    panelColor: Qt.rgba(AppPalette.bg.r, AppPalette.bg.g, AppPalette.bg.b, _bgAlpha)
+    panelBorderColor: AppPalette.border
     panelRadius: Tokens.radiusLg
     ghostFollowsContent: true
     ghostRadius: Tokens.radiusLg
-    headerDragBarLength: 0
     snapEdgeCenters: true
+
+    headerContent: PanelTitleBar {
+        popup: root
+        title: qsTr("USBL")
+        titleInset: root.contentPadding + root._pad
+        onSettingsClicked: root.store.openUsblPanelSettings()
+        onCloseClicked: root.store.setUsblPanelShown(false)
+    }
 
     // Imperative, not a binding: BasePanePopup writes into expandedWidth/Height itself, so a
     // binding would be broken by the base class the first time it did. Same reason and same
     // shape as DataWidgetPopup._applyScale -- the only difference is that one term now comes
     // from the plan, which is what "auto-extending" amounts to.
     function _applyScale() {
-        expandedWidth  = Math.round(_contentW + _pad * 2 + contentPadding * 2)
-        expandedHeight = Math.round(_contentH + _pad * 2 + contentPadding * 2)
+        expandedWidth  = _naturalW
+        expandedHeight = _naturalH
     }
 
     property bool _synced: false
@@ -196,6 +220,21 @@ BasePanePopup {
     onPositionCommitted: function(x, y, w, h) {
         if (_synced && def && def.id)
             store.setWidgetPosition(def.id, x, y, w, h)
+    }
+
+    onSizeCommitted: function(w, h) {
+        if (!def || !def.id) {
+            _applyScale()
+            return
+        }
+        var raw = w / Math.max(1, _naturalW) * widgetScale
+        var best = _scaleSteps[0]
+        for (var i = 1; i < _scaleSteps.length; ++i)
+            if (Math.abs(_scaleSteps[i] - raw) < Math.abs(best - raw))
+                best = _scaleSteps[i]
+        store.setWidgetScale(def.id, best)
+        widgetScale = store.widgetScale(def.id)
+        _applyScale()
     }
 
     onInteractionStarted: if (store && def && def.id) store.widgetBringToFront(def.id)
@@ -665,11 +704,8 @@ BasePanePopup {
         }
     }
 
-    Rectangle {
+    Item {
         anchors.fill: parent
-        radius: root.panelRadius
-        color: AppPalette.bg
-        border.width: 0
         opacity: root._bgAlpha
 
         Column {
@@ -677,19 +713,14 @@ BasePanePopup {
             anchors.centerIn: parent
             spacing: root._gap
 
-            // The states in which there are no rows to draw. Each says what is missing rather
-            // than leaving an empty card, which reads as a broken panel.
-            Text {
-                visible: root._noDevice || root._noNodes
+            PanelEmptyNote {
+                id: emptyNote
+                visible: root._empty
                 width: parent.width
-                height: root._baseRowH
-                verticalAlignment: Text.AlignVCenter
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
+                fontPixelSize: Math.round(Tokens.fontBase * root.widgetScale)
+                padding: Math.round(Tokens.spaceLg * root.widgetScale)
                 text: root._noDevice ? (root._fromNetwork ? qsTr("No bound head connected") : qsTr("No acoustic device"))
                                      : (root._fromNetwork ? qsTr("No beacons in the network") : qsTr("No nodes in the USBL plan"))
-                color: AppPalette.textMuted
-                font.pixelSize: Math.max(8, Math.round(12 * root._k))
             }
 
             Repeater {

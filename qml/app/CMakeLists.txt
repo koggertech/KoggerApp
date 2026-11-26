@@ -64,6 +64,8 @@ qt_add_qml_module(kogger_app
         PaneFrame.qml
         PaneInputBridge.qml
         PaneVideoWindow.qml
+        PanelEmptyNote.qml
+        PanelTitleBar.qml
         PipelineStatusGroup.qml
         PlacementHint.qml
         PowerOffConfirmOverlay.qml

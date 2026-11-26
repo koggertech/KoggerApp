@@ -261,10 +261,18 @@ Column {
     width: baseW
     spacing: Tokens.spaceMd
 
+    PanelEmptyNote {
+        visible: !body.dev
+        width: parent.width
+        text: qsTr("No servo device")
+    }
+
     KIsland {
+        visible: !!body.dev
+
         KIslandRow {
-            label: body.dev ? body._devLabel(body.dev) : qsTr("No servo device")
-            labelColor: body.dev ? AppPalette.textStrong : AppPalette.textMuted
+            label: body._devLabel(body.dev)
+            labelColor: AppPalette.textStrong
             caption: (body.dev && body._linkLabel.length > 0) ? qsTr("On link %1").arg(body._linkLabel) : ""
         }
 
