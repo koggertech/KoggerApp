@@ -141,7 +141,7 @@ Item {
         width: root.menuOpen ? root._openW : 0
         height: root.buttonSize + root._pad * 2
         radius: height / 2
-        color: AppPalette.bg
+        color: AppPalette.glassSurface
         border.width: 0
         clip: true
         opacity: root.menuOpen ? 1 : 0
@@ -253,7 +253,7 @@ Item {
                 opacity: (root.menuOpen && strip.contentX > 0.5) ? 1 : 0
                 gradient: Gradient {
                     orientation: Gradient.Horizontal
-                    GradientStop { position: 0.0; color: AppPalette.bg }
+                    GradientStop { position: 0.0; color: AppPalette.glassSurface }
                     GradientStop { position: 1.0; color: root._bgClear }
                 }
                 Behavior on opacity { NumberAnimation { duration: 120 } }
@@ -268,7 +268,7 @@ Item {
                 gradient: Gradient {
                     orientation: Gradient.Horizontal
                     GradientStop { position: 0.0; color: root._bgClear }
-                    GradientStop { position: 1.0; color: AppPalette.bg }
+                    GradientStop { position: 1.0; color: AppPalette.glassSurface }
                 }
                 Behavior on opacity { NumberAnimation { duration: 120 } }
             }

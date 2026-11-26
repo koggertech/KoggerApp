@@ -149,7 +149,7 @@ Item {
                 height: root.buttonSize + vScaleControl._pad * 2
                 width: vScaleControl.menuOpen ? vScaleControl._openW : 0
                 radius: height / 2
-                color: AppPalette.bg
+                color: AppPalette.glassSurface
                 border.width: 0
                 opacity: vScaleControl.menuOpen ? 1 : 0
                 visible: opacity > 0.01
@@ -175,8 +175,8 @@ Item {
                         height: root.buttonSize
                         iconSource: "qrc:/icons/ui/zoom_cancel.svg"
                         iconTintColor: AppPalette.text
-                        fillColor: AppPalette.card
-                        fillHoverColor: AppPalette.cardHover
+                        fillColor: AppPalette.glassControl
+                        fillHoverColor: AppPalette.glassControlHover
                         borderColor: AppPalette.border
                         toolTipText: qsTr("Reset scaling coefficient")
                         enabled: vScaleControl.active
@@ -223,9 +223,9 @@ Item {
                 anchors.fill: parent
                 iconSource: "qrc:/icons/ui/line-height.svg"
                 iconTintColor: AppPalette.text
-                fillHoverColor: vScaleControl.active ? AppPalette.accentBgHover : AppPalette.cardHover
-                fillPressedColor: vScaleControl.active ? AppPalette.accentBgPressed : AppPalette.bgDeep
-                fillColor: vScaleControl.active ? AppPalette.accentBgStrong : AppPalette.card
+                fillHoverColor: vScaleControl.active ? AppPalette.accentBgHover : AppPalette.glassControlHover
+                fillPressedColor: vScaleControl.active ? AppPalette.accentBgPressed : AppPalette.glassControlPressed
+                fillColor: vScaleControl.active ? AppPalette.accentBgStrong : AppPalette.glassControl
                 borderColor: vScaleControl.active ? AppPalette.accentBorder : AppPalette.border
                 borderWidth: vScaleControl.active ? 2 : 0
                 toolTipText: qsTr("Vertical scale")
@@ -241,8 +241,8 @@ Item {
             Layout.preferredHeight: root.buttonSize
             iconSource: "qrc:/icons/ui/zoom-in.svg"
             iconTintColor: AppPalette.text
-            fillColor: AppPalette.card
-            fillHoverColor: AppPalette.cardHover
+            fillColor: AppPalette.glassControl
+            fillHoverColor: AppPalette.glassControlHover
             borderColor: AppPalette.border
             toolTipText: qsTr("Zoom in")
             onClicked: { root.cancelRuler(); root.closePills(); root._zoom(+4) }
@@ -256,8 +256,8 @@ Item {
             Layout.preferredHeight: root.buttonSize
             iconSource: "qrc:/icons/ui/zoom-out.svg"
             iconTintColor: AppPalette.text
-            fillColor: AppPalette.card
-            fillHoverColor: AppPalette.cardHover
+            fillColor: AppPalette.glassControl
+            fillHoverColor: AppPalette.glassControlHover
             borderColor: AppPalette.border
             toolTipText: qsTr("Zoom out")
             onClicked: { root.cancelRuler(); root.closePills(); root._zoom(-4) }
@@ -287,7 +287,7 @@ Item {
                 height: root.buttonSize + navArrowControl._pad * 2
                 width: navArrowControl.pending ? navArrowControl._openW : 0
                 radius: height / 2
-                color: AppPalette.bg
+                color: AppPalette.glassSurface
                 border.width: 0
                 opacity: navArrowControl.pending ? 1 : 0
                 visible: opacity > 0.01
@@ -322,12 +322,12 @@ Item {
                 anchors.fill: parent
                 iconSource: "qrc:/icons/ui/location.svg"
                 iconTintColor: AppPalette.text
-                fillHoverColor: checked ? AppPalette.accentBgHover : AppPalette.cardHover
-                fillPressedColor: checked ? AppPalette.accentBgPressed : AppPalette.bgDeep
+                fillHoverColor: checked ? AppPalette.accentBgHover : AppPalette.glassControlHover
+                fillPressedColor: checked ? AppPalette.accentBgPressed : AppPalette.glassControlPressed
                 toolTipText: qsTr("Follow boat")
 
                 readonly property bool checked: root.store ? root.store.trackLastDataEnabled : false
-                fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
+                fillColor: checked ? AppPalette.accentBgStrong : AppPalette.glassControl
                 borderColor: checked ? AppPalette.accentBorder : AppPalette.border
                 borderWidth: checked ? 2 : 0
 
@@ -381,7 +381,7 @@ Item {
                 height: root.buttonSize + rulerControl._pad * 2
                 width: rulerControl.menuOpen ? rulerControl._openW : 0
                 radius: height / 2
-                color: AppPalette.bg
+                color: AppPalette.glassSurface
                 border.width: 0
                 opacity: rulerControl.menuOpen ? 1 : 0
                 visible: opacity > 0.01
@@ -407,8 +407,8 @@ Item {
                         height: root.buttonSize
                         iconSource: "qrc:/icons/ui/check.svg"
                         iconTintColor: AppPalette.text
-                        fillColor: AppPalette.card
-                        fillHoverColor: AppPalette.cardHover
+                        fillColor: AppPalette.glassControl
+                        fillHoverColor: AppPalette.glassControlHover
                         borderColor: AppPalette.border
                         toolTipText: qsTr("Save ruler")
                         enabled: rulerControl.hasGeometry
@@ -423,8 +423,8 @@ Item {
                         height: root.buttonSize
                         iconSource: "qrc:/icons/ui/x.svg"
                         iconTintColor: AppPalette.text
-                        fillColor: AppPalette.card
-                        fillHoverColor: AppPalette.cardHover
+                        fillColor: AppPalette.glassControl
+                        fillHoverColor: AppPalette.glassControlHover
                         borderColor: AppPalette.border
                         toolTipText: qsTr("Delete ruler")
                         onClicked: {
@@ -442,9 +442,9 @@ Item {
                 visible: !rulerControl.menuOpen
                 iconSource: "qrc:/icons/ui/ruler_measure.svg"
                 iconTintColor: AppPalette.text
-                fillHoverColor: rulerControl.hasGeometry ? AppPalette.accentBgHover : AppPalette.cardHover
-                fillPressedColor: rulerControl.hasGeometry ? AppPalette.accentBgPressed : AppPalette.bgDeep
-                fillColor:   rulerControl.hasGeometry ? AppPalette.accentBgStrong : AppPalette.card
+                fillHoverColor: rulerControl.hasGeometry ? AppPalette.accentBgHover : AppPalette.glassControlHover
+                fillPressedColor: rulerControl.hasGeometry ? AppPalette.accentBgPressed : AppPalette.glassControlPressed
+                fillColor:   rulerControl.hasGeometry ? AppPalette.accentBgStrong : AppPalette.glassControl
                 borderColor: rulerControl.hasGeometry ? AppPalette.accentBorder : AppPalette.border
                 borderWidth: rulerControl.hasGeometry ? 2 : 0
                 toolTipText: qsTr("Ruler")
@@ -463,8 +463,8 @@ Item {
             Layout.preferredHeight: root.buttonSize
             iconSource: "qrc:/icons/ui/settings.svg"
             iconTintColor: AppPalette.text
-            fillColor: AppPalette.card
-            fillHoverColor: AppPalette.cardHover
+            fillColor: AppPalette.glassControl
+            fillHoverColor: AppPalette.glassControlHover
             borderColor: AppPalette.border
             toolTipText: qsTr("3D scene settings")
             visible: root.store !== null
@@ -489,11 +489,11 @@ Item {
                 Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/point.svg"
                 iconTintColor: AppPalette.text
-                fillHoverColor: checked ? AppPalette.accentBgHover : AppPalette.cardHover
-                fillPressedColor: checked ? AppPalette.accentBgPressed : AppPalette.bgDeep
+                fillHoverColor: checked ? AppPalette.accentBgHover : AppPalette.glassControlHover
+                fillPressedColor: checked ? AppPalette.accentBgPressed : AppPalette.glassControlPressed
                 toolTipText: qsTr("Point")
                 property bool checked: root.geo ? root.geo.tool === 1 : false
-                fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
+                fillColor: checked ? AppPalette.accentBgStrong : AppPalette.glassControl
                 borderColor: checked ? AppPalette.accentBorder : AppPalette.border
                 borderWidth: checked ? 2 : 0
                 onClicked: { root.cancelRuler(); root.closePills(); if (root.geo) root.geo.tool = (root.geo.tool === 1 ? 0 : 1) }
@@ -506,11 +506,11 @@ Item {
                 Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/line.svg"
                 iconTintColor: AppPalette.text
-                fillHoverColor: checked ? AppPalette.accentBgHover : AppPalette.cardHover
-                fillPressedColor: checked ? AppPalette.accentBgPressed : AppPalette.bgDeep
+                fillHoverColor: checked ? AppPalette.accentBgHover : AppPalette.glassControlHover
+                fillPressedColor: checked ? AppPalette.accentBgPressed : AppPalette.glassControlPressed
                 toolTipText: qsTr("Line")
                 property bool checked: root.geo ? root.geo.tool === 2 : false
-                fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
+                fillColor: checked ? AppPalette.accentBgStrong : AppPalette.glassControl
                 borderColor: checked ? AppPalette.accentBorder : AppPalette.border
                 borderWidth: checked ? 2 : 0
                 onClicked: { root.cancelRuler(); root.closePills(); if (root.geo) root.geo.tool = (root.geo.tool === 2 ? 0 : 2) }
@@ -523,11 +523,11 @@ Item {
                 Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/polygon.svg"
                 iconTintColor: AppPalette.text
-                fillHoverColor: checked ? AppPalette.accentBgHover : AppPalette.cardHover
-                fillPressedColor: checked ? AppPalette.accentBgPressed : AppPalette.bgDeep
+                fillHoverColor: checked ? AppPalette.accentBgHover : AppPalette.glassControlHover
+                fillPressedColor: checked ? AppPalette.accentBgPressed : AppPalette.glassControlPressed
                 toolTipText: qsTr("Polygon")
                 property bool checked: root.geo ? root.geo.tool === 3 : false
-                fillColor: checked ? AppPalette.accentBgStrong : AppPalette.card
+                fillColor: checked ? AppPalette.accentBgStrong : AppPalette.glassControl
                 borderColor: checked ? AppPalette.accentBorder : AppPalette.border
                 borderWidth: checked ? 2 : 0
                 onClicked: { root.cancelRuler(); root.closePills(); if (root.geo) root.geo.tool = (root.geo.tool === 3 ? 0 : 3) }
@@ -545,8 +545,8 @@ Item {
                 Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/file-check.svg"
                 iconTintColor: AppPalette.text
-                fillColor: AppPalette.card
-                fillHoverColor: AppPalette.cardHover
+                fillColor: AppPalette.glassControl
+                fillHoverColor: AppPalette.glassControlHover
                 toolTipText: qsTr("Finish drawing")
                 enabled: root.geo ? root.geo.drawing : false
                 onClicked: if (root.geo) root.geo.finishDrawing()
@@ -559,8 +559,8 @@ Item {
                 Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/repeat.svg"
                 iconTintColor: AppPalette.text
-                fillColor: AppPalette.card
-                fillHoverColor: AppPalette.cardHover
+                fillColor: AppPalette.glassControl
+                fillHoverColor: AppPalette.glassControlHover
                 toolTipText: qsTr("Undo")
                 enabled: root.geo ? root.geo.drawing : false
                 onClicked: if (root.geo) root.geo.undoLastVertex()
@@ -573,8 +573,8 @@ Item {
                 Layout.preferredHeight: root.buttonSize
                 iconSource: "qrc:/icons/ui/x.svg"
                 iconTintColor: AppPalette.text
-                fillColor: AppPalette.card
-                fillHoverColor: AppPalette.cardHover
+                fillColor: AppPalette.glassControl
+                fillHoverColor: AppPalette.glassControlHover
                 toolTipText: qsTr("Cancel drawing")
                 enabled: root.geo ? root.geo.drawing : false
                 onClicked: if (root.geo) root.geo.cancelDrawing()

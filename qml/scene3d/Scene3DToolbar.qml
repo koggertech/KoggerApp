@@ -97,8 +97,8 @@ Item  {
             Layout.preferredHeight: toolbarRoot.buttonSize
             iconSource: "qrc:/icons/ui/fit-in-view.svg"
             iconTintColor: AppPalette.text
-            fillColor: AppPalette.card
-            fillHoverColor: AppPalette.cardHover
+            fillColor: AppPalette.glassControl
+            fillHoverColor: AppPalette.glassControlHover
             borderColor: AppPalette.border
             toolTipText: qsTr("Reset camera")
             onClicked: { toolbarRoot.cancelRuler(); Scene3dToolBarController.onSetCameraMapViewButtonClicked() }

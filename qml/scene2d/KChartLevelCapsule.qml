@@ -21,11 +21,13 @@ Rectangle {
     property int capsuleWidth: Math.round(40 * AppPalette.scale)
     // Pill by default (2D echogram overlay); settings override to a rounded rectangle.
     property real cornerRadius: width / 2
+    property color fillColor: AppPalette.card
+    property color fillHoverColor: AppPalette.cardHover
 
     implicitWidth: capsuleWidth
     implicitHeight: col.implicitHeight + Math.round(20 * AppPalette.scale)
     radius: cornerRadius
-    color: capsuleHover.hovered ? AppPalette.cardHover : AppPalette.card
+    color: capsuleHover.hovered ? root.fillHoverColor : root.fillColor
     border.width: Tokens.cardBorderWidth
     border.color: capsuleHover.hovered ? AppPalette.borderHover : AppPalette.border
 

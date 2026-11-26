@@ -85,6 +85,10 @@ QtObject {
     readonly property color chipRaisedHover: isDark ? Qt.lighter(controlRaised, 1.2) : Qt.darker(card, 1.20)
     readonly property real glassAlpha: 0.72
     readonly property real glassControlAlpha: 0.55
+    readonly property color glassSurface: Qt.rgba(bg.r, bg.g, bg.b, glassAlpha)
+    readonly property color glassControl: Qt.rgba(card.r, card.g, card.b, glassControlAlpha)
+    readonly property color glassControlHover: Qt.rgba(cardHover.r, cardHover.g, cardHover.b, glassAlpha)
+    readonly property color glassControlPressed: Qt.rgba(bgDeep.r, bgDeep.g, bgDeep.b, glassAlpha)
 
     // ── Borders ───────────────────────────────────────────────────────────────
     readonly property color border:      theme ? theme.controlBorderColor       : (isDark ? "#334155" : "#E2E8F0")

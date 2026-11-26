@@ -28,6 +28,14 @@ Item {
         clip: true
     }
 
+    KGlassBackdrop {
+        anchors.fill: parent
+        z: 0.5
+        source: hostSurface
+        maskItem: toolbarLayer
+        captureScale: 0.5
+    }
+
     Item {
         id: toolbarLayer
         anchors.fill: parent

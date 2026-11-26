@@ -596,8 +596,34 @@ WaterFall {
         }
     }
 
+    Item {
+        id: controlsOverlay
+        parent: plot.parent ? plot.parent : plot
+        x: parent === plot ? 0 : plot.x
+        y: parent === plot ? 0 : plot.y
+        width: plot.width
+        height: plot.height
+        z: 20
+        visible: plot.visible
+        enabled: plot.enabled
+    }
+
+    KGlassBackdrop {
+        parent: controlsOverlay.parent
+        x: controlsOverlay.x
+        y: controlsOverlay.y
+        width: controlsOverlay.width
+        height: controlsOverlay.height
+        z: controlsOverlay.z - 0.5
+        source: controlsOverlay.parent !== plot ? plot : null
+        maskItem: controlsOverlay
+        captureScale: 0.5
+        visible: controlsOverlay.visible
+    }
+
     ColumnLayout {
         id: settingsRow
+        parent: controlsOverlay
 
         readonly property int _scrollClearance: Math.round(44 * AppPalette.scale)
 
@@ -677,8 +703,8 @@ WaterFall {
                 glyph: (scaleSlot.vModified ? "V" : "") + (scaleSlot.hModified ? "H" : "")
                 glyphPixelSize: Math.round((glyph.length > 1 ? 13 : 16) * AppPalette.scale)
                 glyphColor: AppPalette.text
-                fillColor: AppPalette.card
-                fillHoverColor: AppPalette.cardHover
+                fillColor: AppPalette.glassControl
+                fillHoverColor: AppPalette.glassControlHover
                 borderWidth: 0
                 z: 16
                 toolTipText: qsTr("Echogram scale changed")
@@ -699,7 +725,7 @@ WaterFall {
                 width: open ? fullW : 0
                 radius: height / 2
                 clip: true
-                color: AppPalette.bg
+                color: AppPalette.glassSurface
                 border.width: 0
                 opacity: open ? 1 : 0
                 z: 15
@@ -736,8 +762,8 @@ WaterFall {
                         glyph: "V  " + scaleSlot.formatVertical()
                         glyphPixelSize: scaleSlot.chipFontSize
                         glyphColor: AppPalette.text
-                        fillColor: AppPalette.card
-                        fillHoverColor: AppPalette.cardHover
+                        fillColor: AppPalette.glassControl
+                        fillHoverColor: AppPalette.glassControlHover
                         borderWidth: 0
                         toolTipText: qsTr("Reset vertical scale")
                         onClicked: { plot.resetVerticalScaleFromUi(); scalePill.close() }
@@ -751,8 +777,8 @@ WaterFall {
                         glyph: "H  " + scaleSlot.formatScale(plot.horizontalScale)
                         glyphPixelSize: scaleSlot.chipFontSize
                         glyphColor: AppPalette.text
-                        fillColor: AppPalette.card
-                        fillHoverColor: AppPalette.cardHover
+                        fillColor: AppPalette.glassControl
+                        fillHoverColor: AppPalette.glassControlHover
                         borderWidth: 0
                         toolTipText: qsTr("Reset horizontal scale")
                         onClicked: { plot.resetHorizontalScaleFromUi(); scalePill.close() }
@@ -786,6 +812,8 @@ WaterFall {
 
             KChartLevelCapsule {
                 id: echogramLevelsSlider
+                fillColor: AppPalette.glassControl
+                fillHoverColor: AppPalette.glassControlHover
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: plot.controlButtonSize
                 capsuleWidth: plot.controlButtonSize
@@ -807,8 +835,8 @@ WaterFall {
                 height: plot.controlButtonSize
                 iconSource: "qrc:/icons/ui/adjustments_horizontal.svg"
                 iconTintColor: AppPalette.text
-                fillColor: AppPalette.card
-                fillHoverColor: AppPalette.cardHover
+                fillColor: AppPalette.glassControl
+                fillHoverColor: AppPalette.glassControlHover
                 borderWidth: 0
                 z: 16
                 toolTipText: qsTr("Echogram levels")
@@ -842,7 +870,7 @@ WaterFall {
                 width: open ? fullW : 0
                 radius: height / 2
                 clip: true
-                color: AppPalette.bg
+                color: AppPalette.glassSurface
                 border.width: 0
                 opacity: open ? 1 : 0
                 z: 15
@@ -909,8 +937,8 @@ WaterFall {
             height: plot.controlButtonSize
             iconSource: "qrc:/icons/ui/settings.svg"
             iconTintColor: AppPalette.text
-            fillColor: AppPalette.card
-            fillHoverColor: AppPalette.cardHover
+            fillColor: AppPalette.glassControl
+            fillHoverColor: AppPalette.glassControlHover
             borderWidth: 0
             toolTipText: qsTr("Echogram settings")
             onClicked: { if (typeof core !== "undefined" && core) core.requestDismissTransientUi(); settingsClicked() }

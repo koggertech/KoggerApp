@@ -10,6 +10,7 @@ Item {
     property Item maskItem: null
     property real radius: 0
     property int blurPx: 40
+    property real captureScale: 1.0
 
     readonly property int pad: blurPx
     readonly property point _spaceOffset: {
@@ -28,14 +29,32 @@ Item {
                                        && inSource.x < source.width && inSource.x + inSource.width > 0
                                        && inSource.y < source.height && inSource.y + inSource.height > 0
     readonly property bool active: visible && overSource
+    readonly property rect captureRect: {
+        if (!source)
+            return Qt.rect(0, 0, 0, 0)
+        var r = inSource
+        var x0 = r.x - pad
+        var y0 = r.y - pad
+        var x1 = r.x + r.width + pad
+        var y1 = r.y + r.height + pad
+        if (r.x >= 0)
+            x0 = Math.max(x0, 0)
+        if (r.y >= 0)
+            y0 = Math.max(y0, 0)
+        if (r.x + r.width <= source.width)
+            x1 = Math.min(x1, source.width)
+        if (r.y + r.height <= source.height)
+            y1 = Math.min(y1, source.height)
+        return Qt.rect(x0, y0, Math.max(1, x1 - x0), Math.max(1, y1 - y0))
+    }
 
     readonly property Item _rectShape: Item {
         width: capture.width
         height: capture.height
 
         Rectangle {
-            x: glass.pad + 1
-            y: glass.pad + 1
+            x: 1 - capture.x
+            y: 1 - capture.y
             width: Math.max(0, glass.width - 2)
             height: Math.max(0, glass.height - 2)
             radius: Math.max(0, glass.radius - 1)
@@ -48,12 +67,16 @@ Item {
 
     ShaderEffectSource {
         id: capture
-        x: -glass.pad
-        y: -glass.pad
-        width: glass.width + glass.pad * 2
-        height: glass.height + glass.pad * 2
+        x: glass.captureRect.x - glass.inSource.x
+        y: glass.captureRect.y - glass.inSource.y
+        width: glass.captureRect.width
+        height: glass.captureRect.height
         sourceItem: glass.active ? glass.source : null
-        sourceRect: Qt.rect(glass.inSource.x - glass.pad, glass.inSource.y - glass.pad, width, height)
+        sourceRect: glass.captureRect
+        textureSize: glass.captureScale < 1
+                     ? Qt.size(Math.max(1, Math.round(width * glass.captureScale)),
+                               Math.max(1, Math.round(height * glass.captureScale)))
+                     : Qt.size(0, 0)
         live: glass.active
         visible: false
     }
@@ -63,7 +86,7 @@ Item {
         width: capture.width
         height: capture.height
         sourceItem: glass.active ? glass.maskItem : null
-        sourceRect: Qt.rect(-glass.pad, -glass.pad, width, height)
+        sourceRect: Qt.rect(capture.x, capture.y, width, height)
         live: glass.active && glass.maskItem !== null
         visible: false
     }

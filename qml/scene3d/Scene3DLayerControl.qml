@@ -56,7 +56,7 @@ Item {
         width: root.buttonSize + root._pad * 2
         height: root.menuOpen ? root._openH : 0
         radius: width / 2
-        color: AppPalette.bg
+        color: AppPalette.glassSurface
         border.width: 0
         opacity: root.menuOpen ? 1 : 0
         visible: opacity > 0.01
@@ -82,8 +82,8 @@ Item {
                 visible: root.hasAction
                 iconSource: root.actionIconSource
                 iconTintColor: AppPalette.text
-                fillColor: AppPalette.card
-                fillHoverColor: AppPalette.cardHover
+                fillColor: AppPalette.glassControl
+                fillHoverColor: AppPalette.glassControlHover
                 borderColor: AppPalette.border
                 toolTipText: root.actionToolTipText
                 onClicked: {
@@ -97,8 +97,8 @@ Item {
                 height: root.buttonSize
                 iconSource: "qrc:/icons/ui/settings.svg"
                 iconTintColor: AppPalette.text
-                fillColor: AppPalette.card
-                fillHoverColor: AppPalette.cardHover
+                fillColor: AppPalette.glassControl
+                fillHoverColor: AppPalette.glassControlHover
                 borderColor: AppPalette.border
                 toolTipText: qsTr("Layer settings")
                 onClicked: {
@@ -120,8 +120,8 @@ Item {
                 height: root.buttonSize
                 iconSource: root.active ? "qrc:/icons/ui/eye.svg" : "qrc:/icons/ui/eye-off.svg"
                 iconTintColor: AppPalette.text
-                fillColor:      root.active ? AppPalette.accentBgStrong : AppPalette.card
-                fillHoverColor: root.active ? AppPalette.accentBorder : AppPalette.cardHover
+                fillColor:      root.active ? AppPalette.accentBgStrong : AppPalette.glassControl
+                fillHoverColor: root.active ? AppPalette.accentBorder : AppPalette.glassControlHover
                 borderColor:    root.active ? AppPalette.accentBorder : AppPalette.border
                 borderWidth:    root.active ? 2 : 0
                 toolTipText: root.active ? qsTr("Hide") : qsTr("Show")
@@ -167,10 +167,10 @@ Item {
         anchors.fill: parent
         iconSource: root.iconSource
         iconTintColor: AppPalette.text
-        fillHoverColor: root.active ? AppPalette.accentBgHover : AppPalette.cardHover
-        fillPressedColor: root.active ? AppPalette.accentBgPressed : AppPalette.bgDeep
+        fillHoverColor: root.active ? AppPalette.accentBgHover : AppPalette.glassControlHover
+        fillPressedColor: root.active ? AppPalette.accentBgPressed : AppPalette.glassControlPressed
         fillColor:   root.active ? AppPalette.accentBgStrong
-                                 : (root.menuOpen ? "transparent" : AppPalette.card)
+                                 : (root.menuOpen ? "transparent" : AppPalette.glassControl)
         borderColor: root.active ? AppPalette.accentBorder : AppPalette.border
         borderWidth: root.active ? 2 : 0
         toolTipText: root.toolTipText
