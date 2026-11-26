@@ -470,47 +470,47 @@
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="380"/>
         <source>USBL diagnostics to CSV</source>
-        <translation type="unfinished"></translation>
+        <translation>Диагностика USBL в CSV</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="381"/>
         <source>Only the antenna diagnostics reports, one row per report</source>
-        <translation type="unfinished"></translation>
+        <translation>Только отчёты диагностики антенны, по строке на отчёт</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="391"/>
         <source>Fragment: first epoch</source>
-        <translation type="unfinished"></translation>
+        <translation>Фрагмент: первая эпоха</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="405"/>
         <source>Fragment: last epoch</source>
-        <translation type="unfinished"></translation>
+        <translation>Фрагмент: последняя эпоха</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="419"/>
         <source>Take the echogram&apos;s visible range</source>
-        <translation type="unfinished"></translation>
+        <translation>Взять видимый диапазон эхограммы</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="420"/>
         <source>Fill the bounds with the first and last epoch the echogram is showing</source>
-        <translation type="unfinished"></translation>
+        <translation>Заполнить границы первой и последней эпохой, видимыми на эхограмме</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="436"/>
         <source>Save KLF fragment</source>
-        <translation type="unfinished"></translation>
+        <translation>Сохранить фрагмент KLF</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="438"/>
         <source>%1 of %2 epochs</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 из %2 эпох</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="441"/>
         <source>The first epoch is after the last one</source>
-        <translation type="unfinished"></translation>
+        <translation>Первая эпоха позже последней</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="765"/>
@@ -1577,6 +1577,11 @@
         <location filename="../qml/app/AppSettingsPage.qml" line="2408"/>
         <source>Acoustic nodes</source>
         <translation>Акустические узлы</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="255"/>
+        <source>Export plot data as XTF or CSV (regular or complex).</source>
+        <translation>Экспорт датасета в XTF или CSV (обычный или комплексный).</translation>
     </message>
 </context>
 <context>

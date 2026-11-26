@@ -251,11 +251,14 @@ Column {
         preferredWidth: root.groupWidth
         title: qsTr("Export")
         iconSource: "qrc:/icons/ui/file_export.svg"
-        description: qsTr("Export plot data as XTF, CSV (regular or complex) or USBL.")
+        description: hasUsbl ? qsTr("Export plot data as XTF, CSV (regular or complex) or USBL.")
+                             : qsTr("Export plot data as XTF or CSV (regular or complex).")
         stateStore: root.store
         stateKey: "app.export"
         collapsedByDefault: true
         contentSpacing: Tokens.spaceSm
+
+        readonly property bool hasUsbl: (typeof dataset !== "undefined" && dataset) ? dataset.hasUsblData : false
 
         function currentExportPath() {
             return root.store ? root.store.exportFolderSource : ""
@@ -363,13 +366,14 @@ Column {
             }
 
             KIslandRow {
+                visible: exportGroup.hasUsbl
                 label: qsTr("USBL to CSV")
                 interactive: true
                 onClicked: core.exportUSBLToCSV(exportGroup.currentExportPath())
             }
 
             KIslandRow {
-                visible: !!(root.store && root.store.developerMode)
+                visible: exportGroup.hasUsbl && !!(root.store && root.store.developerMode)
                 label: qsTr("USBL diagnostics to CSV")
                 toolTipText: qsTr("Only the antenna diagnostics reports, one row per report")
                 interactive: true

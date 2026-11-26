@@ -490,47 +490,47 @@
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="380"/>
         <source>USBL diagnostics to CSV</source>
-        <translation type="unfinished"></translation>
+        <translation>USBL diagnostics to CSV</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="381"/>
         <source>Only the antenna diagnostics reports, one row per report</source>
-        <translation type="unfinished"></translation>
+        <translation>Only the antenna diagnostics reports, one row per report</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="391"/>
         <source>Fragment: first epoch</source>
-        <translation type="unfinished"></translation>
+        <translation>Fragment: first epoch</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="405"/>
         <source>Fragment: last epoch</source>
-        <translation type="unfinished"></translation>
+        <translation>Fragment: last epoch</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="419"/>
         <source>Take the echogram&apos;s visible range</source>
-        <translation type="unfinished"></translation>
+        <translation>Take the echogram&apos;s visible range</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="420"/>
         <source>Fill the bounds with the first and last epoch the echogram is showing</source>
-        <translation type="unfinished"></translation>
+        <translation>Fill the bounds with the first and last epoch the echogram is showing</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="436"/>
         <source>Save KLF fragment</source>
-        <translation type="unfinished"></translation>
+        <translation>Save KLF fragment</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="438"/>
         <source>%1 of %2 epochs</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 of %2 epochs</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="441"/>
         <source>The first epoch is after the last one</source>
-        <translation type="unfinished"></translation>
+        <translation>The first epoch is after the last one</translation>
     </message>
     <message>
         <location filename="../qml/app/AppSettingsPage.qml" line="706"/>
@@ -1577,6 +1577,11 @@
         <location filename="../qml/app/AppSettingsPage.qml" line="2408"/>
         <source>Acoustic nodes</source>
         <translation>Acoustic nodes</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="255"/>
+        <source>Export plot data as XTF or CSV (regular or complex).</source>
+        <translation>Export plot data as XTF or CSV (regular or complex).</translation>
     </message>
 </context>
 <context>
