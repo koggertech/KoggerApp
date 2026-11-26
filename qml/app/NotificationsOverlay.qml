@@ -14,6 +14,7 @@ Item {
 
     property bool hideImportant: false
     property bool suppressed: false
+    property Item glassSource: null
 
     visible: !root.suppressed
 
@@ -104,6 +105,7 @@ Item {
     ListModel { id: notificationsModel }
 
     Column {
+        id: stack
         anchors.top: parent.top
         anchors.topMargin: Tokens.spaceLg
         anchors.horizontalCenter: parent.horizontalCenter
@@ -122,7 +124,7 @@ Item {
     Component {
         id: notificationCardComponent
 
-        Rectangle {
+        Item {
             id: card
 
             readonly property bool isWarning: model.kind === 1
@@ -197,11 +199,19 @@ Item {
                               + Tokens.spaceMd + closeButton.width + Tokens.spaceLg)
             height: Math.max(Tokens.controlHLg, messageText.height + 2 * Tokens.spaceLg)
                     + (card.isProgress ? progressTrack.height + Tokens.spaceMd : 0)
-            radius: Tokens.radiusLg
-            color: AppPalette.card
-            border.width: 1
-            border.color: isProgress ? AppPalette.accentBorder
-                                     : (isWarning ? AppPalette.dangerBorder : AppPalette.border)
+
+            KGlassPanel {
+                id: cardGlass
+                anchors.fill: parent
+                source: root.glassSource
+                originSpace: root
+                origin: Qt.point(stack.x + card.x, stack.y + card.y)
+                radius: Tokens.radiusLg
+                fillColor: AppPalette.card
+                borderColor: card.isProgress ? AppPalette.accentBorder
+                                             : (card.isWarning ? AppPalette.dangerBorder : AppPalette.border)
+                borderWidth: 1
+            }
 
             function dismiss() {
                 if (closing)
@@ -357,7 +367,7 @@ Item {
                 glyph: "×"
                 glyphPixelSize: Math.round(12 * AppPalette.scale)
                 fillColor: "transparent"
-                fillHoverColor: AppPalette.cardHover
+                fillHoverColor: cardGlass.tint(AppPalette.cardHover, AppPalette.glassAlpha)
                 borderColor: "transparent"
                 onClicked: card.dismiss()
             }        }

@@ -18,6 +18,7 @@ Rectangle {
     readonly property int headerBtn: toolSize
     readonly property bool tracing: ctl ? (ctl.tool === 6 || ctl.tool === 7 || ctl.tool === 9) : false
     readonly property int panelWidth: Math.min(Math.round(340 * _s), Math.round(width * 0.42))
+    readonly property Item glassSurface: hostSurface
 
     property int rev: 0
     property string draggingItemId: ""
