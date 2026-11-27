@@ -1521,6 +1521,7 @@ readonly property bool isobathsStatusActive: developerMode && isobathsStatusMoni
 readonly property bool mosaicStatusActive: developerMode && mosaicStatusMonitor
 
 readonly property int developerUnlockTaps: 5
+readonly property var developerSettingsSubPages: ["servoPanel", "standPanel", "developer"]
 
 onDeveloperModeChanged: {
     if (!developerMode) {
@@ -1528,10 +1529,7 @@ onDeveloperModeChanged: {
             setWidgetShown(servoPanelId, false)
         if (widgetShown(standPanelId))
             setWidgetShown(standPanelId, false)
-        if (settingsSubPageActive
-                && (settingsSubPageKind === "servoPanel"
-                    || settingsSubPageKind === "standPanel"
-                    || settingsSubPageKind === "developer"))
+        if (settingsSubPageActive && developerSettingsSubPages.indexOf(settingsSubPageKind) >= 0)
             closeActiveSettingsSubPage()
     }
     _syncServoPanelAuto()
@@ -2432,6 +2430,13 @@ function openControlsHelp()         { _openSettingsSubPage("controls") }
 function openTutorialsSettings()    { _openSettingsSubPage("tutorials") }
 function openAutopilotSettings()    { _openSettingsSubPage("autopilot") }
 function openDeveloperSettings()    { _openSettingsSubPage("developer") }
+function showSettingsSubPage(kind) {
+    if (!developerMode && developerSettingsSubPages.indexOf(kind) >= 0)
+        return
+    if (settingsPanelOpen && settingsSubPageActive && !echogramSettingsActive && settingsSubPageKind === kind)
+        return
+    _openSettingsSubPage(kind)
+}
 function openLicenseView(title, file) {
     licenseViewTitle = title
     licenseViewFile = file

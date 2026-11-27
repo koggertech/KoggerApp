@@ -8,14 +8,14 @@ Notifications::Notifications(QObject* parent)
 {
 }
 
-void Notifications::info(const QString& text, const QString& actionPath)
+void Notifications::info(const QString& text, const QString& actionPath, const QString& actionSettingsPage)
 {
     const QString trimmed = text.trimmed();
     if (trimmed.isEmpty()) {
         return;
     }
     core.consoleNotification(trimmed, false);
-    emit messageRequested(0, trimmed, QString(), actionPath);
+    emit messageRequested(0, trimmed, QString(), actionPath, actionSettingsPage);
 }
 
 void Notifications::warning(const QString& text, const QString& tag, const QString& actionPath)
@@ -25,7 +25,7 @@ void Notifications::warning(const QString& text, const QString& tag, const QStri
         return;
     }
     core.consoleNotification(trimmed, true);
-    emit messageRequested(1, trimmed, tag, actionPath);
+    emit messageRequested(1, trimmed, tag, actionPath, QString());
 }
 
 void Notifications::progress(const QString& text, const QString& tag, int percent)

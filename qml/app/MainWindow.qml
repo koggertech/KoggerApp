@@ -1757,6 +1757,7 @@ ApplicationWindow {
             glassSource: missionEditorOverlay.progress >= 1 ? missionEditorOverlay.glassSurface : workspaceView
             hideImportant: workspaceStore.hideImportantNotifications
             suppressed: tutorialOverlay.active
+            onSettingsPageRequested: function(kind) { workspaceStore.showSettingsSubPage(kind) }
         }
 
         TutorialOverlay {

@@ -76,7 +76,7 @@ Column {
 
                 if (card.store.developerMode) {
                     if (!devModeNoticeCooldown.running) {
-                        notifications.info(qsTr("Developer mode is already enabled"))
+                        notifications.info(qsTr("Developer mode is already enabled"), "", "developer")
                         devModeNoticeCooldown.restart()
                     }
                     return
@@ -92,7 +92,7 @@ Column {
                     versionTapReset.stop()
                     versionLabel.taps = 0
                     card.store.developerMode = true
-                    notifications.info(qsTr("Developer mode enabled"))
+                    notifications.info(qsTr("Developer mode enabled"), "", "developer")
                 }
             }
         }

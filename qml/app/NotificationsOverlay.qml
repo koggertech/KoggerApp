@@ -19,10 +19,11 @@ Item {
     visible: !root.suppressed
 
     signal tagDismissRequested(string tag)
+    signal settingsPageRequested(string kind)
 
     readonly property int burstSlack: 2
 
-    function push(kind, text, tag, actionPath) {
+    function push(kind, text, tag, actionPath, actionSettingsPage) {
         if (root.suppressed)
             return
         for (var i = 0; i < notificationsModel.count; ++i) {
@@ -35,7 +36,8 @@ Item {
         while (notificationsModel.count >= maxVisible + burstSlack && dropOldestInfo())
             ;
         notificationsModel.append({ notificationId: nextNotificationId++, kind: kind, text: text,
-                                    tag: tag || "", actionPath: actionPath || "", closing: false,
+                                    tag: tag || "", actionPath: actionPath || "",
+                                    actionSettingsPage: actionSettingsPage || "", closing: false,
                                     percent: -2 })
     }
 
@@ -52,7 +54,8 @@ Item {
         if (notificationsModel.count >= maxVisible)
             evictOldestInfo()
         notificationsModel.insert(0, { notificationId: nextNotificationId++, kind: 2, text: text,
-                                       tag: tag, actionPath: "", closing: false, percent: percent })
+                                       tag: tag, actionPath: "", actionSettingsPage: "", closing: false,
+                                       percent: percent })
     }
 
     function evictOldestInfo() {
@@ -97,7 +100,9 @@ Item {
     Connections {
         target: typeof notifications !== "undefined" ? notifications : null
         ignoreUnknownSignals: true
-        function onMessageRequested(kind, text, tag, actionPath) { root.push(kind, text, tag, actionPath) }
+        function onMessageRequested(kind, text, tag, actionPath, actionSettingsPage) {
+            root.push(kind, text, tag, actionPath, actionSettingsPage)
+        }
         function onProgressRequested(text, tag, percent) { root.pushProgress(text, tag, percent) }
         function onDismissRequested(tag) { root.tagDismissRequested(tag) }
     }
@@ -129,7 +134,10 @@ Item {
 
             readonly property bool isWarning: model.kind === 1
             readonly property bool isProgress: model.kind === 2
-            readonly property bool hasAction: model.actionPath !== undefined && model.actionPath.length > 0
+            readonly property bool hasPath: model.actionPath !== undefined && model.actionPath.length > 0
+            readonly property bool hasSettingsPage: model.actionSettingsPage !== undefined
+                                                    && model.actionSettingsPage.length > 0
+            readonly property bool hasAction: hasPath || hasSettingsPage
             readonly property bool autoDismiss: !isProgress && (!isWarning || root.hideImportant)
             readonly property bool showClose: !isProgress && (hasAction || (isWarning && !root.hideImportant))
             readonly property real maxWidth: hasAction
@@ -268,11 +276,14 @@ Item {
                 cursorShape: card.autoDismiss ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: function(m) {
                     m.accepted = true
-                    var path = card.hasAction ? String(model.actionPath) : ""
+                    var path = card.hasPath ? String(model.actionPath) : ""
+                    var settingsPage = card.hasSettingsPage ? String(model.actionSettingsPage) : ""
                     if (card.autoDismiss)
                         card.dismiss()
                     if (path.length > 0)
                         Qt.callLater(root.reveal, path)
+                    if (settingsPage.length > 0)
+                        root.settingsPageRequested(settingsPage)
                 }
                 onWheel: function(w) { w.accepted = true }
             }
