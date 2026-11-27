@@ -60,7 +60,7 @@ class LinkLossPolicy : public QObject
     Q_PROPERTY(QString outcomeText READ outcomeText NOTIFY changed)
 
 public:
-    enum Choice {
+    enum Choice : qint8 {
         ChoiceUnknown = -1,
         ChoiceNothing = 0,
         ChoiceHold,
@@ -71,7 +71,7 @@ public:
     };
     Q_ENUM(Choice)
 
-    enum Outcome {
+    enum Outcome : quint8 {
         OutcomeUnknown = 0,
         OutcomeNothing,
         OutcomeMission,

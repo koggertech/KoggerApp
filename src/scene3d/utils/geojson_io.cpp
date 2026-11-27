@@ -153,7 +153,7 @@ Result loadFromFile(const QString& path)
 
     QString err;
     if (!parseFeatureCollection(doc.object(), &r.doc, &err)) {
-        r.error = err;
+        r.error = std::move(err);
         return r;
     }
 

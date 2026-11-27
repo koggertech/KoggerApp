@@ -142,7 +142,7 @@ void Epoch::setChartParameters(const ChannelId& channelId, const ChartParameters
 // }
 
 void Epoch::setComplexF(const ChannelId& channelId, int group, QVector<ComplexSignal> signal) {
-    _complex[channelId][group] = signal;
+    _complex[channelId][group] = std::move(signal);
 }
 
 void Epoch::setDist(const ChannelId& channelId, int dist) {
@@ -178,13 +178,13 @@ void Epoch::setPositionLLA(double lat, double lon, LLARef* ref, uint32_t unix_ti
 }
 
 void Epoch::setPositionLLA(Position position) {
-    _positionGNSS = position;
+    _positionGNSS = std::move(position);
     flags.posAvail = true;
 }
 
 void Epoch::setSonarPosition(Position val)
 {
-    sonarPosition_ = val;
+    sonarPosition_ = std::move(val);
     flags.sonarPosAvail = true;
 }
 
@@ -199,7 +199,7 @@ void Epoch::setPositionNED(const NED &ned)
 }
 
 void Epoch::setExternalPosition(Position position) {
-    _positionExternal = position;
+    _positionExternal = std::move(position);
 }
 
 void Epoch::setGnssAltitudeMsl(double altitudeMsl) {

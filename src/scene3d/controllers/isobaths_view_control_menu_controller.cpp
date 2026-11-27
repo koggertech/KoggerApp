@@ -587,7 +587,7 @@ bool IsobathsViewControlMenuController::startSurfaceExport(const QString& path, 
     }
 
     exportParams_ = SurfaceExportParams();
-    exportParams_.path = filePath;
+    exportParams_.path = std::move(filePath);
     exportParams_.zoom = SurfaceGridExport::zoomFromQuality(quality);
     exportParams_.extrapolation = extrapolation;
     exportParams_.depthOffset = static_cast<float>(depthOffset);

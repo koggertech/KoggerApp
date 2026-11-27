@@ -556,7 +556,7 @@ void MissionRunTracker::updateProgress(bool force)
     }
     currentNav_ = nav;
     targetSeq_ = target;
-    currentLabel_ = label;
+    currentLabel_ = std::move(label);
     progress_ = progress;
     remainingDistance_ = remaining;
     remainingSeconds_ = seconds;
@@ -672,10 +672,9 @@ void MissionRunTracker::syncLegSpeed(int previousMode, int previousSeq)
         return;
     }
     const int seq = telemetry_.currentSeq;
-    if (previousMode >= 0 && previousMode != kRoverModeAuto) {
-        speedSyncPending_ = true;
-    } else if (previousMode == kRoverModeAuto && previousSeq >= 0 && actionable() && seq != previousSeq
-               && seq != nextNavSeq(previousSeq)) {
+    if ((previousMode >= 0 && previousMode != kRoverModeAuto)
+        || (previousMode == kRoverModeAuto && previousSeq >= 0 && actionable() && seq != previousSeq
+            && seq != nextNavSeq(previousSeq))) {
         speedSyncPending_ = true;
     }
     if (!speedSyncPending_ || !actionable() || seq < 1 || seq >= items_.size() || !items_.at(seq).navigation) {

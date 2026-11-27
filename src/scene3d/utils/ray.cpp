@@ -125,7 +125,7 @@ QPair<int, int> RayHit::indices() const
 void RayHit::setObject(std::weak_ptr<SceneObject> object)
 {
     if(m_object.lock() != object.lock())
-        m_object = object;
+        m_object = std::move(object);
 }
 
 void RayHit::setWorldIntersection(const QVector3D &intersection)

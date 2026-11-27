@@ -464,9 +464,12 @@ void MissionLayer::MissionLayerRenderImplementation::render(
             const QVector2D left(-dir.x() * kCos30 + dir.y() * kSin30, -dir.y() * kCos30 - dir.x() * kSin30);
             const QVector2D right(-dir.x() * kCos30 - dir.y() * kSin30, -dir.y() * kCos30 + dir.x() * kSin30);
             const float first = std::max(margin, t0);
-            float sPos = phase + margin + std::ceil((first - phase - margin) / spacing) * spacing;
+            const float start = phase + margin + std::ceil((first - phase - margin) / spacing) * spacing;
+            const float end = std::min(len - margin, t1);
+            const int count = start < end ? static_cast<int>(std::ceil((end - start) / spacing)) : 0;
             QVector<QVector2D> solid;
-            for (; sPos < std::min(len - margin, t1); sPos += spacing) {
+            for (int i = 0; i < count; ++i) {
+                const float sPos = start + static_cast<float>(i) * spacing;
                 const QVector2D tip = a + dir * sPos;
                 const QVector<QVector2D> verts{ss.toNdc(tip), ss.toNdc(tip + left * chevron),
                                                ss.toNdc(tip), ss.toNdc(tip + right * chevron)};

@@ -91,7 +91,7 @@ void LinkDiscovery::setPorts(const QVariantList& ports)
     }
     if (next.isEmpty() || next == ports_)
         return;
-    ports_ = next;
+    ports_ = std::move(next);
     emit portsChanged();
 }
 

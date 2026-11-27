@@ -142,9 +142,9 @@ void TileSet::resetForProviderSwitch()
 
 void TileSet::setResources(std::weak_ptr<TileProvider> provider, std::weak_ptr<TileDB> db, std::weak_ptr<TileDownloader> downloader)
 {
-    tileProvider_ = provider;
-    tileDB_ = db;
-    tileDownloader_ = downloader;
+    tileProvider_ = std::move(provider);
+    tileDB_ = std::move(db);
+    tileDownloader_ = std::move(downloader);
 
     if (auto sharedDownloader = tileDownloader_.lock(); sharedDownloader) {
         sharedDownloader->setNetworkAvailable(networkAvailable_);

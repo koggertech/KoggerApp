@@ -1184,7 +1184,7 @@ Resp IDBinUpdate::parsePayload(FrameParser &proto) {
 }
 
 void IDBinUpdate::setUpdate(QByteArray fw) {
-    _fw = fw;
+    _fw = std::move(fw);
     _currentFwOffset = 0;
     _currentNumPacket = 1;
 }

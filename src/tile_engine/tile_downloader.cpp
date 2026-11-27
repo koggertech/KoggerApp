@@ -109,7 +109,7 @@ void TileDownloader::deleteRequest(const TileIndex& tileIndx)
 
 void TileDownloader::setProvider(std::weak_ptr<TileProvider> provider)
 {
-    tileProvider_ = provider;
+    tileProvider_ = std::move(provider);
 }
 
 void TileDownloader::setNetworkAvailable(bool available)

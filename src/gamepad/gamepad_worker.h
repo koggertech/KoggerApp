@@ -18,7 +18,7 @@ class GamepadWorker : public QObject
 
 public:
     /** Why the open pad closed: SDL removed it, the virtual pad was detached, or the subsystem stopped. */
-    enum LossReason {
+    enum LossReason : quint8 {
         LossRemoved,
         LossDetached,
         LossStopped

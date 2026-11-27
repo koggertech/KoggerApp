@@ -148,7 +148,7 @@ QString DeviceManagerWrapper::modeNameFor(int mode)
 
 QString DeviceManagerWrapper::modeRefusalReason(int mode)
 {
-    const QString position = tr("while armed it needs a position estimate (GPS fix and EKF)");
+    QString position = tr("while armed it needs a position estimate (GPS fix and EKF)");
     switch (mode) {
     case 5:
     case 6:

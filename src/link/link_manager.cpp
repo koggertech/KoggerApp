@@ -546,7 +546,7 @@ bool LinkManager::reloadPinnedLinksFromXmlData(const QByteArray& xmlData,
     QString parseError;
     if (!parsePinnedLinksXmlData(xmlData, &records, &parseError)) {
         if (error) {
-            *error = parseError;
+            *error = std::move(parseError);
         }
         return false;
     }

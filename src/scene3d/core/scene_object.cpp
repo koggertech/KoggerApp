@@ -69,7 +69,7 @@ void SceneObject::setName(QString name)
         return;
     }
 
-    m_name = name;
+    m_name = std::move(name);
 
     Q_EMIT nameChanged(m_name);
     Q_EMIT changed();
@@ -171,7 +171,7 @@ void SceneObject::setFilter(std::shared_ptr<AbstractEntityDataFilter> filter)
     if(m_filter == filter)
         return;
 
-    m_filter = filter;
+    m_filter = std::move(filter);
 
     Q_EMIT changed();
 }

@@ -28,7 +28,7 @@ class AutopilotParamRows : public QAbstractListModel
     Q_OBJECT
 
 public:
-    enum Role {
+    enum Role : quint16 {
         NameRole = Qt::UserRole + 1,
         ValueTextRole,
         TypeTextRole,
@@ -64,7 +64,7 @@ class AutopilotParamGroups : public QAbstractListModel
     Q_OBJECT
 
 public:
-    enum Role {
+    enum Role : quint16 {
         KeyRole = Qt::UserRole + 1,
         TitleRole,
         CountRole

@@ -668,7 +668,7 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
                     return;
                 }
                 geoJsonDragging_ = true;
-                geoJsonDragFeatureId_ = fid;
+                geoJsonDragFeatureId_ = std::move(fid);
                 geoJsonDragVertexIndex_ = vid;
                 geoJsonDragPlaneZ_ = world.z();
                 geoJsonRenderDirty_ = true;
@@ -691,7 +691,7 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
                 if (geoJsonController_->insertVertex(segFid, insertIndex, sceneToGeojson(midWorld), &newIndex)) {
                     geoJsonController_->selectVertex(segFid, newIndex);
                     geoJsonDragging_ = true;
-                    geoJsonDragFeatureId_ = segFid;
+                    geoJsonDragFeatureId_ = std::move(segFid);
                     geoJsonDragVertexIndex_ = newIndex;
                     geoJsonDragPlaneZ_ = midWorld.z();
                     geoJsonRenderDirty_ = true;

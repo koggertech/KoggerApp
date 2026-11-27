@@ -147,7 +147,7 @@ CommandDispatcher::Outcome CommandDispatcher::opGet(const QJsonObject& cmd)
     if (!descend(v, r.subPath, error)) {
         out.ok = false;
         out.code = QStringLiteral("not-found");
-        out.error = error;
+        out.error = std::move(error);
         return out;
     }
     out.result = toJson(v);
@@ -282,7 +282,7 @@ bool CommandDispatcher::opWait(int connId, const QJsonValue& id, const QJsonObje
             Outcome out;
             out.ok = false;
             out.code = QStringLiteral("bad-args");
-            out.error = error;
+            out.error = std::move(error);
             finish(connId, id, out);
             return false;
         }
@@ -296,7 +296,7 @@ bool CommandDispatcher::opWait(int connId, const QJsonValue& id, const QJsonObje
         Outcome out;
         out.ok = false;
         out.code = QStringLiteral("bad-args");
-        out.error = error;
+        out.error = std::move(error);
         finish(connId, id, out);
         return false;
     }
@@ -340,7 +340,7 @@ bool CommandDispatcher::opStart(int connId, const QJsonValue& id, const QJsonObj
         Outcome out;
         out.ok = false;
         out.code = QStringLiteral("bad-args");
-        out.error = error;
+        out.error = std::move(error);
         markHandle(handle, out);
         finish(connId, id, out, QJsonObject{{QStringLiteral("handle"), handle}});
         return false;
@@ -376,7 +376,7 @@ bool CommandDispatcher::opStart(int connId, const QJsonValue& id, const QJsonObj
         Outcome out;
         out.ok = false;
         out.code = QStringLiteral("bad-args");
-        out.error = error;
+        out.error = std::move(error);
         markHandle(handle, out);
         finish(connId, id, out, QJsonObject{{QStringLiteral("handle"), handle}});
         return false;
@@ -821,7 +821,7 @@ void CommandDispatcher::pollWaiters()
         remaining.append(w);
     }
 
-    waiters_ = remaining;
+    waiters_ = std::move(remaining);
     if (waiters_.isEmpty()) {
         pollTimer_.stop();
     }

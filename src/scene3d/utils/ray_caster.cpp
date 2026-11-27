@@ -236,13 +236,13 @@ QPair<int, int> RayCasterHit::indices() const
 
 void RayCasterHit::setSourceObject(std::weak_ptr<SceneObject> object)
 {
-    m_sourceObject = object;
+    m_sourceObject = std::move(object);
 }
 
 void RayCasterHit::setSourcePrimitive(std::pair<QVector<QVector3D>, int> primitive)
 {
     if(m_sourcePrimitive != primitive)
-        m_sourcePrimitive = primitive;
+        m_sourcePrimitive = std::move(primitive);
 }
 
 void RayCasterHit::setWorldIntersection(const QVector3D &intersection)

@@ -8,7 +8,7 @@
 #include "surface_export_snapshot.h"
 
 
-enum class SurfaceExportFormat {
+enum class SurfaceExportFormat : quint8 {
     kCsv,
     kXyz
 };
@@ -24,7 +24,7 @@ struct SurfaceExportParams
     std::shared_ptr<std::atomic_bool> cancel;
 };
 
-enum class SurfaceExportStatus {
+enum class SurfaceExportStatus : quint8 {
     kOk,
     kCanceled,
     kNoData,

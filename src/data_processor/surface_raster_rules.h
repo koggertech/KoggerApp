@@ -26,7 +26,7 @@ bool isDegenerate(T twiceAreaValue)
 inline bool withinEdgeLimit(const QVector3D& a, const QVector3D& b, const QVector3D& c, float edgeLimit)
 {
     const float maxEdge = std::max({ (a - b).length(), (b - c).length(), (c - a).length() });
-    return !(std::isfinite(maxEdge) && maxEdge > edgeLimit);
+    return !std::isfinite(maxEdge) || !(maxEdge > edgeLimit);
 }
 
 template<typename T>

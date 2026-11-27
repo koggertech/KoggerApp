@@ -289,7 +289,7 @@ bool fenceFromJson(const QJsonObject& obj, FencePolygon* out, QString* outError)
     }
     f.inclusion = inclusion.toBool(true);
     f.extra = unknownKeys(obj, fenceKeys());
-    *out = f;
+    *out = std::move(f);
     return true;
 }
 
@@ -581,7 +581,7 @@ bool fromJson(const QJsonObject& input, MissionPlan* outPlan, QString* outError)
     }
 
     plan.extra = unknownKeys(root, planKeys());
-    *outPlan = plan;
+    *outPlan = std::move(plan);
     return true;
 }
 
@@ -609,7 +609,7 @@ LoadResult loadFromFile(const QString& path)
     }
     QString err;
     if (!fromJson(doc.object(), &r.plan, &err)) {
-        r.error = err;
+        r.error = std::move(err);
         return r;
     }
     r.ok = true;

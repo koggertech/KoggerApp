@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdint>
 #include <vector>
 
 #include "helm_shaping.h"
@@ -10,7 +11,7 @@
 namespace helm {
 
 /** Helm actions a gamepad input can be bound to; the order is the storage and UI order. */
-enum Action : int {
+enum Action : std::uint8_t {
     ActionThrottleForward,
     ActionThrottleReverse,
     ActionSteering,
@@ -28,7 +29,7 @@ enum Action : int {
  * the OS takes it (Game Bar, Home), and on Windows a pad also reports it for View + Menu. LB + RB
  * together arm / disarm, so an action on a bumper acts when that bumper is released without the other.
  */
-enum class ActionKind {
+enum class ActionKind : std::uint8_t {
     Button,
     Throttle,
     Steering

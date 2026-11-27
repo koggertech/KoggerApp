@@ -256,7 +256,7 @@ void Logger::loggingCsvStream()
     Position boatPos = epoch->getPositionGNSS();
 
     if (boatPos.lla.isCoordinatesValid()) {
-        csvData_.lastCsvPos = boatPos;
+        csvData_.lastCsvPos = std::move(boatPos);
     }
 
     if (epoch->rangeFinder()) {
@@ -420,7 +420,7 @@ bool Logger::creatExportStream(QString name)
     const QUrl url(name);
     QString localFilePath = url.toLocalFile();
     if (localFilePath.isEmpty() && QFileInfo(name).isAbsolute()) {
-        localFilePath = name;
+        localFilePath = std::move(name);
     }
 
     exportFile_->setFileName(localFilePath);

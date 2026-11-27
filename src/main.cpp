@@ -373,9 +373,9 @@ static bool resolveControlEndpoint(const QStringList& args, int instanceIndex, C
     QString portStr;
     const bool digitsOnly = std::all_of(spec.cbegin(), spec.cend(), [](QChar c) { return c.isDigit(); });
     if (digitsOnly) {
-        portStr = spec;
+        portStr = std::move(spec);
     } else if (spec.count(QLatin1Char(':')) > 1 && !spec.startsWith(QLatin1Char('['))) {
-        host = spec;
+        host = std::move(spec);
     } else if (spec.startsWith(QLatin1Char('['))) {
         const int close = spec.indexOf(QLatin1Char(']'));
         if (close < 0) {

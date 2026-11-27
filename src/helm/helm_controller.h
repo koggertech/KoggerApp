@@ -59,7 +59,7 @@ class HelmController : public QObject
     Q_PROPERTY(bool autoEngage READ autoEngage WRITE setAutoEngage NOTIFY autoEngageChanged)
 
 public:
-    enum State {
+    enum State : quint8 {
         Off,
         Checking,
         Starting,
@@ -69,7 +69,7 @@ public:
     Q_ENUM(State)
 
     /** What engage() waits for the operator to accept before it starts. */
-    enum Confirmation {
+    enum Confirmation : quint8 {
         ConfirmNone,
         ConfirmTransmitter,
         ConfirmLinkLossStop
@@ -77,7 +77,7 @@ public:
     Q_ENUM(Confirmation)
 
     /** Short vibration patterns: mode and arm changes during a driving session, a button press while configuring. */
-    enum RumbleCue {
+    enum RumbleCue : qint8 {
         CueNone = -1,
         CueMode,
         CueArm,
@@ -231,7 +231,7 @@ signals:
 private:
     static constexpr int kDefaultRateHz = 20;
 
-    enum class ModeIntent {
+    enum class ModeIntent : quint8 {
         None,
         Engage,
         Toggle,

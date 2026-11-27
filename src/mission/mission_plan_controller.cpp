@@ -353,7 +353,7 @@ bool MissionPlanController::saveFileAs(const QString& path)
         setLastError(err);
         return false;
     }
-    plan_ = stamped;
+    plan_ = std::move(stamped);
     setFilePath(clean);
     rememberLastFile(clean);
     markClean();
@@ -585,7 +585,7 @@ bool MissionPlanController::loadPlanJson(const QString& json)
         return false;
     }
     pushUndo();
-    plan_ = plan;
+    plan_ = std::move(plan);
     uploadSkipTypes_.clear();
     afterChange();
     setLastError(QString());
@@ -975,7 +975,7 @@ bool MissionPlanController::updateItem(const QString& id, const QVariantMap& pat
             return false;
         }
         pushUndo();
-        *fence = updated;
+        *fence = std::move(updated);
         afterChange();
         return true;
     }
@@ -1181,7 +1181,7 @@ bool MissionPlanController::restore(const QByteArray& bytes)
         setLastError(err);
         return false;
     }
-    plan_ = plan;
+    plan_ = std::move(plan);
     return true;
 }
 

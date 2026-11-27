@@ -201,7 +201,7 @@ bool LinkManagerWrapper::reloadPinnedLinksFromXmlData(const QByteArray& xmlData,
         *skippedSerialLinks = localSkippedSerialLinks;
     }
     if (error) {
-        *error = localError;
+        *error = std::move(localError);
     }
     return ok;
 }
