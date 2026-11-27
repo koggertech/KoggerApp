@@ -40,7 +40,14 @@ TileManager::TileManager(QObject *parent) :
     versionNam_(new QNetworkAccessManager(this)),
     versionFailureStreak_(0),
     versionResolveInFlight_(false),
-    lastVersionResolveMs_(0)
+    versionConfirmed_(false),
+    versionResolveGeneration_(0),
+    versionResolveBase_(-1),
+    versionResolveBest_(-1),
+    versionWindowPending_(0),
+    versionBaseAlive_(false),
+    versionAnyAnswer_(false),
+    versionNextResolveMs_(0)
 {
     auto downloaderConnType = Qt::AutoConnection;
     // tileDownloader_ -> tileSet_
@@ -152,6 +159,8 @@ void TileManager::setProvider(int32_t providerId)
 
     versionFailureStreak_ = 0;
     versionResolveInFlight_ = false;
+    versionConfirmed_ = false;
+    ++versionResolveGeneration_;
     seedProviderVersion();
 
     if (tileDB_) {
@@ -255,6 +264,22 @@ void TileManager::onDownloadedForVersion(const map::TileIndex& tileIndx, const Q
     Q_UNUSED(tileIndx);
     Q_UNUSED(image);
     versionFailureStreak_ = 0;
+
+    if (versionConfirmed_) {
+        return;
+    }
+    versionConfirmed_ = true;
+
+    if (!tileProvider_ || tileProvider_->manifestKey().isEmpty()) {
+        return;
+    }
+
+    const int version = tileProvider_->imageryVersion();
+    const QString key = versionSettingsKey(tileProvider_->manifestKey());
+    QSettings settings(QStringLiteral("KOGGER"), QStringLiteral("KoggerApp"));
+    if (settings.value(key, -1).toInt() < version) {
+        settings.setValue(key, version);
+    }
 }
 
 void TileManager::onDownloadFailedForVersion(const map::TileIndex& tileIndx, const QString& errorString, int httpStatus)
@@ -281,35 +306,133 @@ void TileManager::maybeTriggerVersionResolve()
     }
 
     const qint64 now = QDateTime::currentMSecsSinceEpoch();
-    if (lastVersionResolveMs_ != 0 && now - lastVersionResolveMs_ < versionResolveCooldownMs_) {
+    if (now < versionNextResolveMs_) {
         return;
     }
 
     versionResolveInFlight_ = true;
-    lastVersionResolveMs_ = now;
+    versionNextResolveMs_ = now + versionResolveCooldownMs_;
     versionFailureStreak_ = 0;
 
-    const int jitter = QRandomGenerator::global()->bounded(versionJitterMaxMs_);
-    QTimer::singleShot(jitter, this, [this] { fetchManifest(); });
+    const quint64 generation = ++versionResolveGeneration_;
+    const int jitter = versionConfirmed_ ? QRandomGenerator::global()->bounded(versionJitterMaxMs_) : 0;
+    QTimer::singleShot(jitter, this, [this, generation] { startVersionResolve(generation); });
 }
 
-void TileManager::fetchManifest()
+void TileManager::startVersionResolve(quint64 generation)
 {
+    if (generation != versionResolveGeneration_) {
+        return;
+    }
     if (!tileProvider_ || tileProvider_->manifestKey().isEmpty()) {
         versionResolveInFlight_ = false;
         return;
     }
 
+    versionResolveBase_ = tileProvider_->imageryVersion();
+    versionResolveBest_ = -1;
+    versionWindowPending_ = 0;
+    versionBaseAlive_ = false;
+    versionAnyAnswer_ = false;
+
+    for (int candidate = versionResolveBase_; candidate <= versionResolveBase_ + versionProbeSpan_; ++candidate) {
+        probeVersion(candidate, generation, true);
+    }
+
+    if (versionWindowPending_ == 0) {
+        versionResolveInFlight_ = false;
+    }
+}
+
+bool TileManager::probeVersion(int candidate, quint64 generation, bool inWindow)
+{
+    const QString urlStr = tileProvider_->versionedCanaryUrl(candidate);
+    if (urlStr.isEmpty()) {
+        return false;
+    }
+
+    QNetworkRequest req{ QUrl(urlStr) };
+    req.setTransferTimeout(versionProbeTimeoutMs_);
+    if (inWindow) {
+        ++versionWindowPending_;
+    }
+    QNetworkReply* reply = versionNam_->get(req);
+
+    QObject::connect(reply, &QNetworkReply::finished, this, [this, reply, candidate, generation, inWindow] {
+        reply->deleteLater();
+
+        if (generation != versionResolveGeneration_) {
+            return;
+        }
+
+        if (reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).isValid()) {
+            versionAnyAnswer_ = true;
+        }
+
+        bool alive = false;
+        if (reply->error() == QNetworkReply::NoError &&
+            reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200) {
+            QImage img;
+            alive = img.loadFromData(reply->readAll()) && !img.isNull();
+        }
+
+        if (inWindow) {
+            onWindowProbeFinished(candidate, alive, generation);
+            return;
+        }
+
+        versionResolveInFlight_ = false;
+        if (alive) {
+            applyResolvedVersion(candidate, false);
+        }
+    });
+
+    return true;
+}
+
+void TileManager::onWindowProbeFinished(int candidate, bool alive, quint64 generation)
+{
+    if (alive) {
+        versionResolveBest_ = std::max(versionResolveBest_, candidate);
+        if (candidate == versionResolveBase_) {
+            versionBaseAlive_ = true;
+        }
+    }
+
+    if (--versionWindowPending_ > 0) {
+        return;
+    }
+
+    if (versionResolveBest_ < 0) {
+        if (!versionAnyAnswer_) {
+            versionResolveInFlight_ = false;
+            versionNextResolveMs_ = QDateTime::currentMSecsSinceEpoch() + versionNoAnswerRetryMs_;
+            return;
+        }
+        fetchManifest(generation);
+        return;
+    }
+
+    versionResolveInFlight_ = false;
+    applyResolvedVersion(versionResolveBest_, versionBaseAlive_);
+}
+
+void TileManager::fetchManifest(quint64 generation)
+{
     const QString key = tileProvider_->manifestKey();
-    const int current = tileProvider_->imageryVersion();
+    const int windowTop = versionResolveBase_ + versionProbeSpan_;
 
     QNetworkRequest req{ QUrl(QString(kTileManifestUrl)) };
     req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
     req.setTransferTimeout(versionRequestTimeoutMs_);
     QNetworkReply* reply = versionNam_->get(req);
 
-    QObject::connect(reply, &QNetworkReply::finished, this, [this, reply, key, current] {
+    QObject::connect(reply, &QNetworkReply::finished, this, [this, reply, key, windowTop, generation] {
         reply->deleteLater();
+
+        if (generation != versionResolveGeneration_) {
+            return;
+        }
 
         if (reply->error() == QNetworkReply::NoError) {
             QJsonParseError perr;
@@ -317,71 +440,18 @@ void TileManager::fetchManifest()
             if (perr.error == QJsonParseError::NoError && doc.isObject()) {
                 const int v = doc.object().value(QStringLiteral("providers")).toObject()
                                   .value(key).toObject().value(QStringLiteral("version")).toInt(-1);
-                if (v > current) {
-                    probeVersion(v, false);
+                if (v > windowTop && probeVersion(v, generation, false)) {
                     return;
                 }
             }
         }
 
-        probeVersion(current, true);
+        versionResolveInFlight_ = false;
     });
 }
 
-void TileManager::probeVersion(int candidate, bool scanUp)
+void TileManager::applyResolvedVersion(int version, bool baseAlive)
 {
-    if (!tileProvider_ || tileProvider_->manifestKey().isEmpty()) {
-        versionResolveInFlight_ = false;
-        return;
-    }
-
-    const int current = tileProvider_->imageryVersion();
-    if (scanUp && candidate > current + versionProbeSpan_) {
-        versionResolveInFlight_ = false;
-        return;
-    }
-
-    const QString urlStr = tileProvider_->versionedCanaryUrl(candidate);
-    if (urlStr.isEmpty()) {
-        versionResolveInFlight_ = false;
-        return;
-    }
-
-    QNetworkRequest req{ QUrl(urlStr) };
-    req.setTransferTimeout(versionRequestTimeoutMs_);
-    QNetworkReply* reply = versionNam_->get(req);
-    reply->setProperty("candidate", candidate);
-    reply->setProperty("current", current);
-    reply->setProperty("scanUp", scanUp);
-
-    QObject::connect(reply, &QNetworkReply::finished, this, [this, reply] {
-        reply->deleteLater();
-
-        const int candidate = reply->property("candidate").toInt();
-        const int current = reply->property("current").toInt();
-        const bool scanUp = reply->property("scanUp").toBool();
-        const int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-
-        if (reply->error() == QNetworkReply::NoError && httpStatus == 200) {
-            QImage img;
-            if (img.loadFromData(reply->readAll()) && !img.isNull()) {
-                if (candidate > current) {
-                    applyResolvedVersion(candidate);
-                } else {
-                    versionResolveInFlight_ = false;
-                }
-                return;
-            }
-        }
-
-        probeVersion(scanUp ? candidate + 1 : current, true);
-    });
-}
-
-void TileManager::applyResolvedVersion(int version)
-{
-    versionResolveInFlight_ = false;
-
     if (!tileProvider_ || tileProvider_->manifestKey().isEmpty()) {
         return;
     }
@@ -394,12 +464,15 @@ void TileManager::applyResolvedVersion(int version)
     QSettings settings(QStringLiteral("KOGGER"), QStringLiteral("KoggerApp"));
     settings.setValue(versionSettingsKey(tileProvider_->manifestKey()), version);
 
+    if (baseAlive) {
+        return;
+    }
+
     if (tileDownloader_) {
         tileDownloader_->stopAndClearRequests();
     }
-    if (tileSet_) {
-        tileSet_->resetForProviderSwitch();
-    }
+
+    emit imageryVersionChanged();
 }
 
 void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam)

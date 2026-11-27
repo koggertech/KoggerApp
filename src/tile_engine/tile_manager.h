@@ -43,6 +43,7 @@ signals:
     void providerChanged(int32_t providerId);
     void internetAvailabilityChanged(bool available);
     void mapEnabledChanged(bool enabled);
+    void imageryVersionChanged();
 
 private slots:
     void onDownloadFailedForVersion(const map::TileIndex& tileIndx, const QString& errorString, int httpStatus);
@@ -54,9 +55,11 @@ private:
 
     void seedProviderVersion();
     void maybeTriggerVersionResolve();
-    void fetchManifest();
-    void probeVersion(int candidate, bool scanUp);
-    void applyResolvedVersion(int version);
+    void startVersionResolve(quint64 generation);
+    bool probeVersion(int candidate, quint64 generation, bool inWindow);
+    void onWindowProbeFinished(int candidate, bool alive, quint64 generation);
+    void fetchManifest(quint64 generation);
+    void applyResolvedVersion(int version, bool baseAlive);
 
     int32_t providerId_;
     std::shared_ptr<TileProvider> tileProvider_;
@@ -70,16 +73,25 @@ private:
     QNetworkAccessManager* versionNam_;
     int versionFailureStreak_;
     bool versionResolveInFlight_;
-    qint64 lastVersionResolveMs_;
+    bool versionConfirmed_;
+    quint64 versionResolveGeneration_;
+    int versionResolveBase_;
+    int versionResolveBest_;
+    int versionWindowPending_;
+    bool versionBaseAlive_;
+    bool versionAnyAnswer_;
+    qint64 versionNextResolveMs_;
 
     static constexpr int maxTilesCapacity_{ 800 };
     static constexpr int minTilesCapacity_{ 400 };
     static constexpr int maxConcurrentDownloads_{ 10 };
     static constexpr int versionFailureThreshold_{ 6 };
     static constexpr qint64 versionResolveCooldownMs_{ 60LL * 60 * 1000 };
+    static constexpr qint64 versionNoAnswerRetryMs_{ 60LL * 1000 };
     static constexpr int versionProbeSpan_{ 32 };
     static constexpr int versionJitterMaxMs_{ 30 * 1000 };
     static constexpr int versionRequestTimeoutMs_{ 15 * 1000 };
+    static constexpr int versionProbeTimeoutMs_{ 5 * 1000 };
 };
 
 } // namespace map

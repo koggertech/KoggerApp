@@ -10,7 +10,7 @@ namespace map {
 
 constexpr double GOOGLE_TILE_CONSTANT = 126543000.03392;
 const int GOOGLE_PROVIDER_ID = kGoogleProviderId;
-inline constexpr int kGoogleSatFallback = 1012;
+inline constexpr int kGoogleSatFallback = 1017;
 inline constexpr QLatin1StringView secGoogleWord("Galileo");
 inline constexpr QLatin1StringView language("en-US");
 inline constexpr QLatin1StringView server("khm");

@@ -157,7 +157,8 @@ void TileGoogleProvider::setImageryVersion(int version)
 
 QString TileGoogleProvider::versionedCanaryUrl(int version) const
 {
-    return buildUrl(map::TileIndex(1, 1, 1, providerId_), version);
+    const int host = version % 4;
+    return buildUrl(map::TileIndex(host % 2, host / 2, 1, providerId_), version);
 }
 
 
