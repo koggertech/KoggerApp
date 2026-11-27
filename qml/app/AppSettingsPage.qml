@@ -3699,10 +3699,11 @@ Column {
             KButton {
                 id: missionEditorButton
                 readonly property int _iconSize: Tokens.iconSm
+                width: parent.width
+                fontPixelSize: Tokens.fontLg
                 text: qsTr("Mission editor")
-                height: Tokens.controlHMd
                 rightPadding: horizontalPadding + _iconSize + Tokens.spaceSm
-                implicitWidth: contentItem.implicitWidth + leftPadding + rightPadding
+                leftPadding: rightPadding
                 onClicked: {
                     if (root.store) root.store.settingsPanelOpen = false
                     if (typeof core !== "undefined" && core) core.setMissionEditorActive(true)
