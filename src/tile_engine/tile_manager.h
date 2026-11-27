@@ -51,14 +51,13 @@ private slots:
 
 private:
     static QString providerNameForId(int32_t providerId);
-    static QString versionSettingsKey(const QString& manifestKey);
+    static QString versionSettingsKey(const QString& versionKey);
 
     void seedProviderVersion();
     void maybeTriggerVersionResolve();
     void startVersionResolve(quint64 generation);
-    bool probeVersion(int candidate, quint64 generation, bool inWindow);
-    void onWindowProbeFinished(int candidate, bool alive, quint64 generation);
-    void fetchManifest(quint64 generation);
+    void probeVersion(int candidate, quint64 generation);
+    void onWindowProbeFinished(int candidate, bool alive);
     void applyResolvedVersion(int version, bool baseAlive);
 
     int32_t providerId_;
@@ -90,7 +89,6 @@ private:
     static constexpr qint64 versionNoAnswerRetryMs_{ 60LL * 1000 };
     static constexpr int versionProbeSpan_{ 32 };
     static constexpr int versionJitterMaxMs_{ 30 * 1000 };
-    static constexpr int versionRequestTimeoutMs_{ 15 * 1000 };
     static constexpr int versionProbeTimeoutMs_{ 5 * 1000 };
 };
 

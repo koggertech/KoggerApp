@@ -140,7 +140,7 @@ QString TileGoogleProvider::buildUrl(const map::TileIndex& tileIndx, int version
         .arg(request).arg(version).arg(language).arg(tileIndx.x_).arg(str1).arg(tileIndx.y_).arg(tileIndx.z_).arg(str2);
 }
 
-QString TileGoogleProvider::manifestKey() const
+QString TileGoogleProvider::versionKey() const
 {
     return QStringLiteral("google");
 }

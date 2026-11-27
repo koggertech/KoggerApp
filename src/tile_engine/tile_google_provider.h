@@ -29,7 +29,7 @@ public:
     map::TileInfo indexToTileInfo(map::TileIndex tileIndx, map::TilePosition pos = map::TilePosition::kFits) const final;
     QString createURL(const map::TileIndex& tileIndx) const final;
 
-    QString manifestKey() const final;
+    QString versionKey() const final;
     int imageryVersion() const final;
     void setImageryVersion(int version) final;
     QString versionedCanaryUrl(int version) const final;
