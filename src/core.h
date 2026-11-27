@@ -142,6 +142,19 @@ public:
     void deferStartupFileOpen(const QString& filePath);
     Q_INVOKABLE void notifyUiSettingsApplied();
 
+    bool getPosZeroing() const { return isActiveZeroing_; }
+    int  getBottomTrackEditTool() const { return bottomTrackEditTool_; }
+    bool getContactPlacementArmed() const { return contactPlacementArmed_; }
+    bool getGoToPlacementArmed() const { return goToPlacementArmed_; }
+    bool getMissionEditorActive() const { return missionEditorActive_; }
+    QString missionDirectoryFor(const QString& logDir) const;
+    int klfEpochIndexSize() const;
+    bool getProcessingIdle() const { return processingIdle_.load(); }
+    QVariantMap getProcessingActivity() const { return processingActivity_; }
+    bool getIsFileOpened() const;
+    bool echogramSyncCursor() const { return echogramSyncCursor_; }
+    bool echogramSyncView() const { return echogramSyncView_; }
+
 public slots:
     void setIsGPSAlive(bool state) { qDebug() << "Core::setIsGPSAlive" << state; isGPSAlive_ = state; emit isGPSAliveChanged(); }
 
@@ -203,35 +216,23 @@ public slots:
     Q_INVOKABLE void setMosaicSource(int source);
     Q_INVOKABLE void setMosaicFakeCoordsLastN(int n);
     Q_INVOKABLE void setMosaicFakeCoordsClearOldData(bool state);
-    bool getPosZeroing() const { return isActiveZeroing_; }
-    int  getBottomTrackEditTool() const { return bottomTrackEditTool_; }
     Q_INVOKABLE void setBottomTrackEditTool(int tool);
-    bool getContactPlacementArmed() const { return contactPlacementArmed_; }
     Q_INVOKABLE void setContactPlacementArmed(bool armed);
-    bool getGoToPlacementArmed() const { return goToPlacementArmed_; }
     /** "Go here" tool: while armed every tap in the 3D scene picks the point the vehicle is sent to (see MissionRunController). */
     Q_INVOKABLE void setGoToPlacementArmed(bool armed);
-    bool getMissionEditorActive() const { return missionEditorActive_; }
     Q_INVOKABLE void setMissionEditorActive(bool active);
-    QString missionDirectoryFor(const QString& logDir) const;
 
-    int klfEpochIndexSize() const;
     Q_INVOKABLE bool exportKlfFragment(int firstEpoch, int lastEpoch, QString filePath);
     Q_INVOKABLE bool getIsFileOpening() const;
     Q_INVOKABLE bool getIsAppendMode() const;
     Q_INVOKABLE QString getFileTitle() const;
     Q_INVOKABLE int getDataProcessorState() const;
-    bool getProcessingIdle() const { return processingIdle_.load(); }
-    QVariantMap getProcessingActivity() const { return processingActivity_; }
-    bool getIsFileOpened() const;
     Q_INVOKABLE QString getChannel1Name() const;
     Q_INVOKABLE QString getChannel2Name() const;
     Q_INVOKABLE void registerPlot2D(QObject* plotObj);
     Q_INVOKABLE void setEchogramSyncCursor(bool state);
     Q_INVOKABLE void setEchogramSyncView(bool state);
     Q_INVOKABLE void setAimFieldsMask(int mask);
-    bool echogramSyncCursor() const { return echogramSyncCursor_; }
-    bool echogramSyncView() const { return echogramSyncView_; }
     void broadcastEpochCursor(qPlot2D* source, int epoch, float depth, int channel);
     void broadcastCursorClear(qPlot2D* source);
     void broadcastLiveHold(qPlot2D* source);

@@ -20,7 +20,7 @@ namespace {
 constexpr int kStatusPollMs = 700;
 constexpr int kStatusCollapsedPollMs = 3000;
 constexpr int kEstimateRefreshMs = 3000;
-const QString kSurfaceExportTag = QStringLiteral("surface-export");
+constexpr QLatin1StringView kSurfaceExportTag("surface-export");
 
 } // namespace
 

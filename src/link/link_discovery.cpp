@@ -311,11 +311,11 @@ QList<QHostAddress> LinkDiscovery::broadcastTargets()
     targets.append(QHostAddress::Broadcast);
 
     const auto required = QNetworkInterface::IsUp | QNetworkInterface::IsRunning | QNetworkInterface::CanBroadcast;
-    for (const QNetworkInterface& iface : QNetworkInterface::allInterfaces()) {
+    for (const QList<QNetworkInterface> ifaces = QNetworkInterface::allInterfaces(); const QNetworkInterface& iface : ifaces) {
         const auto flags = iface.flags();
         if ((flags & required) != required || (flags & QNetworkInterface::IsLoopBack))
             continue;
-        for (const QNetworkAddressEntry& entry : iface.addressEntries()) {
+        for (const QList<QNetworkAddressEntry> entries = iface.addressEntries(); const QNetworkAddressEntry& entry : entries) {
             if (entry.ip().protocol() != QAbstractSocket::IPv4Protocol)
                 continue;
             const QHostAddress bcast = entry.broadcast();

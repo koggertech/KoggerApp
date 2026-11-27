@@ -28,13 +28,13 @@ constexpr int kActionSmartRtlOrHold = 4;
 constexpr int kActionTerminate = 5;
 constexpr int kActionLoiterOrHold = 6;
 
-const QString kFsAction = QStringLiteral("FS_ACTION");
-const QString kGcsEnable = QStringLiteral("FS_GCS_ENABLE");
-const QString kGcsTimeout = QStringLiteral("FS_GCS_TIMEOUT");
-const QString kFsTimeout = QStringLiteral("FS_TIMEOUT");
-const QString kThrEnable = QStringLiteral("FS_THR_ENABLE");
-const QString kFsOptions = QStringLiteral("FS_OPTIONS");
-const QString kSrtlPoints = QStringLiteral("SRTL_POINTS");
+constexpr QLatin1StringView kFsAction("FS_ACTION");
+constexpr QLatin1StringView kGcsEnable("FS_GCS_ENABLE");
+constexpr QLatin1StringView kGcsTimeout("FS_GCS_TIMEOUT");
+constexpr QLatin1StringView kFsTimeout("FS_TIMEOUT");
+constexpr QLatin1StringView kThrEnable("FS_THR_ENABLE");
+constexpr QLatin1StringView kFsOptions("FS_OPTIONS");
+constexpr QLatin1StringView kSrtlPoints("SRTL_POINTS");
 
 const QStringList& paramNames()
 {

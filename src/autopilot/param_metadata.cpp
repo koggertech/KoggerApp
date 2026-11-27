@@ -16,7 +16,7 @@ constexpr int kMavTypeGroundRover = 10;
 constexpr int kMavTypeSurfaceBoat = 11;
 constexpr int kMinorPerMajor = 1000;
 constexpr int kMaxBit = 31;
-const QString kRoverKeyPrefix = QStringLiteral("Rover ");
+constexpr QLatin1StringView kRoverKeyPrefix("Rover ");
 
 int versionRank(const QString& version)
 {
@@ -122,11 +122,11 @@ ParamInfo parseInfo(const QJsonObject& o)
         info.high = range.at(1).toDouble();
     }
     info.increment = o.value(QStringLiteral("inc")).toDouble();
-    for (const auto& v : o.value(QStringLiteral("values")).toArray()) {
+    for (const QJsonArray values = o.value(QStringLiteral("values")).toArray(); const auto& v : values) {
         const QJsonArray pair = v.toArray();
         info.values.append({ pair.at(0).toDouble(), pair.at(1).toString() });
     }
-    for (const auto& v : o.value(QStringLiteral("bits")).toArray()) {
+    for (const QJsonArray bits = o.value(QStringLiteral("bits")).toArray(); const auto& v : bits) {
         const QJsonArray pair = v.toArray();
         const int bit = pair.at(0).toInt(-1);
         if (bit >= 0 && bit <= kMaxBit) {
@@ -144,7 +144,7 @@ QString ParamMetadata::keyFor(int autopilotKind, int vehicleType, const QString&
 {
     const bool rover = autopilotKind == kMavAutopilotArdupilot
                        && (vehicleType == kMavTypeGroundRover || vehicleType == kMavTypeSurfaceBoat);
-    return rover ? kRoverKeyPrefix + firmwareVersion.section(QLatin1Char('.'), 0, 1) : QString();
+    return rover ? QString(kRoverKeyPrefix) + firmwareVersion.section(QLatin1Char('.'), 0, 1) : QString();
 }
 
 const ParamInfo* ParamMetadata::find(const QString& name) const
@@ -199,7 +199,7 @@ ParamMetadata ParamMetadata::load(const QString& key, const std::atomic_bool* ca
         return {};
     }
     QStringList releases;
-    for (const auto& v : root.value(QStringLiteral("versions")).toArray()) {
+    for (const QJsonArray versions = root.value(QStringLiteral("versions")).toArray(); const auto& v : versions) {
         releases.append(v.toString());
     }
     const QString release = pickRelease(releases, requested);
@@ -213,7 +213,7 @@ ParamMetadata ParamMetadata::load(const QString& key, const std::atomic_bool* ca
         if (cancelled()) {
             return {};
         }
-        for (const auto& variant : it.value().toArray()) {
+        for (const QJsonArray variants = it.value().toArray(); const auto& variant : variants) {
             const QJsonObject o = variant.toObject();
             if (o.value(QStringLiteral("v")).toArray().contains(releaseValue)) {
                 out.table_.insert(it.key(), parseInfo(o));

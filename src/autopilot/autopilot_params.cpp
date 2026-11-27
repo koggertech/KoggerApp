@@ -21,7 +21,7 @@ namespace {
 constexpr int kRebuildDelayMs = 250;
 constexpr int kQgcColumns = 5;
 constexpr int kPlannerColumns = 2;
-const QString kOtherGroup = QStringLiteral("*");
+constexpr QLatin1StringView kOtherGroup("*");
 
 bool isOpaqueUri(const QString& pathOrUri)
 {
@@ -782,7 +782,7 @@ void AutopilotParams::rebuildGroups()
     int other = 0;
     for (auto& e : entries_) {
         const QString g = groupOf(e.name);
-        e.group = g.isEmpty() || counts.value(g) < 2 ? kOtherGroup : g;
+        e.group = g.isEmpty() || counts.value(g) < 2 ? QString(kOtherGroup) : g;
         if (e.group == kOtherGroup) {
             ++other;
         }

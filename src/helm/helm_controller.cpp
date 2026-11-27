@@ -170,6 +170,12 @@ std::span<const RumbleStep> cueSteps(int cue)
     }
 }
 
+void storeSetting(const QString& key, const QVariant& value)
+{
+    QSettings settings(QStringLiteral("KOGGER"), QStringLiteral("KoggerApp"));
+    settings.setValue(key, value);
+}
+
 }
 
 HelmController::HelmController(GamepadMonitor* monitor, DeviceManagerWrapper* vehicle, QObject* parent)
@@ -675,8 +681,7 @@ void HelmController::onPadConnection()
     }
     if (state_ == Off && monitor_->family() != padFamily_) {
         padFamily_ = monitor_->family();
-        QSettings(QStringLiteral("KOGGER"), QStringLiteral("KoggerApp"))
-            .setValue(QStringLiteral("%1/%2").arg(QLatin1String(kSettingsGroup), QLatin1String(kLastFamilyKey)), padFamily_);
+        storeSetting(QStringLiteral("%1/%2").arg(QLatin1String(kSettingsGroup), QLatin1String(kLastFamilyKey)), padFamily_);
         loadProfile();
         emit padFamilyChanged();
         emit tuningChanged();
@@ -1268,8 +1273,7 @@ void HelmController::setAutoEngage(bool autoEngage)
         return;
     }
     autoEngage_ = autoEngage;
-    QSettings(QStringLiteral("KOGGER"), QStringLiteral("KoggerApp"))
-        .setValue(QStringLiteral("%1/autoEngage").arg(QLatin1String(kSettingsGroup)), autoEngage_);
+    storeSetting(QStringLiteral("%1/autoEngage").arg(QLatin1String(kSettingsGroup)), autoEngage_);
     if (autoEngage_) {
         userReleased_ = false;
         autoBlocked_ = false;

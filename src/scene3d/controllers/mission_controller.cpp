@@ -580,7 +580,7 @@ bool MissionController::sceneBounds(QVector3D& minOut, QVector3D& maxOut) const
         consider(r);
     }
     for (const auto& item : plan_->plan().items) {
-        for (const auto& p : shapeVertices(item)) {
+        for (const auto verts = shapeVertices(item); const auto& p : verts) {
             consider(p);
         }
     }
@@ -614,7 +614,7 @@ bool MissionController::itemBounds(const QString& id, QVector3D& minOut, QVector
         if (const auto* w = std::get_if<mission::WaypointItem>(&plan.items[idx])) {
             consider(w->pos);
         }
-        for (const auto& p : shapeVertices(plan.items[idx])) {
+        for (const auto verts = shapeVertices(plan.items[idx]); const auto& p : verts) {
             consider(p);
         }
         for (const auto& f : plan_->expanded().mission.items) {
@@ -1245,7 +1245,7 @@ void MissionController::beginDrag(const Hit& hit, const QVector3D& scenePoint, b
     dragMoved_ = false;
 
     if (hit.kind == HitKind::Center) {
-        for (const auto& v : itemVertices(hit.id)) {
+        for (const auto verts = itemVertices(hit.id); const auto& v : verts) {
             dragStartVertices_.append(toScene(v));
         }
     } else if (hit.id == mission::homeItemId()) {
@@ -1511,7 +1511,7 @@ void MissionController::rebuild()
             appendDeleteBadge(rd, *pointWorld, kHandleSizePx, kDeleteBadge, kDeleteBadgeOffset);
         }
 
-        for (const auto& a : routeAnchors()) {
+        for (const auto anchors = routeAnchors(); const auto& a : anchors) {
             if (!a.valid) {
                 continue;
             }

@@ -165,7 +165,7 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
         }
 
         int textW = 0;
-        for (const QString& ln : lineText.split(QChar('\n')))
+        for (const QStringList textLines = lineText.split(QChar('\n')); const QString& ln : textLines)
             textW = qMax(textW, fm.horizontalAdvance(ln));
 
         if (isFillWidth()) {

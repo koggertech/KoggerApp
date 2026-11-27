@@ -632,7 +632,7 @@ QString UIStateSerializer::normalizePath(const QString& path)
 
 QString UIStateSerializer::majorMinorFromVersion(const QString& version)
 {
-    const QRegularExpression expression(QStringLiteral(R"((\d+)[\.-](\d+))"));
+    static const QRegularExpression expression(QStringLiteral(R"((\d+)[\.-](\d+))"));
     const QRegularExpressionMatch match = expression.match(version);
     if (!match.hasMatch()) {
         return QString();

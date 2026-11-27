@@ -1838,7 +1838,7 @@ QVariantList Dataset::contactIndices() const
     QVariantList result;
     QReadLocker rl(&poolMtx_);
     for (int i = 0; i < pool_.size(); ++i) {
-        if (pool_[i].contact_.isValid()) {
+        if (pool_.at(i).contact_.isValid()) {
             result.append(i);
         }
     }
@@ -1853,7 +1853,7 @@ QVariantMap Dataset::contactAt(int epochIndx) const
         return result;
     }
 
-    const auto& contact = pool_[epochIndx].contact_;
+    const auto& contact = pool_.at(epochIndx).contact_;
     if (!contact.isValid()) {
         return result;
     }

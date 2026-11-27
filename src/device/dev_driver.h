@@ -238,6 +238,10 @@ public:
     bool linkNotAvailable() const { return linkNotAvailable_; }
     void setLinkStatus(bool connected, bool receivesData, bool notAvailable);
 
+    Q_INVOKABLE bool usblControlReady() const { return m_state.connect; }
+    QString modemLastPayload() const;
+    QVariantMap modemPayloads() const { return modemByAddr_; }
+
 signals:
     void averageChartLossesChanged();
     void binFrameOut(Parsers::ProtoBinOut proto_out);
@@ -381,7 +385,6 @@ public slots:
     // because 0xFFFFFFFF does not fit a QML int.
     void acousticPingRequestHex(int address, double timeoutUs, int cmdId, double replyDistanceMm,
                                 const QString& hexPayload, int payloadBits);
-    bool usblControlReady() const { return m_state.connect; }
     void acousticResponceFilter(uint8_t address);
     void acousticResponceFilterSlots(const QVector<int>& addresses);
     void acousticResponceTimeout(uint32_t timeout_us = 0xFFFFFFFF);
@@ -402,8 +405,6 @@ public slots:
                           int cmdIdAction = 0, int cmdIdReplacement = 0,
                           int addressAction = 0, int addressReplacement = 0,
                           int sendBitLength = -1);
-    QString modemLastPayload() const;
-    QVariantMap modemPayloads() const { return modemByAddr_; }
 
     void doRequestAll();
 

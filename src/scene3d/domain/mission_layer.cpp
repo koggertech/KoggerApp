@@ -531,15 +531,15 @@ void MissionLayer::MissionLayerRenderImplementation::render(
     }
 
     auto drawMarkerLayer = [&](int layer) {
-        for (const auto& b : tris[layer]) {
+        for (const auto& b : std::as_const(tris[layer])) {
             draw2d(ctx, sp, colorLoc, b.verts, QColor::fromRgba(b.color), GL_TRIANGLES, 1.0f);
         }
-        for (const auto& b : lines[layer]) {
+        for (const auto& b : std::as_const(lines[layer])) {
             if (b.halo) {
                 draw2d(ctx, sp, colorLoc, extendSegments(b.verts, ss), data_.haloColor, GL_LINES, haloLineWidth);
             }
         }
-        for (const auto& b : lines[layer]) {
+        for (const auto& b : std::as_const(lines[layer])) {
             draw2d(ctx, sp, colorLoc, b.verts, QColor::fromRgba(b.color), GL_LINES, markerLineWidth);
         }
     };
