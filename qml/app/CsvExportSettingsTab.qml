@@ -13,6 +13,9 @@ Column {
     property var targetPlot: null
 
     readonly property color _bright: AppPalette.isDark ? "#FFFFFF" : AppPalette.text
+    readonly property bool hasData: typeof dataset !== "undefined" && !!dataset
+                                    && (dataset.hasChartData || dataset.hasComplexData
+                                        || dataset.hasPositionData || dataset.hasRangefinderData)
 
     width: parent ? parent.width : implicitWidth
     spacing: Tokens.spaceSm
@@ -67,8 +70,21 @@ Column {
     KButton {
         width: parent.width
         height: Tokens.controlHLg
-        text: qsTr("Export to CSV")
+        text: qsTr("Save CSV")
+        accent: true
+        enabled: page.hasData && !!page.targetPlot
         onClicked: page.doExport()
+    }
+
+    Text {
+        visible: text.length > 0
+        width: parent.width
+        wrapMode: Text.WordWrap
+        text: !page.hasData ? qsTr("Nothing to save yet: open a file or connect a device.")
+                            : !page.targetPlot ? qsTr("Show an echogram: the CSV is written for its channel.")
+                                               : ""
+        color: AppPalette.textMuted
+        font.pixelSize: Tokens.fontSm
     }
 
     Spacer { size: Tokens.spaceXl }

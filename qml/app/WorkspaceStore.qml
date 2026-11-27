@@ -2424,6 +2424,7 @@ function openAimPanelSettings()     { _openSettingsSubPage("aimPanel") }
 function openUiSavingSettings()     { _openSettingsSubPage("uiSaving") }
 function openTgcSettings()          { _openSettingsSubPage("tgc") }
 function openCsvExportSettings()    { _openSettingsSubPage("csvExport") }
+function openKlfExportSettings()    { _openSettingsSubPage("klfExport") }
 function openSurfaceExportSettings() { _openSettingsSubPage("surfaceExport") }
 function openConsoleSettings()      { _openSettingsSubPage("console") }
 function openAboutSettings()        { _openSettingsSubPage("about") }

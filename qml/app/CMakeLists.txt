@@ -41,6 +41,7 @@ qt_add_qml_module(kogger_app
         ImuStatusGroup.qml
         InputDeviceState.qml
         IsobathsPipelineStatus.qml
+        KlfExportSettingsTab.qml
         LayoutCreatePage.qml
         LayoutSnapshotPreview.qml
         LicensePage.qml

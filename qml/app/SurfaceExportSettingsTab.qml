@@ -329,7 +329,7 @@ Column {
         width: parent.width
         height: Tokens.controlHLg
         fontPixelSize: Tokens.fontLg
-        text: page.running ? qsTr("Cancel export") : page.xyz ? qsTr("Export to XYZ") : qsTr("Export to CSV")
+        text: page.running ? qsTr("Cancel") : page.xyz ? qsTr("Save XYZ") : qsTr("Save CSV")
         enabled: page.running || page.surfaceOn
         onClicked: page.running ? IsobathsViewControlMenuController.cancelSurfaceExport() : page.startExport()
     }

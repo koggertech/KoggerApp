@@ -106,6 +106,7 @@ public:
     Q_PROPERTY(bool hasDvlSolutionData READ hasDvlSolutionData NOTIFY dataAvailabilityChanged)
     Q_PROPERTY(bool hasPositionData    READ hasPositionData    NOTIFY dataAvailabilityChanged)
     Q_PROPERTY(bool hasUsblData        READ hasUsblData        NOTIFY dataAvailabilityChanged)
+    Q_PROPERTY(bool hasComplexData     READ hasComplexData     NOTIFY dataAvailabilityChanged)
 
     /*methods*/
     Dataset();
@@ -419,6 +420,7 @@ public:
     bool hasDvlSolutionData() const { return hasDvlSolutionData_; };
     bool hasPositionData() const    { return hasPositionData_;    };
     bool hasUsblData() const        { return hasUsblData_;        };
+    bool hasComplexData() const     { return hasComplexData_;     };
 
 public slots:
     void addEvent(int timestamp, int id, int unixt = 0);
@@ -574,11 +576,13 @@ protected:
     bool hasDvlSolutionData_ = false;
     bool hasPositionData_    = false;
     bool hasUsblData_        = false;
+    bool hasComplexData_     = false;
 
     void markDataAvailable(bool& flag) { if (!flag) { flag = true; emit dataAvailabilityChanged(); } }
     void resetDataAvailability() {
         hasChartData_ = hasRangefinderData_ = hasAttitudeData_ = hasTemperatureData_ = false;
         hasDopplerBeamData_ = hasDvlSolutionData_ = hasPositionData_ = hasUsblData_ = false;
+        hasComplexData_ = false;
         emit dataAvailabilityChanged();
     }
 

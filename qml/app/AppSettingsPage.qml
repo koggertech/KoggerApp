@@ -251,30 +251,21 @@ Column {
         preferredWidth: root.groupWidth
         title: qsTr("Export")
         iconSource: "qrc:/icons/ui/file_export.svg"
-        description: hasUsbl ? qsTr("Export plot data as XTF, CSV (regular or complex) or USBL.")
-                             : qsTr("Export plot data as XTF or CSV (regular or complex).")
+        description: qsTr("Export the data to other formats. A format is listed once there is data for it.")
         stateStore: root.store
         stateKey: "app.export"
         collapsedByDefault: true
         contentSpacing: Tokens.spaceSm
 
         readonly property bool hasUsbl: (typeof dataset !== "undefined" && dataset) ? dataset.hasUsblData : false
+        readonly property bool hasChart: (typeof dataset !== "undefined" && dataset) ? dataset.hasChartData : false
+        readonly property bool hasComplex: (typeof dataset !== "undefined" && dataset) ? dataset.hasComplexData : false
 
         function currentExportPath() {
             return root.store ? root.store.exportFolderSource : ""
         }
 
         readonly property int klfEpochCount: (typeof core !== "undefined" && core) ? core.klfEpochIndexSize : 0
-        readonly property real klfSpinWidth: Math.round(104 * AppPalette.scale)
-        readonly property real klfSlotWidth: Math.round(120 * AppPalette.scale)
-
-        onKlfEpochCountChanged: Qt.callLater(exportGroup.resetKlfFragmentBounds)
-        Component.onCompleted: if (klfEpochCount > 0) Qt.callLater(exportGroup.resetKlfFragmentBounds)
-        readonly property bool klfRangeValid: klfFragmentFrom.value <= klfFragmentTo.value
-        function resetKlfFragmentBounds() {
-            klfFragmentFrom.value = 0
-            klfFragmentTo.value = Math.max(0, exportGroup.klfEpochCount - 1)
-        }
 
         // Path row
         Row {
@@ -346,7 +337,7 @@ Column {
 
         KIsland {
             KIslandRow {
-                label: qsTr("Export to CSV")
+                label: qsTr("To CSV")
                 chevron: true
                 interactive: true
                 toolTipText: qsTr("Open the CSV export tab")
@@ -354,12 +345,23 @@ Column {
             }
 
             KIslandRow {
-                label: qsTr("Export to XTF")
+                visible: exportGroup.hasChart || exportGroup.hasComplex
+                label: qsTr("To XTF")
                 interactive: true
                 onClicked: core.exportPlotAsXTF(exportGroup.currentExportPath())
             }
 
             KIslandRow {
+                visible: exportGroup.klfEpochCount > 0
+                label: qsTr("To KLF")
+                chevron: true
+                interactive: true
+                toolTipText: qsTr("Open the KLF export tab")
+                onClicked: if (root.store) root.store.openKlfExportSettings()
+            }
+
+            KIslandRow {
+                visible: exportGroup.hasComplex
                 label: qsTr("Complex signal to CSV")
                 interactive: true
                 onClicked: core.exportComplexToCSV(exportGroup.currentExportPath())
@@ -381,69 +383,6 @@ Column {
             }
         }
 
-        KIsland {
-            visible: exportGroup.klfEpochCount > 0
-
-            KIslandRow {
-                label: qsTr("Fragment: first epoch")
-                slotWidth: exportGroup.klfSlotWidth
-
-                KSpinBox {
-                    id: klfFragmentFrom
-                    width: exportGroup.klfSpinWidth
-                    height: Tokens.controlHMd
-                    from: 0
-                    to: Math.max(0, exportGroup.klfEpochCount - 1)
-                    stepSize: 1
-                }
-            }
-
-            KIslandRow {
-                label: qsTr("Fragment: last epoch")
-                slotWidth: exportGroup.klfSlotWidth
-
-                KSpinBox {
-                    id: klfFragmentTo
-                    width: exportGroup.klfSpinWidth
-                    height: Tokens.controlHMd
-                    from: 0
-                    to: Math.max(0, exportGroup.klfEpochCount - 1)
-                    stepSize: 1
-                }
-            }
-
-            KIslandRow {
-                label: qsTr("Take the echogram's visible range")
-                toolTipText: qsTr("Fill the bounds with the first and last epoch the echogram is showing")
-                interactive: true
-                enabled: !!root.targetPlot
-                onClicked: {
-                    if (!root.targetPlot)
-                        return
-                    var a = root.targetPlot.firstVisibleEpochIndex()
-                    var b = root.targetPlot.lastVisibleEpochIndex()
-                    if (a < 0 || b < 0)
-                        return
-                    klfFragmentFrom.value = Math.min(a, b)
-                    klfFragmentTo.value = Math.max(a, b)
-                }
-            }
-
-            KIslandRow {
-                label: qsTr("Save KLF fragment")
-                caption: exportGroup.klfRangeValid
-                         ? qsTr("%1 of %2 epochs")
-                            .arg(klfFragmentTo.value - klfFragmentFrom.value + 1)
-                            .arg(exportGroup.klfEpochCount)
-                         : qsTr("The first epoch is after the last one")
-                captionColor: exportGroup.klfRangeValid ? AppPalette.textSecond : AppPalette.linkIdleText
-                interactive: exportGroup.klfRangeValid
-                enabled: exportGroup.klfRangeValid
-                onClicked: if (exportGroup.klfRangeValid)
-                               core.exportKlfFragment(klfFragmentFrom.value, klfFragmentTo.value,
-                                                      exportGroup.currentExportPath())
-            }
-        }
     }
 
     // ── Интерфейс ─────────────────────────────────────────────────────────────

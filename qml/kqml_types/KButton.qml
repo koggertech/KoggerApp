@@ -5,15 +5,16 @@ Button {
     id: control
 
     property bool danger: false
+    property bool accent: false
     property string toolTipText: text
     property int cornerRadius: Tokens.radiusMd
     property int borderWidth: Tokens.cardBorderWidth
     property int fontPixelSize: Tokens.fontBase
     property bool bold: true
-    property color normalBg: AppPalette.card
-    property color normalBorder: AppPalette.border
-    property color hoverBg: AppPalette.cardHover
-    property color hoverBorder: AppPalette.borderHover
+    property color normalBg: accent ? AppPalette.accentBgStrong : AppPalette.card
+    property color normalBorder: accent ? AppPalette.accentBorder : AppPalette.border
+    property color hoverBg: accent ? AppPalette.accentBorder : AppPalette.cardHover
+    property color hoverBorder: accent ? AppPalette.accentBorder : AppPalette.borderHover
     property color checkedBg: AppPalette.accentBg
     property color checkedBorder: AppPalette.borderHover
     property color dangerBg: AppPalette.dangerBg

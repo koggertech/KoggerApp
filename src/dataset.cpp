@@ -449,6 +449,8 @@ void Dataset::rawDataRecieved(const ChannelId& channelId, RawData raw_data) {
         validateChannelList(dev_id, ich);
     }
 
+    markDataAvailable(hasComplexData_);
+
     emit dataUpdate();
 }
 

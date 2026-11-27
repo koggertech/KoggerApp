@@ -1583,6 +1583,31 @@
         <source>Export plot data as XTF or CSV (regular or complex).</source>
         <translation>Export plot data as XTF or CSV (regular or complex).</translation>
     </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="339"/>
+        <source>To CSV</source>
+        <translation>To CSV</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="347"/>
+        <source>To XTF</source>
+        <translation>To XTF</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="354"/>
+        <source>To KLF</source>
+        <translation>To KLF</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="357"/>
+        <source>Open the KLF export tab</source>
+        <translation>Open the KLF export tab</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/AppSettingsPage.qml" line="254"/>
+        <source>Export the data to other formats. A format is listed once there is data for it.</source>
+        <translation>Export the data to other formats. A format is listed once there is data for it.</translation>
+    </message>
 </context>
 <context>
     <name>AutopilotParamsDialog</name>
@@ -3668,6 +3693,21 @@ udp://@:1234
         <location filename="../qml/app/CsvExportSettingsTab.qml" line="116"/>
         <source>Mount offset of the transducer, applied to the exported coordinates only.</source>
         <translation>Mount offset of the transducer, applied to the exported coordinates only.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="70"/>
+        <source>Save CSV</source>
+        <translation>Save CSV</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="82"/>
+        <source>Nothing to save yet: open a file or connect a device.</source>
+        <translation>Nothing to save yet: open a file or connect a device.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/CsvExportSettingsTab.qml" line="83"/>
+        <source>Show an echogram: the CSV is written for its channel.</source>
+        <translation>Show an echogram: the CSV is written for its channel.</translation>
     </message>
 </context>
 <context>
@@ -7999,6 +8039,64 @@ udp://@:1234
     </message>
 </context>
 <context>
+    <name>KlfExportSettingsTab</name>
+    <message>
+        <location filename="../qml/app/KlfExportSettingsTab.qml" line="92"/>
+        <source>Save a range of epochs of the opened file as a new KLF file. The destination folder is set in the Export group.</source>
+        <translation>Save a range of epochs of the opened file as a new KLF file. The destination folder is set in the Export group.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/KlfExportSettingsTab.qml" line="93"/>
+        <source>Open a KLF file to save a fragment of it.</source>
+        <translation>Open a KLF file to save a fragment of it.</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/KlfExportSettingsTab.qml" line="104"/>
+        <source>Manual selection</source>
+        <translation>Manual selection</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/KlfExportSettingsTab.qml" line="105"/>
+        <source>%1 of %2 epochs</source>
+        <translation>%1 of %2 epochs</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/KlfExportSettingsTab.qml" line="118"/>
+        <source>Start</source>
+        <translation>Start</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/KlfExportSettingsTab.qml" line="129"/>
+        <source>End</source>
+        <translation>End</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/KlfExportSettingsTab.qml" line="141"/>
+        <source>By echogram</source>
+        <translation>By echogram</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/KlfExportSettingsTab.qml" line="142"/>
+        <source>Start and End from what the echogram shows</source>
+        <translation>Start and End from what the echogram shows</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/KlfExportSettingsTab.qml" line="143"/>
+        <source>No echogram on screen</source>
+        <translation>No echogram on screen</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/KlfExportSettingsTab.qml" line="161"/>
+        <source>Fill the bounds with the first and last epoch the echogram is showing</source>
+        <translation>Fill the bounds with the first and last epoch the echogram is showing</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/KlfExportSettingsTab.qml" line="183"/>
+        <source>Save KLF fragment</source>
+        <translation>Save KLF fragment</translation>
+    </message>
+</context>
+<context>
     <name>LayoutCreatePage</name>
     <message>
         <location filename="../qml/app/LayoutCreatePage.qml" line="32"/>
@@ -8354,6 +8452,11 @@ udp://@:1234
         <location filename="../qml/app/MainWindow.qml" line="1202"/>
         <source>Autopilot</source>
         <translation>Autopilot</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/MainWindow.qml" line="1212"/>
+        <source>Export to KLF</source>
+        <translation>Export to KLF</translation>
     </message>
 </context>
 <context>
@@ -14248,6 +14351,21 @@ udp://@:1234
         <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="332"/>
         <source>Export to CSV</source>
         <translation>Export to CSV</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="332"/>
+        <source>Cancel</source>
+        <translation>Cancel</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="332"/>
+        <source>Save XYZ</source>
+        <translation>Save XYZ</translation>
+    </message>
+    <message>
+        <location filename="../qml/app/SurfaceExportSettingsTab.qml" line="332"/>
+        <source>Save CSV</source>
+        <translation>Save CSV</translation>
     </message>
 </context>
 <context>
