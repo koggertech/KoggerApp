@@ -822,6 +822,8 @@ Item {
             shadowOpacity: panelRoot.panelShadowOpacity * panelRoot.slideProgress
             maskEnabled: panelRoot._glass
             maskInverted: true
+            maskThresholdMin: 0.5
+            maskSpreadAtMin: 0.5
             maskSource: panelShadowCut
         }
     }
