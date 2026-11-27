@@ -16903,282 +16903,219 @@ udp://@:1234
     </message>
 </context>
 <context>
-    <name>tutorial_demo</name>
-    <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="46"/>
-        <source>Tutorial engine demo</source>
-        <translation>Демо движка обучения</translation>
-    </message>
-    <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="47"/>
-        <source>Tutorial demo</source>
-        <translation>Демо обучения</translation>
-    </message>
-    <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="48"/>
-        <source>This scenario shows every building block of the tutorial engine. Tap anywhere to continue.</source>
-        <translation>Этот сценарий показывает все элементы движка обучения. Нажмите в любом месте, чтобы продолжить.</translation>
-    </message>
-    <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="49"/>
-        <source>Settings and quick actions</source>
-        <translation>Настройки и быстрые действия</translation>
-    </message>
-    <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="50"/>
-        <source>The logo opens the settings, the arrow next to it unfolds the quick actions. One step can frame several elements.</source>
-        <translation>Логотип открывает настройки, стрелка рядом раскрывает быстрые действия. Один шаг может выделять несколько элементов.</translation>
-    </message>
-    <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="51"/>
-        <source>3D scene settings</source>
-        <translation>Настройки 3D-сцены</translation>
-    </message>
-    <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="52"/>
-        <source>Tap the gear. The tap reaches the button itself and the step continues once settings are open.</source>
-        <translation>Нажмите на шестерёнку. Нажатие доходит до самой кнопки, и шаг продолжится, когда откроются настройки.</translation>
-    </message>
-    <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="53"/>
-        <source>Tutorials</source>
-        <translation>Обучение</translation>
-    </message>
-    <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="54"/>
-        <source>All tutorials live here. A closed tutorial can be continued from its last checkpoint.</source>
-        <translation>Здесь собраны все обучения. Закрытое обучение можно продолжить с последней контрольной точки.</translation>
-    </message>
-    <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="55"/>
-        <source>That&apos;s it</source>
-        <translation>Вот и всё</translation>
-    </message>
-    <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="56"/>
-        <source>The scenario is marked as completed.</source>
-        <translation>Сценарий отмечен как пройденный.</translation>
-    </message>
-    <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="57"/>
-        <source>Finish</source>
-        <translation>Готово</translation>
-    </message>
-</context>
-<context>
     <name>tutorial_missions</name>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="58"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="46"/>
         <source>Mission planner</source>
         <translation>Планировщик миссий</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="59"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="47"/>
         <source>Here you plan the vehicle&apos;s work on the map: where it starts, which points it passes, which areas it covers and where it must not go. Let&apos;s walk through the screen.</source>
         <translation>Здесь на карте планируется работа лодки: откуда она стартует, какие точки проходит, какие площади обследует и куда ей заходить нельзя. Пройдёмся по экрану.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="60"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="48"/>
         <source>Mission and file</source>
         <translation>Миссия и файл</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="61"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="49"/>
         <source>The mission name. Next to it, the file it is saved in and a note when there are unsaved changes.</source>
         <translation>Название миссии. Рядом — файл, в котором она сохранена, и пометка о несохранённых изменениях.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="62"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="50"/>
         <source>Vehicle status</source>
         <translation>Состояние лодки</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="63"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="51"/>
         <source>Shows whether the connected vehicle carries this plan. When the vehicle has a different mission, tap the badge to open it.</source>
         <translation>Показывает, загружен ли этот план в подключённую лодку. Если на лодке другая миссия, нажмите на значок, чтобы открыть её.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="64"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="52"/>
         <source>Files</source>
         <translation>Файлы</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="65"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="53"/>
         <source>Start a new mission, open one from a file or save the current one. The save button is highlighted while there are unsaved changes.</source>
         <translation>Новая миссия, открытие из файла и сохранение текущей. Кнопка сохранения подсвечена, пока есть несохранённые изменения.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="66"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="54"/>
         <source>Vehicle</source>
         <translation>Лодка</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="67"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="55"/>
         <source>Upload the mission to the vehicle or read the one it already carries. Both need a connected autopilot.</source>
         <translation>Загрузить миссию в лодку или прочитать ту, что уже на ней. Для обоих нужен подключённый автопилот.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="68"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="56"/>
         <source>More and close</source>
         <translation>Ещё и закрыть</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="69"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="57"/>
         <source>The menu holds Save as and export for QGroundControl (.plan) and Mission Planner (.waypoints). The cross closes the editor and asks about unsaved changes first.</source>
         <translation>В меню — «Сохранить как» и экспорт для QGroundControl (.plan) и Mission Planner (.waypoints). Крестик закрывает редактор, предварительно спросив о несохранённых изменениях.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="70"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="58"/>
         <source>Tools</source>
         <translation>Инструменты</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="71"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="59"/>
         <source>Everything you put on the map starts here. Pick a tool, then tap the map. Tap the active tool again to put it away.</source>
         <translation>Всё, что ставится на карту, начинается здесь. Выберите инструмент и нажмите на карту. Повторное нажатие на активный инструмент отключает его.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="72"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="60"/>
         <source>Start point</source>
         <translation>Точка старта</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="73"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="61"/>
         <source>Where the mission begins. Until it is placed, this button and the Start point row on the right are highlighted.</source>
         <translation>Откуда начинается миссия. Пока точка не поставлена, эта кнопка и строка «Точка старта» справа подсвечены.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="74"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="62"/>
         <source>Waypoints</source>
         <translation>Путевые точки</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="75"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="63"/>
         <source>Single points the vehicle passes in order. While the tool is active, every tap on the map adds the next point.</source>
         <translation>Отдельные точки, которые лодка проходит по порядку. Пока инструмент активен, каждое нажатие на карту добавляет следующую точку.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="76"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="64"/>
         <source>Survey and corridor</source>
         <translation>Полигон и коридор</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="77"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="65"/>
         <source>A survey covers an area with parallel passes, a corridor follows a line. You choose how to draw the shape, from a ready template or point by point, and the check mark button finishes it.</source>
         <translation>Полигон покрывает площадь параллельными галсами, коридор идёт вдоль линии. Фигуру можно взять из готового шаблона или нарисовать по точкам, кнопка с галочкой её завершает.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="78"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="66"/>
         <source>Rally points and geofence</source>
         <translation>Точки сбора и геозона</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="79"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="67"/>
         <source>Rally points are safe places to return to. The geofence sets zones the vehicle must stay inside or keep out of.</source>
         <translation>Точки сбора — безопасные места для возврата. Геозона задаёт области, внутри которых лодка должна оставаться или в которые не должна заходить.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="80"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="68"/>
         <source>Undo and view</source>
         <translation>Отмена и вид</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="81"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="69"/>
         <source>Undo and redo your edits, fit the whole mission on screen, zoom in and out.</source>
         <translation>Отмена и повтор правок, вся миссия на экране, приближение и отдаление.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="82"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="70"/>
         <source>Map layer</source>
         <translation>Слой карты</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="83"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="71"/>
         <source>Tap to switch back to the previous map. Press and hold to pick one from the full list.</source>
         <translation>Нажатие возвращает предыдущую карту. Удерживайте, чтобы выбрать из полного списка.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="84"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="72"/>
         <source>Map</source>
         <translation>Карта</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="85"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="73"/>
         <source>Points and shapes are placed here. Tap an item to select it, drag its handles to edit, the plus sign inserts a vertex.</source>
         <translation>Здесь ставятся точки и фигуры. Нажмите на элемент, чтобы выделить его, тяните за маркеры для правки, плюс добавляет вершину.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="86"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="74"/>
         <source>Prompt</source>
         <translation>Подсказка</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="87"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="75"/>
         <source>This prompt always says what the map expects from you right now.</source>
         <translation>Эта подсказка всегда говорит, чего карта ждёт от вас прямо сейчас.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="88"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="76"/>
         <source>Mission panel</source>
         <translation>Панель миссии</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="89"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="77"/>
         <source>The whole mission as a list: plan settings, route, rally points, geofence and the summary.</source>
         <translation>Вся миссия списком: параметры плана, маршрут, точки сбора, геозона и сводка.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="90"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="78"/>
         <source>Plan</source>
         <translation>План</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="91"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="79"/>
         <source>Cruise speed and what the vehicle does after the last point: return to the start point, return to launch, hold position or leave it to the autopilot.</source>
         <translation>Крейсерская скорость и что лодка делает после последней точки: возвращается к точке старта или к месту запуска, остаётся на месте или действует по настройке автопилота.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="92"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="80"/>
         <source>Start point status</source>
         <translation>Состояние точки старта</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="93"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="81"/>
         <source>Shows whether the start point is placed. Tapping the row arms the Start point tool if it is missing, otherwise it selects the point on the map.</source>
         <translation>Показывает, поставлена ли точка старта. Если её нет, нажатие на строку включает инструмент «Точка старта», иначе выделяет точку на карте.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="94"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="82"/>
         <source>Route</source>
         <translation>Маршрут</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="95"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="83"/>
         <source>Route items in the order the vehicle runs them. Tap a card to select it and open its settings. Drag a card or use its arrows to change the order.</source>
         <translation>Элементы маршрута в порядке прохождения. Нажмите на карточку, чтобы выделить её и открыть настройки. Перетащите карточку или используйте её стрелки, чтобы изменить порядок.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="96"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="84"/>
         <source>Summary</source>
         <translation>Сводка</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="97"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="85"/>
         <source>Route length, time at cruise speed, the number of waypoints and how many mission items the autopilot receives out of its limit. Problems with the plan are listed here too.</source>
         <translation>Длина маршрута, время на крейсерской скорости, число путевых точек и сколько элементов миссии получит автопилот из его лимита. Здесь же перечислены проблемы плана.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="98"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="86"/>
         <source>That&apos;s all</source>
         <translation>Вот и всё</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="99"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="87"/>
         <source>Open this tour again any time with this button.</source>
         <translation>Этой кнопкой обучение можно открыть снова в любой момент.</translation>
     </message>
     <message>
-        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="100"/>
+        <location filename="../src/tutorial/generated/tutorial_strings.cpp" line="88"/>
         <source>Finish</source>
         <translation>Готово</translation>
     </message>
