@@ -55,9 +55,8 @@ Item {
 
     property int sourceTab: srcAll
     readonly property int _headerRest: Math.round(570 * _s)
-    readonly property bool _headerFits: width >= _tabBarWidth + _headerRest
     readonly property bool _headerRoomy: width >= _tabBarWidth + _headerRest + Math.round(90 * _s)
-    readonly property bool protoTogglesVisible: sourceTab !== srcApp && _headerFits
+    readonly property bool protoTogglesVisible: sourceTab !== srcApp
     readonly property var sourceModel: {
         if (!core)
             return null
@@ -328,7 +327,6 @@ Item {
         cursorShape: Qt.PointingHandCursor
         implicitHeight: Math.round(26 * root._s)
         implicitWidth: tgRow.implicitWidth
-        Layout.alignment: Qt.AlignVCenter
 
         onClicked: {
             tgRoot.checked = !tgRoot.checked
@@ -479,58 +477,198 @@ Item {
                     onValueSelected: function(v) { root.sourceTab = v }
                 }
 
-                Toggle {
-                    id: consScrollEnable
-                    checked: true
-                    label: qsTr("Auto scroll")
-                    Settings { category: "main/console"; property alias consScrollEnable: consScrollEnable.checked }
-                }
+                Item {
+                    id: toggleStrip
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Layout.preferredWidth: toggleRow.implicitWidth
+                    Layout.maximumWidth: toggleRow.implicitWidth
+                    Layout.preferredHeight: root._btnSize
+                    Layout.alignment: Qt.AlignVCenter
 
-                Toggle {
-                    id: protoBinConsoled
-                    visible: root.protoTogglesVisible
-                    label: qsTr("Binary")
-                    checked: !!root.store && root.store.consoleProtoBin
-                    onToggled: function(value) {
-                        if (root.store)
-                            root.store.consoleProtoBin = value
-                        checked = Qt.binding(function() { return !!root.store && root.store.consoleProtoBin })
+                    readonly property real maxX: Math.max(0, toggleFlick.contentWidth - toggleFlick.width)
+                    readonly property bool canBack: toggleFlick.contentX > 0.5
+                    readonly property bool canForward: toggleFlick.contentX < maxX - 0.5
+                    readonly property int edgeW: Math.round(30 * root._s)
+                    readonly property color _bgClear: Qt.rgba(AppPalette.bg.r, AppPalette.bg.g, AppPalette.bg.b, 0)
+
+                    onMaxXChanged: {
+                        if (toggleFlick.contentX > maxX) {
+                            toggleScrollAnim.stop()
+                            toggleFlick.contentX = maxX
+                        }
                     }
-                }
 
-                Toggle {
-                    id: nmeaConsoled
-                    visible: root.protoTogglesVisible
-                    label: qsTr("NMEA")
-                    checked: !!root.store && root.store.consoleNmea
-                    onToggled: function(value) {
-                        if (root.store)
-                            root.store.consoleNmea = value
-                        checked = Qt.binding(function() { return !!root.store && root.store.consoleNmea })
+                    function _targetX() {
+                        return toggleScrollAnim.running ? toggleScrollAnim.to : toggleFlick.contentX
                     }
-                }
 
-                Toggle {
-                    id: mavlinkConsoled
-                    visible: root.protoTogglesVisible
-                    label: qsTr("MAVLink")
-                    checked: !!root.store && root.store.consoleMavlink
-                    onToggled: function(value) {
-                        if (root.store)
-                            root.store.consoleMavlink = value
-                        checked = Qt.binding(function() { return !!root.store && root.store.consoleMavlink })
+                    function _scrollTo(x) {
+                        toggleScrollAnim.to = Math.max(0, Math.min(x, maxX))
+                        toggleScrollAnim.restart()
                     }
-                }
 
-                Toggle {
-                    id: usblConsoled
-                    visible: root.protoTogglesVisible
-                    label: qsTr("USBL")
-                    checked: !!root.store && root.store.consoleUsbl
-                    onToggled: function(value) {
-                        if (root.store)
-                            root.store.consoleUsbl = value
-                        checked = Qt.binding(function() { return !!root.store && root.store.consoleUsbl })
+                    function _page(direction) {
+                        _scrollTo(_targetX() + direction * Math.max(edgeW, toggleFlick.width - 2 * edgeW))
+                    }
+
+                    function _wheel(event) {
+                        var px = event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.pixelDelta.x
+                        var touchpad = event.phase !== Qt.NoScrollPhase
+                                    || (event.device && event.device.type === PointerDevice.TouchPad)
+                        if (touchpad && px !== 0) {
+                            toggleScrollAnim.stop()
+                            toggleFlick.contentX = Math.max(0, Math.min(toggleFlick.contentX - px, maxX))
+                            return
+                        }
+                        var d = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x
+                        _scrollTo(_targetX() - d)
+                    }
+
+                    Flickable {
+                        id: toggleFlick
+                        anchors.fill: parent
+                        clip: true
+                        contentWidth: toggleRow.implicitWidth
+                        contentHeight: height
+                        interactive: contentWidth > width + 0.5
+                        flickableDirection: Flickable.HorizontalFlick
+                        boundsBehavior: Flickable.StopAtBounds
+                        onMovementStarted: toggleScrollAnim.stop()
+
+                        Row {
+                            id: toggleRow
+                            y: Math.round((toggleFlick.height - height) / 2)
+                            spacing: Tokens.spaceLg
+
+                            Toggle {
+                                id: consScrollEnable
+                                checked: true
+                                label: qsTr("Auto scroll")
+                                Settings { category: "main/console"; property alias consScrollEnable: consScrollEnable.checked }
+                            }
+
+                            Toggle {
+                                id: protoBinConsoled
+                                visible: root.protoTogglesVisible
+                                label: qsTr("Binary")
+                                checked: !!root.store && root.store.consoleProtoBin
+                                onToggled: function(value) {
+                                    if (root.store)
+                                        root.store.consoleProtoBin = value
+                                    checked = Qt.binding(function() { return !!root.store && root.store.consoleProtoBin })
+                                }
+                            }
+
+                            Toggle {
+                                id: nmeaConsoled
+                                visible: root.protoTogglesVisible
+                                label: qsTr("NMEA")
+                                checked: !!root.store && root.store.consoleNmea
+                                onToggled: function(value) {
+                                    if (root.store)
+                                        root.store.consoleNmea = value
+                                    checked = Qt.binding(function() { return !!root.store && root.store.consoleNmea })
+                                }
+                            }
+
+                            Toggle {
+                                id: mavlinkConsoled
+                                visible: root.protoTogglesVisible
+                                label: qsTr("MAVLink")
+                                checked: !!root.store && root.store.consoleMavlink
+                                onToggled: function(value) {
+                                    if (root.store)
+                                        root.store.consoleMavlink = value
+                                    checked = Qt.binding(function() { return !!root.store && root.store.consoleMavlink })
+                                }
+                            }
+
+                            Toggle {
+                                id: usblConsoled
+                                visible: root.protoTogglesVisible
+                                label: qsTr("USBL")
+                                checked: !!root.store && root.store.consoleUsbl
+                                onToggled: function(value) {
+                                    if (root.store)
+                                        root.store.consoleUsbl = value
+                                    checked = Qt.binding(function() { return !!root.store && root.store.consoleUsbl })
+                                }
+                            }
+                        }
+
+                        WheelHandler {
+                            enabled: toggleFlick.interactive
+                            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                            onWheel: function(event) { toggleStrip._wheel(event) }
+                        }
+
+                        NumberAnimation {
+                            id: toggleScrollAnim
+                            target: toggleFlick
+                            property: "contentX"
+                            duration: 220
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        width: toggleStrip.edgeW
+                        opacity: toggleStrip.canBack ? 1 : 0
+                        visible: opacity > 0.01
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0.0; color: AppPalette.bg }
+                            GradientStop { position: 1.0; color: toggleStrip._bgClear }
+                        }
+                        Behavior on opacity { NumberAnimation { duration: 120 } }
+
+                        KCircleIconButton {
+                            anchors.fill: parent
+                            rounded: false
+                            cornerRadius: Tokens.radiusMd
+                            iconSource: "qrc:/icons/ui/chevron-right.svg"
+                            iconRotation: 180
+                            iconPixelSize: Math.round(14 * root._s)
+                            iconTintColor: AppPalette.textStrong
+                            fillColor: "transparent"
+                            fillHoverColor: AppPalette.bgHover
+                            borderWidth: 0
+                            enabled: toggleStrip.canBack
+                            onClicked: toggleStrip._page(-1)
+                        }
+                    }
+
+                    Rectangle {
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        width: toggleStrip.edgeW
+                        opacity: toggleStrip.canForward ? 1 : 0
+                        visible: opacity > 0.01
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0.0; color: toggleStrip._bgClear }
+                            GradientStop { position: 1.0; color: AppPalette.bg }
+                        }
+                        Behavior on opacity { NumberAnimation { duration: 120 } }
+
+                        KCircleIconButton {
+                            anchors.fill: parent
+                            rounded: false
+                            cornerRadius: Tokens.radiusMd
+                            iconSource: "qrc:/icons/ui/chevron-right.svg"
+                            iconPixelSize: Math.round(14 * root._s)
+                            iconTintColor: AppPalette.textStrong
+                            fillColor: "transparent"
+                            fillHoverColor: AppPalette.bgHover
+                            borderWidth: 0
+                            enabled: toggleStrip.canForward
+                            onClicked: toggleStrip._page(1)
+                        }
                     }
                 }
 
