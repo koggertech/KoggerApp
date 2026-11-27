@@ -19,6 +19,7 @@ Checks: >
   -bugprone-exception-escape,
   -bugprone-narrowing-conversions,
   -bugprone-reserved-identifier,
+  -bugprone-signed-bitwise,
   -performance-unnecessary-value-param
 WarningsAsErrors: ''
 HeaderFilterRegex: '(^|.*/)(src|platform)/.*'
