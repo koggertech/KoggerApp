@@ -238,6 +238,7 @@ public slots:
     void broadcastLiveHoldEnd(qPlot2D* source, bool toLiveEnd);
     void updateLiveHoldPause();
     void clearEpochCursors();
+    Q_INVOKABLE void returnEchogramsToLiveEnd();
     Q_INVOKABLE void broadcastEchogramTime(QObject* source, double timelinePos);        // time/scroll → gated by echogramSyncCursor_
     Q_INVOKABLE void broadcastEchogramVertical(QObject* source, double from, double to); // vertical zoom+offset → gated by echogramSyncView_
     Q_INVOKABLE void broadcastEchogramVerticalReset(QObject* source);

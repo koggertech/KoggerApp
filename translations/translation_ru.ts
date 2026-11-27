@@ -12582,12 +12582,12 @@ udp://@:1234
     <message>
         <location filename="../qml/app/Pane3DWindow.qml" line="99"/>
         <source>Viewing a past moment</source>
-        <translation type="unfinished"></translation>
+        <translation>Показан прошлый момент</translation>
     </message>
     <message>
         <location filename="../qml/app/Pane3DWindow.qml" line="106"/>
         <source>Back to live</source>
-        <translation type="unfinished"></translation>
+        <translation>К живым данным</translation>
     </message>
     <message>
         <location filename="../qml/app/Pane3DWindow.qml" line="180"/>

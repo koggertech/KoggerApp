@@ -2210,6 +2210,16 @@ void Core::clearEpochCursors()
     }
 }
 
+void Core::returnEchogramsToLiveEnd()
+{
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        auto* plot = plot2dList_.at(i);
+        if (plot != nullptr && plot->getPlotEnabled()) {
+            plot->releaseLiveHold(true);
+        }
+    }
+}
+
 void Core::broadcastCursorClear(qPlot2D* source)
 {
     if (!echogramSyncCursor_) {

@@ -73,7 +73,8 @@ Item {
             id: livePill
 
             readonly property var v: root.scene3dView
-            readonly property bool pinned: !!(v && v.syncEpochIndex >= 0)
+            readonly property bool live: typeof core !== "undefined" && !!core && core.openedFilePath.length === 0
+            readonly property bool pinned: live && !!(v && v.syncEpochIndex >= 0)
 
             visible: opacity > 0.01
             opacity: pinned ? 1 : 0
@@ -94,7 +95,11 @@ Item {
 
             TapHandler {
                 gesturePolicy: TapHandler.WithinBounds
-                onTapped: if (livePill.v) livePill.v.clearEpochSync()
+                onTapped: {
+                    if (livePill.v)
+                        livePill.v.clearEpochSync()
+                    core.returnEchogramsToLiveEnd()
+                }
             }
 
             Row {

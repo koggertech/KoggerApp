@@ -2143,6 +2143,10 @@ int GraphicsScene3dView::syncEpochIndex() const
 
 void GraphicsScene3dView::clearEpochSync()
 {
+    if (m_bottomTrack) {
+        m_bottomTrack->clearVertexHighlight();
+    }
+
     if (boatTrack_) {
         boatTrack_->clearSelectedEpoch();
     }
@@ -2151,6 +2155,7 @@ void GraphicsScene3dView::clearEpochSync()
     }
 
     core.clearEpochCursors();
+    QQuickFramebufferObject::update();
 }
 
 void GraphicsScene3dView::setEpochSyncEnabled(bool state)
