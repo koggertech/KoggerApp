@@ -237,7 +237,7 @@ QString TileManager::providerNameForId(int32_t providerId)
 
 QString TileManager::versionSettingsKey(const QString& versionKey)
 {
-    return QStringLiteral("tiles/version/") + versionKey;
+    return QStringLiteral("scene3d/map/tileVersion/") + versionKey;
 }
 
 void TileManager::seedProviderVersion()

@@ -7,7 +7,7 @@
 
 namespace {
 
-constexpr int kCurrentSchemaVersion = 9;
+constexpr int kCurrentSchemaVersion = 10;
 
 void migrateSettingsGroup(QSettings& settings, const QString& from, const QString& to)
 {
@@ -288,6 +288,34 @@ void migrateToV9(QSettings& settings)
     settings.remove(QStringLiteral("main/export/exportSurfaceFolderText"));
 }
 
+void migrateToV10(QSettings& settings)
+{
+    settings.beginGroup(QStringLiteral("tiles/version"));
+    const QStringList providers = settings.childKeys();
+    settings.endGroup();
+    for (const QString& provider : providers) {
+        const int version = settings.value(QStringLiteral("tiles/version/") + provider).toInt();
+        const QString dst = QStringLiteral("scene3d/map/tileVersion/") + provider;
+        if (settings.value(dst, -1).toInt() < version) {
+            settings.setValue(dst, version);
+        }
+    }
+
+    const QStringList domains{QStringLiteral("main"), QStringLiteral("scene2d"), QStringLiteral("scene3d")};
+    const QStringList rootGroups = settings.childGroups();
+    for (const QString& group : rootGroups) {
+        if (!domains.contains(group)) {
+            settings.remove(group);
+        }
+    }
+    const QStringList rootKeys = settings.childKeys();
+    for (const QString& key : rootKeys) {
+        if (key != QLatin1StringView("schemaVersion")) {
+            settings.remove(key);
+        }
+    }
+}
+
 }
 
 void migrateSettingsSchema()
@@ -324,6 +352,9 @@ void migrateSettingsSchema()
     }
     if (version < 9) {
         migrateToV9(settings);
+    }
+    if (version < 10) {
+        migrateToV10(settings);
     }
 
     settings.setValue(QStringLiteral("schemaVersion"), kCurrentSchemaVersion);
